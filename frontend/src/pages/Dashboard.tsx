@@ -7,7 +7,7 @@ const modules = [
   {
     icon: Calculator,
     title: "Índices Físicos",
-    description: "Calcule índices físicos do solo: umidade, densidade, porosidade e mais",
+    description: "Calcule índices físicos do solo",
     path: "/indices-fisicos",
     color: "from-sky-500 to-blue-600",
   },
@@ -70,6 +70,7 @@ export default function Dashboard() {
           const content = (
             <Card
               className={cn(
+                "flex flex-col",
                 "glass p-6 transition-smooth hover:shadow-2xl hover:shadow-primary/20 group cursor-pointer relative overflow-hidden",
                 !module.comingSoon && "hover:-translate-y-1"
               )}

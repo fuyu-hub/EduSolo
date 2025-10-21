@@ -201,8 +201,8 @@ export default function IndicesFisicos() {
           </div>
         </div>
 
-        {/* Layout Principal */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Layout Principal - Alterado para 2 colunas */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"> {/* Alterado para lg:grid-cols-2 e items-start */}
           {/* Input Panel */}
           <Card className="glass p-6 lg:col-span-1">
              <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
@@ -210,8 +210,8 @@ export default function IndicesFisicos() {
               Dados de Entrada
             </h2>
              {/* ... Inputs ... */}
-             <div className="space-y-6">
-              <div className="space-y-3">
+             <div className="space-y-4"> {/* Reduzido de space-y-6 para space-y-4 */}
+              <div className="space-y-3"> {/* Talvez reduzir para space-y-2 se ainda parecer muito */}
                  {/* Massa Úmida */}
                  <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -303,12 +303,12 @@ export default function IndicesFisicos() {
             </div>
           </Card>
 
-          {/* Div para Visualização e Resultados */}
-          <div className="lg:col-span-2 space-y-6">
+          {/* Div para Visualização e Resultados (agora ocupa 1 coluna) */}
+          <div className="lg:col-span-1 space-y-6">
             {/* Painel de Visualização */}
             <Card className="glass p-6">
               <h2 className="text-xl font-semibold text-foreground mb-4">Visualização (Diagrama de Fases)</h2>
-              <div className="flex justify-center items-center min-h-[220px]"> {/* Altura mínima aumentada */}
+              <div className="flex justify-center items-center min-h-[180px]"> {/* Altura mínima reduzida */}
                 {isCalculating ? (
                   <Skeleton className="w-36 h-52 bg-muted/20" /> // Tamanho ajustado
                 ) : results && results.volume_solidos_norm !== null && results.volume_agua_norm !== null && results.volume_ar_norm !== null && !results.erro ? (
@@ -379,7 +379,7 @@ export default function IndicesFisicos() {
                   </div>
                 </div>
               ) : (
-                 <div className="flex flex-col items-center justify-center min-h-[200px] text-center">
+                 <div className="flex flex-col items-center justify-center min-h-[150px] text-center"> {/* Altura mínima reduzida */}
                   <Calculator className="w-16 h-16 text-muted-foreground/30 mb-4" />
                   <p className="text-muted-foreground">
                     {error ? "Corrija o erro para ver os resultados" : "Os resultados serão exibidos aqui"}
