@@ -169,7 +169,7 @@ export function DiagramaFases({
                     {/* PopoverContent (inalterado) */}
                     <PopoverContent side="top" align="center" className="w-auto p-3 text-sm shadow-xl glass">
                         <div className="space-y-1.5">
-                            <div className="font-bold text-lg mb-1 text-slate-700 dark:text-slate-300">Fase Gasosa (Ar)</div> {/* Ajuste cor título popover */}
+                            <div className="font-bold text-lg mb-1 text-slate-300 dark:text-slate-300">Fase Gasosa (Ar)</div> {/* Ajuste cor título popover */}
                             <div>Volume (Va): {va.toFixed(3)} cm³ ({percentVolAr.toFixed(1)}%)</div>
                             <div>Massa (Wa): ≈ 0 g (0.0%)</div>
                             <div className="text-muted-foreground pt-1 text-xs">
