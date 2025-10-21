@@ -1,0 +1,106 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* EduSolo Dark Theme - Professional Engineering Application */
+    --background: 215 25% 8%;
+    --foreground: 210 40% 98%;
+
+    /* Glassmorphism card effect */
+    --card: 215 20% 12%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 215 25% 10%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Sky blue accent - vibrant primary */
+    --primary: 200 98% 60%;
+    --primary-foreground: 215 25% 8%;
+
+    /* Subtle secondary */
+    --secondary: 215 20% 18%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 215 20% 15%;
+    --muted-foreground: 215 15% 60%;
+
+    --accent: 200 98% 60%;
+    --accent-foreground: 215 25% 8%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 215 20% 20%;
+    --input: 215 20% 18%;
+    --ring: 200 98% 60%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar glassmorphism */
+    --sidebar-background: 215 25% 10%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 200 98% 60%;
+    --sidebar-primary-foreground: 215 25% 8%;
+    --sidebar-accent: 215 20% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 215 20% 18%;
+    --sidebar-ring: 200 98% 60%;
+
+    /* Custom gradients */
+    --gradient-radial: radial-gradient(circle at 20% 50%, hsl(200 98% 60% / 0.15), transparent 50%);
+    
+    /* Glass effect */
+    --glass-bg: hsl(215 20% 12% / 0.7);
+    --glass-border: hsl(215 20% 25% / 0.3);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image: var(--gradient-radial);
+  }
+
+  /* Glassmorphism utility */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+  }
+
+  /* Smooth transitions */
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Custom animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes card-hover {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-4px);
+  }
+}
