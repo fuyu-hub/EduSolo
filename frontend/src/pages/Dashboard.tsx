@@ -59,7 +59,7 @@ export default function Dashboard() {
           Bem-vindo ao <span className="text-primary">EduSolo</span>
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl">
-          Sua suíte completa de ferramentas para análise e aprendizado em Engenharia Geotécnica
+          Sua suíte completa de ferramentas para análise e aprendizado em Mecânica dos Solos
         </p>
       </div>
 
@@ -154,7 +154,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground">Fase 1</p>
-              <p className="text-sm text-muted-foreground">MVP em Desenvolvimento</p>
+              <p className="text-sm text-muted-foreground">Programa em Desenvolvimento</p>
             </div>
           </div>
         </Card>
