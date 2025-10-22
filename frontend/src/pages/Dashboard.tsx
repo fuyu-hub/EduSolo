@@ -24,6 +24,7 @@ const modules = [
     description: "Análise granulométrica e classificação USCS/AASHTO",
     path: "/granulometria",
     color: "from-fuchsia-500 to-purple-600",
+    comingSoon: true,
   },
   {
     icon: Layers,
@@ -31,6 +32,7 @@ const modules = [
     description: "Análise de curvas de compactação e energia Proctor",
     path: "/compactacao",
     color: "from-violet-500 to-purple-600",
+    comingSoon: true,
   },
   {
     icon: FileText,
@@ -38,6 +40,7 @@ const modules = [
     description: "Calcule tensões verticais, efetivas e neutras no solo",
     path: "/tensoes",
     color: "from-emerald-500 to-green-600",
+    comingSoon: true,
   },
   {
     icon: TrendingDown,
@@ -45,6 +48,7 @@ const modules = [
     description: "Métodos de Boussinesq e análise de carregamentos",
     path: "/acrescimo-tensoes",
     color: "from-orange-500 to-red-600",
+    comingSoon: true,
   },
   {
     icon: TrendingUp,
@@ -68,6 +72,7 @@ const modules = [
     description: "Acesse conteúdos teóricos e conceitos fundamentais",
     path: "/educacional",
     color: "from-cyan-500 to-teal-600",
+    comingSoon: true,
   },
 ];
 
