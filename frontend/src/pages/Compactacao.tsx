@@ -18,6 +18,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { toast } from "sonner";
+import { useSavedCalculations } from "@/hooks/use-saved-calculations";
+import SavedCalculations from "@/components/SavedCalculations";
+import SaveDialog from "@/components/SaveDialog";
+import PrintHeader from "@/components/PrintHeader";
+import CalculationActions from "@/components/CalculationActions";
+import { exportToPDF, ExportData, formatNumberForExport } from "@/lib/export-utils";
 
 interface FormData {
   massaUmida: string;

@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useSavedCalculations } from "@/hooks/use-saved-calculations";
+import SavedCalculations from "@/components/SavedCalculations";
+import SaveDialog from "@/components/SaveDialog";
+import PrintHeader from "@/components/PrintHeader";
+import CalculationActions from "@/components/CalculationActions";
+import { exportToPDF, ExportData, formatNumberForExport } from "@/lib/export-utils";
 
 interface PeneiraDado {
   abertura: string;
@@ -73,6 +79,12 @@ export default function Granulometria() {
 
   const [results, setResults] = useState<Results | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+
+  // Estados para salvamento
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const { calculations, saveCalculation, deleteCalculation, renameCalculation } = useSavedCalculations("granulometria");
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -281,16 +293,103 @@ export default function Granulometria() {
     setResults(null);
   };
 
+  // Funções de salvamento e exportação
+  const handleSaveClick = () => {
+    if (!results) return;
+    setSaveName(`Cálculo ${new Date().toLocaleDateString('pt-BR')}`);
+    setSaveDialogOpen(true);
+  };
+
+  const handleConfirmSave = () => {
+    if (!results || !saveName.trim()) return;
+    const success = saveCalculation(saveName.trim(), formData, results);
+    if (success) {
+      toast.success("Cálculo salvo com sucesso!");
+      setSaveDialogOpen(false);
+      setSaveName("");
+    } else {
+      toast.error("Erro ao salvar o cálculo.");
+    }
+  };
+
+  const handleLoadCalculation = (calculation: any) => {
+    setFormData(calculation.formData);
+    setResults(calculation.results);
+    toast.success(`"${calculation.name}" carregado com sucesso!`);
+  };
+
+  const handleExportPDF = async () => {
+    if (!results) return;
+    
+    const inputs: { label: string; value: string }[] = [
+      { label: "Massa Total", value: `${formData.massaTotal} g` },
+    ];
+    formData.peneiras.forEach((p, i) => {
+      if (p.abertura && p.massaRetida) {
+        inputs.push({ label: `Peneira ${i + 1} - Abertura`, value: `${p.abertura} mm` });
+        inputs.push({ label: `Peneira ${i + 1} - Massa Retida`, value: `${p.massaRetida} g` });
+      }
+    });
+    if (formData.limitePercent) inputs.push({ label: "LL", value: `${formData.limitePercent}%` });
+    if (formData.limitePlasticidade) inputs.push({ label: "LP", value: `${formData.limitePlasticidade}%` });
+
+    const resultsList: { label: string; value: string; highlight?: boolean }[] = [
+      { label: "Classificação USCS", value: results.classificacaoUSCS, highlight: true },
+      { label: "Descrição", value: results.descricaoUSCS },
+      { label: "% Areia", value: `${formatNumberForExport(results.percentagemAreia, 1)}%` },
+      { label: "% Silte", value: `${formatNumberForExport(results.percentagemSilte, 1)}%` },
+      { label: "% Argila", value: `${formatNumberForExport(results.percentagemArgila, 1)}%` },
+    ];
+    if (results.d10) resultsList.push({ label: "D10", value: `${formatNumberForExport(results.d10, 3)} mm` });
+    if (results.d30) resultsList.push({ label: "D30", value: `${formatNumberForExport(results.d30, 3)} mm` });
+    if (results.d60) resultsList.push({ label: "D60", value: `${formatNumberForExport(results.d60, 3)} mm` });
+    if (results.coefUniformidade) resultsList.push({ label: "Cu", value: formatNumberForExport(results.coefUniformidade, 2) });
+    if (results.coefCurvatura) resultsList.push({ label: "Cc", value: formatNumberForExport(results.coefCurvatura, 2) });
+
+    const exportData: ExportData = {
+      moduleName: "granulometria",
+      moduleTitle: "Granulometria e Classificação",
+      inputs,
+      results: resultsList,
+    };
+
+    const success = await exportToPDF(exportData);
+    if (success) {
+      toast.success("PDF exportado com sucesso!");
+    } else {
+      toast.error("Erro ao exportar PDF.");
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center shadow-lg">
-          <BarChart3 className="w-6 h-6 text-white" />
+      <PrintHeader moduleTitle="Granulometria e Classificação" moduleName="granulometria" />
+      
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center shadow-lg">
+            <BarChart3 className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Granulometria e Classificação</h1>
+            <p className="text-muted-foreground">Análise granulométrica e classificação USCS</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Granulometria e Classificação</h1>
-          <p className="text-muted-foreground">Análise granulométrica e classificação USCS</p>
-        </div>
+        
+        <TooltipProvider>
+          <CalculationActions
+            onSave={handleSaveClick}
+            onLoad={() => setLoadDialogOpen(true)}
+            onExport={handleExportPDF}
+            onPrint={handlePrint}
+            hasResults={!!results}
+            isCalculating={isCalculating}
+          />
+        </TooltipProvider>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -481,6 +580,25 @@ export default function Granulometria() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialogs */}
+      <SaveDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        saveName={saveName}
+        onSaveNameChange={setSaveName}
+        onConfirm={handleConfirmSave}
+      />
+
+      <SavedCalculations
+        open={loadDialogOpen}
+        onOpenChange={setLoadDialogOpen}
+        calculations={calculations}
+        onLoad={handleLoadCalculation}
+        onDelete={deleteCalculation}
+        onRename={renameCalculation}
+        moduleName="Granulometria"
+      />
     </div>
   );
 }

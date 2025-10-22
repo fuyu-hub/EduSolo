@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Droplets, Info, Calculator as CalcIcon, Plus, Trash2, LineChart, ChevronLeft, ChevronRight, AlertCircle, BarChart3 } from "lucide-react";
+import { Droplets, Info, Calculator as CalcIcon, Plus, Trash2, LineChart, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,12 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import PlasticityChart from "@/components/visualizations/PlasticityChart";
+import { useSavedCalculations } from "@/hooks/use-saved-calculations";
+import SavedCalculations from "@/components/SavedCalculations";
+import SaveDialog from "@/components/SaveDialog";
+import PrintHeader from "@/components/PrintHeader";
+import CalculationActions from "@/components/CalculationActions";
+import { exportToPDF, ExportData, formatNumberForExport } from "@/lib/export-utils";
 
 // --- Esquema Zod (Inalterado) ---
 const pontoLLSchema = z.object({
@@ -118,6 +124,12 @@ export default function LimitesConsistencia() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
+  // Estados para salvamento e exportação
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const { calculations, saveCalculation, deleteCalculation, renameCalculation } = useSavedCalculations("limites-consistencia");
+
   useEffect(() => { if (fields.length > 0) { setCurrentPointIndex(prev => Math.min(prev, fields.length - 1)); } else { setCurrentPointIndex(0); } }, [fields.length]);
 
   const addPontoLL = () => { append({ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }); setCurrentPointIndex(fields.length); };
@@ -127,6 +139,80 @@ export default function LimitesConsistencia() {
 
   const handleClear = () => { form.reset({ pontosLL: [{ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },{ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }], massaUmidaRecipienteLP: "", massaSecaRecipienteLP: "", massaRecipienteLP: "", umidadeNatural: "", percentualArgila: "" }); setCurrentPointIndex(0); setResults(null); setApiError(null); };
   const handleFillExampleData = () => { const currentLength = fields.length; if (currentLength < 5) { for (let i = 0; i < 5 - currentLength; i++) { append({ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }, { shouldFocus: false }); } } else if (currentLength > 5) { for (let i = currentLength - 1; i >= 5; i--) { remove(i); } } setTimeout(() => { form.reset({ pontosLL: exampleLLData.map(p => ({ ...p, id: crypto.randomUUID() })), massaUmidaRecipienteLP: exampleLPData.massaUmidaRecipienteLP, massaSecaRecipienteLP: exampleLPData.massaSecaRecipienteLP, massaRecipienteLP: exampleLPData.massaRecipienteLP, umidadeNatural: exampleOptionalData.umidadeNatural, percentualArgila: exampleOptionalData.percentualArgila }); setCurrentPointIndex(0); setResults(null); setApiError(null); toast({ title: "Dados de Exemplo Carregados", description: "O formulário foi preenchido com os dados de teste." }); }, 0); };
+
+  // Funções de salvamento e exportação
+  const handleSaveClick = () => {
+    if (!results) return;
+    setSaveName(`Cálculo ${new Date().toLocaleDateString('pt-BR')}`);
+    setSaveDialogOpen(true);
+  };
+
+  const handleConfirmSave = () => {
+    if (!results || !saveName.trim()) return;
+    const formData = form.getValues();
+    const success = saveCalculation(saveName.trim(), formData, results);
+    if (success) {
+      toast({ title: "Cálculo salvo!", description: "O cálculo foi salvo com sucesso." });
+      setSaveDialogOpen(false);
+      setSaveName("");
+    } else {
+      toast({ title: "Erro ao salvar", description: "Não foi possível salvar o cálculo.", variant: "destructive" });
+    }
+  };
+
+  const handleLoadCalculation = (calculation: any) => {
+    const data = calculation.formData;
+    form.reset(data);
+    setResults(calculation.results);
+    setCurrentPointIndex(0);
+    toast({ title: "Cálculo carregado!", description: `"${calculation.name}" foi carregado com sucesso.` });
+  };
+
+  const handleExportPDF = async () => {
+    if (!results) return;
+    const formData = form.getValues();
+    
+    const inputs: { label: string; value: string }[] = [];
+    formData.pontosLL.forEach((p, i) => {
+      inputs.push({ label: `Ponto LL ${i + 1} - Golpes`, value: p.numGolpes });
+      inputs.push({ label: `Ponto LL ${i + 1} - Massa Úmida+Rec`, value: `${p.massaUmidaRecipiente} g` });
+      inputs.push({ label: `Ponto LL ${i + 1} - Massa Seca+Rec`, value: `${p.massaSecaRecipiente} g` });
+      inputs.push({ label: `Ponto LL ${i + 1} - Massa Recipiente`, value: `${p.massaRecipiente} g` });
+    });
+    inputs.push({ label: "LP - Massa Úmida+Rec", value: `${formData.massaUmidaRecipienteLP} g` });
+    inputs.push({ label: "LP - Massa Seca+Rec", value: `${formData.massaSecaRecipienteLP} g` });
+    inputs.push({ label: "LP - Massa Recipiente", value: `${formData.massaRecipienteLP} g` });
+    if (formData.umidadeNatural) inputs.push({ label: "Umidade Natural", value: `${formData.umidadeNatural}%` });
+    if (formData.percentualArgila) inputs.push({ label: "% Argila", value: `${formData.percentualArgila}%` });
+
+    const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
+    if (results.ll !== null) resultsList.push({ label: "Limite de Liquidez (LL)", value: `${formatNumberForExport(results.ll, 1)}%`, highlight: true });
+    if (results.lp !== null) resultsList.push({ label: "Limite de Plasticidade (LP)", value: `${formatNumberForExport(results.lp, 1)}%`, highlight: true });
+    if (results.ip !== null) resultsList.push({ label: "Índice de Plasticidade (IP)", value: `${formatNumberForExport(results.ip, 1)}%`, highlight: true });
+    if (results.ic !== null) resultsList.push({ label: "Índice de Consistência (IC)", value: formatNumberForExport(results.ic, 2) });
+    if (results.classificacao_plasticidade) resultsList.push({ label: "Classificação Plasticidade", value: results.classificacao_plasticidade });
+    if (results.classificacao_consistencia) resultsList.push({ label: "Classificação Consistência", value: results.classificacao_consistencia });
+    if (results.atividade_argila !== null) resultsList.push({ label: "Atividade Argila (Ia)", value: formatNumberForExport(results.atividade_argila, 2) });
+    if (results.classificacao_atividade) resultsList.push({ label: "Classificação Atividade", value: results.classificacao_atividade });
+
+    const exportData: ExportData = {
+      moduleName: "limites-consistencia",
+      moduleTitle: "Limites de Consistência",
+      inputs,
+      results: resultsList,
+    };
+
+    const success = await exportToPDF(exportData);
+    if (success) {
+      toast({ title: "PDF exportado!", description: "O arquivo foi baixado com sucesso." });
+    } else {
+      toast({ title: "Erro ao exportar", description: "Não foi possível gerar o PDF.", variant: "destructive" });
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   const onSubmit = async (data: FormInputValues) => {
     setIsCalculating(true); setApiError(null); setResults(null);
@@ -153,13 +239,28 @@ export default function LimitesConsistencia() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto">
+      <PrintHeader moduleTitle="Limites de Consistência" moduleName="limites-consistencia" />
+      
       {/* Header */}
-      <div className="flex items-center gap-3">
-         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg"> <Droplets className="w-6 h-6 text-white" /> </div>
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Limites de Consistência</h1>
-          <p className="text-muted-foreground text-sm">Determinação de LL, LP, IP, IC, Atividade e classificações</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg"> <Droplets className="w-6 h-6 text-white" /> </div>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Limites de Consistência</h1>
+            <p className="text-muted-foreground text-sm">Determinação de LL, LP, IP, IC, Atividade e classificações</p>
+          </div>
         </div>
+        
+        <TooltipProvider>
+          <CalculationActions
+            onSave={handleSaveClick}
+            onLoad={() => setLoadDialogOpen(true)}
+            onExport={handleExportPDF}
+            onPrint={handlePrint}
+            hasResults={!!results}
+            isCalculating={isCalculating}
+          />
+        </TooltipProvider>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
@@ -361,6 +462,25 @@ export default function LimitesConsistencia() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialogs */}
+      <SaveDialog
+        open={saveDialogOpen}
+        onOpenChange={setSaveDialogOpen}
+        saveName={saveName}
+        onSaveNameChange={setSaveName}
+        onConfirm={handleConfirmSave}
+      />
+
+      <SavedCalculations
+        open={loadDialogOpen}
+        onOpenChange={setLoadDialogOpen}
+        calculations={calculations}
+        onLoad={handleLoadCalculation}
+        onDelete={deleteCalculation}
+        onRename={renameCalculation}
+        moduleName="Limites de Consistência"
+      />
     </div>
   );
 }

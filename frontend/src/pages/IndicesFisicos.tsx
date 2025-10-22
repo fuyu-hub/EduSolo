@@ -1,6 +1,6 @@
 // frontend/src/pages/IndicesFisicos.tsx
 import { useState, useMemo } from "react";
-import { Calculator, Info, BarChart3, ArrowLeft, ArrowRight } from "lucide-react";
+import { Calculator, Info, BarChart3, ArrowLeft, ArrowRight, Save, FolderOpen, Download, Printer } from "lucide-react";
 import axios from 'axios';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,10 +25,22 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import DiagramaFases from "@/components/visualizations/DiagramaFases";
 import { conteudoIndicesFisicos, ConteudoIndice } from "@/lib/geotecnia/indicesFisicosConteudo";
 import { cn } from "@/lib/utils";
+import { useSavedCalculations } from "@/hooks/use-saved-calculations";
+import SavedCalculations from "@/components/SavedCalculations";
+import PrintHeader from "@/components/PrintHeader";
+import { exportToPDF, ExportData, formatNumberForExport } from "@/lib/export-utils";
 
 // Interface local que reflete a API Output
 interface IndicesFisicosOutput {
@@ -100,6 +112,12 @@ export default function IndicesFisicos() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Estados para salvamento e exportação
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const { calculations, saveCalculation, deleteCalculation, renameCalculation, getCalculation } = useSavedCalculations("indices-fisicos");
 
   const handleChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -187,6 +205,94 @@ export default function IndicesFisicos() {
     setError(null);
   };
 
+  // Funções de salvamento e carregamento
+  const handleSaveClick = () => {
+    if (!results) return;
+    setSaveName(`Cálculo ${new Date().toLocaleDateString('pt-BR')}`);
+    setSaveDialogOpen(true);
+  };
+
+  const handleConfirmSave = () => {
+    if (!results || !saveName.trim()) return;
+    
+    const success = saveCalculation(saveName.trim(), formData, results);
+    if (success) {
+      toast({
+        title: "Cálculo salvo!",
+        description: "O cálculo foi salvo com sucesso.",
+      });
+      setSaveDialogOpen(false);
+      setSaveName("");
+    } else {
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar o cálculo.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleLoadCalculation = (calculation: any) => {
+    setFormData(calculation.formData);
+    setResults(calculation.results);
+    toast({
+      title: "Cálculo carregado!",
+      description: `"${calculation.name}" foi carregado com sucesso.`,
+    });
+  };
+
+  const handleExportPDF = async () => {
+    if (!results) return;
+
+    const inputs: { label: string; value: string }[] = [
+      { label: "Massa Úmida", value: `${formData.massaUmida} g` },
+      { label: "Massa Seca", value: `${formData.massaSeca} g` },
+      { label: "Volume Total", value: `${formData.volume} cm³` },
+    ];
+    
+    if (formData.Gs) inputs.push({ label: "Densidade Relativa (Gs)", value: formData.Gs });
+    if (formData.indice_vazios_max) inputs.push({ label: "Índice Vazios Máx", value: formData.indice_vazios_max });
+    if (formData.indice_vazios_min) inputs.push({ label: "Índice Vazios Mín", value: formData.indice_vazios_min });
+
+    const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
+    if (results.peso_especifico_natural !== null) resultsList.push({ label: "Peso Específico Natural", value: `${formatNumberForExport(results.peso_especifico_natural)} kN/m³`, highlight: true });
+    if (results.peso_especifico_seco !== null) resultsList.push({ label: "Peso Específico Seco", value: `${formatNumberForExport(results.peso_especifico_seco)} kN/m³` });
+    if (results.peso_especifico_saturado !== null) resultsList.push({ label: "Peso Específico Saturado", value: `${formatNumberForExport(results.peso_especifico_saturado)} kN/m³` });
+    if (results.peso_especifico_submerso !== null) resultsList.push({ label: "Peso Específico Submerso", value: `${formatNumberForExport(results.peso_especifico_submerso)} kN/m³` });
+    if (results.Gs !== null) resultsList.push({ label: "Densidade Relativa (Gs)", value: formatNumberForExport(results.Gs, 3) });
+    if (results.indice_vazios !== null) resultsList.push({ label: "Índice de Vazios", value: formatNumberForExport(results.indice_vazios, 3) });
+    if (results.porosidade !== null) resultsList.push({ label: "Porosidade", value: `${formatNumberForExport(results.porosidade)}%` });
+    if (results.grau_saturacao !== null) resultsList.push({ label: "Grau de Saturação", value: `${formatNumberForExport(results.grau_saturacao)}%` });
+    if (results.umidade !== null) resultsList.push({ label: "Umidade", value: `${formatNumberForExport(results.umidade)}%` });
+    if (results.compacidade_relativa !== null) resultsList.push({ label: "Compacidade Relativa", value: `${formatNumberForExport(results.compacidade_relativa)}%` });
+    if (results.classificacao_compacidade) resultsList.push({ label: "Classificação", value: results.classificacao_compacidade });
+
+    const exportData: ExportData = {
+      moduleName: "indices-fisicos",
+      moduleTitle: "Índices Físicos",
+      inputs,
+      results: resultsList,
+    };
+
+    const success = await exportToPDF(exportData);
+    if (success) {
+      toast({
+        title: "PDF exportado!",
+        description: "O arquivo foi baixado com sucesso.",
+      });
+    } else {
+      toast({
+        title: "Erro ao exportar",
+        description: "Não foi possível gerar o PDF.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   // Validação: precisa de pelo menos 3 dos 4 básicos OU Gs
   const isFormValid =
     (Object.values(formData).filter((v, i) => i < 3 && v && !isNaN(parseFloat(v))).length >= 3) ||
@@ -224,14 +330,77 @@ export default function IndicesFisicos() {
   return (
     <TooltipProvider>
       <div className="space-y-6 max-w-7xl mx-auto">
+        <PrintHeader moduleTitle="Índices Físicos" moduleName="indices-fisicos" />
+        
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg">
-            <Calculator className="w-6 h-6 text-white" />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg">
+              <Calculator className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Índices Físicos</h1>
+              <p className="text-muted-foreground">Análise das propriedades físicas do solo</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Índices Físicos</h1>
-            <p className="text-muted-foreground">Análise das propriedades físicas do solo</p>
+          
+          {/* Action Buttons */}
+          <div className="flex gap-2 no-print">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setLoadDialogOpen(true)}
+                  disabled={isCalculating}
+                >
+                  <FolderOpen className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Carregar Cálculo</TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleSaveClick}
+                  disabled={!results || isCalculating}
+                >
+                  <Save className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Salvar Cálculo</TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleExportPDF}
+                  disabled={!results || isCalculating}
+                >
+                  <Download className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Exportar PDF</TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handlePrint}
+                  disabled={!results || isCalculating}
+                >
+                  <Printer className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Imprimir</TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
@@ -396,6 +565,51 @@ export default function IndicesFisicos() {
              </div>
           </Card>
         </div>
+
+        {/* Dialog para salvar cálculo */}
+        <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Salvar Cálculo</DialogTitle>
+              <DialogDescription>
+                Dê um nome para este cálculo para encontrá-lo facilmente depois.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="save-name">Nome do Cálculo</Label>
+                <Input
+                  id="save-name"
+                  value={saveName}
+                  onChange={(e) => setSaveName(e.target.value)}
+                  placeholder="Ex: Análise Solo Argiloso - Obra X"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleConfirmSave();
+                  }}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleConfirmSave} disabled={!saveName.trim()}>
+                Salvar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog para carregar cálculos salvos */}
+        <SavedCalculations
+          open={loadDialogOpen}
+          onOpenChange={setLoadDialogOpen}
+          calculations={calculations}
+          onLoad={handleLoadCalculation}
+          onDelete={deleteCalculation}
+          onRename={renameCalculation}
+          moduleName="Índices Físicos"
+        />
       </div>
     </TooltipProvider>
   );

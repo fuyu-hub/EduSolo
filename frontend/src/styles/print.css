@@ -1,0 +1,241 @@
+/* Estilos para impressão - EduSolo */
+
+@media print {
+  /* Ocultar elementos de navegação e interface */
+  aside,
+  header,
+  .no-print,
+  button,
+  [role="button"],
+  .glass,
+  nav {
+    display: none !important;
+  }
+
+  /* Reset de margens e padding */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Container principal */
+  main {
+    margin: 0 !important;
+    padding: 20mm !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Cabeçalho de impressão */
+  .print-header {
+    display: block !important;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #333;
+  }
+
+  .print-header h1 {
+    margin: 0;
+    font-size: 24pt;
+    color: #333;
+  }
+
+  .print-header .print-date {
+    font-size: 10pt;
+    color: #666;
+    margin-top: 5px;
+  }
+
+  /* Cartões e containers */
+  .card,
+  [class*="card"] {
+    border: 1px solid #ddd !important;
+    background: white !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+    margin-bottom: 15px;
+  }
+
+  /* Títulos */
+  h1, h2, h3, h4, h5, h6 {
+    color: #333 !important;
+    page-break-after: avoid;
+  }
+
+  /* Resultados */
+  .result-item,
+  [class*="result"] {
+    border: 1px solid #ddd !important;
+    background: white !important;
+    padding: 8px !important;
+    margin: 5px 0 !important;
+  }
+
+  /* Highlights */
+  .highlight,
+  [class*="highlight"] {
+    background: #f0f0f0 !important;
+    border: 2px solid #333 !important;
+  }
+
+  /* Gráficos e visualizações */
+  svg,
+  canvas,
+  .chart,
+  .visualization {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+  }
+
+  /* Tabelas */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: avoid;
+  }
+
+  table th,
+  table td {
+    border: 1px solid #333 !important;
+    padding: 8px !important;
+    text-align: left !important;
+  }
+
+  table th {
+    background: #f0f0f0 !important;
+    font-weight: bold !important;
+  }
+
+  /* Quebras de página */
+  .page-break {
+    page-break-after: always;
+  }
+
+  .page-break-avoid {
+    page-break-inside: avoid;
+  }
+
+  /* Grid para layout de impressão */
+  .print-grid {
+    display: block !important;
+  }
+
+  .print-grid > * {
+    width: 100% !important;
+    margin-bottom: 15px !important;
+  }
+
+  /* Badges e labels */
+  .badge,
+  [class*="badge"] {
+    border: 1px solid #333 !important;
+    background: white !important;
+    color: black !important;
+    padding: 2px 6px !important;
+  }
+
+  /* Tooltips e popovers - ocultar */
+  [role="tooltip"],
+  [class*="tooltip"],
+  [class*="popover"] {
+    display: none !important;
+  }
+
+  /* Rodapé */
+  .print-footer {
+    display: block !important;
+    position: fixed;
+    bottom: 10mm;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 9pt;
+    color: #666;
+    border-top: 1px solid #ddd;
+    padding-top: 5px;
+  }
+
+  /* Inputs e forms */
+  input,
+  select,
+  textarea {
+    border: none !important;
+    background: transparent !important;
+    font-weight: bold !important;
+  }
+
+  /* Seções de entrada e resultado */
+  .input-section,
+  .result-section {
+    page-break-inside: avoid;
+    margin-bottom: 20px;
+  }
+
+  .input-section h3,
+  .result-section h3 {
+    background: #f0f0f0 !important;
+    padding: 8px !important;
+    margin: 10px 0 !important;
+    border-left: 4px solid #333 !important;
+  }
+
+  /* Accordion - expandir tudo */
+  [data-state="closed"] {
+    display: block !important;
+  }
+
+  /* Carousel - mostrar todos os itens */
+  .carousel {
+    display: block !important;
+  }
+
+  .carousel-item {
+    display: block !important;
+    page-break-inside: avoid;
+    margin-bottom: 15px !important;
+  }
+
+  /* Alertas e avisos */
+  .alert,
+  [role="alert"] {
+    border: 2px solid #333 !important;
+    background: #f9f9f9 !important;
+    padding: 10px !important;
+    margin: 10px 0 !important;
+  }
+
+  /* Links - mostrar URL */
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 9pt;
+    color: #666;
+  }
+
+  /* Ocultar ícones desnecessários */
+  .lucide,
+  svg.lucide {
+    display: none !important;
+  }
+
+  /* Forçar cores de texto legíveis */
+  * {
+    color: black !important;
+  }
+
+  /* Exceções para destaques */
+  .highlight,
+  .primary,
+  [class*="primary"] {
+    color: #000 !important;
+    font-weight: bold !important;
+  }
+}
+
