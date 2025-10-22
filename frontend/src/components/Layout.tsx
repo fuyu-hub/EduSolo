@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+// Adiciona React à importação
+import React, { useState, useEffect } from "react";
 import { Menu, Calculator, FileText, BookOpen, Layers } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -108,106 +109,129 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
 };
 
 // Componente auxiliar para renderizar SheetClose condicionalmente
+// Agora usa React.ComponentProps e React.ReactNode corretamente
 const ConditionalSheetClose = ({ shouldWrap, children, ...props }: { shouldWrap: boolean; children: React.ReactNode } & React.ComponentProps<typeof SheetClose>) => {
-  return shouldWrap ? <SheetClose {...props}>{children}</SheetClose> : <>{children}</>;
+  // Se não deve envolver ou se children não for um elemento válido, retorna children diretamente
+  if (!shouldWrap || !React.isValidElement(children)) {
+    return <>{children}</>;
+  }
+  // Envolve o children com SheetClose se shouldWrap for true
+  return <SheetClose {...props}>{children}</SheetClose>;
 };
 
 
+// Agora usa React.ReactNode corretamente
 export function Layout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
 
   const [collapsed, setCollapsed] = useState<boolean>(() => {
+    // Default to true (collapsed) if on mobile or no localStorage value
     if (typeof window !== 'undefined') {
        const mobileCheck = window.innerWidth < 768;
-       if (mobileCheck) return true;
+       if (mobileCheck) return true; // Always default to collapsed on mobile load/check
+       // For desktop, check localStorage, default to true if not found
        return JSON.parse(localStorage.getItem('sidebarCollapsed') ?? 'true');
     }
-    return true;
+    return true; // Fallback default
   });
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Effect to save desktop state
   useEffect(() => {
-    if (!isMobile) {
+    if (!isMobile) { // Only save state when on desktop
       localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
     }
   }, [collapsed, isMobile]);
 
+   // Effect to ensure sidebar is considered collapsed visually on mobile resize/load
    useEffect(() => {
     if (isMobile) {
-      setCollapsed(true);
+       // We don't need to visually collapse the <aside> as it's not rendered,
+       // but we ensure the logic considers it collapsed if we switch TO mobile.
+       // Set the state only if it's not already collapsed, to avoid unnecessary re-renders.
+       if(!collapsed) {
+         setCollapsed(true);
+       }
+    } else {
+        // Optional: When switching back to desktop, restore saved preference
+        const savedState = JSON.parse(localStorage.getItem('sidebarCollapsed') ?? 'true');
+        setCollapsed(savedState);
     }
-  }, [isMobile]);
+  }, [isMobile]); // Re-run when isMobile changes
 
   const toggleDesktopSidebar = () => {
     if (!isMobile) {
-      setCollapsed(!collapsed);
+      setCollapsed((prev) => !prev); // Use functional update
     }
   };
 
+  // Handler for Sheet's onOpenChange - syncs with mobileOpen state
+  const handleSheetOpenChange = (open: boolean) => {
+    setMobileOpen(open);
+  };
+
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    // Wrap the entire structure potentially needing Sheet context in the Sheet component
+    <Sheet open={isMobile && mobileOpen} onOpenChange={handleSheetOpenChange}>
+      <div className="flex min-h-screen w-full bg-background">
 
-      {/* -- Mobile Sidebar (Sheet) -- */}
-      {isMobile && (
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent side="left" className="p-0 w-64 glass border-r border-sidebar-border/50">
-            {/* Passa a função para fechar a sheet */}
-            <SidebarContent collapsed={false} onLinkClick={() => setMobileOpen(false)} />
-          </SheetContent>
-        </Sheet>
-      )}
+        {/* -- Mobile Only: Sheet Content (Portal'ed) -- */}
+        {/* This SheetContent is controlled by the Sheet above */}
+        <SheetContent side="left" className="p-0 w-64 glass border-r border-sidebar-border/50 data-[state=closed]:duration-0 data-[state=open]:duration-0 sm:data-[state=closed]:duration-0 sm:data-[state=open]:duration-0"> {/* Remove default animations if needed */}
+          {/* Ensure onLinkClick is passed ONLY when it's for mobile */}
+          <SidebarContent collapsed={false} onLinkClick={() => setMobileOpen(false)} />
+        </SheetContent>
 
-      {/* -- Desktop Sidebar -- */}
-      {!isMobile && (
-        <aside
+        {/* -- Desktop Sidebar (Rendered only on Desktop) -- */}
+        {!isMobile && (
+          <aside
+            className={cn(
+              "glass transition-[width] duration-300 ease-in-out border-r border-sidebar-border/50 fixed left-0 top-0 h-full z-20",
+              collapsed ? "w-16" : "w-64"
+            )}
+          >
+            {/* onLinkClick is not needed/passed here */}
+            <SidebarContent collapsed={collapsed} />
+          </aside>
+        )}
+
+        {/* -- Main Content Area -- */}
+        <div
           className={cn(
-            "glass transition-[width] duration-300 ease-in-out border-r border-sidebar-border/50 fixed left-0 top-0 h-full z-20",
-            collapsed ? "w-16" : "w-64"
+            "flex-1 transition-[margin-left] duration-300 ease-in-out",
+             // Apply margin only on desktop
+            !isMobile && (collapsed ? "ml-16" : "ml-64")
           )}
         >
-          {/* Não passa onLinkClick aqui */}
-          <SidebarContent collapsed={collapsed} />
-        </aside>
-      )}
-
-      {/* -- Main Content Area -- */}
-      <div
-        className={cn(
-          "flex-1 transition-[margin-left] duration-300 ease-in-out",
-          !isMobile && (collapsed ? "ml-16" : "ml-64")
-        )}
-      >
-        {/* Header */}
-        <header className="h-16 glass border-b border-border/30 sticky top-0 z-10 flex items-center px-4 md:px-6 backdrop-blur-sm">
-          {isMobile ? (
-            <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-foreground"
-                aria-label="Abrir menu"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-          ) : (
+          {/* Header */}
+          <header className="h-16 glass border-b border-border/30 sticky top-0 z-10 flex items-center px-4 md:px-6 backdrop-blur-sm">
+            {/* Button is always rendered, but wrapped by SheetTrigger conditionally */}
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleDesktopSidebar}
+              onClick={isMobile ? undefined : toggleDesktopSidebar} // Only toggle desktop state if not mobile
               className="text-muted-foreground hover:text-foreground"
-              aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
+              aria-label={isMobile ? "Abrir menu" : (collapsed ? "Expandir menu" : "Recolher menu")}
+              asChild={isMobile} // Make the Button the child of SheetTrigger on mobile
             >
-              <Menu className="h-5 w-5" />
+              {isMobile ? (
+                // On mobile, Button is wrapped by SheetTrigger
+                <SheetTrigger aria-label="Abrir menu">
+                   <Menu className="h-5 w-5" />
+                </SheetTrigger>
+              ) : (
+                // On desktop, Button is standalone
+                <Menu className="h-5 w-5" />
+              )}
             </Button>
-          )}
-          <div className="flex-1"></div>
-        </header>
+            <div className="flex-1"></div>
+          </header>
 
-        {/* Page Content */}
-        <main className="p-4 md:p-6 animate-fade-in">{children}</main>
+          {/* Page Content */}
+          <main className="p-4 md:p-6 animate-fade-in">{children}</main>
+        </div>
       </div>
-    </div>
+    </Sheet>
   );
 }
