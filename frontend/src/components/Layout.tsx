@@ -42,10 +42,10 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
         <ConditionalSheetClose shouldWrap={!!onLinkClick} asChild>
           <Link to="/" className="flex items-center gap-2" onClick={onLinkClick}>
             {collapsed ? (
-              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                <Calculator className="w-5 h-5 text-primary" />
-              </div>
+              // Mostrar "ES" quando colapsado
+              <span className="text-2xl font-bold text-primary">ES</span>
             ) : (
+              // Mostrar logo completo quando expandido
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
                   <Calculator className="w-5 h-5 text-primary" />
