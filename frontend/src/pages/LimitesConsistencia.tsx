@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Droplets, Info, Calculator as CalcIcon, Plus, Trash2, LineChart, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer } from "lucide-react";
+import { Droplets, Info, Calculator as CalcIcon, Plus, Trash2, LineChart, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, FileText } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -383,8 +383,13 @@ export default function LimitesConsistencia() {
                 <CalcIcon className="w-4 h-4 mr-1.5" />
                 {isCalculating ? "Calculando..." : "Calcular"}
               </Button>
-              <Button type="button" onClick={handleFillExampleData} variant="secondary" disabled={isCalculating} className="h-9"> Exemplo </Button>
-              <Button type="button" onClick={handleClear} variant="outline" disabled={isCalculating} className="h-9"> Limpar </Button>
+              <Button type="button" onClick={handleFillExampleData} variant="outline" disabled={isCalculating} className="h-9">
+                <FileText className="w-4 h-4 mr-2" />
+                Exemplo
+              </Button>
+              <Button type="button" onClick={handleClear} variant="outline" disabled={isCalculating} className="h-9">
+                Limpar
+              </Button>
             </CardFooter>
              {apiError && !isCalculating && ( <div className="px-4 pb-3"> <Alert variant="destructive" className="p-2"> <AlertCircle className="h-4 w-4" /> <AlertTitle className="text-sm">Erro</AlertTitle> <AlertDescription className="text-xs">{apiError}</AlertDescription> </Alert> </div> )}
            </form>

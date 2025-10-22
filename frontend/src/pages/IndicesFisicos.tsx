@@ -1,12 +1,19 @@
 // frontend/src/pages/IndicesFisicos.tsx
 import { useState, useMemo } from "react";
-import { Calculator, Info, BarChart3, ArrowLeft, ArrowRight, Save, FolderOpen, Download, Printer } from "lucide-react";
+import { Calculator, Info, BarChart3, ArrowLeft, ArrowRight, Save, FolderOpen, Download, Printer, FileText } from "lucide-react";
 import axios from 'axios';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Tooltip,
   TooltipContent,
@@ -41,6 +48,12 @@ import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import SavedCalculations from "@/components/SavedCalculations";
 import PrintHeader from "@/components/PrintHeader";
 import { exportToPDF, ExportData, formatNumberForExport } from "@/lib/export-utils";
+import SoilExamples from "@/components/soil/SoilExamples";
+import GsSuggestions from "@/components/soil/GsSuggestions";
+import ResultInterpretation from "@/components/soil/ResultInterpretation";
+import InputWithValidation from "@/components/soil/InputWithValidation";
+import { SoilExample } from "@/lib/soil-constants";
+import { Switch } from "@/components/ui/switch";
 
 // Interface local que reflete a API Output
 interface IndicesFisicosOutput {
@@ -118,6 +131,19 @@ export default function IndicesFisicos() {
   const [saveName, setSaveName] = useState("");
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
   const { calculations, saveCalculation, deleteCalculation, renameCalculation, getCalculation } = useSavedCalculations("indices-fisicos");
+
+  // Estados para modo comparação
+  const [compareMode, setCompareMode] = useState(false);
+  const [formDataB, setFormDataB] = useState<FormData>({
+    massaUmida: "",
+    massaSeca: "",
+    volume: "",
+    Gs: "",
+    pesoEspecificoAgua: "10.0",
+    indice_vazios_max: "",
+    indice_vazios_min: "",
+  });
+  const [resultsB, setResultsB] = useState<Results | null>(null);
 
   const handleChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -203,6 +229,24 @@ export default function IndicesFisicos() {
     });
     setResults(null);
     setError(null);
+  };
+
+  const handleLoadExample = (example: SoilExample) => {
+    setFormData(example.data);
+    setResults(null);
+    setError(null);
+    toast({
+      title: `${example.icon} ${example.name} carregado!`,
+      description: example.description,
+    });
+  };
+
+  const handleSelectGs = (gsValue: number) => {
+    setFormData(prev => ({ ...prev, Gs: gsValue.toString() }));
+    toast({
+      title: "Gs atualizado!",
+      description: `Densidade relativa dos grãos definida como ${gsValue}`,
+    });
   };
 
   // Funções de salvamento e carregamento
@@ -415,35 +459,75 @@ export default function IndicesFisicos() {
              {/* Aumentado gap e mb */}
              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mb-8"> {/* Aumentado gap-4 para gap-x-6 gap-y-5, mb-6 para mb-8 */}
               {/* Coluna 1 Inputs */}
-              <div className="space-y-5"> {/* Aumentado space-y-4 para space-y-5 */}
-                 <div className="space-y-2"> {/* Espaçamento interno do label/input mantido */}
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="massaUmida">Massa Úmida (g)</Label>
-                      <Tooltip><TooltipTrigger asChild><Info className="w-4 h-4 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent className="max-w-xs"><p>{tooltips.massaUmida}</p></TooltipContent></Tooltip>
-                    </div>
-                    <Input id="massaUmida" type="number" step="0.01" value={formData.massaUmida} onChange={(e) => handleChange("massaUmida", e.target.value)} className="bg-background/50" placeholder="Ex: 150.5" />
-                  </div>
-                 <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="massaSeca">Massa Seca (g)</Label>
-                      <Tooltip><TooltipTrigger asChild><Info className="w-4 h-4 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent className="max-w-xs"><p>{tooltips.massaSeca}</p></TooltipContent></Tooltip>
-                    </div>
-                    <Input id="massaSeca" type="number" step="0.01" value={formData.massaSeca} onChange={(e) => handleChange("massaSeca", e.target.value)} className="bg-background/50" placeholder="Ex: 130.2" />
-                  </div>
-                 <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="volume">Volume Total (cm³)</Label>
-                      <Tooltip><TooltipTrigger asChild><Info className="w-4 h-4 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent className="max-w-xs"><p>{tooltips.volume}</p></TooltipContent></Tooltip>
-                    </div>
-                    <Input id="volume" type="number" step="0.01" value={formData.volume} onChange={(e) => handleChange("volume", e.target.value)} className="bg-background/50" placeholder="Ex: 100.0" />
-                  </div>
+              <div className="space-y-5">
+                <InputWithValidation
+                  id="massaUmida"
+                  label="Massa Úmida (g)"
+                  value={formData.massaUmida}
+                  onChange={(value) => handleChange("massaUmida", value)}
+                  tooltip={tooltips.massaUmida}
+                  placeholder="Ex: 150.5"
+                  validationRules={[
+                    {
+                      validate: (v) => parseFloat(v) > 0,
+                      message: "Deve ser maior que 0",
+                    },
+                    {
+                      validate: (v) => {
+                        if (!formData.massaSeca) return true;
+                        return parseFloat(v) >= parseFloat(formData.massaSeca);
+                      },
+                      message: "Massa úmida deve ser ≥ massa seca",
+                    },
+                  ]}
+                />
+                
+                <InputWithValidation
+                  id="massaSeca"
+                  label="Massa Seca (g)"
+                  value={formData.massaSeca}
+                  onChange={(value) => handleChange("massaSeca", value)}
+                  tooltip={tooltips.massaSeca}
+                  placeholder="Ex: 130.2"
+                  validationRules={[
+                    {
+                      validate: (v) => parseFloat(v) > 0,
+                      message: "Deve ser maior que 0",
+                    },
+                    {
+                      validate: (v) => {
+                        if (!formData.massaUmida) return true;
+                        return parseFloat(v) <= parseFloat(formData.massaUmida);
+                      },
+                      message: "Massa seca deve ser ≤ massa úmida",
+                    },
+                  ]}
+                />
+                
+                <InputWithValidation
+                  id="volume"
+                  label="Volume Total (cm³)"
+                  value={formData.volume}
+                  onChange={(value) => handleChange("volume", value)}
+                  tooltip={tooltips.volume}
+                  placeholder="Ex: 100.0"
+                  validationRules={[
+                    {
+                      validate: (v) => parseFloat(v) > 0,
+                      message: "Deve ser maior que 0",
+                    },
+                  ]}
+                />
               </div>
               {/* Coluna 2 Inputs */}
               <div className="space-y-5"> {/* Aumentado space-y-4 para space-y-5 */}
                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="Gs">Densidade Relativa Grãos (Gs)</Label>
-                      <Tooltip><TooltipTrigger asChild><Info className="w-4 h-4 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent className="max-w-xs"><p>{tooltips.Gs} (Opcional se massas/volume fornecidos)</p></TooltipContent></Tooltip>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="Gs">Densidade Relativa Grãos (Gs)</Label>
+                        <Tooltip><TooltipTrigger asChild><Info className="w-4 h-4 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent className="max-w-xs"><p>{tooltips.Gs} (Opcional se massas/volume fornecidos)</p></TooltipContent></Tooltip>
+                      </div>
+                      <GsSuggestions onSelect={handleSelectGs} />
                     </div>
                     <Input id="Gs" type="number" step="0.01" value={formData.Gs} onChange={(e) => handleChange("Gs", e.target.value)} className="bg-background/50" placeholder="Ex: 2.65 (opcional)" />
                   </div>
@@ -463,20 +547,29 @@ export default function IndicesFisicos() {
                 </div>
               </div>
             </div>
-              {/* Input Isolado - Peso Específico Água */}
-              <div className="space-y-2 mb-8 md:col-span-2"> {/* Aumentado mb-6 para mb-8, space-y-1 para space-y-2 */}
+              {/* Select - Peso Específico Água */}
+              <div className="space-y-2 mb-8 md:col-span-2">
                  <div className="flex items-center gap-2">
                    <Label htmlFor="pesoEspecificoAgua">Peso Específico Água (kN/m³)</Label>
                    <Tooltip><TooltipTrigger asChild><Info className="w-4 h-4 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent className="max-w-xs"><p>{tooltips.pesoEspecificoAgua}</p></TooltipContent></Tooltip>
                  </div>
-                 <Input id="pesoEspecificoAgua" type="number" step="0.1" value={formData.pesoEspecificoAgua} onChange={(e) => handleChange("pesoEspecificoAgua", e.target.value)} className="bg-background/50" />
+                 <Select value={formData.pesoEspecificoAgua} onValueChange={(value) => handleChange("pesoEspecificoAgua", value)}>
+                   <SelectTrigger className="bg-background/50">
+                     <SelectValue placeholder="Selecione o peso específico" />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="9.81">9.81 kN/m³ (exato)</SelectItem>
+                     <SelectItem value="10.0">10.0 kN/m³ (aproximado)</SelectItem>
+                   </SelectContent>
+                 </Select>
               </div>
               {/* Actions */}
-              <div className="flex gap-3 md:col-span-2 mt-auto pt-4"> {/* Adicionado mt-auto pt-4 para empurrar para baixo */}
+              <div className="flex gap-3 md:col-span-2 mt-auto pt-4">
                 <Button onClick={handleCalculate} disabled={!isFormValid || isCalculating} className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground">
                   <Calculator className="w-4 h-4 mr-2" />
                   {isCalculating ? "Calculando..." : "Calcular"}
                 </Button>
+                <SoilExamples onSelect={handleLoadExample} disabled={isCalculating} />
                 <Button onClick={handleClear} variant="outline" disabled={isCalculating}>
                   Limpar
                 </Button>
@@ -565,6 +658,11 @@ export default function IndicesFisicos() {
              </div>
           </Card>
         </div>
+
+        {/* Card de Interpretação */}
+        {results && !results.erro && !isCalculating && (
+          <ResultInterpretation results={results} />
+        )}
 
         {/* Dialog para salvar cálculo */}
         <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
