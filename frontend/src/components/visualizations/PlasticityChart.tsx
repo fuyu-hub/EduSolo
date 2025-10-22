@@ -15,10 +15,12 @@ import {
   Customized
 } from 'recharts';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -355,6 +357,7 @@ const CustomizedPolygonDrawer = (props: any) => {
 
 const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
+  const [showZoneInfo, setShowZoneInfo] = useState<boolean>(false);
 
   if (ll === null || ip === null || isNaN(ll) || isNaN(ip)) {
     return (
@@ -399,80 +402,6 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
 
   return (
     <div className="space-y-4">
-      {/* Informações da classificação do solo */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Classificação do Solo
-            <Badge variant="outline" style={{ backgroundColor: zoneInfo[soilClassification as keyof typeof zoneInfo]?.color + '20' }}>
-              {soilClassification}
-            </Badge>
-          </CardTitle>
-          <CardDescription>
-            {zoneInfo[soilClassification as keyof typeof zoneInfo]?.name}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-3">
-            {zoneInfo[soilClassification as keyof typeof zoneInfo]?.description}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {zoneInfo[soilClassification as keyof typeof zoneInfo]?.properties.map((prop, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
-                {prop}
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Legenda das zonas */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Legenda das Zonas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {Object.entries(zoneInfo).map(([key, info]) => (
-              <Popover key={key}>
-                <PopoverTrigger asChild>
-                  <div 
-                    className="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
-                    style={{ borderLeftColor: info.color, borderLeftWidth: '4px' }}
-                  >
-                    <div 
-                      className="w-4 h-4 rounded" 
-                      style={{ backgroundColor: info.color }}
-                    />
-                    <div>
-                      <div className="font-medium">{key}</div>
-                      <div className="text-sm text-muted-foreground">{info.name}</div>
-                    </div>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent side="top" align="start" className="w-80">
-                  <div className="space-y-2">
-                    <div className="font-bold text-lg">{info.name}</div>
-                    <p className="text-sm text-muted-foreground">{info.description}</p>
-                    <div className="space-y-1">
-                      <div className="font-medium text-sm">Características:</div>
-                      <ul className="text-sm space-y-1">
-                        {info.properties.map((prop, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <span className="text-muted-foreground">•</span>
-                            <span>{prop}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Gráfico principal */}
       <div className="bg-card p-4 rounded-md border border-border/50 shadow-inner" style={{ width: '100%', height: 380 }}>
         <ResponsiveContainer>
@@ -515,6 +444,20 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
             {/* Linha B LL=50 */}
             <ReferenceLine x={50} stroke="#222" strokeWidth={2} />
 
+            {/* Legendas dos eixos */}
+            <ZoneLabel value="Índice de Plasticidade (IP %)" x={25} y={190} fill="#666" fontSize={12} fontWeight="500" />
+            <ZoneLabel value="Limite de Liquidez (LL %)" x={200} y={365} fill="#666" fontSize={12} fontWeight="500" />
+
+            {/* Textos das linhas de referência */}
+            <ZoneLabel value="Linha A" x={300} y={100} fill="#222" fontSize={12} fontWeight="600" />
+            <ZoneLabel value="IP = 0.73 × (LL - 20)" x={300} y={115} fill="#666" fontSize={10} fontWeight="400" />
+            
+            <ZoneLabel value="Linha U" x={220} y={180} fill="#222" fontSize={12} fontWeight="600" />
+            <ZoneLabel value="IP = 0.9 × (LL - 8)" x={220} y={195} fill="#666" fontSize={10} fontWeight="400" />
+            
+            <ZoneLabel value="Linha B" x={340} y={160} fill="#222" fontSize={12} fontWeight="600" />
+            <ZoneLabel value="LL = 50" x={340} y={175} fill="#666" fontSize={10} fontWeight="400" />
+
             {/* IP = 4 and 7 guide lines */}
             <ReferenceLine y={4} stroke="rgba(0,0,0,0.12)" strokeWidth={1} />
             <ReferenceLine y={7} stroke="rgba(0,0,0,0.12)" strokeWidth={1} />
@@ -528,18 +471,16 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
                     {...chartProps}
                     xDomain={xDomain}
                     yDomain={yDomain}
-                    onZoneClick={setSelectedZone}
+                    onZoneClick={(zone) => {
+                      setSelectedZone(zone);
+                      setShowZoneInfo(true);
+                    }}
                   />
                 )
               }
             />
 
-            {/* Zone labels - positions chosen to match the reference image */}
-            <ZoneLabel value="CL" x={130} y={110} fill="#073b26" fontSize={22} />
-            <ZoneLabel value="CH" x={330} y={70} fill="#3e3e00" fontSize={22} />
-            <ZoneLabel value="ML ou OL" x={190} y={260} fill="#4b0b1b" fontSize={16} />
-            <ZoneLabel value="MH ou OH" x={330} y={220} fill="#0b3a4b" fontSize={18} />
-            <ZoneLabel value="CL - ML" x={70} y={295} fill="#fff" fontSize={11} />
+            {/* Zone labels will be shown only when clicking on zones */}
 
             {/* plotted soil point */}
             <ZAxis type="number" dataKey="z" range={[150, 150]} />
@@ -549,37 +490,71 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
         </ResponsiveContainer>
       </div>
 
-      {/* Informações sobre as linhas de referência */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Linhas de Referência</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-0.5 bg-black"></div>
-              <div>
-                <div className="font-medium">Linha A</div>
-                <div className="text-sm text-muted-foreground">IP = 0.73 × (LL - 20)</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-0.5 bg-black" style={{ borderTop: '2px dashed #222' }}></div>
-              <div>
-                <div className="font-medium">Linha U</div>
-                <div className="text-sm text-muted-foreground">IP = 0.9 × (LL - 8)</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-0.5 bg-black"></div>
-              <div>
-                <div className="font-medium">Linha B</div>
-                <div className="text-sm text-muted-foreground">LL = 50 (linha vertical)</div>
+      {/* Modal da zona selecionada */}
+      <Dialog open={showZoneInfo} onOpenChange={setShowZoneInfo}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div 
+                className="w-6 h-6 rounded" 
+                style={{ backgroundColor: zoneInfo[selectedZone as keyof typeof zoneInfo]?.color }}
+              />
+              <span>Zona {selectedZone}</span>
+              <Badge variant="outline" style={{ backgroundColor: zoneInfo[selectedZone as keyof typeof zoneInfo]?.color + '20' }}>
+                {zoneInfo[selectedZone as keyof typeof zoneInfo]?.name}
+              </Badge>
+            </DialogTitle>
+            <DialogDescription className="text-base">
+              {zoneInfo[selectedZone as keyof typeof zoneInfo]?.description}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <div className="font-medium text-sm text-foreground">Características principais:</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {zoneInfo[selectedZone as keyof typeof zoneInfo]?.properties.map((prop, index) => (
+                  <div key={index} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
+                    <div 
+                      className="w-2 h-2 rounded-full" 
+                      style={{ backgroundColor: zoneInfo[selectedZone as keyof typeof zoneInfo]?.color }}
+                    />
+                    <span className="text-sm">{prop}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Informações da classificação do solo */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            Classificação do Solo
+            <Badge variant="outline" style={{ backgroundColor: zoneInfo[soilClassification as keyof typeof zoneInfo]?.color + '20' }}>
+              {soilClassification}
+            </Badge>
+          </CardTitle>
+          <CardDescription>
+            {zoneInfo[soilClassification as keyof typeof zoneInfo]?.name}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-3">
+            {zoneInfo[soilClassification as keyof typeof zoneInfo]?.description}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {zoneInfo[soilClassification as keyof typeof zoneInfo]?.properties.map((prop, index) => (
+              <Badge key={index} variant="secondary" className="text-xs">
+                {prop}
+              </Badge>
+            ))}
+          </div>
         </CardContent>
       </Card>
+
+
     </div>
   );
 };
