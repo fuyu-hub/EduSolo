@@ -35,16 +35,16 @@ const pontoLLSchema = z.object({
 }).refine(data => {
     const mu = parseFloat(data.massaUmidaRecipiente);
     const ms = parseFloat(data.massaSecaRecipiente);
-    return isNaN(mu) || isNaN(ms) || mu > ms;
+    return isNaN(mu) || isNaN(ms) || mu >= ms; // Ajustado para permitir igualdade (caso raro, mas possível)
 }, {
-  message: "M. úmida > M. seca",
+  message: "M. úmida >= M. seca",
   path: ["massaUmidaRecipiente"],
 }).refine(data => {
     const msr = parseFloat(data.massaSecaRecipiente);
     const mr = parseFloat(data.massaRecipiente);
-    return isNaN(msr) || isNaN(mr) || msr > mr;
+    return isNaN(msr) || isNaN(mr) || msr >= mr; // Ajustado para permitir igualdade
 }, {
-  message: "M. seca+rec > M. rec",
+  message: "M. seca+rec >= M. rec",
   path: ["massaSecaRecipiente"],
 });
 
@@ -62,16 +62,16 @@ const formSchema = z.object({
 }).refine(data => {
     const mu = parseFloat(data.massaUmidaRecipienteLP);
     const ms = parseFloat(data.massaSecaRecipienteLP);
-    return isNaN(mu) || isNaN(ms) || mu > ms;
+    return isNaN(mu) || isNaN(ms) || mu >= ms; // Ajustado
 },{
-  message: "LP: M. úmida > M. seca",
+  message: "LP: M. úmida >= M. seca",
   path: ["massaUmidaRecipienteLP"],
 }).refine(data => {
      const msr = parseFloat(data.massaSecaRecipienteLP);
      const mr = parseFloat(data.massaRecipienteLP);
-     return isNaN(msr) || isNaN(mr) || msr > mr;
+     return isNaN(msr) || isNaN(mr) || msr >= mr; // Ajustado
 },{
-  message: "LP: M. seca+rec > M. rec",
+  message: "LP: M. seca+rec >= M. rec",
   path: ["massaSecaRecipienteLP"],
 });
 
@@ -96,7 +96,7 @@ type ApiInputData = {
 
 
 // --- Interfaces (mantidas) ---
-interface LimitesConsistenciaOutput { /* ... (inalterado) ... */
+interface LimitesConsistenciaOutput {
   ll: number | null;
   lp: number | null;
   ip: number | null;
@@ -110,7 +110,7 @@ interface LimitesConsistenciaOutput { /* ... (inalterado) ... */
 type Results = LimitesConsistenciaOutput;
 
 // --- Tooltips (mantidos) ---
-const tooltips = { /* ... (inalterado) ... */
+const tooltips = {
  // LL
   numGolpes: "Número de golpes necessários para fechar a ranhura no ensaio LL (NBR 6459)",
   massaUmidaRecipienteLL: "Massa do recipiente (tara) + solo úmido (g) - Ensaio LL",
@@ -145,6 +145,24 @@ interface ResultItemProps {
     precision?: number;
 }
 
+// --- Dados de Exemplo ---
+const exampleLLData = [
+  { numGolpes: "33", massaUmidaRecipiente: "42.10", massaSecaRecipiente: "36.50", massaRecipiente: "16.10" },
+  { numGolpes: "28", massaUmidaRecipiente: "44.80", massaSecaRecipiente: "38.20", massaRecipiente: "15.70" },
+  { numGolpes: "25", massaUmidaRecipiente: "45.50", massaSecaRecipiente: "38.00", massaRecipiente: "15.00" },
+  { numGolpes: "20", massaUmidaRecipiente: "48.10", massaSecaRecipiente: "40.00", massaRecipiente: "16.40" },
+  { numGolpes: "16", massaUmidaRecipiente: "50.20", massaSecaRecipiente: "41.10", massaRecipiente: "15.20" },
+];
+const exampleLPData = {
+  massaUmidaRecipienteLP: "32.80",
+  massaSecaRecipienteLP: "29.50",
+  massaRecipienteLP: "14.20",
+};
+const exampleOptionalData = {
+    umidadeNatural: "25.0",
+    percentualArgila: "30.0"
+};
+
 
 export default function LimitesConsistencia() {
   const { toast } = useToast();
@@ -169,7 +187,7 @@ export default function LimitesConsistencia() {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "pontosLL",
-    keyName: "fieldId"
+    keyName: "fieldId" // Garante que temos um ID estável para cada campo no array
   });
 
   const [results, setResults] = useState<Results | null>(null);
@@ -180,34 +198,35 @@ export default function LimitesConsistencia() {
         if (fields.length > 0) {
             setCurrentPointIndex(prev => Math.min(prev, fields.length - 1));
         } else {
+             // Se remover todos os campos, volta ao índice 0 (mas o array terá pelo menos 2)
              setCurrentPointIndex(0);
         }
-   }, [fields, currentPointIndex]);
+   }, [fields.length]); // Observa apenas o tamanho do array
 
 
   const addPontoLL = () => {
     append({ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" });
-    setCurrentPointIndex(fields.length);
+    setCurrentPointIndex(fields.length); // Vai para o novo ponto adicionado (índice é o tamanho anterior)
   };
 
    const removePontoLL = () => {
      if (fields.length > 2) {
        const indexToRemove = currentPointIndex;
        remove(indexToRemove);
-       // O useEffect ajustará o índice se necessário
+       // O useEffect acima cuidará do ajuste do índice se necessário
      } else {
         toast({ title: "Atenção", description: "São necessários pelo menos 2 pontos para o cálculo do LL.", variant: "default" });
     }
   };
 
-  const goToNextPoint = () => { /* ... (igual) ... */
+  const goToNextPoint = () => {
       setCurrentPointIndex(prev => Math.min(prev + 1, fields.length - 1));
   }
-  const goToPreviousPoint = () => { /* ... (igual) ... */
+  const goToPreviousPoint = () => {
        setCurrentPointIndex(prev => Math.max(prev - 1, 0));
   }
 
-  const handleClear = () => { /* ... (igual) ... */
+  const handleClear = () => {
       form.reset({
         pontosLL: [
             { id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
@@ -222,6 +241,38 @@ export default function LimitesConsistencia() {
     setCurrentPointIndex(0);
     setResults(null);
     setApiError(null);
+  };
+
+  const handleFillExampleData = () => {
+    // Garante que temos 5 campos antes de preencher
+    const currentLength = fields.length;
+    if (currentLength < 5) {
+      for (let i = 0; i < 5 - currentLength; i++) {
+        // Usa shouldFocus: false para não mover o foco ao adicionar
+        append({ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }, { shouldFocus: false });
+      }
+    } else if (currentLength > 5) {
+       // Remove excesso se houver mais de 5
+       for (let i = currentLength - 1; i >= 5; i--) {
+           remove(i);
+       }
+    }
+
+     // Use setTimeout para garantir que os campos extras foram adicionados/removidos antes do reset
+     setTimeout(() => {
+        form.reset({
+            pontosLL: exampleLLData.map(p => ({ ...p, id: crypto.randomUUID() })), // Gera novos IDs
+            massaUmidaRecipienteLP: exampleLPData.massaUmidaRecipienteLP,
+            massaSecaRecipienteLP: exampleLPData.massaSecaRecipienteLP,
+            massaRecipienteLP: exampleLPData.massaRecipienteLP,
+            umidadeNatural: exampleOptionalData.umidadeNatural,
+            percentualArgila: exampleOptionalData.percentualArgila,
+        });
+        setCurrentPointIndex(0); // Volta para o primeiro ponto
+        setResults(null); // Limpa resultados anteriores
+        setApiError(null);
+        toast({ title: "Dados de Exemplo Carregados", description: "O formulário foi preenchido com os dados de teste." });
+     }, 0); // Timeout 0 para executar após a renderização atual
   };
 
   // onSubmit agora recebe FormInputValues, mas faz a conversão ANTES de enviar
@@ -277,7 +328,8 @@ export default function LimitesConsistencia() {
       let errorMessage = "Erro de comunicação com o servidor.";
        if (axios.isAxiosError(err) && err.response?.data?.detail) {
         if (Array.isArray(err.response.data.detail)) {
-          errorMessage = err.response.data.detail.map((d: any) => `Campo '${d.loc.join('.')}' - ${d.msg}`).join("; ");
+          // Extrai mensagens de erro de validação do FastAPI
+          errorMessage = err.response.data.detail.map((d: any) => `Campo '${d.loc.slice(1).join('.') || 'Geral'}': ${d.msg}`).join("; ");
         } else if (typeof err.response.data.detail === 'string') {
           errorMessage = err.response.data.detail;
         }
@@ -341,12 +393,12 @@ export default function LimitesConsistencia() {
                             <div className="space-y-3">
                                 <div className="space-y-1">
                                     <Label htmlFor={`pontosLL.${currentPointIndex}.numGolpes`} className={cn("flex items-center gap-1.5 text-xs", errors.pontosLL?.[currentPointIndex]?.numGolpes && "text-destructive")}> Nº Golpes <Tooltip><TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.numGolpes}</TooltipContent></Tooltip> </Label>
-                                    <Controller name={`pontosLL.${currentPointIndex}.numGolpes`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.numGolpes`} type="number" placeholder="Ex: 25" {...field} className={cn(errors.pontosLL?.[currentPointIndex]?.numGolpes && "border-destructive")}/> )} />
+                                    <Controller name={`pontosLL.${currentPointIndex}.numGolpes`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.numGolpes`} type="number" placeholder="Ex: 25" {...field} className={cn("bg-background/50", errors.pontosLL?.[currentPointIndex]?.numGolpes && "border-destructive")}/> )} />
                                     {errors.pontosLL?.[currentPointIndex]?.numGolpes && <p className="text-xs text-destructive mt-1">{errors.pontosLL[currentPointIndex]?.numGolpes?.message}</p>}
                                 </div>
                                 <div className="space-y-1">
                                      <Label htmlFor={`pontosLL.${currentPointIndex}.massaUmidaRecipiente`} className={cn("flex items-center gap-1.5 text-xs", errors.pontosLL?.[currentPointIndex]?.massaUmidaRecipiente && "text-destructive")}> M. Úmida + Recip. (g) <Tooltip><TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.massaUmidaRecipienteLL}</TooltipContent></Tooltip> </Label>
-                                    <Controller name={`pontosLL.${currentPointIndex}.massaUmidaRecipiente`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.massaUmidaRecipiente`} type="number" step="0.01" placeholder="Ex: 45.50" {...field} className={cn(errors.pontosLL?.[currentPointIndex]?.massaUmidaRecipiente && "border-destructive")}/> )} />
+                                    <Controller name={`pontosLL.${currentPointIndex}.massaUmidaRecipiente`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.massaUmidaRecipiente`} type="number" step="0.01" placeholder="Ex: 45.50" {...field} className={cn("bg-background/50", errors.pontosLL?.[currentPointIndex]?.massaUmidaRecipiente && "border-destructive")}/> )} />
                                     {errors.pontosLL?.[currentPointIndex]?.massaUmidaRecipiente && <p className="text-xs text-destructive mt-1">{errors.pontosLL[currentPointIndex]?.massaUmidaRecipiente?.message}</p>}
                                 </div>
                             </div>
@@ -354,12 +406,12 @@ export default function LimitesConsistencia() {
                              <div className="space-y-3">
                                 <div className="space-y-1">
                                     <Label htmlFor={`pontosLL.${currentPointIndex}.massaSecaRecipiente`} className={cn("flex items-center gap-1.5 text-xs", errors.pontosLL?.[currentPointIndex]?.massaSecaRecipiente && "text-destructive")}> M. Seca + Recip. (g) <Tooltip><TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.massaSecaRecipienteLL}</TooltipContent></Tooltip> </Label>
-                                    <Controller name={`pontosLL.${currentPointIndex}.massaSecaRecipiente`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.massaSecaRecipiente`} type="number" step="0.01" placeholder="Ex: 38.00" {...field} className={cn(errors.pontosLL?.[currentPointIndex]?.massaSecaRecipiente && "border-destructive")}/> )} />
+                                    <Controller name={`pontosLL.${currentPointIndex}.massaSecaRecipiente`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.massaSecaRecipiente`} type="number" step="0.01" placeholder="Ex: 38.00" {...field} className={cn("bg-background/50", errors.pontosLL?.[currentPointIndex]?.massaSecaRecipiente && "border-destructive")}/> )} />
                                     {errors.pontosLL?.[currentPointIndex]?.massaSecaRecipiente && <p className="text-xs text-destructive mt-1">{errors.pontosLL[currentPointIndex]?.massaSecaRecipiente?.message}</p>}
                                 </div>
                                 <div className="space-y-1">
                                     <Label htmlFor={`pontosLL.${currentPointIndex}.massaRecipiente`} className={cn("flex items-center gap-1.5 text-xs", errors.pontosLL?.[currentPointIndex]?.massaRecipiente && "text-destructive")}> M. Recipiente (g) <Tooltip><TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.massaRecipienteLL}</TooltipContent></Tooltip> </Label>
-                                    <Controller name={`pontosLL.${currentPointIndex}.massaRecipiente`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.massaRecipiente`} type="number" step="0.01" placeholder="Ex: 15.00" {...field} className={cn(errors.pontosLL?.[currentPointIndex]?.massaRecipiente && "border-destructive")}/> )} />
+                                    <Controller name={`pontosLL.${currentPointIndex}.massaRecipiente`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.massaRecipiente`} type="number" step="0.01" placeholder="Ex: 15.00" {...field} className={cn("bg-background/50", errors.pontosLL?.[currentPointIndex]?.massaRecipiente && "border-destructive")}/> )} />
                                     {errors.pontosLL?.[currentPointIndex]?.massaRecipiente && <p className="text-xs text-destructive mt-1">{errors.pontosLL[currentPointIndex]?.massaRecipiente?.message}</p>}
                                 </div>
                              </div>
@@ -378,17 +430,17 @@ export default function LimitesConsistencia() {
                     <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-1">
                             <Label htmlFor="massaUmidaRecipienteLP" className={cn("flex items-center gap-1.5 text-xs", errors.massaUmidaRecipienteLP && "text-destructive")}> M. Úmida + Recip. (g) <Tooltip><TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.massaUmidaRecipienteLP}</TooltipContent></Tooltip> </Label>
-                            <Controller name="massaUmidaRecipienteLP" control={form.control} render={({ field }) => <Input id="massaUmidaRecipienteLP" type="number" step="0.01" placeholder="Ex: 32.80" {...field} className={cn(errors.massaUmidaRecipienteLP && "border-destructive")} />} />
+                            <Controller name="massaUmidaRecipienteLP" control={form.control} render={({ field }) => <Input id="massaUmidaRecipienteLP" type="number" step="0.01" placeholder="Ex: 32.80" {...field} className={cn("bg-background/50", errors.massaUmidaRecipienteLP && "border-destructive")} />} />
                             {errors.massaUmidaRecipienteLP && <p className="text-xs text-destructive mt-1">{errors.massaUmidaRecipienteLP.message}</p>}
                         </div>
                          <div className="space-y-1">
                             <Label htmlFor="massaSecaRecipienteLP" className={cn("flex items-center gap-1.5 text-xs", errors.massaSecaRecipienteLP && "text-destructive")}> M. Seca + Recip. (g) <Tooltip><TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.massaSecaRecipienteLP}</TooltipContent></Tooltip> </Label>
-                            <Controller name="massaSecaRecipienteLP" control={form.control} render={({ field }) => <Input id="massaSecaRecipienteLP" type="number" step="0.01" placeholder="Ex: 29.50" {...field} className={cn(errors.massaSecaRecipienteLP && "border-destructive")} />} />
+                            <Controller name="massaSecaRecipienteLP" control={form.control} render={({ field }) => <Input id="massaSecaRecipienteLP" type="number" step="0.01" placeholder="Ex: 29.50" {...field} className={cn("bg-background/50", errors.massaSecaRecipienteLP && "border-destructive")} />} />
                             {errors.massaSecaRecipienteLP && <p className="text-xs text-destructive mt-1">{errors.massaSecaRecipienteLP.message}</p>}
                         </div>
                         <div className="space-y-1">
                             <Label htmlFor="massaRecipienteLP" className={cn("flex items-center gap-1.5 text-xs", errors.massaRecipienteLP && "text-destructive")}> M. Recipiente (g) <Tooltip><TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.massaRecipienteLP}</TooltipContent></Tooltip> </Label>
-                            <Controller name="massaRecipienteLP" control={form.control} render={({ field }) => <Input id="massaRecipienteLP" type="number" step="0.01" placeholder="Ex: 14.20" {...field} className={cn(errors.massaRecipienteLP && "border-destructive")} />} />
+                            <Controller name="massaRecipienteLP" control={form.control} render={({ field }) => <Input id="massaRecipienteLP" type="number" step="0.01" placeholder="Ex: 14.20" {...field} className={cn("bg-background/50", errors.massaRecipienteLP && "border-destructive")} />} />
                             {errors.massaRecipienteLP && <p className="text-xs text-destructive mt-1">{errors.massaRecipienteLP.message}</p>}
                         </div>
                     </div>
@@ -406,12 +458,12 @@ export default function LimitesConsistencia() {
                         <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1">
                             <Label htmlFor="umidadeNatural" className={cn("flex items-center gap-1.5 text-xs", errors.umidadeNatural && "text-destructive")}> Umidade Natural (%) <Tooltip><TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.umidadeNatural}</TooltipContent></Tooltip> </Label>
-                             <Controller name="umidadeNatural" control={form.control} render={({ field }) => <Input id="umidadeNatural" type="number" step="0.1" placeholder="Ex: 28.5" {...field} value={field.value ?? ""} className={cn(errors.umidadeNatural && "border-destructive")} />} />
+                             <Controller name="umidadeNatural" control={form.control} render={({ field }) => <Input id="umidadeNatural" type="number" step="0.1" placeholder="Ex: 28.5" {...field} value={field.value ?? ""} className={cn("bg-background/50", errors.umidadeNatural && "border-destructive")} />} />
                             {errors.umidadeNatural && <p className="text-xs text-destructive mt-1">{errors.umidadeNatural.message}</p>}
                         </div>
                         <div className="space-y-1">
                             <Label htmlFor="percentualArgila" className={cn("flex items-center gap-1.5 text-xs", errors.percentualArgila && "text-destructive")}> % Argila (&lt;0.002mm) <Tooltip><TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.percentualArgila}</TooltipContent></Tooltip> </Label>
-                            <Controller name="percentualArgila" control={form.control} render={({ field }) => <Input id="percentualArgila" type="number" step="0.1" placeholder="Ex: 35.0" {...field} value={field.value ?? ""} className={cn(errors.percentualArgila && "border-destructive")} />} />
+                            <Controller name="percentualArgila" control={form.control} render={({ field }) => <Input id="percentualArgila" type="number" step="0.1" placeholder="Ex: 35.0" {...field} value={field.value ?? ""} className={cn("bg-background/50", errors.percentualArgila && "border-destructive")} />} />
                             {errors.percentualArgila && <p className="text-xs text-destructive mt-1">{errors.percentualArgila.message}</p>}
                         </div>
                         </div>
@@ -420,12 +472,19 @@ export default function LimitesConsistencia() {
                 </Accordion>
               </TooltipProvider>
             </CardContent>
+            {/* --- CardFooter com Botão Exemplo --- */}
             <CardFooter className="flex gap-3 pt-4 border-t border-border/50">
               <Button type="submit" disabled={isCalculating || !form.formState.isValid} className="flex-1">
                 <CalcIcon className="w-4 h-4 mr-2" />
                 {isCalculating ? "Calculando..." : "Calcular"}
               </Button>
-              <Button type="button" onClick={handleClear} variant="outline" disabled={isCalculating}> Limpar </Button>
+              {/* --- Botão Exemplo Adicionado --- */}
+              <Button type="button" onClick={handleFillExampleData} variant="secondary" disabled={isCalculating}>
+                Exemplo
+              </Button>
+              <Button type="button" onClick={handleClear} variant="outline" disabled={isCalculating}>
+                Limpar
+              </Button>
             </CardFooter>
              {/* Exibe erro geral da API */}
              {apiError && !isCalculating && ( <div className="px-6 pb-4"> <Alert variant="destructive"> <AlertCircle className="h-4 w-4" /> <AlertTitle>Erro no Cálculo</AlertTitle> <AlertDescription>{apiError}</AlertDescription> </Alert> </div> )}
@@ -487,7 +546,17 @@ export default function LimitesConsistencia() {
                     <div className="pt-4 border-t border-border/50">
                        <h3 className="font-semibold text-sm text-foreground mb-3 flex items-center gap-2">
                          <LineChart className="w-4 h-4 text-primary" /> Carta de Plasticidade
-                         <TooltipProvider> <Tooltip> <TooltipTrigger asChild> <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-primary rounded-full p-0"> <Info className="w-3.5 h-3.5" /> </Button> </TooltipTrigger> <TooltipContent>{tooltips.CartaPlasticidade}</TooltipContent> </Tooltip> </TooltipProvider>
+                         <TooltipProvider>
+                            <Tooltip>
+                               {/* CORRIGIDO: Removido asChild */}
+                               <TooltipTrigger>
+                                  <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-primary rounded-full p-0">
+                                     <Info className="w-3.5 h-3.5" />
+                                  </Button>
+                               </TooltipTrigger>
+                               <TooltipContent>{tooltips.CartaPlasticidade}</TooltipContent>
+                            </Tooltip>
+                         </TooltipProvider>
                        </h3>
                        <PlasticityChart ll={results.ll} ip={results.ip} />
                     </div>
@@ -507,8 +576,34 @@ export default function LimitesConsistencia() {
   );
 }
 
-// --- Componentes Auxiliares (ResultItemGroup, MissingInfoItem, ClassificationBadge, ResultItem - inalterados) ---
+// --- Componentes Auxiliares (ResultItemGroup, MissingInfoItem, ClassificationBadge, ResultItem) ---
 const ResultItemGroup: React.FC<{ title?: string, children: React.ReactNode }> = ({ title, children }) => ( <div className="space-y-1"> {title && <h4 className="text-xs font-medium text-muted-foreground mb-2 pt-2 border-t border-border/30">{title}</h4>} <div className="space-y-2">{children}</div> </div> );
-function ResultItem({ label, value, unit, tooltip, highlight = false, precision = 2 }: ResultItemProps) { const displayValue = typeof value === 'number' && !isNaN(value) ? value.toFixed(precision) : (value || "-"); return ( <div className={cn( "flex justify-between items-center p-3 rounded-lg min-h-[56px]", highlight ? "bg-primary/10 border border-primary/20" : "bg-background/50 border border-border/50" )}> <TooltipProvider> <span className="text-sm font-medium text-muted-foreground flex items-center gap-1.5"> {label} {tooltip && ( <Tooltip> <TooltipTrigger asChild> <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-primary rounded-full p-0"> <Info className="w-3.5 h-3.5" /> </Button> </TooltipTrigger> <TooltipContent>{tooltip}</TooltipContent> </Tooltip> )} </span> </TooltipProvider> <span className={cn("font-semibold text-right pl-2", highlight ? "text-primary text-lg" : "text-foreground text-base")}> {displayValue} {unit} </span> </div> ); }
+
+function ResultItem({ label, value, unit, tooltip, highlight = false, precision = 2 }: ResultItemProps) {
+  const displayValue = typeof value === 'number' && !isNaN(value) ? value.toFixed(precision) : (value || "-");
+  return (
+    <div className={cn( "flex justify-between items-center p-3 rounded-lg min-h-[56px]", highlight ? "bg-primary/10 border border-primary/20" : "bg-background/50 border border-border/50" )}>
+      <TooltipProvider>
+        <span className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+          {label}
+          {tooltip && (
+            <Tooltip>
+               {/* CORRIGIDO: Removido asChild */}
+               <TooltipTrigger>
+                 <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-primary rounded-full p-0">
+                   <Info className="w-3.5 h-3.5" />
+                 </Button>
+               </TooltipTrigger>
+              <TooltipContent>{tooltip}</TooltipContent>
+            </Tooltip>
+          )}
+        </span>
+      </TooltipProvider>
+      <span className={cn("font-semibold text-right pl-2", highlight ? "text-primary text-lg" : "text-foreground text-base")}>
+        {displayValue} {unit}
+      </span>
+    </div>
+  );
+}
 const MissingInfoItem = ({ label, reason }: { label: string, reason: string }) => ( <div className="flex justify-between items-center p-3 rounded-lg bg-muted/30 border border-border/30 border-dashed min-h-[56px]"> <span className="text-sm font-medium text-muted-foreground">{label}</span> <span className="text-xs text-muted-foreground italic text-right pl-2">{reason}</span> </div> );
 const ClassificationBadge = ({ label, value }: { label: string; value: string }) => { let badgeVariant: "default" | "secondary" | "destructive" = "default"; if (value.includes("Não") || value.includes("Inativa")) { badgeVariant = "secondary"; } return ( <div className="flex flex-col items-start gap-1"> <span className="text-xs text-muted-foreground">{label}</span> <Badge variant={badgeVariant} className="text-sm px-3 py-1">{value}</Badge> </div> ); };
