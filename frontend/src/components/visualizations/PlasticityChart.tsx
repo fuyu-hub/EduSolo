@@ -9,18 +9,9 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
   Label as RechartsLabel,
-  ReferenceLine,
   ZAxis,
-  Text,
   Customized
 } from 'recharts';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -62,37 +53,6 @@ const zoneInfo = {
     properties: ["Características mistas", "Comportamento variável", "Análise detalhada necessária"]
   }
 };
-
-/**
- * Pequeno componente para rótulos (Text do Recharts)
- */
-const ZoneLabel = ({
-  x,
-  y,
-  value,
-  fontSize = 14,
-  fontWeight = '700',
-  fill = '#111'
-}: {
-  x: number;
-  y: number;
-  value: string;
-  fontSize?: number;
-  fontWeight?: string | number;
-  fill?: string;
-}) => (
-  <Text
-    x={x}
-    y={y}
-    fill={fill}
-    fontSize={fontSize}
-    fontWeight={fontWeight}
-    textAnchor="middle"
-    dominantBaseline="central"
-  >
-    {value}
-  </Text>
-);
 
 /**
  * CustomizedPolygonDrawer:
@@ -163,7 +123,11 @@ const CustomizedPolygonDrawer = (props: any) => {
   // close polygon back to top-left at xMin
   leftCL.push({ x: xScale(xMin), y: yScale(yMax) });
 
-  // polygon for left-bottom (ML/OL) - area under LineA and left of LL=50
+  // Calculate LL values where IP=4 and IP=7 intersect Line A
+  const ll_ip4_onA = (4 / 0.73) + 20;
+  const ll_ip7_onA = (7 / 0.73) + 20;
+
+  // polygon for left-bottom (ML/OL) - area under LineA and left of LL=50, including area under CL-ML
   const leftML: { x: number; y: number }[] = [];
   // start at LL=0, IP=0
   leftML.push({ x: xScale(xMin), y: yScale(yMin) });
@@ -172,19 +136,19 @@ const CustomizedPolygonDrawer = (props: any) => {
   // go up along vertical at LL=50 to ip at lineA
   const ipA_50 = ipA(50);
   leftML.push({ x: xScale(Math.min(50, xMax)), y: yScale(Math.min(ipA_50, yMax)) });
-  // go back along LineA from LL=50 to xMin
-  const aPointsUpTo50 = aPoints.filter(p => p[0] <= 50).reverse();
-  // Append the line A points (from LL=50 back to LL=min)
-  aPointsUpTo50.forEach(([llv, ipv]) => {
+  // go back along LineA from LL=50 to ll_ip7_onA (top of CL-ML band)
+  const aPointsTo_ip7 = aPoints.filter(p => p[0] >= ll_ip7_onA && p[0] <= 50).reverse();
+  aPointsTo_ip7.forEach(([llv, ipv]) => {
     leftML.push({ x: xScale(llv), y: yScale(Math.min(ipv, yMax)) });
   });
+  // go along IP=7 line to left edge
+  leftML.push({ x: xScale(ll_ip7_onA), y: yScale(7) });
+  leftML.push({ x: xScale(xMin), y: yScale(7) });
   // finally close at bottom-left
   leftML.push({ x: xScale(xMin), y: yScale(yMin) });
 
   // small CL-ML band between IP=4 and IP=7 under A (left side)
   // Build polygon that follows IP=7 line to intersection with A, then along A down to intersection with IP=4, then back along IP=4 to left edge.
-  const ll_ip4_onA = (4 / 0.73) + 20;
-  const ll_ip7_onA = (7 / 0.73) + 20;
   const clmlPoly: { x: number; y: number }[] = [];
   // leftmost edge at IP=7
   clmlPoly.push({ x: xScale(xMin), y: yScale(7) });
@@ -261,6 +225,7 @@ const CustomizedPolygonDrawer = (props: any) => {
 
   return (
     <g>
+      {/* Layer 1: Base areas */}
       {/* Left CL (green) */}
       <path 
         d={polyToPath(leftCL)} 
@@ -269,42 +234,6 @@ const CustomizedPolygonDrawer = (props: any) => {
         stroke="none" 
         style={{ cursor: 'pointer' }}
         onClick={() => onZoneClick && onZoneClick('CL')}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.fillOpacity = '0.8';
-          e.currentTarget.style.stroke = '#333';
-          e.currentTarget.style.strokeWidth = '2';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.fillOpacity = '0.95';
-          e.currentTarget.style.stroke = 'none';
-        }}
-      />
-      {/* CL-ML stripe (brown thin) */}
-      <path 
-        d={polyToPath(clmlPoly)} 
-        fill={colors.cl_ml} 
-        fillOpacity={0.95} 
-        stroke="none" 
-        style={{ cursor: 'pointer' }}
-        onClick={() => onZoneClick && onZoneClick('CL-ML')}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.fillOpacity = '0.8';
-          e.currentTarget.style.stroke = '#333';
-          e.currentTarget.style.strokeWidth = '2';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.fillOpacity = '0.95';
-          e.currentTarget.style.stroke = 'none';
-        }}
-      />
-      {/* Left ML/OL (pink) */}
-      <path 
-        d={polyToPath(leftML)} 
-        fill={colors.ml_ol} 
-        fillOpacity={0.95} 
-        stroke="none" 
-        style={{ cursor: 'pointer' }}
-        onClick={() => onZoneClick && onZoneClick('ML')}
         onMouseEnter={(e) => {
           e.currentTarget.style.fillOpacity = '0.8';
           e.currentTarget.style.stroke = '#333';
@@ -351,6 +280,198 @@ const CustomizedPolygonDrawer = (props: any) => {
           e.currentTarget.style.stroke = 'none';
         }}
       />
+      {/* Left ML/OL (pink) */}
+      <path 
+        d={polyToPath(leftML)} 
+        fill={colors.ml_ol} 
+        fillOpacity={0.95} 
+        stroke="none" 
+        style={{ cursor: 'pointer' }}
+        onClick={() => onZoneClick && onZoneClick('ML')}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.fillOpacity = '0.8';
+          e.currentTarget.style.stroke = '#333';
+          e.currentTarget.style.strokeWidth = '2';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.fillOpacity = '0.95';
+          e.currentTarget.style.stroke = 'none';
+        }}
+      />
+      {/* Layer 2: CL-ML stripe (brown) - on top of ML */}
+      <path 
+        d={polyToPath(clmlPoly)} 
+        fill={colors.cl_ml} 
+        fillOpacity={0.95} 
+        stroke="none" 
+        style={{ cursor: 'pointer' }}
+        onClick={() => onZoneClick && onZoneClick('CL-ML')}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.fillOpacity = '0.8';
+          e.currentTarget.style.stroke = '#333';
+          e.currentTarget.style.strokeWidth = '2';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.fillOpacity = '0.95';
+          e.currentTarget.style.stroke = 'none';
+        }}
+      />
+      
+      {/* Zone Labels */}
+      {/* CL label - left top area */}
+      <text
+        x={xScale(25)}
+        y={yScale(35)}
+        fill="#000"
+        fontSize={16}
+        fontWeight="700"
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        CL
+      </text>
+      
+      {/* CH label - right top area */}
+      <text
+        x={xScale(70)}
+        y={yScale(40)}
+        fill="#000"
+        fontSize={16}
+        fontWeight="700"
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        CH
+      </text>
+      
+      {/* ML ou OL label - left bottom area (pink zone) */}
+      <text
+        x={xScale(30)}
+        y={yScale(15)}
+        fill="#000"
+        fontSize={12}
+        fontWeight="600"
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        ML
+      </text>
+      <text
+        x={xScale(30)}
+        y={yScale(11)}
+        fill="#000"
+        fontSize={12}
+        fontWeight="600"
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        ou OL
+      </text>
+      
+      {/* MH ou OH label - right bottom area */}
+      <text
+        x={xScale(70)}
+        y={yScale(22)}
+        fill="#000"
+        fontSize={14}
+        fontWeight="600"
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        MH
+      </text>
+      <text
+        x={xScale(70)}
+        y={yScale(17)}
+        fill="#000"
+        fontSize={14}
+        fontWeight="600"
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        ou OH
+      </text>
+      
+      {/* CL-ML label - small brown stripe */}
+      <text
+        x={xScale(10)}
+        y={yScale(5.5)}
+        fill="#FFF"
+        fontSize={9}
+        fontWeight="700"
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        CL-ML
+      </text>
+      
+      {/* Line Labels */}
+      {/* Linha A label */}
+      <text
+        x={xScale(55)}
+        y={yScale(Math.max(ipA(55) + 3, ipA(55) + 3))}
+        fill="#222"
+        fontSize={10}
+        fontWeight="600"
+        textAnchor="middle"
+        dominantBaseline="central"
+        transform={`rotate(-35, ${xScale(55)}, ${yScale(ipA(55) + 3)})`}
+      >
+        Linha A
+      </text>
+      
+      {/* Linha B label (vertical) */}
+      <text
+        x={xScale(50)}
+        y={yScale(yMax - 5)}
+        fill="#222"
+        fontSize={10}
+        fontWeight="600"
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
+        Linha B
+      </text>
+      
+      {/* Draw reference lines on top of everything */}
+      {/* Linha A - solid thick line going down to IP=4 (bottom of CL-ML) */}
+      <line
+        x1={xScale((4 / 0.73) + 20)}
+        y1={yScale(4)}
+        x2={xScale(xMax)}
+        y2={yScale(ipA(xMax))}
+        stroke="#000"
+        strokeWidth={2.5}
+      />
+      
+      {/* CL-ML border - black outline */}
+      <path 
+        d={polyToPath(clmlPoly)} 
+        fill="none"
+        stroke="#000" 
+        strokeWidth={2}
+      />
+      
+      {/* Linha U - dashed line */}
+      <line
+        x1={xScale(8)}
+        y1={yScale(0)}
+        x2={xScale(xMax)}
+        y2={yScale(Math.max(0, 0.9 * (xMax - 8)))}
+        stroke="#000"
+        strokeWidth={1.5}
+        strokeDasharray="4 4"
+      />
+      
+      {/* Linha B - vertical line at LL=50 */}
+      <line
+        x1={xScale(50)}
+        y1={yScale(yMin)}
+        x2={xScale(50)}
+        y2={yScale(yMax)}
+        stroke="#000"
+        strokeWidth={2.5}
+      />
     </g>
   );
 };
@@ -361,7 +482,7 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
 
   if (ll === null || ip === null || isNaN(ll) || isNaN(ip)) {
     return (
-      <div className="flex items-center justify-center h-[350px] bg-card p-4 rounded-md border border-border/50 shadow-inner text-muted-foreground">
+      <div className="flex items-center justify-center h-[260px] bg-card p-2 rounded-md border border-border/50 shadow-inner text-muted-foreground text-sm">
         Dados insuficientes para gerar a carta.
       </div>
     );
@@ -401,11 +522,11 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
   const soilClassification = getSoilClassification();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2 relative">
       {/* Gráfico principal */}
-      <div className="bg-card p-4 rounded-md border border-border/50 shadow-inner" style={{ width: '100%', height: 380 }}>
+      <div className="bg-card p-2 rounded-md border border-border/50 shadow-inner" style={{ width: '100%', height: 260 }}>
         <ResponsiveContainer>
-          <ScatterChart margin={{ top: 12, right: 16, bottom: 44, left: 36 }}>
+          <ScatterChart margin={{ top: 8, right: 12, bottom: 32, left: 28 }}>
             <CartesianGrid stroke="rgba(0,0,0,0.12)" />
             <XAxis
               type="number"
@@ -414,11 +535,11 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
               domain={xDomain}
               ticks={[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].filter(t => t <= xDomain[1])}
               stroke="rgba(0,0,0,0.85)"
-              tick={{ fill: 'rgba(0,0,0,0.8)', fontSize: 11 }}
+              tick={{ fill: 'rgba(0,0,0,0.8)', fontSize: 10 }}
               axisLine={{ stroke: 'rgba(0,0,0,0.9)' }}
               tickLine={{ stroke: 'rgba(0,0,0,0.9)' }}
             >
-              <RechartsLabel value="Limite de Liquidez" offset={-20} position="insideBottom" fill="rgba(0,0,0,0.8)" fontSize={12} />
+              <RechartsLabel value="Limite de Liquidez" offset={-18} position="insideBottom" fill="rgba(0,0,0,0.8)" fontSize={11} />
             </XAxis>
 
             <YAxis
@@ -428,39 +549,14 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
               domain={yDomain}
               ticks={[0, 5, 10, 15, 20, 30, 40, 50, 60].filter(t => t <= yDomain[1])}
               stroke="rgba(0,0,0,0.85)"
-              tick={{ fill: 'rgba(0,0,0,0.8)', fontSize: 11 }}
+              tick={{ fill: 'rgba(0,0,0,0.8)', fontSize: 10 }}
               axisLine={{ stroke: 'rgba(0,0,0,0.9)' }}
               tickLine={{ stroke: 'rgba(0,0,0,0.9)' }}
             >
-              <RechartsLabel value="Índice de Plasticidade (IP %)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fill: 'rgba(0,0,0,0.8)', fontSize: 12 }} offset={-18} />
+              <RechartsLabel value="Índice de Plasticidade (IP %)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fill: 'rgba(0,0,0,0.8)', fontSize: 11 }} offset={-16} />
             </YAxis>
 
             <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} />
-
-            {/* Linha A (segment) */}
-            <ReferenceLine segment={[{ x: 20, y: ipA(20) }, { x: xMax, y: ipA(xMax) }]} stroke="#222" strokeWidth={2} />
-            {/* Linha U */}
-            <ReferenceLine segment={[{ x: 8, y: 0 }, { x: xMax, y: Math.max(0, 0.9 * (xMax - 8)) }]} stroke="#222" strokeDasharray="4 4" strokeWidth={1} />
-            {/* Linha B LL=50 */}
-            <ReferenceLine x={50} stroke="#222" strokeWidth={2} />
-
-            {/* Legendas dos eixos */}
-            <ZoneLabel value="Índice de Plasticidade (IP %)" x={25} y={190} fill="#666" fontSize={12} fontWeight="500" />
-            <ZoneLabel value="Limite de Liquidez (LL %)" x={200} y={365} fill="#666" fontSize={12} fontWeight="500" />
-
-            {/* Textos das linhas de referência */}
-            <ZoneLabel value="Linha A" x={300} y={100} fill="#222" fontSize={12} fontWeight="600" />
-            <ZoneLabel value="IP = 0.73 × (LL - 20)" x={300} y={115} fill="#666" fontSize={10} fontWeight="400" />
-            
-            <ZoneLabel value="Linha U" x={220} y={180} fill="#222" fontSize={12} fontWeight="600" />
-            <ZoneLabel value="IP = 0.9 × (LL - 8)" x={220} y={195} fill="#666" fontSize={10} fontWeight="400" />
-            
-            <ZoneLabel value="Linha B" x={340} y={160} fill="#222" fontSize={12} fontWeight="600" />
-            <ZoneLabel value="LL = 50" x={340} y={175} fill="#666" fontSize={10} fontWeight="400" />
-
-            {/* IP = 4 and 7 guide lines */}
-            <ReferenceLine y={4} stroke="rgba(0,0,0,0.12)" strokeWidth={1} />
-            <ReferenceLine y={7} stroke="rgba(0,0,0,0.12)" strokeWidth={1} />
 
             {/* Customized: draw polygons that respect the Line A shape */}
             <Customized
@@ -483,70 +579,78 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
             {/* Zone labels will be shown only when clicking on zones */}
 
             {/* plotted soil point */}
-            <ZAxis type="number" dataKey="z" range={[150, 150]} />
+            <ZAxis type="number" dataKey="z" range={[120, 120]} />
             <Scatter name={`Solo (${ll.toFixed(1)}, ${ip.toFixed(1)})`} data={data} fill="#981b1b" shape="cross" />
 
           </ScatterChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Modal da zona selecionada */}
-      <Dialog open={showZoneInfo} onOpenChange={setShowZoneInfo}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <div 
-                className="w-6 h-6 rounded" 
-                style={{ backgroundColor: zoneInfo[selectedZone as keyof typeof zoneInfo]?.color }}
-              />
-              <span>Zona {selectedZone}</span>
-              <Badge variant="outline" style={{ backgroundColor: zoneInfo[selectedZone as keyof typeof zoneInfo]?.color + '20' }}>
-                {zoneInfo[selectedZone as keyof typeof zoneInfo]?.name}
-              </Badge>
-            </DialogTitle>
-            <DialogDescription className="text-base">
-              {zoneInfo[selectedZone as keyof typeof zoneInfo]?.description}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-3">
-              <div className="font-medium text-sm text-foreground">Características principais:</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {zoneInfo[selectedZone as keyof typeof zoneInfo]?.properties.map((prop, index) => (
-                  <div key={index} className="flex items-center gap-2 p-2 rounded-md bg-muted/50">
-                    <div 
-                      className="w-2 h-2 rounded-full" 
-                      style={{ backgroundColor: zoneInfo[selectedZone as keyof typeof zoneInfo]?.color }}
-                    />
-                    <span className="text-sm">{prop}</span>
-                  </div>
-                ))}
+      {/* Popover compacto da zona selecionada */}
+      {showZoneInfo && selectedZone && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="bg-popover text-popover-foreground rounded-md border border-border shadow-lg max-w-[280px] p-2.5">
+            <button
+              onClick={() => setShowZoneInfo(false)}
+              className="absolute top-1.5 right-1.5 rounded-sm opacity-70 hover:opacity-100 transition-opacity"
+            >
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="space-y-1.5 pr-4">
+              <div className="flex items-center gap-1.5 pb-1 border-b border-border/30">
+                <div 
+                  className="w-3 h-3 rounded flex-shrink-0" 
+                  style={{ backgroundColor: zoneInfo[selectedZone as keyof typeof zoneInfo]?.color }}
+                />
+                <span className="font-semibold text-xs">Zona {selectedZone}</span>
+                <Badge variant="outline" className="text-[10px] h-4 px-1" style={{ backgroundColor: zoneInfo[selectedZone as keyof typeof zoneInfo]?.color + '20' }}>
+                  {zoneInfo[selectedZone as keyof typeof zoneInfo]?.name}
+                </Badge>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                {zoneInfo[selectedZone as keyof typeof zoneInfo]?.description}
+              </p>
+              <div className="space-y-1 pt-0.5">
+                <div className="font-medium text-[11px] text-foreground">Características:</div>
+                <div className="flex flex-col gap-0.5">
+                  {zoneInfo[selectedZone as keyof typeof zoneInfo]?.properties.map((prop, index) => (
+                    <div key={index} className="flex items-center gap-1 text-[11px]">
+                      <div 
+                        className="w-1 h-1 rounded-full flex-shrink-0" 
+                        style={{ backgroundColor: zoneInfo[selectedZone as keyof typeof zoneInfo]?.color }}
+                      />
+                      <span className="text-[11px] leading-tight">{prop}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
 
       {/* Informações da classificação do solo */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+        <CardHeader className="pb-2 pt-3">
+          <CardTitle className="flex items-center gap-2 text-sm">
             Classificação do Solo
-            <Badge variant="outline" style={{ backgroundColor: zoneInfo[soilClassification as keyof typeof zoneInfo]?.color + '20' }}>
+            <Badge variant="outline" className="text-xs" style={{ backgroundColor: zoneInfo[soilClassification as keyof typeof zoneInfo]?.color + '20' }}>
               {soilClassification}
             </Badge>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-xs">
             {zoneInfo[soilClassification as keyof typeof zoneInfo]?.name}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-3">
+        <CardContent className="pt-0 pb-3">
+          <p className="text-xs text-muted-foreground mb-1.5 leading-tight">
             {zoneInfo[soilClassification as keyof typeof zoneInfo]?.description}
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1">
             {zoneInfo[soilClassification as keyof typeof zoneInfo]?.properties.map((prop, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
+              <Badge key={index} variant="secondary" className="text-[10px] py-0 px-1.5 h-5">
                 {prop}
               </Badge>
             ))}

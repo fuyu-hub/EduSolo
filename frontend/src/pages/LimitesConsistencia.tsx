@@ -171,7 +171,7 @@ export default function LimitesConsistencia() {
             </CardHeader>
             <CardContent className="space-y-3 p-4 pt-0 flex-1">
               <TooltipProvider>
-                 <Accordion type="single" collapsible defaultValue="ll" className="w-full space-y-3">
+                 <Accordion type="multiple" defaultValue={["ll", "lp"]} className="w-full space-y-3">
                    {/* Item Accordion: LL */}
                    <AccordionItem value="ll" className="border-0">
                       <AccordionTrigger className="text-sm font-semibold text-foreground bg-accent/5 hover:bg-accent/10 px-3 py-2 rounded-lg border border-accent/20 [&[data-state=open]]:rounded-b-none">
@@ -307,39 +307,39 @@ export default function LimitesConsistencia() {
                <Carousel className="w-full px-8 relative">
                  <CarouselContent>
                    {/* Slide 1: Resultados Numéricos e Classificações Gerais */}
-                   <CarouselItem>
-                     <div className="space-y-3">
-                       <ResultItemGroup title="Limites de Atterberg">
-                         <ResultItem label="Limite de Liquidez (LL)" value={results.ll} unit="%" tooltip={tooltips.LL} precision={2}/>
-                         <ResultItem label="Limite de Plasticidade (LP)" value={results.lp} unit="%" tooltip={tooltips.LP} precision={2}/>
-                         <ResultItem label="Índice de Plasticidade (IP)" value={results.ip} unit="%" tooltip={tooltips.IP} highlight precision={2}/>
-                       </ResultItemGroup>
-                       {(results.ic !== null) && (
-                         <ResultItemGroup title="Consistência">
-                           {results.ic !== null ? ( <ResultItem label="Índice de Consistência (IC)" value={results.ic} unit="" tooltip={tooltips.IC} precision={3}/> ) : ( <MissingInfoItem label="Índice de Consistência (IC)" reason={!form.getValues("umidadeNatural") ? "w% não fornecida" : (results.ip !== null && results.ip < 1e-9 ? "IP ≈ 0" : "Dado ausente")} /> )}
-                         </ResultItemGroup>
-                       )}
-                       {(results.atividade_argila !== null) && (
-                         <ResultItemGroup title="Atividade">
-                           {results.atividade_argila !== null ? ( <ResultItem label="Atividade da Argila (Ia)" value={results.atividade_argila} unit="" tooltip={tooltips.Atividade} precision={3}/> ) : ( <MissingInfoItem label="Atividade da Argila (Ia)" reason={!form.getValues("percentualArgila") ? "% Argila não fornecida" : (results.ip !== null && results.ip < 1e-9 ? "IP ≈ 0" : "% Argila ≈ 0 ou dado ausente")} /> )}
-                         </ResultItemGroup>
-                       )}
-                       <div className="pt-3 space-y-2">
-                         <h3 className="text-xs font-medium text-muted-foreground">Classificações Gerais</h3>
-                         <div className="flex flex-wrap gap-1.5">
-                           {results.classificacao_plasticidade && <ClassificationBadge label="Plasticidade" value={results.classificacao_plasticidade} />}
-                           {results.classificacao_consistencia && <ClassificationBadge label="Consistência" value={results.classificacao_consistencia} />}
-                           {results.classificacao_atividade && <ClassificationBadge label="Atividade" value={results.classificacao_atividade} />}
-                         </div>
-                       </div>
-                     </div>
-                   </CarouselItem>
+                  <CarouselItem>
+                    <div className="space-y-2">
+                      <ResultItemGroup title="Limites de Atterberg">
+                        <ResultItem label="Limite de Liquidez (LL)" value={results.ll} unit="%" tooltip={tooltips.LL} precision={2}/>
+                        <ResultItem label="Limite de Plasticidade (LP)" value={results.lp} unit="%" tooltip={tooltips.LP} precision={2}/>
+                        <ResultItem label="Índice de Plasticidade (IP)" value={results.ip} unit="%" tooltip={tooltips.IP} highlight precision={2}/>
+                      </ResultItemGroup>
+                      {(results.ic !== null) && (
+                        <ResultItemGroup title="Consistência">
+                          {results.ic !== null ? ( <ResultItem label="Índice de Consistência (IC)" value={results.ic} unit="" tooltip={tooltips.IC} precision={3}/> ) : ( <MissingInfoItem label="Índice de Consistência (IC)" reason={!form.getValues("umidadeNatural") ? "w% não fornecida" : (results.ip !== null && results.ip < 1e-9 ? "IP ≈ 0" : "Dado ausente")} /> )}
+                        </ResultItemGroup>
+                      )}
+                      {(results.atividade_argila !== null) && (
+                        <ResultItemGroup title="Atividade">
+                          {results.atividade_argila !== null ? ( <ResultItem label="Atividade da Argila (Ia)" value={results.atividade_argila} unit="" tooltip={tooltips.Atividade} precision={3}/> ) : ( <MissingInfoItem label="Atividade da Argila (Ia)" reason={!form.getValues("percentualArgila") ? "% Argila não fornecida" : (results.ip !== null && results.ip < 1e-9 ? "IP ≈ 0" : "% Argila ≈ 0 ou dado ausente")} /> )}
+                        </ResultItemGroup>
+                      )}
+                      <div className="pt-2 space-y-1.5">
+                        <h3 className="text-xs font-medium text-muted-foreground">Classificações Gerais</h3>
+                        <div className="flex flex-wrap gap-1.5">
+                          {results.classificacao_plasticidade && <ClassificationBadge label="Plasticidade" value={results.classificacao_plasticidade} />}
+                          {results.classificacao_consistencia && <ClassificationBadge label="Consistência" value={results.classificacao_consistencia} />}
+                          {results.classificacao_atividade && <ClassificationBadge label="Atividade" value={results.classificacao_atividade} />}
+                        </div>
+                      </div>
+                    </div>
+                  </CarouselItem>
                    {/* Slide 2: Carta de Plasticidade e Classificação Detalhada */}
                    <CarouselItem>
-                     <div className="space-y-3">
+                     <div className="space-y-2">
                        {(results.ll !== null && results.ip !== null) && (
-                         <div className="pt-2">
-                           <h3 className="font-semibold text-xs text-foreground mb-2 flex items-center gap-1.5">
+                         <div>
+                           <h3 className="font-semibold text-xs text-foreground mb-1.5 flex items-center gap-1.5">
                              <LineChart className="w-3.5 h-3.5 text-primary" /> Carta de Plasticidade
                              <TooltipProvider><Tooltip><TooltipTrigger><Button variant="ghost" size="icon" className="h-4 w-4 text-muted-foreground hover:text-primary rounded-full p-0"><Info className="w-3 h-3" /></Button></TooltipTrigger><TooltipContent>{tooltips.CartaPlasticidade}</TooltipContent></Tooltip></TooltipProvider>
                            </h3>
@@ -365,8 +365,8 @@ export default function LimitesConsistencia() {
   );
 }
 
-// --- Componentes Auxiliares (Inalterados) ---
-const ResultItemGroup: React.FC<{ title?: string, children: React.ReactNode }> = ({ title, children }) => ( <div className="space-y-1"> {title && <h4 className="text-xs font-medium text-muted-foreground mb-1.5 pt-1.5 border-t border-border/30">{title}</h4>} <div className="space-y-1.5">{children}</div> </div> );
-function ResultItem({ label, value, unit, tooltip, highlight = false, precision = 2 }: ResultItemProps) { const displayValue = typeof value === 'number' && !isNaN(value) ? value.toFixed(precision) : (value || "-"); return ( <div className={cn( "flex justify-between items-center p-2 rounded-lg min-h-[48px]", highlight ? "bg-primary/10 border border-primary/20" : "bg-background/50 border border-border/50" )}> <TooltipProvider> <span className="text-xs font-medium text-muted-foreground flex items-center gap-1"> {label} {tooltip && ( <Tooltip> <TooltipTrigger> <Button variant="ghost" size="icon" className="h-4 w-4 text-muted-foreground hover:text-primary rounded-full p-0"> <Info className="w-2.5 h-2.5" /> </Button> </TooltipTrigger> <TooltipContent>{tooltip}</TooltipContent> </Tooltip> )} </span> </TooltipProvider> <span className={cn("font-semibold text-right pl-1.5", highlight ? "text-primary text-base" : "text-foreground text-sm")}> {displayValue} {unit} </span> </div> ); }
-const MissingInfoItem = ({ label, reason }: { label: string, reason: string }) => ( <div className="flex justify-between items-center p-2 rounded-lg bg-muted/30 border border-border/30 border-dashed min-h-[48px]"> <span className="text-xs font-medium text-muted-foreground">{label}</span> <span className="text-xs text-muted-foreground italic text-right pl-1.5">{reason}</span> </div> );
+// --- Componentes Auxiliares (Compactados) ---
+const ResultItemGroup: React.FC<{ title?: string, children: React.ReactNode }> = ({ title, children }) => ( <div className="space-y-1"> {title && <h4 className="text-xs font-medium text-muted-foreground mb-1 pt-1 border-t border-border/30">{title}</h4>} <div className="space-y-1">{children}</div> </div> );
+function ResultItem({ label, value, unit, tooltip, highlight = false, precision = 2 }: ResultItemProps) { const displayValue = typeof value === 'number' && !isNaN(value) ? value.toFixed(precision) : (value || "-"); return ( <div className={cn( "flex justify-between items-center px-2 py-1.5 rounded-lg min-h-[36px]", highlight ? "bg-primary/10 border border-primary/20" : "bg-background/50 border border-border/50" )}> <TooltipProvider> <span className="text-xs font-medium text-muted-foreground flex items-center gap-1"> {label} {tooltip && ( <Tooltip> <TooltipTrigger> <Button variant="ghost" size="icon" className="h-4 w-4 text-muted-foreground hover:text-primary rounded-full p-0"> <Info className="w-2.5 h-2.5" /> </Button> </TooltipTrigger> <TooltipContent>{tooltip}</TooltipContent> </Tooltip> )} </span> </TooltipProvider> <span className={cn("font-semibold text-right pl-1.5", highlight ? "text-primary text-sm" : "text-foreground text-sm")}> {displayValue} {unit} </span> </div> ); }
+const MissingInfoItem = ({ label, reason }: { label: string, reason: string }) => ( <div className="flex justify-between items-center px-2 py-1.5 rounded-lg bg-muted/30 border border-border/30 border-dashed min-h-[36px]"> <span className="text-xs font-medium text-muted-foreground">{label}</span> <span className="text-xs text-muted-foreground italic text-right pl-1.5">{reason}</span> </div> );
 const ClassificationBadge = ({ label, value }: { label: string; value: string }) => { let badgeVariant: "default" | "secondary" | "destructive" = "default"; if (value.includes("Não") || value.includes("Inativa")) { badgeVariant = "secondary"; } return ( <div className="flex flex-col items-start gap-0.5"> <span className="text-xs text-muted-foreground">{label}</span> <Badge variant={badgeVariant} className="text-xs px-2 py-0.5">{value}</Badge> </div> ); };
