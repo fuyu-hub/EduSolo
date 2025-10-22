@@ -80,7 +80,7 @@ export default function Dashboard() {
           Bem-vindo ao <span className="text-primary">EduSolo</span>
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl">
-          Sua suíte completa de ferramentas para análise e aprendizado em Engenharia Geotécnica
+          Sua suíte completa de ferramentas para análise e aprendizado em Mecânica dos Solos
         </p>
       </div>
 
