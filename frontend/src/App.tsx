@@ -6,8 +6,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import Index from "./pages/Index";
 import IndicesFisicos from "./pages/IndicesFisicos";
+import LimitesConsistencia from "./pages/LimitesConsistencia";
+import Granulometria from "./pages/Granulometria";
 import Compactacao from "./pages/Compactacao";
 import Tensoes from "./pages/Tensoes";
+import AcrescimoTensoes from "./pages/AcrescimoTensoes";
 import Educacional from "./pages/Educacional";
 import NotFound from "./pages/NotFound";
 
@@ -30,6 +33,22 @@ const App = () => (
             }
           />
           <Route
+            path="/limites-consistencia"
+            element={
+              <Layout>
+                <LimitesConsistencia />
+              </Layout>
+            }
+          />
+          <Route
+            path="/granulometria"
+            element={
+              <Layout>
+                <Granulometria />
+              </Layout>
+            }
+          />
+          <Route
             path="/compactacao"
             element={
               <Layout>
@@ -42,6 +61,14 @@ const App = () => (
             element={
               <Layout>
                 <Tensoes />
+              </Layout>
+            }
+          />
+          <Route
+            path="/acrescimo-tensoes"
+            element={
+              <Layout>
+                <AcrescimoTensoes />
               </Layout>
             }
           />

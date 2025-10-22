@@ -1,4 +1,4 @@
-import { Calculator, Layers, FileText, BookOpen, TrendingUp, Ruler } from "lucide-react";
+import { Calculator, Layers, FileText, BookOpen, TrendingUp, TrendingDown, Ruler, Droplets, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -7,9 +7,23 @@ const modules = [
   {
     icon: Calculator,
     title: "Índices Físicos",
-    description: "Calcule índices físicos do solo",
+    description: "Calcule índices físicos do solo: umidade, densidade, porosidade e mais",
     path: "/indices-fisicos",
     color: "from-sky-500 to-blue-600",
+  },
+  {
+    icon: Droplets,
+    title: "Limites de Consistência",
+    description: "Calcule LL, LP, IP, IL, IC e classifique a plasticidade do solo",
+    path: "/limites-consistencia",
+    color: "from-indigo-500 to-blue-600",
+  },
+  {
+    icon: BarChart3,
+    title: "Granulometria e Classificação",
+    description: "Análise granulométrica e classificação USCS/AASHTO",
+    path: "/granulometria",
+    color: "from-fuchsia-500 to-purple-600",
   },
   {
     icon: Layers,
@@ -24,6 +38,13 @@ const modules = [
     description: "Calcule tensões verticais, efetivas e neutras no solo",
     path: "/tensoes",
     color: "from-emerald-500 to-green-600",
+  },
+  {
+    icon: TrendingDown,
+    title: "Acréscimo de Tensões",
+    description: "Métodos de Boussinesq e análise de carregamentos",
+    path: "/acrescimo-tensoes",
+    color: "from-orange-500 to-red-600",
   },
   {
     icon: TrendingUp,
@@ -59,7 +80,7 @@ export default function Dashboard() {
           Bem-vindo ao <span className="text-primary">EduSolo</span>
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl">
-          Sua suíte completa de ferramentas para análise e aprendizado em Mecânica dos Solos
+          Sua suíte completa de ferramentas para análise e aprendizado em Engenharia Geotécnica
         </p>
       </div>
 
@@ -70,7 +91,6 @@ export default function Dashboard() {
           const content = (
             <Card
               className={cn(
-                "flex flex-col",
                 "glass p-6 transition-smooth hover:shadow-2xl hover:shadow-primary/20 group cursor-pointer relative overflow-hidden",
                 !module.comingSoon && "hover:-translate-y-1"
               )}
@@ -130,7 +150,7 @@ export default function Dashboard() {
               <Calculator className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">6+</p>
+              <p className="text-2xl font-bold text-foreground">8+</p>
               <p className="text-sm text-muted-foreground">Módulos de Cálculo</p>
             </div>
           </div>
@@ -154,8 +174,8 @@ export default function Dashboard() {
               <TrendingUp className="w-5 h-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">Fase 1</p>
-              <p className="text-sm text-muted-foreground">Programa em Desenvolvimento</p>
+              <p className="text-2xl font-bold text-foreground">Fase 2</p>
+              <p className="text-sm text-muted-foreground">Projeto em Desenvolvimento</p>
             </div>
           </div>
         </Card>
