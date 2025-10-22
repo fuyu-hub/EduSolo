@@ -524,22 +524,30 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
   return (
     <div className="space-y-2 relative">
       {/* Gráfico principal */}
-      <div className="bg-card p-2 rounded-md border border-border/50 shadow-inner" style={{ width: '100%', height: 260 }}>
+      <div className="bg-card p-4 rounded-md border border-border/50 shadow-inner" style={{ width: '100%', height: 280 }}>
         <ResponsiveContainer>
-          <ScatterChart margin={{ top: 8, right: 12, bottom: 32, left: 28 }}>
-            <CartesianGrid stroke="rgba(0,0,0,0.12)" />
+          <ScatterChart margin={{ top: 10, right: 15, bottom: 45, left: 60 }}>
+            <CartesianGrid stroke="rgba(0,0,0,0.15)" strokeDasharray="3 3" />
             <XAxis
               type="number"
               dataKey="ll"
               name="LL"
               domain={xDomain}
               ticks={[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].filter(t => t <= xDomain[1])}
-              stroke="rgba(0,0,0,0.85)"
-              tick={{ fill: 'rgba(0,0,0,0.8)', fontSize: 10 }}
-              axisLine={{ stroke: 'rgba(0,0,0,0.9)' }}
-              tickLine={{ stroke: 'rgba(0,0,0,0.9)' }}
+              stroke="rgba(0,0,0,0.9)"
+              tick={{ fill: 'rgba(0,0,0,0.9)', fontSize: 11, fontWeight: 500 }}
+              axisLine={{ stroke: 'rgba(0,0,0,0.9)', strokeWidth: 2 }}
+              tickLine={{ stroke: 'rgba(0,0,0,0.9)', strokeWidth: 1.5 }}
             >
-              <RechartsLabel value="Limite de Liquidez" offset={-18} position="insideBottom" fill="rgba(0,0,0,0.8)" fontSize={11} />
+              <RechartsLabel 
+                value="Limite de Liquidez (LL %)" 
+                offset={8} 
+                position="insideBottom" 
+                fill="rgba(0,0,0,0.9)" 
+                fontSize={12}
+                fontWeight={600}
+                style={{ transform: 'translateY(30px)' }}
+              />
             </XAxis>
 
             <YAxis
@@ -547,13 +555,20 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
               dataKey="ip"
               name="IP"
               domain={yDomain}
-              ticks={[0, 5, 10, 15, 20, 30, 40, 50, 60].filter(t => t <= yDomain[1])}
-              stroke="rgba(0,0,0,0.85)"
-              tick={{ fill: 'rgba(0,0,0,0.8)', fontSize: 10 }}
-              axisLine={{ stroke: 'rgba(0,0,0,0.9)' }}
-              tickLine={{ stroke: 'rgba(0,0,0,0.9)' }}
+              ticks={[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60].filter(t => t <= yDomain[1])}
+              stroke="rgba(0,0,0,0.9)"
+              tick={{ fill: 'rgba(0,0,0,0.9)', fontSize: 11, fontWeight: 500 }}
+              axisLine={{ stroke: 'rgba(0,0,0,0.9)', strokeWidth: 2 }}
+              tickLine={{ stroke: 'rgba(0,0,0,0.9)', strokeWidth: 1.5 }}
             >
-              <RechartsLabel value="Índice de Plasticidade (IP %)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fill: 'rgba(0,0,0,0.8)', fontSize: 11 }} offset={-16} />
+              <RechartsLabel 
+                value="Índice de Plasticidade (IP %)" 
+                angle={-90} 
+                position="insideLeft" 
+                style={{ textAnchor: 'middle', fill: 'rgba(0,0,0,0.9)', fontSize: 12, fontWeight: 600 }} 
+                offset={0}
+                dx={-40}
+              />
             </YAxis>
 
             <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} />

@@ -1,6 +1,6 @@
 // Adiciona React à importação
 import React, { useState, useEffect } from "react";
-import { Menu, Calculator, FileText, BookOpen, Layers } from "lucide-react";
+import { Menu, Calculator, FileText, BookOpen, Layers, Droplets, BarChart3, TrendingDown } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,16 +17,17 @@ const menuItems = [
     title: "Análise Geotécnica",
     items: [
       { icon: Calculator, label: "Índices Físicos", path: "/indices-fisicos" },
+      { icon: Droplets, label: "Limites de Consistência", path: "/limites-consistencia" },
+      { icon: BarChart3, label: "Granulometria", path: "/granulometria" },
       { icon: Layers, label: "Compactação", path: "/compactacao" },
       { icon: FileText, label: "Tensões Geostáticas", path: "/tensoes" },
-      // Add future items here if needed
+      { icon: TrendingDown, label: "Acréscimo de Tensões", path: "/acrescimo-tensoes" },
     ],
   },
   {
     title: "Ferramentas",
     items: [
       { icon: BookOpen, label: "Material Educacional", path: "/educacional" },
-      // Add future items here if needed
     ],
   },
 ];
