@@ -6,9 +6,9 @@ import {
   Sheet,
   SheetContent,
   SheetTrigger,
-  SheetClose, // Import SheetClose
+  SheetClose,
 } from "@/components/ui/sheet";
-import { useIsMobile } from "@/hooks/use-mobile"; // Import the hook
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
@@ -37,27 +37,30 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
   return (
     <>
       {/* Logo */}
-      <div className="h-16 flex items-center justify-center border-b border-sidebar-border/50 px-3"> {/* Added padding */}
-        <Link to="/" className="flex items-center gap-2" onClick={onLinkClick}>
-          {collapsed ? (
-            <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center"> {/* Icon container */}
-              <Calculator className="w-5 h-5 text-primary" />
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
+      <div className="h-16 flex items-center justify-center border-b border-sidebar-border/50 px-3">
+        {/* Link fecha a Sheet se onLinkClick estiver definido */}
+        <ConditionalSheetClose shouldWrap={!!onLinkClick} asChild>
+          <Link to="/" className="flex items-center gap-2" onClick={onLinkClick}>
+            {collapsed ? (
               <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
                 <Calculator className="w-5 h-5 text-primary" />
               </div>
-              <span className="text-xl font-bold text-foreground">
-                Edu<span className="text-primary">Solo</span>
-              </span>
-            </div>
-          )}
-        </Link>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <Calculator className="w-5 h-5 text-primary" />
+                </div>
+                <span className="text-xl font-bold text-foreground">
+                  Edu<span className="text-primary">Solo</span>
+                </span>
+              </div>
+            )}
+          </Link>
+        </ConditionalSheetClose>
       </div>
 
       {/* Navigation */}
-      <nav className="p-3 space-y-4"> {/* Reduced vertical space */}
+      <nav className="p-3 space-y-4">
         {menuItems.map((section) => (
           <div key={section.title}>
             {!collapsed && (
@@ -76,10 +79,10 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
                    </>
                 );
 
-                // Use SheetClose conditionally for mobile links
+                // Use ConditionalSheetClose para envolver o Link apenas no mobile
                 return (
-                   <SheetClose key={item.path} asChild={!!onLinkClick}>
-                      <Link to={item.path} onClick={onLinkClick} title={collapsed ? item.label : undefined}> {/* Add title for collapsed state */}
+                   <ConditionalSheetClose key={item.path} shouldWrap={!!onLinkClick} asChild>
+                      <Link to={item.path} onClick={onLinkClick} title={collapsed ? item.label : undefined}>
                         <Button
                           variant="ghost"
                           className={cn(
@@ -93,7 +96,7 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
                           {buttonContent}
                         </Button>
                       </Link>
-                   </SheetClose>
+                   </ConditionalSheetClose>
                 );
               })}
             </div>
@@ -104,40 +107,37 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
   );
 };
 
+// Componente auxiliar para renderizar SheetClose condicionalmente
+const ConditionalSheetClose = ({ shouldWrap, children, ...props }: { shouldWrap: boolean; children: React.ReactNode } & React.ComponentProps<typeof SheetClose>) => {
+  return shouldWrap ? <SheetClose {...props}>{children}</SheetClose> : <>{children}</>;
+};
+
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const isMobile = useIsMobile(); // Check if mobile
+  const isMobile = useIsMobile();
 
-  // State for desktop collapsed state with localStorage persistence
-  // Default to true (collapsed) if no value is saved or on mobile initially
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-       // Check isMobile here directly for initial state on mobile
-       const mobileCheck = window.innerWidth < 768; // MOBILE_BREAKPOINT from useIsMobile
-       if (mobileCheck) return true; // Default collapsed on mobile load
+       const mobileCheck = window.innerWidth < 768;
+       if (mobileCheck) return true;
        return JSON.parse(localStorage.getItem('sidebarCollapsed') ?? 'true');
     }
-    return true; // Default fallback
+    return true;
   });
 
-  // State for mobile sheet open/closed
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Save desktop collapsed state to localStorage
   useEffect(() => {
-    // Only save state if not on mobile
     if (!isMobile) {
       localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
     }
   }, [collapsed, isMobile]);
 
-   // Ensure sidebar collapses on mobile resize if it was open on desktop
    useEffect(() => {
     if (isMobile) {
-      setCollapsed(true); // Force collapse on mobile view
+      setCollapsed(true);
     }
   }, [isMobile]);
-
 
   const toggleDesktopSidebar = () => {
     if (!isMobile) {
@@ -146,13 +146,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-screen w-full bg-background"> {/* Ensure bg covers */}
+    <div className="flex min-h-screen w-full bg-background">
 
       {/* -- Mobile Sidebar (Sheet) -- */}
       {isMobile && (
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          {/* Trigger is now in the header */}
-          <SheetContent side="left" className="p-0 w-64 glass border-r border-sidebar-border/50"> {/* Removed width constraint, added padding 0 */}
+          <SheetContent side="left" className="p-0 w-64 glass border-r border-sidebar-border/50">
+            {/* Passa a função para fechar a sheet */}
             <SidebarContent collapsed={false} onLinkClick={() => setMobileOpen(false)} />
           </SheetContent>
         </Sheet>
@@ -162,10 +162,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {!isMobile && (
         <aside
           className={cn(
-            "glass transition-[width] duration-300 ease-in-out border-r border-sidebar-border/50 fixed left-0 top-0 h-full z-20", // Use z-20
+            "glass transition-[width] duration-300 ease-in-out border-r border-sidebar-border/50 fixed left-0 top-0 h-full z-20",
             collapsed ? "w-16" : "w-64"
           )}
         >
+          {/* Não passa onLinkClick aqui */}
           <SidebarContent collapsed={collapsed} />
         </aside>
       )}
@@ -174,37 +175,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <div
         className={cn(
           "flex-1 transition-[margin-left] duration-300 ease-in-out",
-           // Apply margin only on desktop
           !isMobile && (collapsed ? "ml-16" : "ml-64")
         )}
       >
         {/* Header */}
-        <header className="h-16 glass border-b border-border/30 sticky top-0 z-10 flex items-center px-4 md:px-6 backdrop-blur-sm"> {/* Increased z-index, adjusted padding */}
+        <header className="h-16 glass border-b border-border/30 sticky top-0 z-10 flex items-center px-4 md:px-6 backdrop-blur-sm">
           {isMobile ? (
-            // Mobile: Sheet Trigger
             <SheetTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
                 className="text-muted-foreground hover:text-foreground"
-                aria-label="Abrir menu" // Accessibility
+                aria-label="Abrir menu"
               >
                 <Menu className="h-5 w-5" />
               </Button>
             </SheetTrigger>
           ) : (
-            // Desktop: Collapse Toggle
             <Button
               variant="ghost"
               size="icon"
               onClick={toggleDesktopSidebar}
               className="text-muted-foreground hover:text-foreground"
-              aria-label={collapsed ? "Expandir menu" : "Recolher menu"} // Accessibility
+              aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
             >
               <Menu className="h-5 w-5" />
             </Button>
           )}
-          {/* Placeholder for potential header content */}
           <div className="flex-1"></div>
         </header>
 
