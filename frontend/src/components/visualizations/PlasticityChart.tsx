@@ -1,5 +1,5 @@
 // src/components/visualizations/PlasticityChart.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ScatterChart,
   Scatter,
@@ -14,11 +14,52 @@ import {
   Text,
   Customized
 } from 'recharts';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface PlasticityChartProps {
   ll: number | null;
   ip: number | null;
 }
+
+// Informações das zonas de classificação
+const zoneInfo = {
+  CL: {
+    name: "Argila de Baixa Plasticidade",
+    description: "Solo argiloso com baixa plasticidade. Características: coesão moderada, compressibilidade média.",
+    color: "#00D07A",
+    properties: ["Coesão moderada", "Compressibilidade média", "Boa para fundações rasas"]
+  },
+  CH: {
+    name: "Argila de Alta Plasticidade", 
+    description: "Solo argiloso com alta plasticidade. Características: alta coesão, alta compressibilidade.",
+    color: "#FFD400",
+    properties: ["Alta coesão", "Alta compressibilidade", "Requer cuidados especiais em fundações"]
+  },
+  ML: {
+    name: "Silte de Baixa Plasticidade",
+    description: "Solo siltoso com baixa plasticidade. Características: baixa coesão, comportamento intermediário.",
+    color: "#FFB6C1", 
+    properties: ["Baixa coesão", "Comportamento intermediário", "Sensível à água"]
+  },
+  MH: {
+    name: "Silte de Alta Plasticidade",
+    description: "Solo siltoso com alta plasticidade. Características: comportamento expansivo, alta sensibilidade à água.",
+    color: "#BFE9FF",
+    properties: ["Comportamento expansivo", "Alta sensibilidade à água", "Requer drenagem adequada"]
+  },
+  "CL-ML": {
+    name: "Zona de Transição CL-ML",
+    description: "Zona de transição entre argila de baixa plasticidade e silte de baixa plasticidade.",
+    color: "#8B4513",
+    properties: ["Características mistas", "Comportamento variável", "Análise detalhada necessária"]
+  }
+};
 
 /**
  * Pequeno componente para rótulos (Text do Recharts)
@@ -57,7 +98,7 @@ const ZoneLabel = ({
  * com base no domínio [0..xMax] e [0..yMax], seguindo a linha A (ip = 0.73*(ll-20)).
  */
 const CustomizedPolygonDrawer = (props: any) => {
-  const { width, height, xAxisMap, yAxisMap, xAxisProps, yAxisProps, xDomain, yDomain } = props;
+  const { width, height, xAxisMap, yAxisMap, xAxisProps, yAxisProps, xDomain, yDomain, onZoneClick } = props;
 
   // se não tiver escala, não desenha
   if (!xAxisMap || !yAxisMap) return null;
@@ -219,20 +260,102 @@ const CustomizedPolygonDrawer = (props: any) => {
   return (
     <g>
       {/* Left CL (green) */}
-      <path d={polyToPath(leftCL)} fill={colors.cl} fillOpacity={0.95} stroke="none" />
+      <path 
+        d={polyToPath(leftCL)} 
+        fill={colors.cl} 
+        fillOpacity={0.95} 
+        stroke="none" 
+        style={{ cursor: 'pointer' }}
+        onClick={() => onZoneClick && onZoneClick('CL')}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.fillOpacity = '0.8';
+          e.currentTarget.style.stroke = '#333';
+          e.currentTarget.style.strokeWidth = '2';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.fillOpacity = '0.95';
+          e.currentTarget.style.stroke = 'none';
+        }}
+      />
       {/* CL-ML stripe (brown thin) */}
-      <path d={polyToPath(clmlPoly)} fill={colors.cl_ml} fillOpacity={0.95} stroke="none" />
+      <path 
+        d={polyToPath(clmlPoly)} 
+        fill={colors.cl_ml} 
+        fillOpacity={0.95} 
+        stroke="none" 
+        style={{ cursor: 'pointer' }}
+        onClick={() => onZoneClick && onZoneClick('CL-ML')}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.fillOpacity = '0.8';
+          e.currentTarget.style.stroke = '#333';
+          e.currentTarget.style.strokeWidth = '2';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.fillOpacity = '0.95';
+          e.currentTarget.style.stroke = 'none';
+        }}
+      />
       {/* Left ML/OL (pink) */}
-      <path d={polyToPath(leftML)} fill={colors.ml_ol} fillOpacity={0.95} stroke="none" />
+      <path 
+        d={polyToPath(leftML)} 
+        fill={colors.ml_ol} 
+        fillOpacity={0.95} 
+        stroke="none" 
+        style={{ cursor: 'pointer' }}
+        onClick={() => onZoneClick && onZoneClick('ML')}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.fillOpacity = '0.8';
+          e.currentTarget.style.stroke = '#333';
+          e.currentTarget.style.strokeWidth = '2';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.fillOpacity = '0.95';
+          e.currentTarget.style.stroke = 'none';
+        }}
+      />
       {/* Right CH (yellow) */}
-      <path d={polyToPath(rightCHpoly)} fill={colors.ch} fillOpacity={0.95} stroke="none" />
+      <path 
+        d={polyToPath(rightCHpoly)} 
+        fill={colors.ch} 
+        fillOpacity={0.95} 
+        stroke="none" 
+        style={{ cursor: 'pointer' }}
+        onClick={() => onZoneClick && onZoneClick('CH')}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.fillOpacity = '0.8';
+          e.currentTarget.style.stroke = '#333';
+          e.currentTarget.style.strokeWidth = '2';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.fillOpacity = '0.95';
+          e.currentTarget.style.stroke = 'none';
+        }}
+      />
       {/* Right MH/OH (blue) */}
-      <path d={polyToPath(rightBottomPoly)} fill={colors.mh_oh} fillOpacity={0.95} stroke="none" />
+      <path 
+        d={polyToPath(rightBottomPoly)} 
+        fill={colors.mh_oh} 
+        fillOpacity={0.95} 
+        stroke="none" 
+        style={{ cursor: 'pointer' }}
+        onClick={() => onZoneClick && onZoneClick('MH')}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.fillOpacity = '0.8';
+          e.currentTarget.style.stroke = '#333';
+          e.currentTarget.style.strokeWidth = '2';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.fillOpacity = '0.95';
+          e.currentTarget.style.stroke = 'none';
+        }}
+      />
     </g>
   );
 };
 
 const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
+  const [selectedZone, setSelectedZone] = useState<string | null>(null);
+
   if (ll === null || ip === null || isNaN(ll) || isNaN(ip)) {
     return (
       <div className="flex items-center justify-center h-[350px] bg-card p-4 rounded-md border border-border/50 shadow-inner text-muted-foreground">
@@ -253,79 +376,210 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
   // data point
   const data = [{ ll, ip, z: 1 }];
 
+  // Função para determinar a classificação do solo
+  const getSoilClassification = () => {
+    if (ll < 50) {
+      if (ip >= ipA(ll)) {
+        return 'CL';
+      } else if (ip >= 4 && ip <= 7 && ll <= 20) {
+        return 'CL-ML';
+      } else {
+        return 'ML';
+      }
+    } else {
+      if (ip >= ipA(ll)) {
+        return 'CH';
+      } else {
+        return 'MH';
+      }
+    }
+  };
+
+  const soilClassification = getSoilClassification();
+
   return (
-    <div className="bg-card p-4 rounded-md border border-border/50 shadow-inner" style={{ width: '100%', height: 380 }}>
-      <ResponsiveContainer>
-        <ScatterChart margin={{ top: 12, right: 16, bottom: 44, left: 36 }}>
-          <CartesianGrid stroke="rgba(0,0,0,0.12)" />
-          <XAxis
-            type="number"
-            dataKey="ll"
-            name="LL"
-            domain={xDomain}
-            ticks={[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].filter(t => t <= xDomain[1])}
-            stroke="rgba(0,0,0,0.85)"
-            tick={{ fill: 'rgba(0,0,0,0.8)', fontSize: 11 }}
-            axisLine={{ stroke: 'rgba(0,0,0,0.9)' }}
-            tickLine={{ stroke: 'rgba(0,0,0,0.9)' }}
-          >
-            <RechartsLabel value="Limite de Liquidez" offset={-20} position="insideBottom" fill="rgba(0,0,0,0.8)" fontSize={12} />
-          </XAxis>
+    <div className="space-y-4">
+      {/* Informações da classificação do solo */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            Classificação do Solo
+            <Badge variant="outline" style={{ backgroundColor: zoneInfo[soilClassification as keyof typeof zoneInfo]?.color + '20' }}>
+              {soilClassification}
+            </Badge>
+          </CardTitle>
+          <CardDescription>
+            {zoneInfo[soilClassification as keyof typeof zoneInfo]?.name}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-3">
+            {zoneInfo[soilClassification as keyof typeof zoneInfo]?.description}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {zoneInfo[soilClassification as keyof typeof zoneInfo]?.properties.map((prop, index) => (
+              <Badge key={index} variant="secondary" className="text-xs">
+                {prop}
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-          <YAxis
-            type="number"
-            dataKey="ip"
-            name="IP"
-            domain={yDomain}
-            ticks={[0, 5, 10, 15, 20, 30, 40, 50, 60].filter(t => t <= yDomain[1])}
-            stroke="rgba(0,0,0,0.85)"
-            tick={{ fill: 'rgba(0,0,0,0.8)', fontSize: 11 }}
-            axisLine={{ stroke: 'rgba(0,0,0,0.9)' }}
-            tickLine={{ stroke: 'rgba(0,0,0,0.9)' }}
-          >
-            <RechartsLabel value="Índice de Plasticidade (IP %)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fill: 'rgba(0,0,0,0.8)', fontSize: 12 }} offset={-18} />
-          </YAxis>
+      {/* Legenda das zonas */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Legenda das Zonas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {Object.entries(zoneInfo).map(([key, info]) => (
+              <Popover key={key}>
+                <PopoverTrigger asChild>
+                  <div 
+                    className="flex items-center gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors"
+                    style={{ borderLeftColor: info.color, borderLeftWidth: '4px' }}
+                  >
+                    <div 
+                      className="w-4 h-4 rounded" 
+                      style={{ backgroundColor: info.color }}
+                    />
+                    <div>
+                      <div className="font-medium">{key}</div>
+                      <div className="text-sm text-muted-foreground">{info.name}</div>
+                    </div>
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent side="top" align="start" className="w-80">
+                  <div className="space-y-2">
+                    <div className="font-bold text-lg">{info.name}</div>
+                    <p className="text-sm text-muted-foreground">{info.description}</p>
+                    <div className="space-y-1">
+                      <div className="font-medium text-sm">Características:</div>
+                      <ul className="text-sm space-y-1">
+                        {info.properties.map((prop, index) => (
+                          <li key={index} className="flex items-start gap-2">
+                            <span className="text-muted-foreground">•</span>
+                            <span>{prop}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-          <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} />
+      {/* Gráfico principal */}
+      <div className="bg-card p-4 rounded-md border border-border/50 shadow-inner" style={{ width: '100%', height: 380 }}>
+        <ResponsiveContainer>
+          <ScatterChart margin={{ top: 12, right: 16, bottom: 44, left: 36 }}>
+            <CartesianGrid stroke="rgba(0,0,0,0.12)" />
+            <XAxis
+              type="number"
+              dataKey="ll"
+              name="LL"
+              domain={xDomain}
+              ticks={[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].filter(t => t <= xDomain[1])}
+              stroke="rgba(0,0,0,0.85)"
+              tick={{ fill: 'rgba(0,0,0,0.8)', fontSize: 11 }}
+              axisLine={{ stroke: 'rgba(0,0,0,0.9)' }}
+              tickLine={{ stroke: 'rgba(0,0,0,0.9)' }}
+            >
+              <RechartsLabel value="Limite de Liquidez" offset={-20} position="insideBottom" fill="rgba(0,0,0,0.8)" fontSize={12} />
+            </XAxis>
 
-          {/* Linha A (segment) */}
-          <ReferenceLine segment={[{ x: 20, y: ipA(20) }, { x: xMax, y: ipA(xMax) }]} stroke="#222" strokeWidth={2} />
-          {/* Linha U */}
-          <ReferenceLine segment={[{ x: 8, y: 0 }, { x: xMax, y: Math.max(0, 0.9 * (xMax - 8)) }]} stroke="#222" strokeDasharray="4 4" strokeWidth={1} />
-          {/* Linha B LL=50 */}
-          <ReferenceLine x={50} stroke="#222" strokeWidth={2} />
+            <YAxis
+              type="number"
+              dataKey="ip"
+              name="IP"
+              domain={yDomain}
+              ticks={[0, 5, 10, 15, 20, 30, 40, 50, 60].filter(t => t <= yDomain[1])}
+              stroke="rgba(0,0,0,0.85)"
+              tick={{ fill: 'rgba(0,0,0,0.8)', fontSize: 11 }}
+              axisLine={{ stroke: 'rgba(0,0,0,0.9)' }}
+              tickLine={{ stroke: 'rgba(0,0,0,0.9)' }}
+            >
+              <RechartsLabel value="Índice de Plasticidade (IP %)" angle={-90} position="insideLeft" style={{ textAnchor: 'middle', fill: 'rgba(0,0,0,0.8)', fontSize: 12 }} offset={-18} />
+            </YAxis>
 
-          {/* IP = 4 and 7 guide lines */}
-          <ReferenceLine y={4} stroke="rgba(0,0,0,0.12)" strokeWidth={1} />
-          <ReferenceLine y={7} stroke="rgba(0,0,0,0.12)" strokeWidth={1} />
+            <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} />
 
-          {/* Customized: draw polygons that respect the Line A shape */}
-          <Customized
-            component={
-              // Recharts pass chart width/height etc. via props to this function. We'll wrap it so it receives the domains.
-              (chartProps: any) => (
-                <CustomizedPolygonDrawer
-                  {...chartProps}
-                  xDomain={xDomain}
-                  yDomain={yDomain}
-                />
-              )
-            }
-          />
+            {/* Linha A (segment) */}
+            <ReferenceLine segment={[{ x: 20, y: ipA(20) }, { x: xMax, y: ipA(xMax) }]} stroke="#222" strokeWidth={2} />
+            {/* Linha U */}
+            <ReferenceLine segment={[{ x: 8, y: 0 }, { x: xMax, y: Math.max(0, 0.9 * (xMax - 8)) }]} stroke="#222" strokeDasharray="4 4" strokeWidth={1} />
+            {/* Linha B LL=50 */}
+            <ReferenceLine x={50} stroke="#222" strokeWidth={2} />
 
-          {/* Zone labels - positions chosen to match the reference image */}
-          <ZoneLabel value="CL" x={130} y={110} fill="#073b26" fontSize={22} />
-          <ZoneLabel value="CH" x={330} y={70} fill="#3e3e00" fontSize={22} />
-          <ZoneLabel value="ML ou OL" x={190} y={260} fill="#4b0b1b" fontSize={16} />
-          <ZoneLabel value="MH ou OH" x={330} y={220} fill="#0b3a4b" fontSize={18} />
-          <ZoneLabel value="CL - ML" x={70} y={295} fill="#fff" fontSize={11} />
+            {/* IP = 4 and 7 guide lines */}
+            <ReferenceLine y={4} stroke="rgba(0,0,0,0.12)" strokeWidth={1} />
+            <ReferenceLine y={7} stroke="rgba(0,0,0,0.12)" strokeWidth={1} />
 
-          {/* plotted soil point */}
-          <ZAxis type="number" dataKey="z" range={[150, 150]} />
-          <Scatter name={`Solo (${ll.toFixed(1)}, ${ip.toFixed(1)})`} data={data} fill="#981b1b" shape="cross" />
+            {/* Customized: draw polygons that respect the Line A shape */}
+            <Customized
+              component={
+                // Recharts pass chart width/height etc. via props to this function. We'll wrap it so it receives the domains.
+                (chartProps: any) => (
+                  <CustomizedPolygonDrawer
+                    {...chartProps}
+                    xDomain={xDomain}
+                    yDomain={yDomain}
+                    onZoneClick={setSelectedZone}
+                  />
+                )
+              }
+            />
 
-        </ScatterChart>
-      </ResponsiveContainer>
+            {/* Zone labels - positions chosen to match the reference image */}
+            <ZoneLabel value="CL" x={130} y={110} fill="#073b26" fontSize={22} />
+            <ZoneLabel value="CH" x={330} y={70} fill="#3e3e00" fontSize={22} />
+            <ZoneLabel value="ML ou OL" x={190} y={260} fill="#4b0b1b" fontSize={16} />
+            <ZoneLabel value="MH ou OH" x={330} y={220} fill="#0b3a4b" fontSize={18} />
+            <ZoneLabel value="CL - ML" x={70} y={295} fill="#fff" fontSize={11} />
+
+            {/* plotted soil point */}
+            <ZAxis type="number" dataKey="z" range={[150, 150]} />
+            <Scatter name={`Solo (${ll.toFixed(1)}, ${ip.toFixed(1)})`} data={data} fill="#981b1b" shape="cross" />
+
+          </ScatterChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Informações sobre as linhas de referência */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Linhas de Referência</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-0.5 bg-black"></div>
+              <div>
+                <div className="font-medium">Linha A</div>
+                <div className="text-sm text-muted-foreground">IP = 0.73 × (LL - 20)</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-0.5 bg-black" style={{ borderTop: '2px dashed #222' }}></div>
+              <div>
+                <div className="font-medium">Linha U</div>
+                <div className="text-sm text-muted-foreground">IP = 0.9 × (LL - 8)</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-0.5 bg-black"></div>
+              <div>
+                <div className="font-medium">Linha B</div>
+                <div className="text-sm text-muted-foreground">LL = 50 (linha vertical)</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
