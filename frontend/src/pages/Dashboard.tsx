@@ -24,7 +24,6 @@ const modules = [
     description: "Análise granulométrica e classificação USCS/AASHTO",
     path: "/granulometria",
     color: "from-fuchsia-500 to-purple-600",
-    comingSoon: true,
   },
   {
     icon: Layers,
@@ -96,7 +95,7 @@ export default function Dashboard() {
           const content = (
             <Card
               className={cn(
-                "glass p-6 transition-smooth hover:shadow-2xl hover:shadow-primary/20 group cursor-pointer relative overflow-hidden",
+                "glass p-6 transition-smooth hover:shadow-2xl hover:shadow-primary/20 group cursor-pointer relative overflow-hidden h-full min-h-[200px] flex flex-col",
                 !module.comingSoon && "hover:-translate-y-1"
               )}
             >
@@ -109,7 +108,7 @@ export default function Dashboard() {
               />
 
               {/* Content */}
-              <div className="relative">
+              <div className="relative flex-1 flex flex-col">
                 <div
                   className={cn(
                     "w-14 h-14 rounded-xl bg-gradient-to-br flex items-center justify-center mb-4 shadow-lg",
@@ -128,7 +127,7 @@ export default function Dashboard() {
                   )}
                 </h3>
 
-                <p className="text-muted-foreground text-sm leading-relaxed">
+                <p className="text-muted-foreground text-sm leading-relaxed flex-1">
                   {module.description}
                 </p>
               </div>
