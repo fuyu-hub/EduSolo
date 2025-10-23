@@ -22,7 +22,8 @@ def calcular_compactacao(dados: CompactacaoInput) -> CompactacaoOutput:
         pontos_calculados: List[PontoCurvaCompactacao] = []
         gama_w = dados.peso_especifico_agua # kN/m³
         # γw em g/cm³ para consistência com massas em g e volume em cm³
-        gama_w_gcm3 = gama_w / 9.81 if np.isclose(gama_w, 9.81, rtol=1e-2) else gama_w / 10.0
+        # Conversão: se γw ≈ 10 kN/m³, então ρw ≈ 1.0 g/cm³
+        gama_w_gcm3 = 1.0 if np.isclose(gama_w, 10.0, rtol=0.05) else (gama_w / 9.81)
 
         if dados.Gs is not None and dados.Gs <= 0:
             raise ValueError("Gs (Densidade relativa dos grãos) deve ser maior que zero.")

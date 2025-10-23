@@ -107,20 +107,22 @@ def calcular_tensoes_com_fluxo(
     profundidade_base_fluxo = profundidade_topo_fluxo + espessura_total_fluxo
 
     # Carga hidráulica total (delta_h)
+    # Convenção: profundidade positiva para baixo
+    # delta_h = h_saida - h_entrada (positivo se saída está acima da entrada = fluxo ascendente)
     carga_entrada = -profundidade_na_entrada # Assumindo datum na superfície
     carga_saida = -profundidade_na_saida
-    delta_h_total = carga_entrada - carga_saida
+    delta_h_total = carga_saida - carga_entrada # CORRIGIDO: invertido para convenção correta
 
     # Gradiente hidráulico médio
     if espessura_total_fluxo <= EPSILON:
         raise ValueError("Espessura total das camadas de fluxo não pode ser zero.")
-    i_medio = delta_h_total / espessura_total_fluxo # Positivo para descendente, Negativo para ascendente
+    i_medio = delta_h_total / espessura_total_fluxo # Positivo para ascendente, Negativo para descendente
 
-    # Valida direção do fluxo vs gradiente
-    if direcao_fluxo.lower() == 'descendente' and i_medio < 0:
-         raise ValueError("Direção de fluxo 'descendente' inconsistente com NA de entrada abaixo do NA de saída.")
-    if direcao_fluxo.lower() == 'ascendente' and i_medio > 0:
-         raise ValueError("Direção de fluxo 'ascendente' inconsistente com NA de entrada acima do NA de saída.")
+    # Valida direção do fluxo vs gradiente (com convenção corrigida)
+    if direcao_fluxo.lower() == 'descendente' and i_medio > 0:
+         raise ValueError("Direção de fluxo 'descendente' inconsistente com gradiente calculado (fluxo ascendente).")
+    if direcao_fluxo.lower() == 'ascendente' and i_medio < 0:
+         raise ValueError("Direção de fluxo 'ascendente' inconsistente com gradiente calculado (fluxo descendente).")
 
     resultados: List[TensaoPontoFluxo] = []
     tensao_total_acumulada = 0.0 # Tensão total na profundidade_topo_fluxo (pode vir de camadas acima)
@@ -165,7 +167,11 @@ def calcular_tensoes_com_fluxo(
         # h_total = u/gamma_w + Z_elev => u = gamma_w * (h_total - Z_elev)
         # Z_elev = -z_ponto (datum na superfície)
         pressao_neutra = gamma_w * (carga_total_ponto - (-z_ponto))
-        pressao_neutra = max(0, pressao_neutra) # Pressão neutra não pode ser negativa em fluxo saturado (exceto capilaridade, não considerada aqui)
+        # Nota: Em fluxo ascendente, a pressão pode ser menor que hidrostática, mas não negativa em solos saturados
+        # Apenas limitamos a zero se for ligeiramente negativo por erros numéricos
+        if pressao_neutra < -0.1:  # Tolerância para detectar erros reais vs. numéricos
+            print(f"Aviso: Pressão neutra negativa calculada ({pressao_neutra:.2f}) na profundidade {z_ponto:.2f} m.")
+        pressao_neutra = max(0, pressao_neutra)
 
         # Calcula Tensão Efetiva Vertical (σ'v)
         tensao_efetiva_v = sigma_v - pressao_neutra

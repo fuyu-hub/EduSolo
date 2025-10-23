@@ -142,7 +142,7 @@ class TensaoPonto(BaseModel):
 
 class TensoesGeostaticasInput(BaseModel):
     camadas: List[CamadaSolo] = Field(..., min_items=1, description="Lista das camadas de solo, da superfície para baixo")
-    profundidade_na: float = Field(..., ge=0, description="Profundidade do Nível d'Água (NA) a partir da superfície (m). Usar 0 se na superfície.")
+    profundidade_na: Optional[float] = Field(None, ge=0, description="Profundidade do Nível d'Água (NA) a partir da superfície (m). Usar 0 se na superfície, None ou valor muito alto se não há NA.")
     altura_capilar: float = Field(0.0, ge=0, description="Altura da franja capilar acima do NA (m)")
     peso_especifico_agua: float = Field(10.0, gt=0, description="Peso específico da água (γw) (kN/m³)")
 
@@ -264,8 +264,8 @@ class ClassificacaoUSCSInput(BaseModel):
     @validator('ip')
     def check_ip_ll(cls, ip, values):
         ll = values.get('ll')
-        # if ll is not None and ip is not None and ip > ll + EPSILON:
-        #     raise ValueError("Índice de Plasticidade (IP) não pode ser maior que o Limite de Liquidez (LL).")
+        if ll is not None and ip is not None and ip > ll + EPSILON:
+            raise ValueError("Índice de Plasticidade (IP) não pode ser maior que o Limite de Liquidez (LL).")
         return ip
 
     @validator('pass_peneira_200')

@@ -51,8 +51,9 @@ def calcular_indices_fisicos(dados: IndicesFisicosInput) -> IndicesFisicosOutput
         mw_calc: Optional[float] = None # Massa água
 
         # γw em g/cm³ (aproximação comum)
-        # Se precisar de alta precisão, usar γw = 9.81 kN/m³ => ~0.999 g/cm³ a 4°C
-        gama_w_gcm3 = 1.0 if np.isclose(gama_w, 10.0, rtol=1e-2) else gama_w / 9.81
+        # Conversão: se γw ≈ 10 kN/m³, então ρw ≈ 1.0 g/cm³
+        # Para outros valores: γw (kN/m³) / 9.81 ≈ ρw (g/cm³)
+        gama_w_gcm3 = 1.0 if np.isclose(gama_w, 10.0, rtol=0.05) else (gama_w / 9.81)
 
         # --- CÁLCULOS DIRETOS PRIORITÁRIOS (mantidos) ---
         if w is None and mu_in is not None and ms_in is not None:

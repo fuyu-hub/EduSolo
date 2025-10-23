@@ -33,20 +33,18 @@ def calcular_tensoes_geostaticas(dados: TensoesGeostaticasInput) -> TensoesGeost
         # Se nenhuma camada tem NA específico, usa o NA global
         tem_na_especifico = any(na is not None for na in nas_camadas)
         
-        # Verifica se o NA global é válido (não é o valor padrão 999 ou similar)
+        # Verifica se o NA global é válido
         profundidade_total = sum(c.espessura for c in dados.camadas)
-        na_global_valido = dados.profundidade_na > 0 and dados.profundidade_na < profundidade_total * 2
+        # NA é válido se for especificado e estiver dentro ou próximo da profundidade total do perfil
+        na_global_valido = dados.profundidade_na is not None and (0 <= dados.profundidade_na <= profundidade_total * 1.5)
 
         # Ponto inicial na superfície
         # Calcula pressão neutra inicial considerando capilaridade
-        u_inicial = 0.0
-        if dados.profundidade_na <= 0 and dados.altura_capilar > 0: # NA na superfície ou acima
-            # Considera apenas a parte da capilaridade acima da superfície (se houver)
-            # Neste caso simplificado, se NA=0, a pressão na superfície é negativa pela capilaridade
-             u_inicial = -min(dados.altura_capilar, 0) * gama_w # Será 0 se NA=0, mas pode ser negativa se NA < 0
-             # Para o caso NA=0 exato, a pressão é -altura_capilar*gama_w, mas só se z<altura_capilar
-             # Na superfície (z=0), se NA=0, u = -altura_capilar*gama_w *apenas* se h_capilar > 0
-             u_inicial = -dados.altura_capilar * gama_w if dados.altura_capilar > 0 else 0.0
+        # Se NA está na superfície (z=0) e há capilaridade, a pressão é negativa
+        if dados.profundidade_na is not None and dados.profundidade_na <= 0 and dados.altura_capilar > 0:
+            u_inicial = -dados.altura_capilar * gama_w  # Pressão negativa devido à capilaridade
+        else:
+            u_inicial = 0.0  # Superfície acima do NA e da franja capilar ou sem NA
 
 
         sigma_ef_v_inicial = 0.0 - u_inicial
@@ -66,8 +64,8 @@ def calcular_tensoes_geostaticas(dados: TensoesGeostaticasInput) -> TensoesGeost
             z_topo = profundidade_atual
             z_base = profundidade_base_camada
             
-            # Profundidade do início da capilaridade
-            prof_inicio_capilaridade = max(0, dados.profundidade_na - dados.altura_capilar)
+            # Profundidade do início da capilaridade (apenas se NA for definido)
+            prof_inicio_capilaridade = max(0, dados.profundidade_na - dados.altura_capilar) if dados.profundidade_na is not None else None
 
             # --- Adicionar ponto no NA específico da camada se estiver dentro dela ---
             if camada.profundidade_na_camada is not None:
@@ -102,9 +100,14 @@ def calcular_tensoes_geostaticas(dados: TensoesGeostaticasInput) -> TensoesGeost
             # --- Adicionar ponto no início da capilaridade se estiver dentro desta camada ---
             altura_cap_usar = camada.altura_capilar_camada if camada.altura_capilar_camada is not None else dados.altura_capilar
             na_usar = camada.profundidade_na_camada if camada.profundidade_na_camada is not None else dados.profundidade_na
-            prof_inicio_capilaridade_camada = max(0, na_usar - altura_cap_usar)
             
-            if altura_cap_usar > 0 and prof_inicio_capilaridade_camada > 0:
+            # Só calcula início da capilaridade se houver NA definido
+            if na_usar is not None and altura_cap_usar > 0:
+                prof_inicio_capilaridade_camada = max(0, na_usar - altura_cap_usar)
+            else:
+                prof_inicio_capilaridade_camada = None
+            
+            if prof_inicio_capilaridade_camada is not None and prof_inicio_capilaridade_camada > 0:
                 # Verifica se o início da capilaridade está dentro desta camada
                 if z_topo < prof_inicio_capilaridade_camada <= z_base:
                     # Calcula tensão total até o início da capilaridade
@@ -133,36 +136,47 @@ def calcular_tensoes_geostaticas(dados: TensoesGeostaticasInput) -> TensoesGeost
                             ))
 
             # --- Calcular Tensão Total na Base da Camada ---
-            # Se não há NA válido, usa γnat se disponível, senão γsat
-            if not na_global_valido and not tem_na_especifico:
+            # Determina se esta camada está acima, atravessada ou abaixo do NA (global ou específico da camada)
+            
+            # Verifica se a camada tem NA específico
+            if camada.profundidade_na_camada is not None:
+                na_para_tensao = camada.profundidade_na_camada
+            elif dados.profundidade_na is not None:
+                na_para_tensao = dados.profundidade_na
+            else:
+                na_para_tensao = None
+            
+            # Agora calcula a tensão total baseado na posição do NA
+            if na_para_tensao is None:
+                # Sem NA: usa γnat se disponível, senão γsat
                 gama_camada = camada.gama_nat if camada.gama_nat is not None else camada.gama_sat
                 if gama_camada is None:
                     raise ValueError(f"Peso específico (γnat ou γsat) não definido para a camada {i+1}. Defina pelo menos um deles.")
                 tensao_total_atual += gama_camada * camada.espessura
             
-            elif z_base <= dados.profundidade_na: # Camada inteira acima do NA
+            elif z_base <= na_para_tensao: # Camada inteira acima do NA
                 gama_camada = camada.gama_nat
                 if gama_camada is None:
-                    raise ValueError(f"Peso específico natural (γnat) não definido para a camada {i+1} (ID: {i}) que está acima do NA (Prof: {z_topo:.2f}-{z_base:.2f} m, NA: {dados.profundidade_na:.2f} m).")
+                    raise ValueError(f"Peso específico natural (γnat) não definido para a camada {i+1} (ID: {i}) que está acima do NA (Prof: {z_topo:.2f}-{z_base:.2f} m, NA: {na_para_tensao:.2f} m).")
                 tensao_total_atual += gama_camada * camada.espessura
 
-            elif z_topo >= dados.profundidade_na: # Camada inteira abaixo do NA
+            elif z_topo >= na_para_tensao: # Camada inteira abaixo do NA
                 gama_camada = camada.gama_sat
                 if gama_camada is None:
-                    raise ValueError(f"Peso específico saturado (γsat) não definido para a camada {i+1} (ID: {i}) que está abaixo do NA (Prof: {z_topo:.2f}-{z_base:.2f} m, NA: {dados.profundidade_na:.2f} m).")
+                    raise ValueError(f"Peso específico saturado (γsat) não definido para a camada {i+1} (ID: {i}) que está abaixo do NA (Prof: {z_topo:.2f}-{z_base:.2f} m, NA: {na_para_tensao:.2f} m).")
                 tensao_total_atual += gama_camada * camada.espessura
 
             else: # Camada atravessada pelo NA
-                espessura_acima_na = dados.profundidade_na - z_topo
-                espessura_abaixo_na = z_base - dados.profundidade_na
+                espessura_acima_na = na_para_tensao - z_topo
+                espessura_abaixo_na = z_base - na_para_tensao
 
                 gama_nat_camada = camada.gama_nat
                 gama_sat_camada = camada.gama_sat
 
                 if gama_nat_camada is None:
-                     raise ValueError(f"Peso específico natural (γnat) não definido para a camada {i+1} (ID: {i}) que é atravessada pelo NA (NA: {dados.profundidade_na:.2f} m).")
+                     raise ValueError(f"Peso específico natural (γnat) não definido para a camada {i+1} (ID: {i}) que é atravessada pelo NA (NA: {na_para_tensao:.2f} m).")
                 if gama_sat_camada is None:
-                     raise ValueError(f"Peso específico saturado (γsat) não definido para a camada {i+1} (ID: {i}) que é atravessada pelo NA (NA: {dados.profundidade_na:.2f} m).")
+                     raise ValueError(f"Peso específico saturado (γsat) não definido para a camada {i+1} (ID: {i}) que é atravessada pelo NA (NA: {na_para_tensao:.2f} m).")
 
                 # Adiciona contribuição da parte acima do NA
                 tensao_total_na_interface = tensao_total_atual + gama_nat_camada * espessura_acima_na
@@ -173,9 +187,9 @@ def calcular_tensoes_geostaticas(dados: TensoesGeostaticasInput) -> TensoesGeost
                 sigma_ef_v_no_na = sigma_v_no_na - u_no_na
                 sigma_ef_h_no_na = sigma_ef_v_no_na * camada.Ko
                 # Evita duplicar se o NA coincide com interface de camadas
-                if not any(np.isclose(p.profundidade, dados.profundidade_na) for p in pontos_calculo):
+                if not any(np.isclose(p.profundidade, na_para_tensao) for p in pontos_calculo):
                     pontos_calculo.append(TensaoPonto(
-                        profundidade=dados.profundidade_na,
+                        profundidade=na_para_tensao,
                         tensao_total_vertical=round(sigma_v_no_na, 4),
                         pressao_neutra=round(u_no_na, 4),
                         tensao_efetiva_vertical=round(sigma_ef_v_no_na, 4),
@@ -198,41 +212,45 @@ def calcular_tensoes_geostaticas(dados: TensoesGeostaticasInput) -> TensoesGeost
                 na_relevante = camada.profundidade_na_camada
                 altura_capilar_relevante = camada.altura_capilar_camada if camada.altura_capilar_camada is not None else 0.0
             # Regra 3: Se nenhuma camada tem NA específico E o NA global é válido, usa o global
-            elif not tem_na_especifico and na_global_valido:
+            elif not tem_na_especifico and na_global_valido and dados.profundidade_na is not None:
                 na_relevante = dados.profundidade_na
                 altura_capilar_relevante = dados.altura_capilar
             # Regra 4: Tem NAs específicos mas esta camada não tem
             else:
-                # Se o NA global não é válido, não há NA para esta camada
-                if not na_global_valido:
-                    na_relevante = None
-                else:
-                    # Verifica se há camada impermeável entre esta camada e o NA global
-                    tem_impermeavel_entre_na = False
-                    prof_na_global = dados.profundidade_na
+                # Procura o NA mais próximo acima (seja específico de camada ou global)
+                # que não esteja separado por uma camada impermeável
+                na_candidato = None
+                altura_cap_candidato = 0.0
+                
+                # Primeiro, verifica camadas acima procurando por aquíferos que se estendem para cá
+                for j in range(i - 1, -1, -1):  # De cima para baixo até esta camada
+                    camada_j = dados.camadas[j]
                     
-                    # Procura camadas impermeáveis entre o NA global e esta camada
+                    # Se encontrar impermeável, para de procurar
+                    if camada_j.impermeavel:
+                        break
+                    
+                    # Se a camada tem NA específico, usa ele
+                    if camada_j.profundidade_na_camada is not None:
+                        na_candidato = camada_j.profundidade_na_camada
+                        altura_cap_candidato = camada_j.altura_capilar_camada if camada_j.altura_capilar_camada is not None else 0.0
+                        break
+                
+                # Se não encontrou NA específico em camadas acima, tenta o NA global
+                if na_candidato is None and na_global_valido and dados.profundidade_na is not None:
+                    # Verifica se há impermeável entre o NA global e esta camada
+                    tem_impermeavel = False
                     for j in range(i):
-                        camada_j = dados.camadas[j]
-                        prof_topo_j = sum(dados.camadas[k].espessura for k in range(j))
-                        prof_base_j = prof_topo_j + camada_j.espessura
-                        
-                        # Se a camada j é impermeável e está entre o NA e a camada atual
-                        if camada_j.impermeavel:
-                            # Verifica se está entre o NA e esta camada
-                            if (prof_na_global <= prof_base_j and prof_topo_j <= z_topo) or \
-                               (prof_topo_j <= prof_na_global <= prof_base_j):
-                                tem_impermeavel_entre_na = True
-                                break
+                        if dados.camadas[j].impermeavel:
+                            tem_impermeavel = True
+                            break
                     
-                    if not tem_impermeavel_entre_na:
-                        # Não há impermeável entre o NA e esta camada, usa NA global
-                        na_relevante = dados.profundidade_na
-                        altura_capilar_relevante = dados.altura_capilar
-                    else:
-                        # Há impermeável entre o NA e esta camada, sem NA próprio
-                        # Poropressão é zero
-                        na_relevante = None
+                    if not tem_impermeavel:
+                        na_candidato = dados.profundidade_na
+                        altura_cap_candidato = dados.altura_capilar
+                
+                na_relevante = na_candidato
+                altura_capilar_relevante = altura_cap_candidato
             
             # Calcula pressão neutra
             if na_relevante is None:
