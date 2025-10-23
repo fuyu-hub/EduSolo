@@ -31,7 +31,6 @@ const modules = [
     description: "Análise de curvas de compactação e energia Proctor",
     path: "/compactacao",
     color: "from-violet-500 to-purple-600",
-    comingSoon: true,
   },
   {
     icon: FileText,
@@ -39,7 +38,6 @@ const modules = [
     description: "Calcule tensões verticais, efetivas e neutras no solo",
     path: "/tensoes",
     color: "from-emerald-500 to-green-600",
-    comingSoon: true,
   },
   {
     icon: TrendingDown,
