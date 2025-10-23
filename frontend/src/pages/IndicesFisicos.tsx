@@ -196,11 +196,14 @@ export default function IndicesFisicos() {
         setResults(response.data);
       }
     } catch (err) {
-      console.error("Erro ao chamar a API (catch):", err);
       let errorMessage = "Não foi possível conectar ao servidor de cálculo.";
       if (axios.isAxiosError(err) && err.response?.data?.detail) {
         if (Array.isArray(err.response.data.detail)) {
-          errorMessage = err.response.data.detail.map((d: any) => `${d.loc.join('.')} - ${d.msg}`).join("; ");
+          interface ValidationError {
+            loc: string[];
+            msg: string;
+          }
+          errorMessage = err.response.data.detail.map((d: ValidationError) => `${d.loc.join('.')} - ${d.msg}`).join("; ");
         } else {
           errorMessage = err.response.data.detail;
         }
@@ -427,14 +430,14 @@ export default function IndicesFisicos() {
         <PrintHeader moduleTitle="Índices Físicos" moduleName="indices-fisicos" />
         
         {/* Header */}
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-left-4 duration-500">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
               <Calculator className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Índices Físicos</h1>
-              <p className="text-muted-foreground">Análise das propriedades físicas do solo</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Índices Físicos</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">Análise das propriedades físicas do solo</p>
             </div>
           </div>
           
@@ -454,13 +457,13 @@ export default function IndicesFisicos() {
         {/* Layout Principal */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           {/* Input Panel - Ajustes de espaçamento aqui */}
-          <Card className="glass p-6 lg:col-span-1 flex flex-col"> {/* Adicionado flex flex-col */}
+          <Card className="glass p-4 sm:p-6 lg:col-span-1 flex flex-col animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
              <h2 className="text-xl font-semibold text-foreground mb-6 flex items-center gap-2"> {/* Aumentado mb-4 para mb-6 */}
               <Info className="w-5 h-5 text-primary" />
               Dados de Entrada
             </h2>
              {/* Aumentado gap e mb */}
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mb-8"> {/* Aumentado gap-4 para gap-x-6 gap-y-5, mb-6 para mb-8 */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mb-8" role="group" aria-labelledby="input-section-title">
               {/* Coluna 1 Inputs */}
               <div className="space-y-5">
                 <InputWithValidation
@@ -567,20 +570,30 @@ export default function IndicesFisicos() {
                  </Select>
               </div>
               {/* Actions */}
-              <div className="flex gap-3 md:col-span-2 mt-auto pt-4">
-                <Button onClick={handleCalculate} disabled={!isFormValid || isCalculating} className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground">
+              <div className="flex gap-3 md:col-span-2 mt-auto pt-4" role="group" aria-label="Ações do formulário">
+                <Button 
+                  onClick={handleCalculate} 
+                  disabled={!isFormValid || isCalculating} 
+                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                  aria-label={isCalculating ? "Calculando dados" : "Calcular índices físicos"}
+                >
                   <Calculator className="w-4 h-4 mr-2" />
                   {isCalculating ? "Calculando..." : "Calcular"}
                 </Button>
                 <SoilExamples onSelect={handleLoadExample} disabled={isCalculating} />
-                <Button onClick={handleClear} variant="outline" disabled={isCalculating}>
+                <Button 
+                  onClick={handleClear} 
+                  variant="outline" 
+                  disabled={isCalculating}
+                  aria-label="Limpar todos os campos"
+                >
                   Limpar
                 </Button>
               </div>
           </Card>
 
           {/* Card de Saída Unificado */}
-          <Card className="glass p-6 lg:col-span-1 space-y-6">
+          <Card className="glass p-4 sm:p-6 lg:col-span-1 space-y-6 animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
               {/* Seção do Diagrama de Fases */}
               <div>
                 <h2 className="text-xl font-semibold text-foreground mb-4">Visualização (Diagrama de Fases)</h2>
@@ -664,7 +677,9 @@ export default function IndicesFisicos() {
 
         {/* Card de Interpretação */}
         {results && !results.erro && !isCalculating && (
-          <ResultInterpretation results={results} />
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: '300ms' }}>
+            <ResultInterpretation results={results} />
+          </div>
         )}
 
         {/* Dialog para salvar cálculo */}

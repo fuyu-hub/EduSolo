@@ -159,7 +159,7 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
 
         // Usar autoTable para criar a tabela
         try {
-          (doc as any).autoTable({
+          doc.autoTable({
             startY: yPosition,
             head: [table.headers],
             body: table.rows,
@@ -179,9 +179,8 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
             margin: { left: margin, right: margin },
           });
 
-          yPosition = (doc as any).lastAutoTable.finalY + 5;
+          yPosition = doc.lastAutoTable.finalY + 5;
         } catch (tableError) {
-          console.error('Erro ao criar tabela:', tableError);
           // Se falhar, continuar sem a tabela
           yPosition += 10;
         }
@@ -232,7 +231,6 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
     
     return true;
   } catch (error) {
-    console.error('Erro ao exportar PDF:', error);
     return false;
   }
 }
@@ -261,7 +259,6 @@ export async function captureChartAsImage(elementId: string): Promise<string | n
     
     return canvas.toDataURL('image/png');
   } catch (error) {
-    console.error('Erro ao capturar gráfico:', error);
     return null;
   }
 }
@@ -334,7 +331,6 @@ export async function exportToExcel(data: ExcelExportData): Promise<boolean> {
     
     return true;
   } catch (error) {
-    console.error('Erro ao exportar Excel:', error);
     return false;
   }
 }

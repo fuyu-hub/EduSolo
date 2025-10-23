@@ -31,7 +31,6 @@ export function useSavedCalculations(moduleName: string) {
         setCalculations(allCalculations[moduleName] || []);
       }
     } catch (error) {
-      console.error('Erro ao carregar cálculos salvos:', error);
       setCalculations([]);
     }
   };
@@ -59,7 +58,6 @@ export function useSavedCalculations(moduleName: string) {
       loadCalculations();
       return true;
     } catch (error) {
-      console.error('Erro ao salvar cálculo:', error);
       return false;
     }
   };
@@ -81,7 +79,6 @@ export function useSavedCalculations(moduleName: string) {
       }
       return false;
     } catch (error) {
-      console.error('Erro ao excluir cálculo:', error);
       return false;
     }
   };
@@ -104,7 +101,6 @@ export function useSavedCalculations(moduleName: string) {
       }
       return false;
     } catch (error) {
-      console.error('Erro ao renomear cálculo:', error);
       return false;
     }
   };
@@ -124,7 +120,6 @@ export function useSavedCalculations(moduleName: string) {
       loadCalculations();
       return true;
     } catch (error) {
-      console.error('Erro ao limpar cálculos:', error);
       return false;
     }
   };

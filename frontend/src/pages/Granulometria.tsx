@@ -168,12 +168,10 @@ export default function Granulometria() {
 
       setResults(response.data);
       toast.success("Análise granulométrica concluída!");
-    } catch (error: any) {
-      console.error("Erro ao calcular granulometria:", error);
-      
-      if (error.response?.data?.detail) {
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.data?.detail) {
         toast.error(`Erro: ${error.response.data.detail}`);
-      } else if (error.message) {
+      } else if (error instanceof Error) {
         toast.error(`Erro: ${error.message}`);
       } else {
         toast.error("Erro ao calcular. Verifique os dados e tente novamente.");

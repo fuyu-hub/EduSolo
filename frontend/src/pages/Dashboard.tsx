@@ -77,9 +77,9 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Hero Section */}
-      <div className="space-y-3">
+      <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <h1 className="text-4xl font-bold text-foreground">
-          Bem-vindo ao <span className="text-primary">EduSolo</span>
+          Bem-vindo ao <span className="text-primary bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">EduSolo</span>
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl">
           Sua suíte completa de ferramentas para análise e aprendizado em Mecânica dos Solos
@@ -87,39 +87,50 @@ export default function Dashboard() {
       </div>
 
       {/* Modules Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {modules.map((module) => {
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="list" aria-label="Módulos disponíveis">
+        {modules.map((module, index) => {
           const Icon = module.icon;
           const content = (
             <Card
               className={cn(
                 "glass p-6 transition-smooth hover:shadow-2xl hover:shadow-primary/20 group cursor-pointer relative overflow-hidden h-full min-h-[200px] flex flex-col",
-                !module.comingSoon && "hover:-translate-y-1"
+                "animate-in fade-in slide-in-from-bottom-4 duration-700",
+                !module.comingSoon && "hover:-translate-y-2 hover:scale-[1.02] active:scale-[0.98]"
               )}
+              style={{ 
+                animationDelay: `${index * 80}ms`,
+                animationFillMode: 'backwards'
+              }}
             >
               {/* Gradient overlay on hover */}
               <div
                 className={cn(
-                  "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-5 transition-opacity",
+                  "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-all duration-500",
                   module.color
                 )}
               />
+
+              {/* Shine effect on hover */}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+              </div>
 
               {/* Content */}
               <div className="relative flex-1 flex flex-col">
                 <div
                   className={cn(
                     "w-14 h-14 rounded-xl bg-gradient-to-br flex items-center justify-center mb-4 shadow-lg",
+                    "transition-all duration-300 group-hover:scale-110 group-hover:rotate-3",
                     module.color
                   )}
                 >
-                  <Icon className="w-7 h-7 text-white" />
+                  <Icon className="w-7 h-7 text-white transition-transform duration-300 group-hover:scale-110" />
                 </div>
 
-                <h3 className="text-xl font-semibold text-foreground mb-2 flex items-center gap-2">
+                <h3 className="text-xl font-semibold text-foreground mb-2 flex items-center gap-2 group-hover:text-primary transition-colors">
                   {module.title}
                   {module.comingSoon && (
-                    <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary font-normal">
+                    <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary font-normal animate-pulse">
                       Em breve
                     </span>
                   )}
@@ -133,11 +144,16 @@ export default function Dashboard() {
           );
 
           if (module.comingSoon) {
-            return <div key={module.title}>{content}</div>;
+            return <div key={module.title} role="listitem">{content}</div>;
           }
 
           return (
-            <Link key={module.title} to={module.path}>
+            <Link 
+              key={module.title} 
+              to={module.path}
+              role="listitem"
+              aria-label={`Acessar módulo ${module.title}`}
+            >
               {content}
             </Link>
           );
@@ -146,37 +162,40 @@ export default function Dashboard() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12">
-        <Card className="glass p-5 border-l-4 border-l-primary">
+        <Card className="glass p-5 border-l-4 border-l-primary animate-in fade-in slide-in-from-left-4 duration-700 hover:shadow-lg transition-all hover:border-l-8"
+          style={{ animationDelay: '400ms', animationFillMode: 'backwards' }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center transition-all hover:scale-110 hover:rotate-12">
               <Calculator className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">8+</p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">8+</p>
               <p className="text-sm text-muted-foreground">Módulos de Cálculo</p>
             </div>
           </div>
         </Card>
 
-        <Card className="glass p-5 border-l-4 border-l-violet-500">
+        <Card className="glass p-5 border-l-4 border-l-violet-500 animate-in fade-in slide-in-from-bottom-4 duration-700 hover:shadow-lg transition-all hover:border-l-8"
+          style={{ animationDelay: '500ms', animationFillMode: 'backwards' }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center transition-all hover:scale-110 hover:rotate-12">
               <BookOpen className="w-5 h-5 text-violet-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">100%</p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">100%</p>
               <p className="text-sm text-muted-foreground">Gratuito e Open Source</p>
             </div>
           </div>
         </Card>
 
-        <Card className="glass p-5 border-l-4 border-l-emerald-500">
+        <Card className="glass p-5 border-l-4 border-l-emerald-500 animate-in fade-in slide-in-from-right-4 duration-700 hover:shadow-lg transition-all hover:border-l-8"
+          style={{ animationDelay: '600ms', animationFillMode: 'backwards' }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center transition-all hover:scale-110 hover:rotate-12">
               <TrendingUp className="w-5 h-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">Fase 2</p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">Fase 2</p>
               <p className="text-sm text-muted-foreground">Projeto em Desenvolvimento</p>
             </div>
           </div>

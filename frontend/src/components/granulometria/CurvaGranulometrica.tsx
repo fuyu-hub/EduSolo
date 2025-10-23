@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, Area, ComposedChart, Scatter, ReferenceArea } from "recharts";
 
@@ -33,7 +34,8 @@ const ZONAS_GRANULOMETRICAS = {
   pedregulho: { min: 2.0, max: 60.0, label: 'PEDREGULHO' }
 };
 
-export default function CurvaGranulometrica({ dados, d10, d30, d60 }: CurvaGranulometricaProps) {
+// Otimizado com React.memo para evitar re-renders desnecessários
+const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30, d60 }: CurvaGranulometricaProps) {
   
   // Preparar dados para o gráfico (ordenar por abertura crescente para plotagem)
   const dadosGrafico = [...dados]
@@ -88,8 +90,21 @@ export default function CurvaGranulometrica({ dados, d10, d30, d60 }: CurvaGranu
     return abertura.toFixed(3);
   };
 
+  // Interfaces para o Tooltip do Recharts
+  interface TooltipPayload {
+    payload: {
+      aberturaFormatada: string;
+      passante: number;
+    };
+  }
+
+  interface CustomTooltipProps {
+    active?: boolean;
+    payload?: TooltipPayload[];
+  }
+
   // Tooltip customizado
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
@@ -413,5 +428,7 @@ export default function CurvaGranulometrica({ dados, d10, d30, d60 }: CurvaGranu
     </Card>
     </div>
   );
-}
+});
+
+export default CurvaGranulometrica;
 

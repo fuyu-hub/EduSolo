@@ -1,6 +1,7 @@
 // src/components/visualizations/PlasticityChart.tsx
-import React, { useState } from 'react';
-import ReactDOM from 'react-dom';
+import * as React from 'react';
+import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ScatterChart,
   Scatter,
@@ -632,7 +633,7 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
       </div>
 
       {/* Popover da zona selecionada - renderizado via Portal no body */}
-      {showZoneInfo && selectedZone && ReactDOM.createPortal(
+      {showZoneInfo && selectedZone && createPortal(
         <div 
           ref={popupRef}
           className="fixed animate-in fade-in slide-in-from-bottom-2 duration-200"

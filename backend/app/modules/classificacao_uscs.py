@@ -17,24 +17,27 @@ def classificar_uscs(dados: ClassificacaoUSCSInput) -> ClassificacaoUSCSOutput:
         ClassificacaoUSCSOutput: Objeto com classificação, descrição e explicação
     """
     try:
-        # Validações iniciais
-        if dados.porcentagem_areia is None or dados.porcentagem_silte_argila is None:
+        # Calcular porcentagens a partir dos dados das peneiras
+        # pass_peneira_200 = % finos (silte + argila)
+        # pass_peneira_4 = % finos + % areia
+        # 100 - pass_peneira_4 = % pedregulho
+        
+        finos = dados.pass_peneira_200  # % passando na #200 (finos)
+        pedregulho = 100.0 - dados.pass_peneira_4  # % retido na #4 (pedregulho)
+        areia = dados.pass_peneira_4 - dados.pass_peneira_200  # % entre #4 e #200 (areia)
+        
+        # Validação básica
+        if finos < 0 or pedregulho < 0 or areia < 0:
             return ClassificacaoUSCSOutput(
-                erro="É necessário fornecer porcentagem_areia e porcentagem_silte_argila"
+                erro="Dados granulométricos inconsistentes"
             )
         
-        # Validar que a soma das porcentagens seja aproximadamente 100%
-        if dados.porcentagem_pedregulho is not None:
-            soma = dados.porcentagem_pedregulho + dados.porcentagem_areia + dados.porcentagem_silte_argila
-            if abs(soma - 100.0) > 1.0:  # Tolerância de 1%
-                return ClassificacaoUSCSOutput(
-                    erro=f"A soma das porcentagens deve ser 100% (atual: {soma:.1f}%)"
-                )
-        
-        # Determinar finos
-        finos = dados.porcentagem_silte_argila
-        pedregulho = dados.porcentagem_pedregulho if dados.porcentagem_pedregulho is not None else 0.0
-        areia = dados.porcentagem_areia
+        # Verificar solo altamente orgânico (Turfa)
+        if dados.is_altamente_organico:
+            return ClassificacaoUSCSOutput(
+                classificacao="Pt",
+                descricao="Turfa e outros solos altamente orgânicos"
+            )
         
         # Decisão principal: Solo grosso (< 50% finos) ou fino (>= 50% finos)
         if finos < 50.0:
@@ -83,8 +86,6 @@ def _classificar_solo_grosso(pedregulho: float, areia: float, finos: float,
         else:
             classificacao = f"{prefixo}P"  # Poorly-graded
             descricao = f"{tipo_solo} mal graduado"
-        
-        explicacao = f"Solo grosso com {finos:.1f}% de finos (<5%). Cu={Cu:.2f}, Cc={Cc:.2f}."
     
     elif 5.0 <= finos <= 12.0:
         # Entre 5-12% finos - classificação dupla ou borderline
@@ -106,14 +107,11 @@ def _classificar_solo_grosso(pedregulho: float, areia: float, finos: float,
             else:
                 classificacao = f"{prefixo}P-{prefixo}{sufixo_finos}"
                 descricao = f"{tipo_solo} mal graduado com finos"
-            
-            explicacao = f"Solo grosso com {finos:.1f}% de finos (5-12%, classificação dupla). Cu={Cu:.2f}, Cc={Cc:.2f}."
         else:
             # Sem Cu e Cc, usa apenas os finos
             sufixo_finos = _determinar_sufixo_finos(dados)
             classificacao = f"{prefixo}{sufixo_finos}"
             descricao = f"{tipo_solo} com finos"
-            explicacao = f"Solo grosso com {finos:.1f}% de finos (5-12%). Cu e Cc não fornecidos."
     
     else:  # finos > 12%
         # Mais de 12% finos - classificação baseada em plasticidade dos finos
@@ -126,13 +124,10 @@ def _classificar_solo_grosso(pedregulho: float, areia: float, finos: float,
             descricao = f"{tipo_solo} argiloso"
         else:
             descricao = f"{tipo_solo} com finos"
-        
-        explicacao = f"Solo grosso com {finos:.1f}% de finos (>12%). Classificação baseada em plasticidade dos finos."
     
     return ClassificacaoUSCSOutput(
         classificacao=classificacao,
-        descricao=descricao,
-        explicacao=explicacao
+        descricao=descricao
     )
 
 
@@ -140,13 +135,13 @@ def _classificar_solo_fino(dados: ClassificacaoUSCSInput) -> ClassificacaoUSCSOu
     """Classifica solos finos (>=50% de finos)."""
     
     # Requer limites de Atterberg
-    if dados.LL is None:
+    if dados.ll is None:
         return ClassificacaoUSCSOutput(
             erro="Para solos finos (>=50% finos), o Limite de Liquidez (LL) é obrigatório"
         )
     
-    LL = dados.LL
-    IP = dados.IP if dados.IP is not None else 0.0
+    LL = dados.ll
+    IP = dados.ip if dados.ip is not None else 0.0
     
     # Determinar se é solo de alta ou baixa plasticidade
     if LL < 50.0:
@@ -155,17 +150,14 @@ def _classificar_solo_fino(dados: ClassificacaoUSCSInput) -> ClassificacaoUSCSOu
             # Acima da linha A
             classificacao = "CL"
             descricao = "Argila de baixa plasticidade"
-            explicacao = f"Solo fino com LL={LL:.1f}%, IP={IP:.1f}%. Acima da linha A, baixa plasticidade."
         elif IP < 4.0:
             # Abaixo da linha A, baixa plasticidade
             classificacao = "ML"
             descricao = "Silte de baixa plasticidade"
-            explicacao = f"Solo fino com LL={LL:.1f}%, IP={IP:.1f}%. Abaixo da linha A, baixa plasticidade."
         else:
             # Zona intermediária (CL-ML)
             classificacao = "CL-ML"
             descricao = "Silte argiloso de baixa plasticidade"
-            explicacao = f"Solo fino com LL={LL:.1f}%, IP={IP:.1f}%. Na zona intermediária."
     
     else:
         # Alta plasticidade (H)
@@ -173,28 +165,23 @@ def _classificar_solo_fino(dados: ClassificacaoUSCSInput) -> ClassificacaoUSCSOu
             # Acima da linha A
             classificacao = "CH"
             descricao = "Argila de alta plasticidade"
-            explicacao = f"Solo fino com LL={LL:.1f}%, IP={IP:.1f}%. Acima da linha A, alta plasticidade."
         else:
             # Abaixo da linha A
             classificacao = "MH"
             descricao = "Silte de alta plasticidade"
-            explicacao = f"Solo fino com LL={LL:.1f}%, IP={IP:.1f}%. Abaixo da linha A, alta plasticidade."
     
     # Verificar se é solo orgânico
-    if dados.organico and dados.organico is True:
+    if dados.is_organico_fino:
         if LL < 50.0:
             classificacao = "OL"
             descricao = "Silte/argila orgânico de baixa plasticidade"
-            explicacao += " Solo identificado como orgânico."
         else:
             classificacao = "OH"
             descricao = "Silte/argila orgânico de alta plasticidade"
-            explicacao += " Solo identificado como orgânico."
     
     return ClassificacaoUSCSOutput(
         classificacao=classificacao,
-        descricao=descricao,
-        explicacao=explicacao
+        descricao=descricao
     )
 
 
@@ -202,11 +189,11 @@ def _determinar_sufixo_finos(dados: ClassificacaoUSCSInput) -> str:
     """
     Determina o sufixo para finos em solos grossos (M=siltoso, C=argiloso).
     """
-    if dados.LL is None or dados.IP is None:
+    if dados.ll is None or dados.ip is None:
         return "M"  # Padrão: assume siltoso se não há dados de plasticidade
     
-    LL = dados.LL
-    IP = dados.IP
+    LL = dados.ll
+    IP = dados.ip
     
     # Critério da linha A
     if IP >= 4.0 and IP >= 0.73 * (LL - 20.0):

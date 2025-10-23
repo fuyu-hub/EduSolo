@@ -1,7 +1,23 @@
 # backend/app/main.py
+"""
+API Principal do EduSolo - Plataforma de Cálculos Geotécnicos.
+
+Esta API fornece endpoints para diversos cálculos de Mecânica dos Solos,
+incluindo índices físicos, limites de consistência, granulometria, compactação,
+tensões geostáticas e mais.
+"""
+
 import numpy as np
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+
+# Importar configurações e logging
+from app.config import settings
+from app.core.logging_config import setup_logging, get_logger
+from app.middleware.logging_middleware import LoggingMiddleware
+
+# Importar modelos Pydantic
 from app.models import (
     IndicesFisicosInput, IndicesFisicosOutput,
     LimitesConsistenciaInput, LimitesConsistenciaOutput,
@@ -10,13 +26,12 @@ from app.models import (
     AcrescimoTensoesInput, AcrescimoTensoesOutput,
     RecalqueAdensamentoInput, RecalqueAdensamentoOutput,
     TempoAdensamentoInput, TempoAdensamentoOutput,
-    # Novos imports para Fluxo e Classificação
     FluxoHidraulicoInput, FluxoHidraulicoOutput,
     ClassificacaoUSCSInput, ClassificacaoUSCSOutput,
-    # Import para Granulometria
     GranulometriaInput, GranulometriaOutput
 )
-# Importa as funções de cálculo de cada módulo
+
+# Importar funções de cálculo
 from app.modules.indices_fisicos import calcular_indices_fisicos
 from app.modules.limites_consistencia import calcular_limites_consistencia
 from app.modules.compactacao import calcular_compactacao
@@ -24,7 +39,6 @@ from app.modules.tensoes_geostaticas import calcular_tensoes_geostaticas
 from app.modules.acrescimo_tensoes import calcular_acrescimo_tensoes
 from app.modules.recalque_adensamento import calcular_recalque_adensamento
 from app.modules.tempo_adensamento import calcular_tempo_adensamento
-# Novos imports
 from app.modules.fluxo_hidraulico import (
     calcular_permeabilidade_equivalente, calcular_velocidades_fluxo,
     calcular_tensoes_com_fluxo, calcular_gradiente_critico, calcular_fs_liquefacao
@@ -32,27 +46,126 @@ from app.modules.fluxo_hidraulico import (
 from app.modules.classificacao_uscs import classificar_uscs
 from app.modules.granulometria import calcular_granulometria
 
+# Configurar logging
+setup_logging()
+logger = get_logger(__name__)
+
+
+# Lifespan context manager (substitui event handlers deprecados)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Gerencia o ciclo de vida da aplicação.
+    Substitui os event handlers deprecados @app.on_event.
+    """
+    # Startup
+    logger.info("=" * 60)
+    logger.info(f"🚀 Iniciando {settings.API_TITLE} v{settings.API_VERSION}")
+    logger.info(f"Ambiente: {settings.ENVIRONMENT}")
+    logger.info(f"Debug: {settings.DEBUG}")
+    logger.info("=" * 60)
+    
+    yield
+    
+    # Shutdown
+    logger.info("=" * 60)
+    logger.info("🛑 Encerrando EduSolo API")
+    logger.info("=" * 60)
+
+
+# Criar aplicação FastAPI
 app = FastAPI(
-    title="EduSolo API",
-    description="Backend para cálculos de Mecânica dos Solos.",
-    version="0.4.0" # Versão incrementada - Adicionado módulo de Granulometria
+    title=settings.API_TITLE,
+    description=settings.API_DESCRIPTION,
+    version=settings.API_VERSION,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    lifespan=lifespan
 )
 
-# Configuração do CORS (mantida)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Adicionar middleware de logging
+app.add_middleware(LoggingMiddleware)
+
+# Configuração do CORS
+if settings.CORS_ENABLED:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.ALLOWED_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    logger.info(f"CORS habilitado para origens: {settings.ALLOWED_ORIGINS}")
 
 # --- Endpoints ---
 
 @app.get("/", tags=["Root"])
 def read_root():
-    """ Endpoint raiz para verificar se a API está online. """
-    return {"message": "Bem-vindo à API do EduSolo v0.4.0"}
+    """
+    Endpoint raiz para verificar se a API está online.
+    
+    Returns:
+        dict: Mensagem de boas-vindas e informações da API
+    """
+    logger.debug("Endpoint raiz acessado")
+    return {
+        "message": f"Bem-vindo à API do EduSolo v{settings.API_VERSION}",
+        "version": settings.API_VERSION,
+        "environment": settings.ENVIRONMENT,
+        "docs": "/docs",
+        "status": "online"
+    }
+
+
+@app.get("/health", tags=["Root"])
+def health_check():
+    """
+    Endpoint de health check para monitoramento.
+    
+    Returns:
+        dict: Status de saúde da aplicação
+    """
+    return {
+        "status": "healthy",
+        "version": settings.API_VERSION,
+        "environment": settings.ENVIRONMENT
+    }
+
+
+@app.get("/cache/stats", tags=["Monitoramento"])
+def get_cache_statistics():
+    """
+    Retorna estatísticas do cache de cálculos.
+    
+    Returns:
+        dict: Estatísticas do cache (hits, misses, size, hit_rate)
+    """
+    from app.utils.cache import get_cache_stats
+    
+    stats = get_cache_stats()
+    logger.debug(f"Estatísticas do cache solicitadas: {stats}")
+    return stats
+
+
+@app.post("/cache/clear", tags=["Monitoramento"])
+def clear_calculation_cache():
+    """
+    Limpa o cache de cálculos.
+    
+    Útil para desenvolvimento ou quando dados de referência mudam.
+    
+    Returns:
+        dict: Mensagem de confirmação
+    """
+    from app.utils.cache import clear_cache
+    
+    clear_cache()
+    logger.info("Cache de cálculos limpo manualmente")
+    return {
+        "message": "Cache limpo com sucesso",
+        "timestamp": "now"
+    }
 
 # --- Módulos Anteriores (mantidos) ---
 @app.post("/calcular/indices-fisicos", response_model=IndicesFisicosOutput, tags=["Índices e Limites"])

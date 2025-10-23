@@ -88,18 +88,20 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
                 return (
                    <ConditionalSheetClose key={item.path} shouldWrap={!!onLinkClick} asChild>
                       <Link to={item.path} onClick={onLinkClick} title={collapsed ? item.label : undefined}>
-                        <Button
-                          variant="ghost"
-                          className={cn(
-                            "w-full transition-smooth",
-                            collapsed ? "justify-center px-2" : "justify-start",
-                            isActive
-                              ? "bg-primary/20 text-primary hover:bg-primary/30"
-                              : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                          )}
-                        >
-                          {buttonContent}
-                        </Button>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full transition-all duration-200",
+                    collapsed ? "justify-center px-2" : "justify-start",
+                    isActive
+                      ? "bg-primary/20 text-primary hover:bg-primary/30 shadow-sm"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                  )}
+                  aria-label={item.label}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  {buttonContent}
+                </Button>
                       </Link>
                    </ConditionalSheetClose>
                 );
@@ -253,19 +255,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
               variant="ghost"
               size="icon"
               onClick={toggleMode}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground transition-all duration-200 hover:bg-primary/10 hover:text-primary"
               aria-label={theme.mode === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
             >
               {theme.mode === "dark" ? (
-                <Sun className="h-5 w-5" />
+                <Sun className="h-5 w-5 transition-transform hover:rotate-90" />
               ) : (
-                <Moon className="h-5 w-5" />
+                <Moon className="h-5 w-5 transition-transform hover:-rotate-12" />
               )}
             </Button>
           </header>
 
           {/* Page Content */}
-          <main className="p-4 md:p-6 animate-fade-in">{children}</main>
+          <main className="p-4 md:p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">{children}</main>
         </div>
       </div>
     </Sheet>
