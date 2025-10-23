@@ -114,8 +114,7 @@ export default function About() {
 
                 <p className="text-muted-foreground leading-relaxed">
                   Estudante de <strong className="text-foreground">Engenharia Civil</strong> na 
-                  <strong className="text-foreground"> Universidade Federal do Cariri (UFCA)</strong>, 
-                  apaixonado por tecnologia e educação. O EduSolo nasceu da vontade de unir conhecimentos 
+                  <strong className="text-foreground"> Universidade Federal do Cariri (UFCA)</strong>. O EduSolo nasceu da vontade de unir conhecimentos 
                   em programação com a área de geotecnia, criando uma ferramenta que pudesse beneficiar 
                   outros estudantes e profissionais da área.
                 </p>

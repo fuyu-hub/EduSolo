@@ -77,7 +77,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Hero Section */}
-      <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="space-y-3">
         <h1 className="text-4xl font-bold text-foreground">
           Bem-vindo ao <span className="text-primary bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">EduSolo</span>
         </h1>
@@ -94,13 +94,8 @@ export default function Dashboard() {
             <Card
               className={cn(
                 "glass p-6 transition-smooth hover:shadow-2xl hover:shadow-primary/20 group cursor-pointer relative overflow-hidden h-full min-h-[200px] flex flex-col",
-                "animate-in fade-in slide-in-from-bottom-4 duration-700",
                 !module.comingSoon && "hover:-translate-y-2 hover:scale-[1.02] active:scale-[0.98]"
               )}
-              style={{ 
-                animationDelay: `${index * 80}ms`,
-                animationFillMode: 'backwards'
-              }}
             >
               {/* Gradient overlay on hover */}
               <div
@@ -162,8 +157,7 @@ export default function Dashboard() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12">
-        <Card className="glass p-5 border-l-4 border-l-primary animate-in fade-in slide-in-from-left-4 duration-700 hover:shadow-lg transition-all hover:border-l-8"
-          style={{ animationDelay: '400ms', animationFillMode: 'backwards' }}>
+        <Card className="glass p-5 border-l-4 border-l-primary hover:shadow-lg transition-all hover:border-l-8">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center transition-all hover:scale-110 hover:rotate-12">
               <Calculator className="w-5 h-5 text-primary" />
@@ -175,8 +169,7 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        <Card className="glass p-5 border-l-4 border-l-violet-500 animate-in fade-in slide-in-from-bottom-4 duration-700 hover:shadow-lg transition-all hover:border-l-8"
-          style={{ animationDelay: '500ms', animationFillMode: 'backwards' }}>
+        <Card className="glass p-5 border-l-4 border-l-violet-500 hover:shadow-lg transition-all hover:border-l-8">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center transition-all hover:scale-110 hover:rotate-12">
               <BookOpen className="w-5 h-5 text-violet-500" />
@@ -188,8 +181,7 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        <Card className="glass p-5 border-l-4 border-l-emerald-500 animate-in fade-in slide-in-from-right-4 duration-700 hover:shadow-lg transition-all hover:border-l-8"
-          style={{ animationDelay: '600ms', animationFillMode: 'backwards' }}>
+        <Card className="glass p-5 border-l-4 border-l-emerald-500 hover:shadow-lg transition-all hover:border-l-8">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center transition-all hover:scale-110 hover:rotate-12">
               <TrendingUp className="w-5 h-5 text-emerald-500" />

@@ -55,6 +55,9 @@ import ResultInterpretation from "@/components/soil/ResultInterpretation";
 import InputWithValidation from "@/components/soil/InputWithValidation";
 import { SoilExample } from "@/lib/soil-constants";
 import { Switch } from "@/components/ui/switch";
+import { useSettings } from "@/hooks/use-settings";
+import { formatNumber } from "@/lib/format-number";
+import { AppSettings } from "@/contexts/SettingsContext";
 
 // Interface local que reflete a API Output
 interface IndicesFisicosOutput {
@@ -112,6 +115,9 @@ const tooltips = {
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'; // URL do backend
 
 export default function IndicesFisicos() {
+  // Configurações
+  const { settings } = useSettings();
+  
   // Estados
   const [formData, setFormData] = useState<FormData>({
     massaUmida: "",
@@ -400,18 +406,18 @@ export default function IndicesFisicos() {
     if (!results || results.erro) return [];
 
     const items = [
-      results.peso_especifico_natural !== null ? <ResultItem key="gama_nat" label="Natural (γn)" value={results.peso_especifico_natural} unit="kN/m³" infoKey="peso_especifico_natural" precision={2}/> : null,
-      results.peso_especifico_seco !== null ? <ResultItem key="gama_d" label="Seco (γd)" value={results.peso_especifico_seco} unit="kN/m³" infoKey="peso_especifico_seco" precision={2}/> : null,
-      results.peso_especifico_solidos !== null ? <ResultItem key="gama_s" label="Sólidos (γs)" value={results.peso_especifico_solidos} unit="kN/m³" infoKey="peso_especifico_solidos" precision={2}/> : null,
-      results.Gs !== null ? <ResultItem key="Gs" label="Densidade Relativa (Gs)" value={results.Gs} unit="" infoKey="Gs" precision={3}/> : null,
-      results.peso_especifico_saturado !== null ? <ResultItem key="gama_sat" label="Saturado (γsat)" value={results.peso_especifico_saturado} unit="kN/m³" infoKey="peso_especifico_saturado" precision={2} /> : null,
-      results.peso_especifico_submerso !== null ? <ResultItem key="gama_sub" label="Submerso (γsub)" value={results.peso_especifico_submerso} unit="kN/m³" infoKey="peso_especifico_submerso" precision={2} /> : null,
-      results.umidade !== null ? <ResultItem key="w" label="Umidade (w)" value={results.umidade} unit="%" infoKey="umidade" precision={2}/> : null,
-      results.indice_vazios !== null ? <ResultItem key="e" label="Índice de Vazios (e)" value={results.indice_vazios} unit="" infoKey="indice_vazios" precision={3}/> : null,
-      results.porosidade !== null ? <ResultItem key="n" label="Porosidade (n)" value={results.porosidade} unit="%" infoKey="porosidade" precision={2}/> : null,
-      results.grau_saturacao !== null ? <ResultItem key="Sr" label="Grau de Saturação (Sr)" value={results.grau_saturacao} unit="%" infoKey="grau_saturacao" precision={2}/> : null,
-      results.compacidade_relativa !== null ? <ResultItem key="Dr" label="Compacidade Relativa (Dr)" value={results.compacidade_relativa} unit="%" infoKey="compacidade_relativa" precision={2}/> : null,
-      results.classificacao_compacidade ? <ResultItem key="class_dr" label="Classificação (Dr)" value={results.classificacao_compacidade} unit="" infoKey="classificacao_compacidade" /> : null,
+      results.peso_especifico_natural !== null ? <ResultItem key="gama_nat" label="Natural (γn)" value={results.peso_especifico_natural} unit="kN/m³" infoKey="peso_especifico_natural" settings={settings} /> : null,
+      results.peso_especifico_seco !== null ? <ResultItem key="gama_d" label="Seco (γd)" value={results.peso_especifico_seco} unit="kN/m³" infoKey="peso_especifico_seco" settings={settings} /> : null,
+      results.peso_especifico_solidos !== null ? <ResultItem key="gama_s" label="Sólidos (γs)" value={results.peso_especifico_solidos} unit="kN/m³" infoKey="peso_especifico_solidos" settings={settings} /> : null,
+      results.Gs !== null ? <ResultItem key="Gs" label="Densidade Relativa (Gs)" value={results.Gs} unit="" infoKey="Gs" settings={settings} /> : null,
+      results.peso_especifico_saturado !== null ? <ResultItem key="gama_sat" label="Saturado (γsat)" value={results.peso_especifico_saturado} unit="kN/m³" infoKey="peso_especifico_saturado" settings={settings} /> : null,
+      results.peso_especifico_submerso !== null ? <ResultItem key="gama_sub" label="Submerso (γsub)" value={results.peso_especifico_submerso} unit="kN/m³" infoKey="peso_especifico_submerso" settings={settings} /> : null,
+      results.umidade !== null ? <ResultItem key="w" label="Umidade (w)" value={results.umidade} unit="%" infoKey="umidade" settings={settings} /> : null,
+      results.indice_vazios !== null ? <ResultItem key="e" label="Índice de Vazios (e)" value={results.indice_vazios} unit="" infoKey="indice_vazios" settings={settings} /> : null,
+      results.porosidade !== null ? <ResultItem key="n" label="Porosidade (n)" value={results.porosidade} unit="%" infoKey="porosidade" settings={settings} /> : null,
+      results.grau_saturacao !== null ? <ResultItem key="Sr" label="Grau de Saturação (Sr)" value={results.grau_saturacao} unit="%" infoKey="grau_saturacao" settings={settings} /> : null,
+      results.compacidade_relativa !== null ? <ResultItem key="Dr" label="Compacidade Relativa (Dr)" value={results.compacidade_relativa} unit="%" infoKey="compacidade_relativa" settings={settings} /> : null,
+      results.classificacao_compacidade ? <ResultItem key="class_dr" label="Classificação (Dr)" value={results.classificacao_compacidade} unit="" infoKey="classificacao_compacidade" settings={settings} /> : null,
     ].filter(Boolean); // Remove os nulos
 
     // Agrupa em chunks de 4
@@ -421,7 +427,7 @@ export default function IndicesFisicos() {
       chunks.push(items.slice(i, i + chunkSize));
     }
     return chunks;
-  }, [results]);
+  }, [results, settings]);
 
 
   return (
@@ -646,7 +652,7 @@ export default function IndicesFisicos() {
                     </div>
                   </div>
                 ) : results && !results.erro && resultItems.length > 0 ? (
-                  <Carousel opts={{ align: "start" }} className="w-full px-10"> {/* Adicionado padding horizontal */}
+                  <Carousel opts={{ align: "start" }} className="w-full px-10">
                     <CarouselContent className="-ml-4">
                       {resultItems.map((chunk, index) => (
                         <CarouselItem key={index} className="pl-4 basis-full">
@@ -658,8 +664,8 @@ export default function IndicesFisicos() {
                     </CarouselContent>
                     {resultItems.length > 1 && (
                       <>
-                        <CarouselPrevious className="absolute left-0 top-1/2 -translate-y-1/2" /> {/* Ajustado left */}
-                        <CarouselNext className="absolute right-0 top-1/2 -translate-y-1/2" /> {/* Ajustado right */}
+                        <CarouselPrevious className="absolute left-0 top-1/2 -translate-y-1/2" />
+                        <CarouselNext className="absolute right-0 top-1/2 -translate-y-1/2" />
                       </>
                     )}
                   </Carousel>
@@ -737,11 +743,11 @@ interface ResultItemProps {
     value: number | string | null;
     unit: string;
     infoKey: keyof typeof conteudoIndicesFisicos;
-    precision?: number;
+    settings: AppSettings;
 }
-function ResultItem({ label, value, unit, infoKey, precision }: ResultItemProps) {
+function ResultItem({ label, value, unit, infoKey, settings }: ResultItemProps) {
   const content = conteudoIndicesFisicos[infoKey];
-  const displayValue = typeof value === 'number' ? value.toFixed(precision ?? 2) : value ?? "-";
+  const displayValue = typeof value === 'number' ? formatNumber(value, settings) : value ?? "-";
 
   if ((value === null && typeof value !== 'string') || !content) return null;
 
@@ -749,28 +755,32 @@ function ResultItem({ label, value, unit, infoKey, precision }: ResultItemProps)
     <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50 min-h-[56px]">
       <div className="flex items-center gap-1.5">
         <span className="text-sm font-medium text-muted-foreground">{label}</span>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-primary rounded-full">
-              <Info className="h-3.5 w-3.5" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80 z-50" side="top" align="start">
-            <div className="space-y-2">
-              <h4 className="font-semibold leading-none text-base">{label}</h4>
-              {content?.formula && <div className="text-sm font-mono bg-muted p-2 rounded border border-border/50">{content.formula}</div>}
-              <p className="text-sm text-muted-foreground">{content?.descricao}</p>
-              {content?.valoresTipicos && <p className="text-xs text-muted-foreground italic pt-1"><strong>Valores Típicos:</strong> {content.valoresTipicos}</p>}
-              {content?.paginaPDF && (
-                 <p className="text-xs text-muted-foreground pt-1">
-                    <a href="#" onClick={(e) => { e.preventDefault(); alert(`Consultar página ${content.paginaPDF} do PDF "4. Indices_Fisicos_2022-Maro.pdf" para mais detalhes.`); }} className="underline hover:text-primary">
-                      Ref. PDF pág. {content.paginaPDF}
-                    </a>
-                 </p>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
+        {settings.showEducationalTips && (
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-5 w-5 text-muted-foreground hover:text-primary rounded-full">
+                <Info className="h-3.5 w-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 z-50" side="top" align="start">
+              <div className="space-y-2">
+                <h4 className="font-semibold leading-none text-base">{label}</h4>
+                {settings.showFormulas && content?.formula && (
+                  <div className="text-sm font-mono bg-muted p-2 rounded border border-border/50">{content.formula}</div>
+                )}
+                <p className="text-sm text-muted-foreground">{content?.descricao}</p>
+                {content?.valoresTipicos && <p className="text-xs text-muted-foreground italic pt-1"><strong>Valores Típicos:</strong> {content.valoresTipicos}</p>}
+                {content?.paginaPDF && (
+                   <p className="text-xs text-muted-foreground pt-1">
+                      <a href="#" onClick={(e) => { e.preventDefault(); alert(`Consultar página ${content.paginaPDF} do PDF "4. Indices_Fisicos_2022-Maro.pdf" para mais detalhes.`); }} className="underline hover:text-primary">
+                        Ref. PDF pág. {content.paginaPDF}
+                      </a>
+                   </p>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
       </div>
       <span className="text-base font-semibold text-primary text-right pl-2">{displayValue} {unit}</span>
     </div>

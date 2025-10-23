@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
+import { useSettings } from "@/hooks/use-settings";
 import SavedCalculations from "@/components/SavedCalculations";
 import SaveDialog from "@/components/SaveDialog";
 import PrintHeader from "@/components/PrintHeader";
@@ -94,6 +95,7 @@ const peneirasComuns = [
 ];
 
 export default function Granulometria() {
+  const { settings } = useSettings();
   const [formData, setFormData] = useState<FormData>({
     massaTotal: "",
     peneiras: [],
@@ -643,20 +645,22 @@ export default function Granulometria() {
 
                   {/* Diâmetros e Coeficientes - Grid horizontal */}
                   <div className="grid lg:grid-cols-5 gap-3">
-                    <ResultItem label="D10" value={results.d10 ? `${results.d10.toFixed(4)} mm` : "N/A"} tooltip={tooltips.d10} color="red" />
-                    <ResultItem label="D30" value={results.d30 ? `${results.d30.toFixed(4)} mm` : "N/A"} tooltip={tooltips.d30} color="amber" />
-                    <ResultItem label="D60" value={results.d60 ? `${results.d60.toFixed(4)} mm` : "N/A"} tooltip={tooltips.d60} color="green" />
+                    <ResultItem label="D10" value={results.d10 ? `${results.d10.toFixed(4)} mm` : "N/A"} tooltip={tooltips.d10} color="red" showTooltips={settings.showEducationalTips} />
+                    <ResultItem label="D30" value={results.d30 ? `${results.d30.toFixed(4)} mm` : "N/A"} tooltip={tooltips.d30} color="amber" showTooltips={settings.showEducationalTips} />
+                    <ResultItem label="D60" value={results.d60 ? `${results.d60.toFixed(4)} mm` : "N/A"} tooltip={tooltips.d60} color="green" showTooltips={settings.showEducationalTips} />
                     <ResultItem
                       label="Cu"
                       value={results.coef_uniformidade ? results.coef_uniformidade.toFixed(2) : "N/A"}
                       tooltip={tooltips.cu}
                       highlight
+                      showTooltips={settings.showEducationalTips}
                     />
                     <ResultItem
                       label="Cc"
                       value={results.coef_curvatura ? results.coef_curvatura.toFixed(2) : "N/A"}
                       tooltip={tooltips.cc}
                       highlight
+                      showTooltips={settings.showEducationalTips}
                     />
                   </div>
                 </div>
@@ -722,7 +726,8 @@ function ResultItem({
   tooltip, 
   highlight = false, 
   color,
-  compact = false
+  compact = false,
+  showTooltips = true
 }: { 
   label: string; 
   value: string; 
@@ -730,6 +735,7 @@ function ResultItem({
   highlight?: boolean;
   color?: 'red' | 'amber' | 'green';
   compact?: boolean;
+  showTooltips?: boolean;
 }) {
   const colorClasses = {
     red: 'border-l-2 border-red-500 bg-red-50 dark:bg-red-950/30',
@@ -752,7 +758,7 @@ function ResultItem({
       <TooltipProvider>
         <span className={`${fontSize} font-medium text-muted-foreground flex items-center gap-1`}>
           {label}
-          {tooltip && (
+          {showTooltips && tooltip && (
             <Tooltip>
               <TooltipTrigger>
                 <Info className="w-2.5 h-2.5" />

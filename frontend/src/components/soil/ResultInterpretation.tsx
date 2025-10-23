@@ -3,15 +3,18 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { interpretResults, ResultInterpretation as InterpretationType } from "@/lib/soil-constants";
 import { Badge } from "@/components/ui/badge";
+import { useSettings } from "@/hooks/use-settings";
 
 interface ResultInterpretationProps {
   results: any;
 }
 
 export default function ResultInterpretation({ results }: ResultInterpretationProps) {
+  const { settings } = useSettings();
   const interpretations = interpretResults(results);
 
-  if (interpretations.length === 0) {
+  // Se dicas educacionais estiverem desativadas, não mostra nada
+  if (!settings.showEducationalTips || interpretations.length === 0) {
     return null;
   }
 

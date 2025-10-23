@@ -3,7 +3,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useTheme } from "@/hooks/use-theme";
 import { useSettings } from "@/hooks/use-settings";
 import { ThemeColor } from "@/contexts/ThemeContext";
@@ -31,28 +33,58 @@ interface ThemeOption {
 
 const themeColors: ThemeOption[] = [
   {
+    value: "indigo",
+    label: "Índigo Profundo",
+    description: "Sofisticado e intenso",
+    colors: ["238 84% 62%", "238 84% 52%", "238 84% 42%", "241 86% 36%", "244 88% 30%"],
+  },
+  {
     value: "blue",
-    label: "Azul",
-    description: "Tema padrão com tons de azul céu",
-    colors: ["200 98% 60%", "200 98% 50%", "200 98% 40%", "210 100% 35%"],
+    label: "Azul Céu",
+    description: "Profissional e sereno",
+    colors: ["200 98% 60%", "200 98% 50%", "200 98% 40%", "210 100% 35%", "215 100% 30%"],
+  },
+  {
+    value: "cyan",
+    label: "Ciano Água",
+    description: "Fresco e luminoso",
+    colors: ["189 94% 55%", "189 94% 45%", "189 94% 35%", "192 96% 30%", "195 98% 25%"],
   },
   {
     value: "green",
-    label: "Verde",
-    description: "Tons de verde esmeralda",
-    colors: ["142 76% 56%", "142 76% 46%", "142 76% 36%", "145 80% 30%"],
+    label: "Verde Esmeralda",
+    description: "Natural e equilibrado",
+    colors: ["142 76% 56%", "142 76% 46%", "142 76% 36%", "145 80% 30%", "148 85% 25%"],
   },
   {
-    value: "purple",
-    label: "Roxo",
-    description: "Tons de roxo vibrante",
-    colors: ["262 83% 58%", "262 83% 48%", "262 83% 38%", "265 85% 32%"],
+    value: "amber",
+    label: "Âmbar Dourado",
+    description: "Caloroso e acolhedor",
+    colors: ["38 92% 58%", "38 92% 48%", "38 92% 38%", "35 92% 33%", "32 92% 28%"],
+  },
+  {
+    value: "orange",
+    label: "Laranja Energia",
+    description: "Vibrante e dinâmico",
+    colors: ["24 95% 60%", "24 95% 50%", "24 95% 40%", "20 95% 35%", "16 95% 30%"],
+  },
+  {
+    value: "red",
+    label: "Vermelho Paixão",
+    description: "Forte e determinado",
+    colors: ["358 75% 59%", "358 75% 49%", "358 75% 39%", "0 78% 34%", "2 80% 29%"],
   },
   {
     value: "pink",
-    label: "Rosa",
-    description: "Tons de rosa coral",
-    colors: ["346 77% 60%", "346 77% 50%", "346 77% 40%", "350 80% 35%"],
+    label: "Rosa Coral",
+    description: "Elegante e caloroso",
+    colors: ["346 77% 60%", "346 77% 50%", "346 77% 40%", "350 80% 35%", "354 82% 30%"],
+  },
+  {
+    value: "purple",
+    label: "Roxo Vibrante",
+    description: "Criativo e moderno",
+    colors: ["262 83% 58%", "262 83% 48%", "262 83% 38%", "265 85% 32%", "268 88% 28%"],
   },
 ];
 
@@ -93,7 +125,8 @@ export default function Settings() {
   };
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
+    <TooltipProvider>
+      <div className="space-y-8 max-w-4xl mx-auto">
       {/* Header */}
       <div className="space-y-2">
         <div className="flex items-center gap-3">
@@ -121,47 +154,85 @@ export default function Settings() {
           </p>
         </Card>
 
-        {/* Temas */}
-        <div className="space-y-3">
-          <h3 className="text-lg font-medium text-foreground">Temas</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {themeColors.map((themeOption) => (
-              <Card
-                key={themeOption.value}
-                className={cn(
-                  "glass p-5 cursor-pointer transition-smooth hover:shadow-lg hover:shadow-primary/20 relative",
-                  theme.color === themeOption.value && "ring-2 ring-primary"
-                )}
-                onClick={() => setThemeColor(themeOption.value)}
-              >
-                <div className="space-y-3">
-                  {/* Informações */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-base font-semibold text-foreground mb-1 flex items-center gap-2">
-                        {themeOption.label}
-                        {theme.color === themeOption.value && (
-                          <Check className="w-4 h-4 text-primary" />
-                        )}
-                      </h4>
-                      <p className="text-sm text-muted-foreground">{themeOption.description}</p>
-                    </div>
-                  </div>
-
-                  {/* Paleta de Cores */}
-                  <div className="flex gap-2">
-                    {themeOption.colors.map((color, index) => (
-                      <div
-                        key={index}
-                        className="flex-1 h-12 rounded-lg shadow-sm border border-border/50"
-                        style={{ backgroundColor: `hsl(${color})` }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </Card>
-            ))}
+        {/* Temas - Accent Colors */}
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-lg font-medium text-foreground">Cores de Destaque</h3>
+            <p className="text-sm text-muted-foreground">Defina a personalidade do design com acentos perfeitos</p>
           </div>
+          
+          {/* Seletor de Cores em Círculos */}
+          <div className="flex flex-wrap items-center gap-4 p-6 rounded-xl bg-gradient-to-br from-background/50 to-muted/20 border border-border/50">
+            {themeColors.map((themeOption) => {
+              const isSelected = theme.color === themeOption.value;
+              const primaryColor = themeOption.colors[0];
+              
+              return (
+                <Tooltip key={themeOption.value}>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => setThemeColor(themeOption.value)}
+                      className={cn(
+                        "relative w-14 h-14 rounded-full transition-all duration-300 hover:scale-110",
+                        "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
+                        isSelected && "scale-110"
+                      )}
+                      style={{
+                        backgroundColor: `hsl(${primaryColor})`,
+                        boxShadow: isSelected 
+                          ? `0 0 0 3px hsl(var(--background)), 0 0 0 5px hsl(${primaryColor}), 0 8px 24px -4px hsl(${primaryColor} / 0.5)`
+                          : `0 4px 12px -2px hsl(${primaryColor} / 0.3)`,
+                      }}
+                      aria-label={`Selecionar tema ${themeOption.label}`}
+                    >
+                      {isSelected && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <Check className="w-6 h-6 text-white drop-shadow-lg" strokeWidth={3} />
+                        </div>
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <div className="text-center">
+                      <p className="font-semibold">{themeOption.label}</p>
+                      <p className="text-xs text-muted-foreground">{themeOption.description}</p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+
+          {/* Preview do Tema Selecionado */}
+          <Card className="glass p-5 border-l-4 border-l-primary">
+            <div className="flex items-start gap-4">
+              <div 
+                className="w-16 h-16 rounded-xl shadow-lg flex-shrink-0"
+                style={{
+                  background: `linear-gradient(135deg, hsl(${themeColors.find(t => t.value === theme.color)?.colors[0]}) 0%, hsl(${themeColors.find(t => t.value === theme.color)?.colors[2]}) 100%)`,
+                }}
+              />
+              <div className="flex-1">
+                <h4 className="text-base font-semibold text-foreground mb-1">
+                  {themeColors.find(t => t.value === theme.color)?.label}
+                </h4>
+                <p className="text-sm text-muted-foreground mb-3">
+                  {themeColors.find(t => t.value === theme.color)?.description}
+                </p>
+                {/* Mini paleta */}
+                <div className="flex gap-1.5">
+                  {themeColors.find(t => t.value === theme.color)?.colors.map((color, index) => (
+                    <div
+                      key={index}
+                      className="w-8 h-8 rounded-md border-2 border-background shadow-sm"
+                      style={{ backgroundColor: `hsl(${color})` }}
+                      title={`Cor ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </Card>
         </div>
       </section>
 
@@ -200,19 +271,23 @@ export default function Settings() {
           </Card>
 
           {/* Sistema de Unidades */}
-          <Card className="glass p-5">
+          <Card className="glass p-5 opacity-60">
             <div className="space-y-3">
-              <Label htmlFor="unit-system" className="text-base font-medium">
-                Sistema de Unidades
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="unit-system" className="text-base font-medium">
+                  Sistema de Unidades
+                </Label>
+                <Badge variant="outline" className="text-xs">Em desenvolvimento</Badge>
+              </div>
               <p className="text-sm text-muted-foreground">
                 Unidades usadas nos cálculos
               </p>
               <Select
                 value={settings.unitSystem}
                 onValueChange={(value: UnitSystem) => updateSettings({ unitSystem: value })}
+                disabled
               >
-                <SelectTrigger id="unit-system">
+                <SelectTrigger id="unit-system" disabled>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -221,6 +296,9 @@ export default function Settings() {
                   <SelectItem value="Imperial">Imperial (lb/ft³, psi)</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground italic">
+                ⚙️ Esta funcionalidade será implementada em breve
+              </p>
             </div>
           </Card>
         </div>
@@ -254,19 +332,23 @@ export default function Settings() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Densidade da Interface */}
-          <Card className="glass p-5">
+          <Card className="glass p-5 opacity-60">
             <div className="space-y-3">
-              <Label htmlFor="interface-density" className="text-base font-medium">
-                Densidade da Interface
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="interface-density" className="text-base font-medium">
+                  Densidade da Interface
+                </Label>
+                <Badge variant="outline" className="text-xs">Em desenvolvimento</Badge>
+              </div>
               <p className="text-sm text-muted-foreground">
                 Espaçamento entre elementos
               </p>
               <Select
                 value={settings.interfaceDensity}
                 onValueChange={(value: InterfaceDensity) => updateSettings({ interfaceDensity: value })}
+                disabled
               >
-                <SelectTrigger id="interface-density">
+                <SelectTrigger id="interface-density" disabled>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -275,6 +357,9 @@ export default function Settings() {
                   <SelectItem value="comfortable">Espaçosa</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground italic">
+                ⚙️ Esta funcionalidade será implementada em breve
+              </p>
             </div>
           </Card>
 
@@ -437,13 +522,27 @@ export default function Settings() {
         </div>
       </section>
 
-      {/* Informações */}
-      <Card className="glass p-5 border-l-4 border-l-primary">
-        <p className="text-sm text-muted-foreground">
-          <strong className="text-foreground">Dica:</strong> As configurações são salvas automaticamente
-          no seu navegador e serão mantidas nas próximas visitas.
-        </p>
-      </Card>
+      {/* Informações e Resumo das Configurações */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="glass p-5 border-l-4 border-l-primary">
+          <p className="text-sm text-muted-foreground">
+            <strong className="text-foreground">Dica:</strong> As configurações são salvas automaticamente
+            no seu navegador e serão mantidas nas próximas visitas.
+          </p>
+        </Card>
+
+        <Card className="glass p-5 border-l-4 border-l-accent">
+          <h3 className="text-sm font-semibold text-foreground mb-2">Configurações Ativas:</h3>
+          <ul className="text-xs text-muted-foreground space-y-1">
+            <li>• Tema: <span className="font-medium text-foreground capitalize">{themeColors.find(t => t.value === theme.color)?.label}</span> ({theme.mode === "dark" ? "escuro" : "claro"})</li>
+            <li>• Casas decimais: <span className="font-medium text-foreground">{settings.decimalPlaces}</span></li>
+            <li>• {settings.showEducationalTips ? "✓" : "✗"} Dicas educacionais {settings.showEducationalTips ? "ativas" : "desativadas"}</li>
+            <li>• {settings.showFormulas ? "✓" : "✗"} Fórmulas {settings.showFormulas ? "visíveis" : "ocultas"}</li>
+            <li>• {settings.reduceMotion ? "✓" : "✗"} Redução de animações {settings.reduceMotion ? "ativa" : "desativada"}</li>
+            <li>• {settings.scientificNotation ? "✓" : "✗"} Notação científica {settings.scientificNotation ? "ativa" : "desativada"}</li>
+          </ul>
+        </Card>
+      </div>
 
       {/* Dialogs de Confirmação */}
       <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
@@ -479,7 +578,8 @@ export default function Settings() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }
 

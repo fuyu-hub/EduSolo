@@ -369,6 +369,451 @@ All colors MUST be HSL.
     --glass-bg: hsl(0 0% 100% / 0.7);
     --glass-border: hsl(345 32% 91% / 0.5);
   }
+
+  /* ========== TEMA LARANJA ========== */
+  /* Dark Mode - Laranja */
+  .dark.theme-orange {
+    --background: 25 25% 8%;
+    --foreground: 30 40% 98%;
+
+    --card: 25 20% 12%;
+    --card-foreground: 30 40% 98%;
+
+    --popover: 25 25% 10%;
+    --popover-foreground: 30 40% 98%;
+
+    --primary: 24 95% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 25 20% 18%;
+    --secondary-foreground: 30 40% 98%;
+
+    --muted: 25 20% 15%;
+    --muted-foreground: 25 15% 60%;
+
+    --accent: 24 95% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 30 40% 98%;
+
+    --border: 25 20% 20%;
+    --input: 25 20% 18%;
+    --ring: 24 95% 60%;
+
+    --sidebar-background: 25 25% 10%;
+    --sidebar-foreground: 30 40% 98%;
+    --sidebar-primary: 24 95% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 25 20% 15%;
+    --sidebar-accent-foreground: 30 40% 98%;
+    --sidebar-border: 25 20% 18%;
+    --sidebar-ring: 24 95% 60%;
+
+    --gradient-radial: radial-gradient(circle at 20% 50%, hsl(24 95% 60% / 0.15), transparent 50%);
+    --glass-bg: hsl(25 20% 12% / 0.7);
+    --glass-border: hsl(25 20% 25% / 0.3);
+  }
+
+  /* Light Mode - Laranja */
+  .light.theme-orange {
+    --background: 30 40% 98%;
+    --foreground: 25 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 25 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 25 25% 15%;
+
+    --primary: 24 95% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 30 30% 94%;
+    --secondary-foreground: 25 25% 15%;
+
+    --muted: 30 30% 96%;
+    --muted-foreground: 25 15% 45%;
+
+    --accent: 24 95% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 30 32% 91%;
+    --input: 30 32% 91%;
+    --ring: 24 95% 50%;
+
+    --sidebar-background: 30 40% 98%;
+    --sidebar-foreground: 25 25% 15%;
+    --sidebar-primary: 24 95% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 30% 94%;
+    --sidebar-accent-foreground: 25 25% 15%;
+    --sidebar-border: 30 32% 91%;
+    --sidebar-ring: 24 95% 50%;
+
+    --gradient-radial: radial-gradient(circle at 20% 50%, hsl(24 95% 50% / 0.1), transparent 50%);
+    --glass-bg: hsl(0 0% 100% / 0.7);
+    --glass-border: hsl(30 32% 91% / 0.5);
+  }
+
+  /* ========== TEMA CIANO ========== */
+  /* Dark Mode - Ciano */
+  .dark.theme-cyan {
+    --background: 190 25% 8%;
+    --foreground: 185 40% 98%;
+
+    --card: 190 20% 12%;
+    --card-foreground: 185 40% 98%;
+
+    --popover: 190 25% 10%;
+    --popover-foreground: 185 40% 98%;
+
+    --primary: 189 94% 55%;
+    --primary-foreground: 190 25% 8%;
+
+    --secondary: 190 20% 18%;
+    --secondary-foreground: 185 40% 98%;
+
+    --muted: 190 20% 15%;
+    --muted-foreground: 190 15% 60%;
+
+    --accent: 189 94% 55%;
+    --accent-foreground: 190 25% 8%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 185 40% 98%;
+
+    --border: 190 20% 20%;
+    --input: 190 20% 18%;
+    --ring: 189 94% 55%;
+
+    --sidebar-background: 190 25% 10%;
+    --sidebar-foreground: 185 40% 98%;
+    --sidebar-primary: 189 94% 55%;
+    --sidebar-primary-foreground: 190 25% 8%;
+    --sidebar-accent: 190 20% 15%;
+    --sidebar-accent-foreground: 185 40% 98%;
+    --sidebar-border: 190 20% 18%;
+    --sidebar-ring: 189 94% 55%;
+
+    --gradient-radial: radial-gradient(circle at 20% 50%, hsl(189 94% 55% / 0.15), transparent 50%);
+    --glass-bg: hsl(190 20% 12% / 0.7);
+    --glass-border: hsl(190 20% 25% / 0.3);
+  }
+
+  /* Light Mode - Ciano */
+  .light.theme-cyan {
+    --background: 185 40% 98%;
+    --foreground: 190 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 190 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 190 25% 15%;
+
+    --primary: 189 94% 43%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 185 30% 94%;
+    --secondary-foreground: 190 25% 15%;
+
+    --muted: 185 30% 96%;
+    --muted-foreground: 190 15% 45%;
+
+    --accent: 189 94% 43%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 185 32% 91%;
+    --input: 185 32% 91%;
+    --ring: 189 94% 43%;
+
+    --sidebar-background: 185 40% 98%;
+    --sidebar-foreground: 190 25% 15%;
+    --sidebar-primary: 189 94% 43%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 185 30% 94%;
+    --sidebar-accent-foreground: 190 25% 15%;
+    --sidebar-border: 185 32% 91%;
+    --sidebar-ring: 189 94% 43%;
+
+    --gradient-radial: radial-gradient(circle at 20% 50%, hsl(189 94% 43% / 0.1), transparent 50%);
+    --glass-bg: hsl(0 0% 100% / 0.7);
+    --glass-border: hsl(185 32% 91% / 0.5);
+  }
+
+  /* ========== TEMA ÂMBAR ========== */
+  /* Dark Mode - Âmbar */
+  .dark.theme-amber {
+    --background: 35 25% 8%;
+    --foreground: 40 40% 98%;
+
+    --card: 35 20% 12%;
+    --card-foreground: 40 40% 98%;
+
+    --popover: 35 25% 10%;
+    --popover-foreground: 40 40% 98%;
+
+    --primary: 38 92% 58%;
+    --primary-foreground: 35 25% 8%;
+
+    --secondary: 35 20% 18%;
+    --secondary-foreground: 40 40% 98%;
+
+    --muted: 35 20% 15%;
+    --muted-foreground: 35 15% 60%;
+
+    --accent: 38 92% 58%;
+    --accent-foreground: 35 25% 8%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 40 40% 98%;
+
+    --border: 35 20% 20%;
+    --input: 35 20% 18%;
+    --ring: 38 92% 58%;
+
+    --sidebar-background: 35 25% 10%;
+    --sidebar-foreground: 40 40% 98%;
+    --sidebar-primary: 38 92% 58%;
+    --sidebar-primary-foreground: 35 25% 8%;
+    --sidebar-accent: 35 20% 15%;
+    --sidebar-accent-foreground: 40 40% 98%;
+    --sidebar-border: 35 20% 18%;
+    --sidebar-ring: 38 92% 58%;
+
+    --gradient-radial: radial-gradient(circle at 20% 50%, hsl(38 92% 58% / 0.15), transparent 50%);
+    --glass-bg: hsl(35 20% 12% / 0.7);
+    --glass-border: hsl(35 20% 25% / 0.3);
+  }
+
+  /* Light Mode - Âmbar */
+  .light.theme-amber {
+    --background: 40 40% 98%;
+    --foreground: 35 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 35 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 35 25% 15%;
+
+    --primary: 38 92% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 40 30% 94%;
+    --secondary-foreground: 35 25% 15%;
+
+    --muted: 40 30% 96%;
+    --muted-foreground: 35 15% 45%;
+
+    --accent: 38 92% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 32% 91%;
+    --input: 40 32% 91%;
+    --ring: 38 92% 45%;
+
+    --sidebar-background: 40 40% 98%;
+    --sidebar-foreground: 35 25% 15%;
+    --sidebar-primary: 38 92% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 40 30% 94%;
+    --sidebar-accent-foreground: 35 25% 15%;
+    --sidebar-border: 40 32% 91%;
+    --sidebar-ring: 38 92% 45%;
+
+    --gradient-radial: radial-gradient(circle at 20% 50%, hsl(38 92% 45% / 0.1), transparent 50%);
+    --glass-bg: hsl(0 0% 100% / 0.7);
+    --glass-border: hsl(40 32% 91% / 0.5);
+  }
+
+  /* ========== TEMA ÍNDIGO ========== */
+  /* Dark Mode - Índigo */
+  .dark.theme-indigo {
+    --background: 235 25% 8%;
+    --foreground: 240 40% 98%;
+
+    --card: 235 20% 12%;
+    --card-foreground: 240 40% 98%;
+
+    --popover: 235 25% 10%;
+    --popover-foreground: 240 40% 98%;
+
+    --primary: 238 84% 62%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 235 20% 18%;
+    --secondary-foreground: 240 40% 98%;
+
+    --muted: 235 20% 15%;
+    --muted-foreground: 235 15% 60%;
+
+    --accent: 238 84% 62%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 240 40% 98%;
+
+    --border: 235 20% 20%;
+    --input: 235 20% 18%;
+    --ring: 238 84% 62%;
+
+    --sidebar-background: 235 25% 10%;
+    --sidebar-foreground: 240 40% 98%;
+    --sidebar-primary: 238 84% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 235 20% 15%;
+    --sidebar-accent-foreground: 240 40% 98%;
+    --sidebar-border: 235 20% 18%;
+    --sidebar-ring: 238 84% 62%;
+
+    --gradient-radial: radial-gradient(circle at 20% 50%, hsl(238 84% 62% / 0.15), transparent 50%);
+    --glass-bg: hsl(235 20% 12% / 0.7);
+    --glass-border: hsl(235 20% 25% / 0.3);
+  }
+
+  /* Light Mode - Índigo */
+  .light.theme-indigo {
+    --background: 240 40% 98%;
+    --foreground: 235 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 235 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 235 25% 15%;
+
+    --primary: 238 84% 52%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 30% 94%;
+    --secondary-foreground: 235 25% 15%;
+
+    --muted: 240 30% 96%;
+    --muted-foreground: 235 15% 45%;
+
+    --accent: 238 84% 52%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 32% 91%;
+    --input: 240 32% 91%;
+    --ring: 238 84% 52%;
+
+    --sidebar-background: 240 40% 98%;
+    --sidebar-foreground: 235 25% 15%;
+    --sidebar-primary: 238 84% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 30% 94%;
+    --sidebar-accent-foreground: 235 25% 15%;
+    --sidebar-border: 240 32% 91%;
+    --sidebar-ring: 238 84% 52%;
+
+    --gradient-radial: radial-gradient(circle at 20% 50%, hsl(238 84% 52% / 0.1), transparent 50%);
+    --glass-bg: hsl(0 0% 100% / 0.7);
+    --glass-border: hsl(240 32% 91% / 0.5);
+  }
+
+  /* ========== TEMA VERMELHO ========== */
+  /* Dark Mode - Vermelho */
+  .dark.theme-red {
+    --background: 355 25% 8%;
+    --foreground: 0 40% 98%;
+
+    --card: 355 20% 12%;
+    --card-foreground: 0 40% 98%;
+
+    --popover: 355 25% 10%;
+    --popover-foreground: 0 40% 98%;
+
+    --primary: 358 75% 59%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 355 20% 18%;
+    --secondary-foreground: 0 40% 98%;
+
+    --muted: 355 20% 15%;
+    --muted-foreground: 355 15% 60%;
+
+    --accent: 358 75% 59%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 40% 98%;
+
+    --border: 355 20% 20%;
+    --input: 355 20% 18%;
+    --ring: 358 75% 59%;
+
+    --sidebar-background: 355 25% 10%;
+    --sidebar-foreground: 0 40% 98%;
+    --sidebar-primary: 358 75% 59%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 355 20% 15%;
+    --sidebar-accent-foreground: 0 40% 98%;
+    --sidebar-border: 355 20% 18%;
+    --sidebar-ring: 358 75% 59%;
+
+    --gradient-radial: radial-gradient(circle at 20% 50%, hsl(358 75% 59% / 0.15), transparent 50%);
+    --glass-bg: hsl(355 20% 12% / 0.7);
+    --glass-border: hsl(355 20% 25% / 0.3);
+  }
+
+  /* Light Mode - Vermelho */
+  .light.theme-red {
+    --background: 0 40% 98%;
+    --foreground: 355 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 355 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 355 25% 15%;
+
+    --primary: 358 75% 48%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 30% 94%;
+    --secondary-foreground: 355 25% 15%;
+
+    --muted: 0 30% 96%;
+    --muted-foreground: 355 15% 45%;
+
+    --accent: 358 75% 48%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 32% 91%;
+    --input: 0 32% 91%;
+    --ring: 358 75% 48%;
+
+    --sidebar-background: 0 40% 98%;
+    --sidebar-foreground: 355 25% 15%;
+    --sidebar-primary: 358 75% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 30% 94%;
+    --sidebar-accent-foreground: 355 25% 15%;
+    --sidebar-border: 0 32% 91%;
+    --sidebar-ring: 358 75% 48%;
+
+    --gradient-radial: radial-gradient(circle at 20% 50%, hsl(358 75% 48% / 0.1), transparent 50%);
+    --glass-bg: hsl(0 0% 100% / 0.7);
+    --glass-border: hsl(0 32% 91% / 0.5);
+  }
 }
 
 @layer base {
@@ -486,6 +931,34 @@ All colors MUST be HSL.
   }
 }
 
+@keyframes confetti {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
 /* Add animation utilities */
 .animate-shimmer {
   animation: shimmer 2s infinite;
@@ -497,6 +970,18 @@ All colors MUST be HSL.
 
 .animate-bounce-subtle {
   animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+.animate-confetti {
+  animation: confetti 1s ease-out forwards;
+}
+
+.animate-ripple {
+  animation: ripple 0.6s ease-out;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
 }
 
 /* Improve focus states for accessibility */

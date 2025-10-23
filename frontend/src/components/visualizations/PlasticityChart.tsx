@@ -27,31 +27,31 @@ const zoneInfo = {
   CL: {
     name: "Argila de Baixa Plasticidade",
     description: "Solo argiloso com baixa plasticidade. Características: coesão moderada, compressibilidade média.",
-    color: "#00D07A",
+    color: "#C8A882", // Bege amarelado (cor de argila clara)
     properties: ["Coesão moderada", "Compressibilidade média", "Boa para fundações rasas"]
   },
   CH: {
     name: "Argila de Alta Plasticidade", 
     description: "Solo argiloso com alta plasticidade. Características: alta coesão, alta compressibilidade.",
-    color: "#FFD400",
+    color: "#B8860B", // Dourado escuro (cor de argila mais rica)
     properties: ["Alta coesão", "Alta compressibilidade", "Requer cuidados especiais em fundações"]
   },
   ML: {
     name: "Silte de Baixa Plasticidade",
     description: "Solo siltoso com baixa plasticidade. Características: baixa coesão, comportamento intermediário.",
-    color: "#FFB6C1", 
+    color: "#DEB887", // Burlywood (cor de silte/areia fina)
     properties: ["Baixa coesão", "Comportamento intermediário", "Sensível à água"]
   },
   MH: {
     name: "Silte de Alta Plasticidade",
     description: "Solo siltoso com alta plasticidade. Características: comportamento expansivo, alta sensibilidade à água.",
-    color: "#BFE9FF",
+    color: "#8B9DC3", // Azul acinzentado (cor de silte úmido)
     properties: ["Comportamento expansivo", "Alta sensibilidade à água", "Requer drenagem adequada"]
   },
   "CL-ML": {
     name: "Zona de Transição CL-ML",
     description: "Zona de transição entre argila de baixa plasticidade e silte de baixa plasticidade.",
-    color: "#8B4513",
+    color: "#A0826D", // Marrom rosado (cor de solo misto)
     properties: ["Características mistas", "Comportamento variável", "Análise detalhada necessária"]
   }
 };
@@ -216,19 +216,19 @@ const CustomizedPolygonDrawer = (props: any) => {
     return d + ' Z';
   };
 
-  // colors (close to your reference image)
+  // cores realistas de solo
   const colors = {
-    cl: '#00D07A', // green
-    ch: '#FFD400', // yellow
-    ml_ol: '#FFB6C1', // pink
-    mh_oh: '#BFE9FF', // light blue
-    cl_ml: '#8B4513' // brown for small stripe
+    cl: '#C8A882', // Bege amarelado (argila de baixa plasticidade)
+    ch: '#B8860B', // Dourado escuro (argila de alta plasticidade)
+    ml_ol: '#DEB887', // Burlywood (silte de baixa plasticidade)
+    mh_oh: '#8B9DC3', // Azul acinzentado (silte de alta plasticidade)
+    cl_ml: '#A0826D' // Marrom rosado (zona de transição)
   };
 
   return (
     <g>
       {/* Layer 1: Base areas */}
-      {/* Left CL (green) */}
+      {/* Left CL (bege amarelado - argila baixa plasticidade) */}
       <path 
         d={polyToPath(leftCL)} 
         fill={colors.cl} 
@@ -246,7 +246,7 @@ const CustomizedPolygonDrawer = (props: any) => {
           e.currentTarget.style.stroke = 'none';
         }}
       />
-      {/* Right CH (yellow) */}
+      {/* Right CH (dourado escuro - argila alta plasticidade) */}
       <path 
         d={polyToPath(rightCHpoly)} 
         fill={colors.ch} 
@@ -264,7 +264,7 @@ const CustomizedPolygonDrawer = (props: any) => {
           e.currentTarget.style.stroke = 'none';
         }}
       />
-      {/* Right MH/OH (blue) */}
+      {/* Right MH/OH (azul acinzentado - silte alta plasticidade) */}
       <path 
         d={polyToPath(rightBottomPoly)} 
         fill={colors.mh_oh} 
@@ -282,7 +282,7 @@ const CustomizedPolygonDrawer = (props: any) => {
           e.currentTarget.style.stroke = 'none';
         }}
       />
-      {/* Left ML/OL (pink) */}
+      {/* Left ML/OL (burlywood - silte baixa plasticidade) */}
       <path 
         d={polyToPath(leftML)} 
         fill={colors.ml_ol} 
@@ -300,7 +300,7 @@ const CustomizedPolygonDrawer = (props: any) => {
           e.currentTarget.style.stroke = 'none';
         }}
       />
-      {/* Layer 2: CL-ML stripe (brown) - on top of ML */}
+      {/* Layer 2: CL-ML stripe (marrom rosado - zona de transição) - on top of ML */}
       <path 
         d={polyToPath(clmlPoly)} 
         fill={colors.cl_ml} 

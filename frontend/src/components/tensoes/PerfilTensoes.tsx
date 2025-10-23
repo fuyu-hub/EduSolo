@@ -42,17 +42,20 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
     const valores = dadosGrafico.flatMap(d => [d.sigma_v, d.u, d.sigma_v_ef, d.sigma_h_ef].filter((v): v is number => v !== null));
     if (valores.length === 0) return [0, 200];
     
-    const maxTensao = Math.max(...valores);
-    const margem = maxTensao * 0.1 || 10;
-    return [0, maxTensao + margem];
+    const minTensao = Math.min(...valores, 0); // Inclui 0 no mínimo
+    const maxTensao = Math.max(...valores, 0); // Inclui 0 no máximo
+    const margem = Math.max((maxTensao - minTensao) * 0.15, 10); // Margem mínima de 10
+    return [Math.max(0, minTensao - margem * 0.5), maxTensao + margem];
   }, [dadosGrafico]);
 
   const dominioY = useMemo(() => {
     if (dadosGrafico.length === 0) return [0, 10];
     
     const profs = dadosGrafico.map(d => d.prof);
+    const minProf = Math.min(...profs, 0);
     const maxProf = Math.max(...profs);
-    return [0, maxProf + maxProf * 0.05]; // Pequena margem no fundo
+    const margemProf = Math.max(maxProf * 0.08, 0.5); // Margem mínima de 0.5m
+    return [Math.max(0, minProf - margemProf * 0.3), maxProf + margemProf];
   }, [dadosGrafico]);
 
   if (dadosGrafico.length === 0) {
@@ -81,30 +84,53 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
           Perfil de Tensões
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={500}>
+      <CardContent className="flex justify-center">
+        <ResponsiveContainer width="90%" height={400}>
           <LineChart 
-            data={dadosGrafico} 
-            margin={{ top: 10, right: 30, left: 20, bottom: 50 }}
+            data={dadosGrafico}
+            layout="vertical"
+            margin={{ top: 10, right: 30, left: 65, bottom: 15 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+            <CartesianGrid 
+              strokeDasharray="3 3" 
+              stroke="hsl(var(--border))" 
+              opacity={0.3}
+              horizontal={true}
+              vertical={true}
+            />
             
-            {/* Eixo X (Tensão) - Normal */}
+            {/* Eixo X (Tensão) - Horizontal */}
             <XAxis 
               type="number"
               domain={dominioX}
-              label={{ value: 'Tensão (kPa)', position: 'insideBottom', offset: -10 }}
-              tick={{ fontSize: 12 }}
+              label={{ 
+                value: 'Tensão (kPa)', 
+                position: 'insideBottom', 
+                offset: -8,
+                style: { fontSize: 13, fontWeight: 600, fill: 'hsl(var(--foreground))' }
+              }}
+              tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+              axisLine={{ stroke: 'hsl(var(--border))', strokeWidth: 1.5 }}
+              tickLine={{ stroke: 'hsl(var(--border))' }}
             />
             
-            {/* Eixo Y (Profundidade) - INVERTIDO */}
+            {/* Eixo Y (Profundidade) - 0 no topo, aumenta para baixo */}
             <YAxis 
               dataKey="prof"
               type="number"
-              domain={dominioY}
-              reversed={true}  // Inverte o eixo Y
-              label={{ value: 'Profundidade (m)', angle: -90, position: 'insideLeft' }}
-              tick={{ fontSize: 12 }}
+              domain={[0, 'dataMax + 1']}
+              reversed={false}
+              orientation="left"
+              label={{ 
+                value: 'Profundidade (m)', 
+                angle: -90, 
+                position: 'insideLeft',
+                style: { fontSize: 13, fontWeight: 600, fill: 'hsl(var(--foreground))' },
+                offset: -10
+              }}
+              tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+              axisLine={{ stroke: 'hsl(var(--border))', strokeWidth: 1.5 }}
+              tickLine={{ stroke: 'hsl(var(--border))' }}
             />
             
             <Tooltip 
@@ -146,23 +172,24 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
               }}
             />
             
-            {/* Linhas dos Níveis d'Água */}
+            {/* Linhas dos Níveis d'Água - no layout vertical, usamos y para linhas horizontais */}
             {niveisAgua && niveisAgua.length > 0 ? (
               // Múltiplos NAs
               niveisAgua.map((na, idx) => (
                 na.profundidade > 0 && (
                   <ReferenceLine 
                     key={`na-${idx}`}
-                    y={na.profundidade} 
+                    y={na.profundidade}
                     stroke="#3b82f6" 
-                    strokeWidth={2}
+                    strokeWidth={2.5}
                     strokeDasharray="5 5"
                     label={{ 
                       value: niveisAgua.length > 1 ? `NA${idx + 1} = ${na.profundidade.toFixed(2)} m` : `NA = ${na.profundidade.toFixed(2)} m`, 
-                      position: 'right',
+                      position: 'insideTopRight',
                       fill: '#3b82f6',
                       fontSize: 12,
-                      fontWeight: 'bold'
+                      fontWeight: 'bold',
+                      offset: 5
                     }}
                   />
                 )
@@ -171,75 +198,72 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
               // NA único (modo compatibilidade)
               profundidadeNA !== undefined && profundidadeNA > 0 && (
                 <ReferenceLine 
-                  y={profundidadeNA} 
+                  y={profundidadeNA}
                   stroke="#3b82f6" 
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                   strokeDasharray="5 5"
                   label={{ 
                     value: `NA = ${profundidadeNA.toFixed(2)} m`, 
-                    position: 'right',
+                    position: 'insideTopRight',
                     fill: '#3b82f6',
                     fontSize: 12,
-                    fontWeight: 'bold'
+                    fontWeight: 'bold',
+                    offset: 5
                   }}
                 />
               )
             )}
             
-            {/* Linhas de tensão */}
+            {/* Linhas de tensão - no layout vertical, dataKey aponta para valores no eixo X */}
             <Line
               name="sigma_v"
-              type="monotone"
+              type="linear"
               dataKey="sigma_v"
               stroke="#f97316"
               strokeWidth={2}
               dot={{ r: 4, fill: "#f97316" }}
               activeDot={{ r: 6 }}
               connectNulls
+              isAnimationActive={true}
             />
             
             <Line
               name="u"
-              type="monotone"
+              type="linear"
               dataKey="u"
               stroke="#3b82f6"
               strokeWidth={2}
               dot={{ r: 4, fill: "#3b82f6" }}
               activeDot={{ r: 6 }}
               connectNulls
+              isAnimationActive={true}
             />
             
             <Line
               name="sigma_v_ef"
-              type="monotone"
+              type="linear"
               dataKey="sigma_v_ef"
               stroke="#10b981"
               strokeWidth={2.5}
               dot={{ r: 4, fill: "#10b981" }}
               activeDot={{ r: 6 }}
               connectNulls
+              isAnimationActive={true}
             />
             
             <Line
               name="sigma_h_ef"
-              type="monotone"
+              type="linear"
               dataKey="sigma_h_ef"
               stroke="#a855f7"
               strokeWidth={2}
               dot={{ r: 4, fill: "#a855f7" }}
               activeDot={{ r: 6 }}
               connectNulls
+              isAnimationActive={true}
             />
           </LineChart>
         </ResponsiveContainer>
-
-        {/* Informações adicionais */}
-        <div className="mt-4 p-3 bg-accent/30 rounded-lg border border-accent text-xs">
-          <p className="text-muted-foreground">
-            <strong>Nota:</strong> A profundidade aumenta para baixo (eixo Y invertido). 
-            As tensões são calculadas em cada interface de camada e no nível d'água (se aplicável).
-          </p>
-        </div>
       </CardContent>
     </Card>
   );

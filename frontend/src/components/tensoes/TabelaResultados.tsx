@@ -36,15 +36,15 @@ export default function TabelaResultados({ pontos, profundidadeNA, alturaCapilar
     : null;
 
   return (
-    <div className="rounded-md border overflow-x-auto">
+    <div className="rounded-md border overflow-auto" style={{ maxHeight: '400px' }}>
       <Table>
-        <TableHeader>
+        <TableHeader className="sticky top-0 bg-background z-10">
           <TableRow>
-            <TableHead className="text-center">Prof. (m)</TableHead>
-            <TableHead className="text-center">σ<sub>v</sub> (kPa)</TableHead>
-            <TableHead className="text-center">u (kPa)</TableHead>
-            <TableHead className="text-center">σ'<sub>v</sub> (kPa)</TableHead>
-            <TableHead className="text-center">σ'<sub>h</sub> (kPa)</TableHead>
+            <TableHead className="text-center bg-muted">Prof. (m)</TableHead>
+            <TableHead className="text-center bg-muted">σ<sub>v</sub> (kPa)</TableHead>
+            <TableHead className="text-center bg-muted">u (kPa)</TableHead>
+            <TableHead className="text-center bg-muted">σ'<sub>v</sub> (kPa)</TableHead>
+            <TableHead className="text-center bg-muted">σ'<sub>h</sub> (kPa)</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
