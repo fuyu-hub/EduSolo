@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { BarChart3, Info, Calculator as CalcIcon, Plus, Trash2 } from "lucide-react";
+import axios from "axios";
+import { BarChart3, Info, Calculator as CalcIcon, Plus, Trash2, Table as TableIcon, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -13,6 +15,14 @@ import SaveDialog from "@/components/SaveDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
 import { exportToPDF, ExportData, formatNumberForExport } from "@/lib/export-utils";
+import TabelaDadosGranulometricos from "@/components/granulometria/TabelaDadosGranulometricos";
+import CurvaGranulometrica from "@/components/granulometria/CurvaGranulometrica";
+import SeletorPeneiras from "@/components/granulometria/SeletorPeneiras";
+import DialogExemplos from "@/components/granulometria/DialogExemplos";
+import { ExemploGranulometria } from "@/lib/exemplos-granulometria";
+
+// Configuração da API
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 interface PeneiraDado {
   abertura: string;
@@ -26,17 +36,27 @@ interface FormData {
   limitePlasticidade: string;
 }
 
+// Interface alinhada com o backend (GranulometriaOutput)
+interface PontoGranulometrico {
+  abertura: number;
+  massa_retida: number;
+  porc_retida: number;
+  porc_retida_acum: number;
+  porc_passante: number;
+}
+
 interface Results {
-  percentagemAreia: number;
-  percentagemSilte: number;
-  percentagemArgila: number;
+  dados_granulometricos: PontoGranulometrico[];
+  percentagem_pedregulho: number | null;
+  percentagem_areia: number | null;
+  percentagem_finos: number | null;
   d10: number | null;
   d30: number | null;
   d60: number | null;
-  coefUniformidade: number | null;
-  coefCurvatura: number | null;
-  classificacaoUSCS: string;
-  descricaoUSCS: string;
+  coef_uniformidade: number | null;
+  coef_curvatura: number | null;
+  classificacao_uscs: string | null;
+  descricao_uscs: string | null;
 }
 
 const tooltips = {
@@ -110,7 +130,7 @@ export default function Granulometria() {
     }
   };
 
-  const handleCalculate = () => {
+  const handleCalculate = async () => {
     if (!formData.massaTotal) {
       toast.error("Preencha a massa total");
       return;
@@ -124,160 +144,39 @@ export default function Granulometria() {
 
     setIsCalculating(true);
 
-    setTimeout(() => {
-      const massaTotal = parseFloat(formData.massaTotal);
-
-      // Ordenar peneiras por abertura (decrescente)
-      const peneirasOrdenadas = peneirasValidas
-        .map((p) => ({
+    try {
+      // Preparar payload para a API
+      const payload = {
+        massa_total: parseFloat(formData.massaTotal),
+        peneiras: peneirasValidas.map((p) => ({
           abertura: parseFloat(p.abertura),
-          massaRetida: parseFloat(p.massaRetida),
-        }))
-        .sort((a, b) => b.abertura - a.abertura);
-
-      // Calcular porcentagens retidas e acumuladas
-      let massaAcumulada = 0;
-      const dadosGranulometricos = peneirasOrdenadas.map((p) => {
-        massaAcumulada += p.massaRetida;
-        const percRetida = (p.massaRetida / massaTotal) * 100;
-        const percRetidaAcum = (massaAcumulada / massaTotal) * 100;
-        const percPassante = 100 - percRetidaAcum;
-        return {
-          ...p,
-          percRetida,
-          percRetidaAcum,
-          percPassante,
-        };
-      });
-
-      // Calcular D10, D30, D60
-      const calcularDiametro = (percentualPassante: number): number | null => {
-        for (let i = 0; i < dadosGranulometricos.length - 1; i++) {
-          const p1 = dadosGranulometricos[i];
-          const p2 = dadosGranulometricos[i + 1];
-          
-          if (p1.percPassante >= percentualPassante && p2.percPassante <= percentualPassante) {
-            // Interpolação linear
-            const d = p2.abertura + ((p1.abertura - p2.abertura) * (percentualPassante - p2.percPassante)) / (p1.percPassante - p2.percPassante);
-            return d;
-          }
-        }
-        return null;
+          massa_retida: parseFloat(p.massaRetida),
+        })),
+        ll: formData.limitePercent ? parseFloat(formData.limitePercent) : null,
+        lp: formData.limitePlasticidade ? parseFloat(formData.limitePlasticidade) : null,
       };
 
-      const d10 = calcularDiametro(10);
-      const d30 = calcularDiametro(30);
-      const d60 = calcularDiametro(60);
+      // Fazer requisição para a API
+      const response = await axios.post<Results>(
+        `${API_BASE_URL}/analisar/granulometria`,
+        payload
+      );
 
-      // Coeficientes
-      const cu = d10 && d60 ? d60 / d10 : null;
-      const cc = d10 && d30 && d60 ? (d30 * d30) / (d10 * d60) : null;
-
-      // Classificação por tamanho (ABNT)
-      const passante475 = dadosGranulometricos.find((d) => Math.abs(d.abertura - 4.76) < 0.1)?.percPassante || 100;
-      const passante0075 = dadosGranulometricos.find((d) => Math.abs(d.abertura - 0.075) < 0.01)?.percPassante || 0;
-
-      const percPedregulho = 100 - passante475;
-      const percAreia = passante475 - passante0075;
-      const percFinos = passante0075;
-
-      // Simplificação da classificação USCS
-      let classificacaoUSCS = "";
-      let descricaoUSCS = "";
-
-      const LL = formData.limitePercent ? parseFloat(formData.limitePercent) : 0;
-      const LP = formData.limitePlasticidade ? parseFloat(formData.limitePlasticidade) : 0;
-      const IP = LL - LP;
-
-      if (percFinos < 50) {
-        // Solos grossos
-        if (percPedregulho > percAreia) {
-          // Pedregulho
-          if (percFinos < 5) {
-            if (cu && cu > 4 && cc && cc >= 1 && cc <= 3) {
-              classificacaoUSCS = "GW";
-              descricaoUSCS = "Pedregulho bem graduado";
-            } else {
-              classificacaoUSCS = "GP";
-              descricaoUSCS = "Pedregulho mal graduado";
-            }
-          } else if (percFinos > 12) {
-            if (IP > 7) {
-              classificacaoUSCS = "GC";
-              descricaoUSCS = "Pedregulho argiloso";
-            } else {
-              classificacaoUSCS = "GM";
-              descricaoUSCS = "Pedregulho siltoso";
-            }
-          } else {
-            classificacaoUSCS = "GW-GC/GM";
-            descricaoUSCS = "Pedregulho com finos";
-          }
-        } else {
-          // Areia
-          if (percFinos < 5) {
-            if (cu && cu > 6 && cc && cc >= 1 && cc <= 3) {
-              classificacaoUSCS = "SW";
-              descricaoUSCS = "Areia bem graduada";
-            } else {
-              classificacaoUSCS = "SP";
-              descricaoUSCS = "Areia mal graduada";
-            }
-          } else if (percFinos > 12) {
-            if (IP > 7) {
-              classificacaoUSCS = "SC";
-              descricaoUSCS = "Areia argilosa";
-            } else {
-              classificacaoUSCS = "SM";
-              descricaoUSCS = "Areia siltosa";
-            }
-          } else {
-            classificacaoUSCS = "SW-SC/SM";
-            descricaoUSCS = "Areia com finos";
-          }
-        }
-      } else {
-        // Solos finos
-        if (LL < 50) {
-          // Baixa plasticidade
-          if (IP > 7) {
-            classificacaoUSCS = "CL";
-            descricaoUSCS = "Argila de baixa plasticidade";
-          } else if (IP < 4) {
-            classificacaoUSCS = "ML";
-            descricaoUSCS = "Silte de baixa plasticidade";
-          } else {
-            classificacaoUSCS = "CL-ML";
-            descricaoUSCS = "Silte argiloso";
-          }
-        } else {
-          // Alta plasticidade
-          if (IP > 7) {
-            classificacaoUSCS = "CH";
-            descricaoUSCS = "Argila de alta plasticidade";
-          } else {
-            classificacaoUSCS = "MH";
-            descricaoUSCS = "Silte de alta plasticidade";
-          }
-        }
-      }
-
-      setResults({
-        percentagemAreia: percAreia,
-        percentagemSilte: percFinos > 0 ? percFinos * 0.7 : 0, // Estimativa
-        percentagemArgila: percFinos > 0 ? percFinos * 0.3 : 0, // Estimativa
-        d10,
-        d30,
-        d60,
-        coefUniformidade: cu,
-        coefCurvatura: cc,
-        classificacaoUSCS,
-        descricaoUSCS,
-      });
-
-      setIsCalculating(false);
+      setResults(response.data);
       toast.success("Análise granulométrica concluída!");
-    }, 1000);
+    } catch (error: any) {
+      console.error("Erro ao calcular granulometria:", error);
+      
+      if (error.response?.data?.detail) {
+        toast.error(`Erro: ${error.response.data.detail}`);
+      } else if (error.message) {
+        toast.error(`Erro: ${error.message}`);
+      } else {
+        toast.error("Erro ao calcular. Verifique os dados e tente novamente.");
+      }
+    } finally {
+      setIsCalculating(false);
+    }
   };
 
   const handleClear = () => {
@@ -318,6 +217,27 @@ export default function Granulometria() {
     toast.success(`"${calculation.name}" carregado com sucesso!`);
   };
 
+  const handleCarregarExemplo = (exemplo: ExemploGranulometria) => {
+    // Converter peneiras do exemplo para o formato do formulário
+    const peneirasFormatadas: PeneiraDado[] = exemplo.peneiras.map(p => ({
+      abertura: p.aberturaMM.toString(),
+      massaRetida: p.massaRetida.toString()
+    }));
+
+    // Atualizar formulário com dados do exemplo
+    setFormData({
+      massaTotal: exemplo.massaTotal.toString(),
+      peneiras: peneirasFormatadas,
+      limitePercent: exemplo.ll?.toString() || "",
+      limitePlasticidade: exemplo.lp?.toString() || "",
+    });
+
+    // Limpar resultados anteriores
+    setResults(null);
+
+    toast.success(`Exemplo "${exemplo.nome}" carregado com sucesso!`);
+  };
+
   const handleExportPDF = async () => {
     if (!results) return;
     
@@ -333,18 +253,30 @@ export default function Granulometria() {
     if (formData.limitePercent) inputs.push({ label: "LL", value: `${formData.limitePercent}%` });
     if (formData.limitePlasticidade) inputs.push({ label: "LP", value: `${formData.limitePlasticidade}%` });
 
-    const resultsList: { label: string; value: string; highlight?: boolean }[] = [
-      { label: "Classificação USCS", value: results.classificacaoUSCS, highlight: true },
-      { label: "Descrição", value: results.descricaoUSCS },
-      { label: "% Areia", value: `${formatNumberForExport(results.percentagemAreia, 1)}%` },
-      { label: "% Silte", value: `${formatNumberForExport(results.percentagemSilte, 1)}%` },
-      { label: "% Argila", value: `${formatNumberForExport(results.percentagemArgila, 1)}%` },
-    ];
-    if (results.d10) resultsList.push({ label: "D10", value: `${formatNumberForExport(results.d10, 3)} mm` });
-    if (results.d30) resultsList.push({ label: "D30", value: `${formatNumberForExport(results.d30, 3)} mm` });
-    if (results.d60) resultsList.push({ label: "D60", value: `${formatNumberForExport(results.d60, 3)} mm` });
-    if (results.coefUniformidade) resultsList.push({ label: "Cu", value: formatNumberForExport(results.coefUniformidade, 2) });
-    if (results.coefCurvatura) resultsList.push({ label: "Cc", value: formatNumberForExport(results.coefCurvatura, 2) });
+    const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
+    
+    if (results.classificacao_uscs) {
+      resultsList.push({ label: "Classificação USCS", value: results.classificacao_uscs, highlight: true });
+    }
+    if (results.descricao_uscs) {
+      resultsList.push({ label: "Descrição", value: results.descricao_uscs });
+    }
+    
+    if (results.percentagem_pedregulho !== null) {
+      resultsList.push({ label: "% Pedregulho", value: `${formatNumberForExport(results.percentagem_pedregulho, 1)}%` });
+    }
+    if (results.percentagem_areia !== null) {
+      resultsList.push({ label: "% Areia", value: `${formatNumberForExport(results.percentagem_areia, 1)}%` });
+    }
+    if (results.percentagem_finos !== null) {
+      resultsList.push({ label: "% Finos", value: `${formatNumberForExport(results.percentagem_finos, 1)}%` });
+    }
+    
+    if (results.d10) resultsList.push({ label: "D10", value: `${formatNumberForExport(results.d10, 4)} mm` });
+    if (results.d30) resultsList.push({ label: "D30", value: `${formatNumberForExport(results.d30, 4)} mm` });
+    if (results.d60) resultsList.push({ label: "D60", value: `${formatNumberForExport(results.d60, 4)} mm` });
+    if (results.coef_uniformidade) resultsList.push({ label: "Cu", value: formatNumberForExport(results.coef_uniformidade, 2) });
+    if (results.coef_curvatura) resultsList.push({ label: "Cc", value: formatNumberForExport(results.coef_curvatura, 2) });
 
     const exportData: ExportData = {
       moduleName: "granulometria",
@@ -380,16 +312,20 @@ export default function Granulometria() {
           </div>
         </div>
         
-        <TooltipProvider>
-          <CalculationActions
-            onSave={handleSaveClick}
-            onLoad={() => setLoadDialogOpen(true)}
-            onExport={handleExportPDF}
-            onPrint={handlePrint}
-            hasResults={!!results}
-            isCalculating={isCalculating}
-          />
-        </TooltipProvider>
+        <div className="flex items-center gap-2">
+          <DialogExemplos onCarregarExemplo={handleCarregarExemplo} />
+          
+          <TooltipProvider>
+            <CalculationActions
+              onSave={handleSaveClick}
+              onLoad={() => setLoadDialogOpen(true)}
+              onExport={handleExportPDF}
+              onPrint={handlePrint}
+              hasResults={!!results}
+              isCalculating={isCalculating}
+            />
+          </TooltipProvider>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
@@ -424,59 +360,11 @@ export default function Granulometria() {
                 />
               </div>
 
-              {/* Peneiras */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-semibold">Dados das Peneiras</Label>
-                  <Button onClick={addPeneira} size="sm" variant="outline">
-                    <Plus className="w-4 h-4 mr-1" />
-                    Adicionar
-                  </Button>
-                </div>
-
-                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
-                  {formData.peneiras.map((peneira, index) => (
-                    <div key={index} className="p-3 rounded-lg bg-accent/5 border border-accent/20 space-y-2">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-medium text-muted-foreground">Peneira {index + 1}</span>
-                        {formData.peneiras.length > 1 && (
-                          <Button onClick={() => removePeneira(index)} size="sm" variant="ghost" className="h-6 w-6 p-0">
-                            <Trash2 className="w-3 h-3" />
-                          </Button>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                          <Label htmlFor={`abertura-${index}`} className="text-xs">
-                            Abertura (mm)
-                          </Label>
-                          <Input
-                            id={`abertura-${index}`}
-                            type="number"
-                            step="0.001"
-                            value={peneira.abertura}
-                            onChange={(e) => handlePeneiraChange(index, "abertura", e.target.value)}
-                            placeholder="Ex: 4.76"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor={`massaRetida-${index}`} className="text-xs">
-                            Massa Retida (g)
-                          </Label>
-                          <Input
-                            id={`massaRetida-${index}`}
-                            type="number"
-                            step="0.01"
-                            value={peneira.massaRetida}
-                            onChange={(e) => handlePeneiraChange(index, "massaRetida", e.target.value)}
-                            placeholder="Ex: 150.00"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {/* Peneiras - Novo Componente */}
+              <SeletorPeneiras 
+                peneiras={formData.peneiras}
+                onChange={(novasPeneiras) => setFormData(prev => ({ ...prev, peneiras: novasPeneiras }))}
+              />
 
               {/* Limites (opcional) */}
               <div className="space-y-3 p-3 rounded-lg bg-accent/5 border border-accent/20">
@@ -534,39 +422,47 @@ export default function Granulometria() {
               </div>
             ) : results ? (
               <div className="space-y-4">
-                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-                  <p className="text-sm font-medium text-muted-foreground mb-2">Classificação USCS</p>
-                  <p className="text-2xl font-bold text-primary mb-1">{results.classificacaoUSCS}</p>
-                  <p className="text-sm text-foreground">{results.descricaoUSCS}</p>
-                </div>
+                {results.classificacao_uscs && (
+                  <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Classificação USCS</p>
+                    <p className="text-2xl font-bold text-primary mb-1">{results.classificacao_uscs}</p>
+                    <p className="text-sm text-foreground">{results.descricao_uscs}</p>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-3 gap-3">
                   <div className="p-3 rounded-lg bg-accent/5 text-center">
+                    <p className="text-xs text-muted-foreground mb-1">Pedregulho</p>
+                    <p className="text-lg font-bold text-foreground">
+                      {results.percentagem_pedregulho !== null ? results.percentagem_pedregulho.toFixed(1) : "N/A"}%
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg bg-accent/5 text-center">
                     <p className="text-xs text-muted-foreground mb-1">Areia</p>
-                    <p className="text-lg font-bold text-foreground">{results.percentagemAreia.toFixed(1)}%</p>
+                    <p className="text-lg font-bold text-foreground">
+                      {results.percentagem_areia !== null ? results.percentagem_areia.toFixed(1) : "N/A"}%
+                    </p>
                   </div>
                   <div className="p-3 rounded-lg bg-accent/5 text-center">
-                    <p className="text-xs text-muted-foreground mb-1">Silte</p>
-                    <p className="text-lg font-bold text-foreground">{results.percentagemSilte.toFixed(1)}%</p>
-                  </div>
-                  <div className="p-3 rounded-lg bg-accent/5 text-center">
-                    <p className="text-xs text-muted-foreground mb-1">Argila</p>
-                    <p className="text-lg font-bold text-foreground">{results.percentagemArgila.toFixed(1)}%</p>
+                    <p className="text-xs text-muted-foreground mb-1">Finos</p>
+                    <p className="text-lg font-bold text-foreground">
+                      {results.percentagem_finos !== null ? results.percentagem_finos.toFixed(1) : "N/A"}%
+                    </p>
                   </div>
                 </div>
 
-                <ResultItem label="D10" value={results.d10 ? `${results.d10.toFixed(3)} mm` : "N/A"} tooltip={tooltips.d10} />
-                <ResultItem label="D30" value={results.d30 ? `${results.d30.toFixed(3)} mm` : "N/A"} tooltip={tooltips.d30} />
-                <ResultItem label="D60" value={results.d60 ? `${results.d60.toFixed(3)} mm` : "N/A"} tooltip={tooltips.d60} />
+                <ResultItem label="D10" value={results.d10 ? `${results.d10.toFixed(4)} mm` : "N/A"} tooltip={tooltips.d10} />
+                <ResultItem label="D30" value={results.d30 ? `${results.d30.toFixed(4)} mm` : "N/A"} tooltip={tooltips.d30} />
+                <ResultItem label="D60" value={results.d60 ? `${results.d60.toFixed(4)} mm` : "N/A"} tooltip={tooltips.d60} />
                 <ResultItem
                   label="Coef. Uniformidade (Cu)"
-                  value={results.coefUniformidade ? results.coefUniformidade.toFixed(2) : "N/A"}
+                  value={results.coef_uniformidade ? results.coef_uniformidade.toFixed(2) : "N/A"}
                   tooltip={tooltips.cu}
                   highlight
                 />
                 <ResultItem
                   label="Coef. Curvatura (Cc)"
-                  value={results.coefCurvatura ? results.coefCurvatura.toFixed(2) : "N/A"}
+                  value={results.coef_curvatura ? results.coef_curvatura.toFixed(2) : "N/A"}
                   tooltip={tooltips.cc}
                   highlight
                 />
@@ -580,6 +476,38 @@ export default function Granulometria() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Seção de Visualizações Detalhadas */}
+      {results && (
+        <Tabs defaultValue="tabela" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
+            <TabsTrigger value="tabela" className="flex items-center gap-2">
+              <TableIcon className="w-4 h-4" />
+              Tabela
+            </TabsTrigger>
+            <TabsTrigger value="grafico" className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" />
+              Curva
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="tabela" className="mt-6">
+            <TabelaDadosGranulometricos 
+              dados={results.dados_granulometricos}
+              massaTotal={parseFloat(formData.massaTotal)}
+            />
+          </TabsContent>
+
+          <TabsContent value="grafico" className="mt-6">
+            <CurvaGranulometrica 
+              dados={results.dados_granulometricos}
+              d10={results.d10}
+              d30={results.d30}
+              d60={results.d60}
+            />
+          </TabsContent>
+        </Tabs>
+      )}
 
       {/* Dialogs */}
       <SaveDialog

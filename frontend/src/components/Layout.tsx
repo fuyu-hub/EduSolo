@@ -1,8 +1,9 @@
 // Adiciona React à importação
 import React, { useState, useEffect } from "react";
-import { Menu, Calculator, FileText, BookOpen, Layers, Droplets, BarChart3, TrendingDown } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Menu, Calculator, FileText, BookOpen, Layers, Droplets, BarChart3, TrendingDown, ArrowLeft, Settings, Sun, Moon } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/hooks/use-theme";
 import {
   Sheet,
   SheetContent,
@@ -28,6 +29,7 @@ const menuItems = [
     title: "Ferramentas",
     items: [
       { icon: BookOpen, label: "Material Educacional", path: "/educacional" },
+      { icon: Settings, label: "Configurações", path: "/settings" },
     ],
   },
 ];
@@ -124,6 +126,9 @@ const ConditionalSheetClose = ({ shouldWrap, children, ...props }: { shouldWrap:
 // Agora usa React.ReactNode corretamente
 export function Layout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { theme, toggleMode } = useTheme();
 
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     // Default to true (collapsed) if on mobile or no localStorage value
@@ -226,7 +231,36 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Menu className="h-5 w-5" />
               )}
             </Button>
+            
+            {/* Botão de Voltar */}
+            {location.pathname !== "/" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(-1)}
+                className="ml-2 text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Voltar</span>
+              </Button>
+            )}
+            
             <div className="flex-1"></div>
+            
+            {/* Botão de Toggle de Modo Claro/Escuro */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleMode}
+              className="text-muted-foreground hover:text-foreground"
+              aria-label={theme.mode === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+            >
+              {theme.mode === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
           </header>
 
           {/* Page Content */}

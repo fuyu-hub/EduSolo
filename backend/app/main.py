@@ -12,7 +12,9 @@ from app.models import (
     TempoAdensamentoInput, TempoAdensamentoOutput,
     # Novos imports para Fluxo e Classificação
     FluxoHidraulicoInput, FluxoHidraulicoOutput,
-    ClassificacaoUSCSInput, ClassificacaoUSCSOutput
+    ClassificacaoUSCSInput, ClassificacaoUSCSOutput,
+    # Import para Granulometria
+    GranulometriaInput, GranulometriaOutput
 )
 # Importa as funções de cálculo de cada módulo
 from app.modules.indices_fisicos import calcular_indices_fisicos
@@ -28,11 +30,12 @@ from app.modules.fluxo_hidraulico import (
     calcular_tensoes_com_fluxo, calcular_gradiente_critico, calcular_fs_liquefacao
 )
 from app.modules.classificacao_uscs import classificar_uscs
+from app.modules.granulometria import calcular_granulometria
 
 app = FastAPI(
     title="EduSolo API",
     description="Backend para cálculos de Mecânica dos Solos.",
-    version="0.3.0" # Versão incrementada
+    version="0.4.0" # Versão incrementada - Adicionado módulo de Granulometria
 )
 
 # Configuração do CORS (mantida)
@@ -49,7 +52,7 @@ app.add_middleware(
 @app.get("/", tags=["Root"])
 def read_root():
     """ Endpoint raiz para verificar se a API está online. """
-    return {"message": "Bem-vindo à API do EduSolo v0.3.0"}
+    return {"message": "Bem-vindo à API do EduSolo v0.4.0"}
 
 # --- Módulos Anteriores (mantidos) ---
 @app.post("/calcular/indices-fisicos", response_model=IndicesFisicosOutput, tags=["Índices e Limites"])
@@ -205,6 +208,26 @@ def post_classificar_uscs(dados_entrada: ClassificacaoUSCSInput):
     Cu e Cc são necessários para solos grossos com < 5% de finos ou classificação dupla.
     """
     resultados = classificar_uscs(dados_entrada)
+    if resultados.erro:
+        raise HTTPException(status_code=400, detail=resultados.erro)
+    return resultados
+
+
+@app.post("/analisar/granulometria", response_model=GranulometriaOutput, tags=["Granulometria"])
+def post_analisar_granulometria(dados_entrada: GranulometriaInput):
+    """
+    Realiza análise granulométrica completa e classificação USCS.
+    Calcula curva granulométrica, parâmetros D10/D30/D60, Cu, Cc e classificação.
+    
+    Forneça:
+    - massa_total: Massa total da amostra (g)
+    - peneiras: Lista com abertura (mm) e massa retida (g) de cada peneira
+    - ll (opcional): Limite de Liquidez (%)
+    - lp (opcional): Limite de Plasticidade (%)
+    
+    Retorna análise completa com classificação USCS se os dados permitirem.
+    """
+    resultados = calcular_granulometria(dados_entrada)
     if resultados.erro:
         raise HTTPException(status_code=400, detail=resultados.erro)
     return resultados

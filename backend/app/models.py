@@ -276,3 +276,35 @@ class ClassificacaoUSCSOutput(BaseModel):
     classificacao: Optional[str] = Field(None, description="Símbolo do grupo USCS (ex: SW, CL, GP-GC)")
     descricao: Optional[str] = Field(None, description="Descrição do grupo (ex: Areia bem graduada, Argila de baixa plasticidade)")
     erro: Optional[str] = None
+
+# --- Modelos Módulo 9: Granulometria ---
+class PeneiraDado(BaseModel):
+    abertura: float = Field(..., gt=0, description="Abertura da peneira (mm)")
+    massa_retida: float = Field(..., ge=0, description="Massa retida (g)")
+
+class GranulometriaInput(BaseModel):
+    massa_total: float = Field(..., gt=0, description="Massa total da amostra (g)")
+    peneiras: List[PeneiraDado] = Field(..., min_items=1, description="Dados das peneiras")
+    ll: Optional[float] = Field(None, ge=0, description="Limite de Liquidez (%)")
+    lp: Optional[float] = Field(None, ge=0, description="Limite de Plasticidade (%)")
+
+class PontoGranulometrico(BaseModel):
+    abertura: float
+    massa_retida: float
+    porc_retida: float
+    porc_retida_acum: float
+    porc_passante: float
+
+class GranulometriaOutput(BaseModel):
+    dados_granulometricos: List[PontoGranulometrico] = Field(..., description="Dados calculados para cada peneira")
+    percentagem_pedregulho: Optional[float] = Field(None, description="% de pedregulho (> 4.76mm)")
+    percentagem_areia: Optional[float] = Field(None, description="% de areia (4.76 - 0.075mm)")
+    percentagem_finos: Optional[float] = Field(None, description="% de finos (< 0.075mm)")
+    d10: Optional[float] = Field(None, description="Diâmetro efetivo D10 (mm)")
+    d30: Optional[float] = Field(None, description="Diâmetro D30 (mm)")
+    d60: Optional[float] = Field(None, description="Diâmetro D60 (mm)")
+    coef_uniformidade: Optional[float] = Field(None, description="Coeficiente de Uniformidade Cu = D60/D10")
+    coef_curvatura: Optional[float] = Field(None, description="Coeficiente de Curvatura Cc = (D30)²/(D10×D60)")
+    classificacao_uscs: Optional[str] = Field(None, description="Classificação USCS do solo")
+    descricao_uscs: Optional[str] = Field(None, description="Descrição da classificação USCS")
+    erro: Optional[str] = None

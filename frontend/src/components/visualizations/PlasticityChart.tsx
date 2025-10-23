@@ -1,5 +1,6 @@
 // src/components/visualizations/PlasticityChart.tsx
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import {
   ScatterChart,
   Scatter,
@@ -60,7 +61,7 @@ const zoneInfo = {
  * com base no domínio [0..xMax] e [0..yMax], seguindo a linha A (ip = 0.73*(ll-20)).
  */
 const CustomizedPolygonDrawer = (props: any) => {
-  const { width, height, xAxisMap, yAxisMap, xAxisProps, yAxisProps, xDomain, yDomain, onZoneClick } = props;
+  const { width, height, xAxisMap, yAxisMap, xAxisProps, yAxisProps, xDomain, yDomain, onZoneClick, chartRef } = props;
 
   // se não tiver escala, não desenha
   if (!xAxisMap || !yAxisMap) return null;
@@ -233,7 +234,7 @@ const CustomizedPolygonDrawer = (props: any) => {
         fillOpacity={0.95} 
         stroke="none" 
         style={{ cursor: 'pointer' }}
-        onClick={() => onZoneClick && onZoneClick('CL')}
+        onClick={(e) => onZoneClick && onZoneClick('CL', e)}
         onMouseEnter={(e) => {
           e.currentTarget.style.fillOpacity = '0.8';
           e.currentTarget.style.stroke = '#333';
@@ -251,7 +252,7 @@ const CustomizedPolygonDrawer = (props: any) => {
         fillOpacity={0.95} 
         stroke="none" 
         style={{ cursor: 'pointer' }}
-        onClick={() => onZoneClick && onZoneClick('CH')}
+        onClick={(e) => onZoneClick && onZoneClick('CH', e)}
         onMouseEnter={(e) => {
           e.currentTarget.style.fillOpacity = '0.8';
           e.currentTarget.style.stroke = '#333';
@@ -269,7 +270,7 @@ const CustomizedPolygonDrawer = (props: any) => {
         fillOpacity={0.95} 
         stroke="none" 
         style={{ cursor: 'pointer' }}
-        onClick={() => onZoneClick && onZoneClick('MH')}
+        onClick={(e) => onZoneClick && onZoneClick('MH', e)}
         onMouseEnter={(e) => {
           e.currentTarget.style.fillOpacity = '0.8';
           e.currentTarget.style.stroke = '#333';
@@ -287,7 +288,7 @@ const CustomizedPolygonDrawer = (props: any) => {
         fillOpacity={0.95} 
         stroke="none" 
         style={{ cursor: 'pointer' }}
-        onClick={() => onZoneClick && onZoneClick('ML')}
+        onClick={(e) => onZoneClick && onZoneClick('ML', e)}
         onMouseEnter={(e) => {
           e.currentTarget.style.fillOpacity = '0.8';
           e.currentTarget.style.stroke = '#333';
@@ -305,7 +306,7 @@ const CustomizedPolygonDrawer = (props: any) => {
         fillOpacity={0.95} 
         stroke="none" 
         style={{ cursor: 'pointer' }}
-        onClick={() => onZoneClick && onZoneClick('CL-ML')}
+        onClick={(e) => onZoneClick && onZoneClick('CL-ML', e)}
         onMouseEnter={(e) => {
           e.currentTarget.style.fillOpacity = '0.8';
           e.currentTarget.style.stroke = '#333';
@@ -479,6 +480,30 @@ const CustomizedPolygonDrawer = (props: any) => {
 const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [showZoneInfo, setShowZoneInfo] = useState<boolean>(false);
+  const [popupPosition, setPopupPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const popupRef = React.useRef<HTMLDivElement>(null);
+
+  // Fecha o popup ao clicar fora
+  React.useEffect(() => {
+    if (!showZoneInfo) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      
+      // Verifica se o clique foi em uma zona (path element)
+      const isZoneClick = target.tagName === 'path' && target.style.cursor === 'pointer';
+      
+      // Não fecha se clicar no popup ou em uma zona
+      if (popupRef.current && !popupRef.current.contains(target) && !isZoneClick) {
+        setShowZoneInfo(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showZoneInfo]);
 
   if (ll === null || ip === null || isNaN(ll) || isNaN(ip)) {
     return (
@@ -582,7 +607,12 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
                     {...chartProps}
                     xDomain={xDomain}
                     yDomain={yDomain}
-                    onZoneClick={(zone) => {
+                    onZoneClick={(zone: string, event: any) => {
+                      // Posição relativa à viewport (janela inteira)
+                      setPopupPosition({ 
+                        x: event.clientX, 
+                        y: event.clientY 
+                      });
                       setSelectedZone(zone);
                       setShowZoneInfo(true);
                     }}
@@ -601,19 +631,21 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
         </ResponsiveContainer>
       </div>
 
-      {/* Popover compacto da zona selecionada */}
-      {showZoneInfo && selectedZone && (
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="bg-popover text-popover-foreground rounded-md border border-border shadow-lg max-w-[280px] p-2.5">
-            <button
-              onClick={() => setShowZoneInfo(false)}
-              className="absolute top-1.5 right-1.5 rounded-sm opacity-70 hover:opacity-100 transition-opacity"
-            >
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <div className="space-y-1.5 pr-4">
+      {/* Popover da zona selecionada - renderizado via Portal no body */}
+      {showZoneInfo && selectedZone && ReactDOM.createPortal(
+        <div 
+          ref={popupRef}
+          className="fixed animate-in fade-in slide-in-from-bottom-2 duration-200"
+          style={{
+            left: `${popupPosition.x}px`,
+            top: `${popupPosition.y - 10}px`,
+            transform: 'translate(-50%, -100%)',
+            zIndex: 9999,
+            pointerEvents: 'auto'
+          }}
+        >
+          <div className="bg-popover text-popover-foreground rounded-md border border-border shadow-2xl max-w-[280px] p-2.5">
+            <div className="space-y-1.5">
               <div className="flex items-center gap-1.5 pb-1 border-b border-border/30">
                 <div 
                   className="w-3 h-3 rounded flex-shrink-0" 
@@ -643,7 +675,8 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Informações da classificação do solo */}
