@@ -388,9 +388,9 @@ export default function Granulometria() {
     <div className="space-y-3 max-w-7xl mx-auto">
       <PrintHeader moduleTitle="Granulometria e Classificação" moduleName="granulometria" />
       
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 animate-in fade-in slide-in-from-left-4 duration-500">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center shadow-md">
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center shadow-md transition-transform hover:scale-110 hover:rotate-3">
             <BarChart3 className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -416,7 +416,7 @@ export default function Granulometria() {
       </div>
 
       {/* Formulário - Largura total */}
-      <Card className="glass">
+      <Card className="glass animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <CalcIcon className="w-4 h-4" />
@@ -557,7 +557,7 @@ export default function Granulometria() {
 
       {/* Resultados - Abaixo do formulário */}
       {results && (
-        <Card className="glass">
+        <Card className="glass animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Resultados da Análise</CardTitle>
           </CardHeader>

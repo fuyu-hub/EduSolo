@@ -295,9 +295,9 @@ export default function LimitesConsistencia() {
       <PrintHeader moduleTitle="Limites de Consistência" moduleName="limites-consistencia" />
       
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 animate-in fade-in slide-in-from-left-4 duration-500">
         <div className="flex items-center gap-3">
-           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg"> <Droplets className="w-6 h-6 text-white" /> </div>
+           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3"> <Droplets className="w-6 h-6 text-white" /> </div>
           <div>
             <h1 className="text-3xl font-bold text-foreground">Limites de Consistência</h1>
             <p className="text-muted-foreground text-sm">Determinação de LL, LP, IP, IC, Atividade e classificações</p>
@@ -318,7 +318,7 @@ export default function LimitesConsistencia() {
 
       <div className="grid lg:grid-cols-2 gap-4">
         {/* Formulário com Accordion */}
-        <Card className="glass flex flex-col">
+        <Card className="glass flex flex-col animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
             <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-xl"> <CalcIcon className="w-5 h-5" /> Dados dos Ensaios </CardTitle>
@@ -449,7 +449,7 @@ export default function LimitesConsistencia() {
         </Card>
 
         {/* --- Card de Resultados com Carrossel (Inalterado) --- */}
-        <Card className="glass">
+        <Card className="glass animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
            <CardHeader>
                <CardTitle className="flex items-center gap-2 text-xl">
                    <BarChart3 className="w-5 h-5 text-primary" />

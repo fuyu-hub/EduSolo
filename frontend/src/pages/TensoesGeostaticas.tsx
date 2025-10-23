@@ -559,9 +559,9 @@ export default function TensoesGeostaticas() {
       <PrintHeader moduleTitle="Tensões Geostáticas" moduleName="tensoes-geostaticas" />
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 animate-in fade-in slide-in-from-left-4 duration-500">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
             <Layers className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -588,7 +588,7 @@ export default function TensoesGeostaticas() {
 
       <div className="grid lg:grid-cols-2 gap-4">
         {/* Formulário */}
-        <Card className="glass flex flex-col">
+        <Card className="glass flex flex-col animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl">
@@ -653,7 +653,7 @@ export default function TensoesGeostaticas() {
         </Card>
 
         {/* Resultados e Visualizações */}
-        <div className="space-y-4">
+        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
           {/* Tabs com Tabela e Perfil de Tensões */}
           {!isCalculating && results && results.pontos_calculo && results.pontos_calculo.length > 0 && (
             <Tabs defaultValue="tabela" className="w-full">

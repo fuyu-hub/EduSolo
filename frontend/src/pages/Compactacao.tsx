@@ -385,9 +385,9 @@ export default function Compactacao() {
       <PrintHeader moduleTitle="Compactação (Proctor)" moduleName="compactacao" />
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 animate-in fade-in slide-in-from-left-4 duration-500">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
             <Hammer className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -410,7 +410,7 @@ export default function Compactacao() {
 
       <div className="grid lg:grid-cols-2 gap-4">
         {/* Formulário */}
-        <Card className="glass flex flex-col">
+        <Card className="glass flex flex-col animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl">
@@ -706,7 +706,7 @@ export default function Compactacao() {
         </Card>
 
         {/* Resultados */}
-        <Card className="glass">
+        <Card className="glass animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
               <BarChart3 className="w-5 h-5 text-primary" />
