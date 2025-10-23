@@ -29,7 +29,7 @@ import DialogExemplos from "@/components/tensoes/DialogExemplos";
 import { ExemploTensoes } from "@/lib/exemplos-tensoes";
 import { CamadaData } from "@/components/tensoes/DialogCamada";
 import DialogConfiguracoes, { ConfigData } from "@/components/tensoes/DialogConfiguracoes";
-import { transferirNAParaCamadaCorreta, CamadaTensoes } from "@/lib/tensoes-utils";
+import { transferirNAParaCamadaCorreta, CamadaTensoes } from "@/lib/tensoes-utils.ts";
 
 // Schema de validação
 const camadaSchema = z.object({
