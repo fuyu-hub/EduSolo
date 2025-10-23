@@ -1,6 +1,9 @@
 import numpy as np
 from typing import List, Tuple, Optional
-from app.models import CompactacaoInput, CompactacaoOutput, PontoEnsaioCompactacao, PontoCurva
+from app.models import CompactacaoInput, CompactacaoOutput, PontoEnsaioCompactacao, PontoCurvaCompactacao
+
+# Constante para evitar divisão por zero
+EPSILON = 1e-9
 
 # Precisaremos do numpy para a interpolação polinomial
 # Certifique-se que numpy está em requirements.txt e instalado
@@ -16,7 +19,7 @@ def calcular_compactacao(dados: CompactacaoInput) -> CompactacaoOutput:
     Retorna os resultados e pontos para plotagem dos gráficos.
     """
     try:
-        pontos_calculados: List[PontoCurva] = []
+        pontos_calculados: List[PontoCurvaCompactacao] = []
         gama_w = dados.peso_especifico_agua # kN/m³
         # γw em g/cm³ para consistência com massas em g e volume em cm³
         gama_w_gcm3 = gama_w / 9.81 if np.isclose(gama_w, 9.81, rtol=1e-2) else gama_w / 10.0
@@ -55,7 +58,7 @@ def calcular_compactacao(dados: CompactacaoInput) -> CompactacaoOutput:
 
             gama_d = gama_h_knm3 / (1 + umidade_decimal) # γd = γh / (1 + w)
 
-            pontos_calculados.append(PontoCurva(umidade=umidade_percentual, peso_especifico_seco=gama_d))
+            pontos_calculados.append(PontoCurvaCompactacao(umidade=umidade_percentual, peso_especifico_seco=gama_d))
 
         if len(pontos_calculados) < 3:
             return CompactacaoOutput(pontos_curva_compactacao=pontos_calculados, erro="São necessários pelo menos 3 pontos para traçar a curva de compactação.")
@@ -126,7 +129,7 @@ def calcular_compactacao(dados: CompactacaoInput) -> CompactacaoOutput:
                 denominador = (1 + dados.Gs * w_dec)
                 if abs(denominador) > EPSILON:
                      gd_sat = (dados.Gs * gama_w) / denominador
-                     pontos_saturacao_100.append(PontoCurva(umidade=w_p, peso_especifico_seco=gd_sat))
+                     pontos_saturacao_100.append(PontoCurvaCompactacao(umidade=w_p, peso_especifico_seco=gd_sat))
 
         return CompactacaoOutput(
             umidade_otima=round(w_ot, 2),

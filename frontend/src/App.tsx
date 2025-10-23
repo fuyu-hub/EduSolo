@@ -9,7 +9,7 @@ import IndicesFisicos from "./pages/IndicesFisicos";
 import LimitesConsistencia from "./pages/LimitesConsistencia";
 import Granulometria from "./pages/Granulometria";
 import Compactacao from "./pages/Compactacao";
-import Tensoes from "./pages/Tensoes";
+import TensoesGeostaticas from "./pages/TensoesGeostaticas";
 import AcrescimoTensoes from "./pages/AcrescimoTensoes";
 import Educacional from "./pages/Educacional";
 import Settings from "./pages/Settings";
@@ -66,7 +66,7 @@ const App = () => (
               path="/tensoes"
               element={
                 <Layout>
-                  <Tensoes />
+                  <TensoesGeostaticas />
                 </Layout>
               }
             />
