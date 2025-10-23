@@ -13,6 +13,7 @@ import Tensoes from "./pages/Tensoes";
 import AcrescimoTensoes from "./pages/AcrescimoTensoes";
 import Educacional from "./pages/Educacional";
 import Settings from "./pages/Settings";
+import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
@@ -90,6 +91,14 @@ const App = () => (
               element={
                 <Layout>
                   <Settings />
+                </Layout>
+              }
+            />
+            <Route
+              path="/about"
+              element={
+                <Layout>
+                  <About />
                 </Layout>
               }
             />
