@@ -1,6 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Download } from "lucide-react";
+import { Download, Table as TableIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface PontoGranulometrico {
@@ -71,74 +71,87 @@ export default function TabelaDadosGranulometricos({ dados, massaTotal }: Tabela
   const percPerdaMassa = (perdaMassa / massaTotal) * 100;
 
   return (
-    <Card className="glass">
-      <CardHeader>
+    <Card className="glass border-2">
+      <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Dados Granulométricos Detalhados</CardTitle>
-          <Button onClick={exportarCSV} variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Exportar CSV
+          <div>
+            <CardTitle className="text-base flex items-center gap-2">
+              <TableIcon className="w-5 h-5 text-fuchsia-500" />
+              Dados Granulométricos Detalhados
+            </CardTitle>
+          </div>
+          <Button onClick={exportarCSV} variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
+            <Download className="w-3.5 h-3.5" />
+            CSV
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="rounded-md border overflow-x-auto">
+      <CardContent className="pb-2">
+        <div className="rounded-lg border overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="text-center font-semibold">Peneira</TableHead>
-                <TableHead className="text-center font-semibold">Abertura (mm)</TableHead>
-                <TableHead className="text-center font-semibold">Massa Retida (g)</TableHead>
-                <TableHead className="text-center font-semibold">% Retida</TableHead>
-                <TableHead className="text-center font-semibold">% Retida Acum.</TableHead>
-                <TableHead className="text-center font-semibold">% Passante</TableHead>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="text-center font-bold text-xs py-2">Peneira</TableHead>
+                <TableHead className="text-center font-bold text-xs py-2">Abertura</TableHead>
+                <TableHead className="text-center font-bold text-xs py-2">M. Retida (g)</TableHead>
+                <TableHead className="text-center font-bold text-xs py-2">% Ret.</TableHead>
+                <TableHead className="text-center font-bold text-xs py-2">% Ret. Ac.</TableHead>
+                <TableHead className="text-center font-bold text-xs py-2 bg-primary/10">% Pass.</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {dados.map((ponto, index) => (
-                <TableRow key={index}>
-                  <TableCell className="text-center font-medium">
+                <TableRow key={index} className="hover:bg-muted/20">
+                  <TableCell className="text-center font-semibold text-xs py-1.5">
                     {getNomePeneira(ponto.abertura)}
                   </TableCell>
-                  <TableCell className="text-center">{ponto.abertura.toFixed(3)}</TableCell>
-                  <TableCell className="text-center">{ponto.massa_retida.toFixed(2)}</TableCell>
-                  <TableCell className="text-center">{ponto.porc_retida.toFixed(2)}</TableCell>
-                  <TableCell className="text-center">{ponto.porc_retida_acum.toFixed(2)}</TableCell>
-                  <TableCell className="text-center font-medium">{ponto.porc_passante.toFixed(2)}</TableCell>
+                  <TableCell className="text-center text-xs py-1.5">{ponto.abertura.toFixed(3)}</TableCell>
+                  <TableCell className="text-center text-xs py-1.5">{ponto.massa_retida.toFixed(2)}</TableCell>
+                  <TableCell className="text-center text-xs py-1.5">{ponto.porc_retida.toFixed(2)}%</TableCell>
+                  <TableCell className="text-center text-xs py-1.5">{ponto.porc_retida_acum.toFixed(2)}%</TableCell>
+                  <TableCell className="text-center font-bold text-xs py-1.5 bg-primary/5">{ponto.porc_passante.toFixed(2)}%</TableCell>
                 </TableRow>
               ))}
-              <TableRow className="bg-accent/50 font-semibold">
-                <TableCell className="text-center" colSpan={2}>TOTAL</TableCell>
-                <TableCell className="text-center">{massaTotalCalculada.toFixed(2)}</TableCell>
-                <TableCell className="text-center">100.00</TableCell>
-                <TableCell className="text-center">-</TableCell>
-                <TableCell className="text-center">-</TableCell>
+              <TableRow className="bg-gradient-to-r from-fuchsia-500/10 to-purple-600/10 font-bold border-t border-fuchsia-500/30">
+                <TableCell className="text-center text-xs py-2" colSpan={2}>TOTAL</TableCell>
+                <TableCell className="text-center text-xs py-2">{massaTotalCalculada.toFixed(2)}</TableCell>
+                <TableCell className="text-center text-xs py-2">100.00%</TableCell>
+                <TableCell className="text-center text-xs py-2">-</TableCell>
+                <TableCell className="text-center text-xs py-2 bg-primary/5">-</TableCell>
               </TableRow>
             </TableBody>
           </Table>
         </div>
 
         {/* Informações adicionais */}
-        <div className="mt-4 p-3 rounded-lg bg-muted/50 space-y-1 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Massa Total da Amostra:</span>
-            <span className="font-semibold">{massaTotal.toFixed(2)} g</span>
+        <div className="mt-4 p-3 rounded-lg bg-gradient-to-br from-muted/50 to-muted/30 border border-muted space-y-1.5 text-sm">
+          <p className="text-sm font-semibold text-muted-foreground uppercase mb-2">Resumo</p>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Massa Total:</span>
+            <span className="font-bold text-sm">{massaTotal.toFixed(2)} g</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Massa Total Retida:</span>
-            <span className="font-semibold">{massaTotalCalculada.toFixed(2)} g</span>
+          <div className="flex justify-between items-center">
+            <span className="text-muted-foreground">Massa Retida:</span>
+            <span className="font-bold text-sm">{massaTotalCalculada.toFixed(2)} g</span>
           </div>
           {Math.abs(perdaMassa) > 0.01 && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Perda de Massa:</span>
-              <span className={`font-semibold ${Math.abs(percPerdaMassa) > 1 ? "text-amber-500" : ""}`}>
+            <div className="flex justify-between items-center pt-1.5 border-t border-muted-foreground/20">
+              <span className="text-muted-foreground">Perda:</span>
+              <span className={`font-bold text-sm ${Math.abs(percPerdaMassa) > 1 ? "text-amber-600 dark:text-amber-400" : "text-green-600 dark:text-green-400"}`}>
                 {perdaMassa.toFixed(2)} g ({percPerdaMassa.toFixed(2)}%)
               </span>
             </div>
           )}
           {Math.abs(percPerdaMassa) > 1 && (
-            <div className="text-xs text-amber-600 dark:text-amber-400 mt-2">
-              ⚠️ Perda de massa superior a 1%. Verifique os dados do ensaio.
+            <div className="mt-2 p-2 rounded bg-amber-100 dark:bg-amber-900/30 border border-amber-400 dark:border-amber-700 text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
+              <span>⚠️</span>
+              <p>Perda &gt; 1%. Verificar NBR 7181</p>
+            </div>
+          )}
+          {Math.abs(percPerdaMassa) <= 1 && Math.abs(perdaMassa) > 0.01 && (
+            <div className="mt-2 p-2 rounded bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-700 text-xs text-green-800 dark:text-green-200 flex items-center gap-2">
+              <span>✓</span>
+              <p>Perda aceitável</p>
             </div>
           )}
         </div>

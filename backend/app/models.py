@@ -277,6 +277,23 @@ class ClassificacaoUSCSOutput(BaseModel):
     descricao: Optional[str] = Field(None, description="Descrição do grupo (ex: Areia bem graduada, Argila de baixa plasticidade)")
     erro: Optional[str] = None
 
+# --- Modelos Classificação HRB/AASHTO ---
+class ClassificacaoHRBInput(BaseModel):
+    pass_peneira_200: float = Field(..., ge=0, le=100, description="% passando na peneira #200 (0.075mm)")
+    pass_peneira_40: Optional[float] = Field(None, ge=0, le=100, description="% passando na peneira #40 (0.42mm)")
+    pass_peneira_10: Optional[float] = Field(None, ge=0, le=100, description="% passando na peneira #10 (2.0mm)")
+    ll: Optional[float] = Field(None, ge=0, description="Limite de Liquidez (%)")
+    ip: Optional[float] = Field(None, ge=0, description="Índice de Plasticidade (%)")
+
+class ClassificacaoHRBOutput(BaseModel):
+    classificacao: Optional[str] = Field(None, description="Classificação HRB completa (ex: A-2-4, A-7-6 (10))")
+    grupo_principal: Optional[str] = Field(None, description="Grupo principal (ex: A-2, A-7)")
+    subgrupo: Optional[str] = Field(None, description="Subgrupo (ex: 4, 5, 6, 7, a, b)")
+    indice_grupo: Optional[int] = Field(None, description="Índice de Grupo (IG)")
+    descricao: Optional[str] = Field(None, description="Descrição do material")
+    avaliacao_subleito: Optional[str] = Field(None, description="Qualidade como subleito de pavimento")
+    erro: Optional[str] = None
+
 # --- Modelos Módulo 9: Granulometria ---
 class PeneiraDado(BaseModel):
     abertura: float = Field(..., gt=0, description="Abertura da peneira (mm)")
@@ -305,6 +322,14 @@ class GranulometriaOutput(BaseModel):
     d60: Optional[float] = Field(None, description="Diâmetro D60 (mm)")
     coef_uniformidade: Optional[float] = Field(None, description="Coeficiente de Uniformidade Cu = D60/D10")
     coef_curvatura: Optional[float] = Field(None, description="Coeficiente de Curvatura Cc = (D30)²/(D10×D60)")
+    # Classificação USCS
     classificacao_uscs: Optional[str] = Field(None, description="Classificação USCS do solo")
     descricao_uscs: Optional[str] = Field(None, description="Descrição da classificação USCS")
+    # Classificação HRB/AASHTO
+    classificacao_hrb: Optional[str] = Field(None, description="Classificação HRB/AASHTO do solo")
+    grupo_hrb: Optional[str] = Field(None, description="Grupo principal HRB")
+    subgrupo_hrb: Optional[str] = Field(None, description="Subgrupo HRB")
+    indice_grupo_hrb: Optional[int] = Field(None, description="Índice de Grupo (IG)")
+    descricao_hrb: Optional[str] = Field(None, description="Descrição da classificação HRB")
+    avaliacao_subleito_hrb: Optional[str] = Field(None, description="Avaliação como subleito")
     erro: Optional[str] = None

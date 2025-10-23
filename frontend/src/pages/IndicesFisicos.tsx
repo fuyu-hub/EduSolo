@@ -47,7 +47,8 @@ import { cn } from "@/lib/utils";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import SavedCalculations from "@/components/SavedCalculations";
 import PrintHeader from "@/components/PrintHeader";
-import { exportToPDF, ExportData, formatNumberForExport } from "@/lib/export-utils";
+import CalculationActions from "@/components/CalculationActions";
+import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport } from "@/lib/export-utils";
 import SoilExamples from "@/components/soil/SoilExamples";
 import GsSuggestions from "@/components/soil/GsSuggestions";
 import ResultInterpretation from "@/components/soil/ResultInterpretation";
@@ -333,8 +334,57 @@ export default function IndicesFisicos() {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleExportExcel = async () => {
+    if (!results) return;
+
+    // Sheet de Entrada
+    const entradaData: { label: string; value: string | number }[] = [
+      { label: "Massa Úmida (g)", value: formData.massaUmida },
+      { label: "Massa Seca (g)", value: formData.massaSeca },
+      { label: "Volume Total (cm³)", value: formData.volume },
+    ];
+    if (formData.Gs) entradaData.push({ label: "Densidade Relativa (Gs)", value: formData.Gs });
+    if (formData.pesoEspecificoAgua) entradaData.push({ label: "Peso Específico Água (kN/m³)", value: formData.pesoEspecificoAgua });
+    if (formData.indice_vazios_max) entradaData.push({ label: "Índice Vazios Máx", value: formData.indice_vazios_max });
+    if (formData.indice_vazios_min) entradaData.push({ label: "Índice Vazios Mín", value: formData.indice_vazios_min });
+
+    // Sheet de Resultados
+    const resultadosData: { label: string; value: string | number }[] = [];
+    if (results.peso_especifico_natural !== null) resultadosData.push({ label: "Peso Específico Natural (kN/m³)", value: results.peso_especifico_natural.toFixed(2) });
+    if (results.peso_especifico_seco !== null) resultadosData.push({ label: "Peso Específico Seco (kN/m³)", value: results.peso_especifico_seco.toFixed(2) });
+    if (results.peso_especifico_saturado !== null) resultadosData.push({ label: "Peso Específico Saturado (kN/m³)", value: results.peso_especifico_saturado.toFixed(2) });
+    if (results.peso_especifico_submerso !== null) resultadosData.push({ label: "Peso Específico Submerso (kN/m³)", value: results.peso_especifico_submerso.toFixed(2) });
+    if (results.peso_especifico_solidos !== null) resultadosData.push({ label: "Peso Específico Sólidos (kN/m³)", value: results.peso_especifico_solidos.toFixed(2) });
+    if (results.Gs !== null) resultadosData.push({ label: "Densidade Relativa (Gs)", value: results.Gs.toFixed(3) });
+    if (results.indice_vazios !== null) resultadosData.push({ label: "Índice de Vazios", value: results.indice_vazios.toFixed(3) });
+    if (results.porosidade !== null) resultadosData.push({ label: "Porosidade (%)", value: results.porosidade.toFixed(2) });
+    if (results.grau_saturacao !== null) resultadosData.push({ label: "Grau de Saturação (%)", value: results.grau_saturacao.toFixed(2) });
+    if (results.umidade !== null) resultadosData.push({ label: "Umidade (%)", value: results.umidade.toFixed(2) });
+    if (results.compacidade_relativa !== null) resultadosData.push({ label: "Compacidade Relativa (%)", value: results.compacidade_relativa.toFixed(2) });
+    if (results.classificacao_compacidade) resultadosData.push({ label: "Classificação", value: results.classificacao_compacidade });
+
+    const excelData: ExcelExportData = {
+      moduleName: "indices-fisicos",
+      moduleTitle: "Índices Físicos",
+      sheets: [
+        { name: "Dados de Entrada", data: entradaData },
+        { name: "Resultados", data: resultadosData }
+      ],
+    };
+
+    const success = await exportToExcel(excelData);
+    if (success) {
+      toast({
+        title: "Excel exportado!",
+        description: "O arquivo foi baixado com sucesso.",
+      });
+    } else {
+      toast({
+        title: "Erro ao exportar",
+        description: "Não foi possível gerar o Excel.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Validação: precisa de pelo menos 3 dos 4 básicos OU Gs
@@ -389,63 +439,16 @@ export default function IndicesFisicos() {
           </div>
           
           {/* Action Buttons */}
-          <div className="flex gap-2 no-print">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setLoadDialogOpen(true)}
-                  disabled={isCalculating}
-                >
-                  <FolderOpen className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Carregar Cálculo</TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleSaveClick}
-                  disabled={!results || isCalculating}
-                >
-                  <Save className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Salvar Cálculo</TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleExportPDF}
-                  disabled={!results || isCalculating}
-                >
-                  <Download className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Exportar PDF</TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handlePrint}
-                  disabled={!results || isCalculating}
-                >
-                  <Printer className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Imprimir</TooltipContent>
-            </Tooltip>
-          </div>
+          <TooltipProvider>
+            <CalculationActions
+              onSave={handleSaveClick}
+              onLoad={() => setLoadDialogOpen(true)}
+              onExportPDF={handleExportPDF}
+              onExportExcel={handleExportExcel}
+              hasResults={!!results}
+              isCalculating={isCalculating}
+            />
+          </TooltipProvider>
         </div>
 
         {/* Layout Principal */}

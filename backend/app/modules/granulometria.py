@@ -16,8 +16,10 @@ from app.models import (
     GranulometriaOutput, 
     PontoGranulometrico,
     ClassificacaoUSCSInput,
+    ClassificacaoHRBInput,
 )
 from app.modules.classificacao_uscs import classificar_uscs
+from app.modules.classificacao_hrb import classificar_hrb
 
 EPSILON = 1e-9
 
@@ -91,6 +93,14 @@ def calcular_granulometria(dados: GranulometriaInput) -> GranulometriaOutput:
         classificacao_uscs = None
         descricao_uscs = None
         
+        # Integração com classificação HRB
+        classificacao_hrb = None
+        grupo_hrb = None
+        subgrupo_hrb = None
+        indice_grupo_hrb = None
+        descricao_hrb = None
+        avaliacao_subleito_hrb = None
+        
         if percentagens['finos'] is not None:
             # Calcular IP se LL e LP foram fornecidos
             ip = None
@@ -124,6 +134,37 @@ def calcular_granulometria(dados: GranulometriaInput) -> GranulometriaOutput:
             except Exception as e:
                 # Classificação USCS é opcional, não falha a análise granulométrica
                 print(f"Aviso: Não foi possível classificar USCS: {e}")
+            
+            # Preparar entrada para classificação HRB
+            try:
+                # Buscar % passando nas peneiras #10 e #40
+                pass_10 = _interpolar_passante(dados_granulometricos, 2.0)  # Peneira #10
+                pass_40 = _interpolar_passante(dados_granulometricos, 0.42)  # Peneira #40
+                
+                hrb_input = ClassificacaoHRBInput(
+                    pass_peneira_200=percentagens['finos'],
+                    pass_peneira_40=pass_40,
+                    pass_peneira_10=pass_10,
+                    ll=dados.ll,
+                    ip=ip
+                )
+                
+                resultado_hrb = classificar_hrb(hrb_input)
+                
+                if resultado_hrb.erro:
+                    # Se houver erro na classificação HRB, apenas registra mas não falha
+                    pass
+                else:
+                    classificacao_hrb = resultado_hrb.classificacao
+                    grupo_hrb = resultado_hrb.grupo_principal
+                    subgrupo_hrb = resultado_hrb.subgrupo
+                    indice_grupo_hrb = resultado_hrb.indice_grupo
+                    descricao_hrb = resultado_hrb.descricao
+                    avaliacao_subleito_hrb = resultado_hrb.avaliacao_subleito
+                    
+            except Exception as e:
+                # Classificação HRB é opcional, não falha a análise granulométrica
+                print(f"Aviso: Não foi possível classificar HRB: {e}")
         
         return GranulometriaOutput(
             dados_granulometricos=dados_granulometricos,
@@ -136,7 +177,13 @@ def calcular_granulometria(dados: GranulometriaInput) -> GranulometriaOutput:
             coef_uniformidade=cu,
             coef_curvatura=cc,
             classificacao_uscs=classificacao_uscs,
-            descricao_uscs=descricao_uscs
+            descricao_uscs=descricao_uscs,
+            classificacao_hrb=classificacao_hrb,
+            grupo_hrb=grupo_hrb,
+            subgrupo_hrb=subgrupo_hrb,
+            indice_grupo_hrb=indice_grupo_hrb,
+            descricao_hrb=descricao_hrb,
+            avaliacao_subleito_hrb=avaliacao_subleito_hrb
         )
         
     except ValueError as ve:

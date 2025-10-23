@@ -1,12 +1,12 @@
-import { Save, FolderOpen, Download, Printer } from "lucide-react";
+import { Save, FolderOpen, FileDown, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface CalculationActionsProps {
   onSave: () => void;
   onLoad: () => void;
-  onExport: () => void;
-  onPrint: () => void;
+  onExportPDF: () => void;
+  onExportExcel: () => void;
   hasResults: boolean;
   isCalculating: boolean;
 }
@@ -14,8 +14,8 @@ interface CalculationActionsProps {
 export default function CalculationActions({
   onSave,
   onLoad,
-  onExport,
-  onPrint,
+  onExportPDF,
+  onExportExcel,
   hasResults,
   isCalculating,
 }: CalculationActionsProps) {
@@ -54,10 +54,10 @@ export default function CalculationActions({
           <Button
             variant="outline"
             size="icon"
-            onClick={onExport}
+            onClick={onExportPDF}
             disabled={!hasResults || isCalculating}
           >
-            <Download className="w-4 h-4" />
+            <FileDown className="w-4 h-4" />
           </Button>
         </TooltipTrigger>
         <TooltipContent>Exportar PDF</TooltipContent>
@@ -68,13 +68,13 @@ export default function CalculationActions({
           <Button
             variant="outline"
             size="icon"
-            onClick={onPrint}
+            onClick={onExportExcel}
             disabled={!hasResults || isCalculating}
           >
-            <Printer className="w-4 h-4" />
+            <FileSpreadsheet className="w-4 h-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Imprimir</TooltipContent>
+        <TooltipContent>Exportar Excel</TooltipContent>
       </Tooltip>
     </div>
   );

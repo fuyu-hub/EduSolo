@@ -99,30 +99,30 @@ export default function DialogExemplos({ onCarregarExemplo }: DialogExemplosProp
           </div>
         ) : (
           // Detalhes do exemplo selecionado
-          <div className="space-y-4 mt-4">
-            <div className="flex items-start justify-between">
+          <div className="space-y-2 mt-2">
+            <div className="flex items-start justify-between gap-2">
               <div>
-                <h3 className="text-lg font-semibold">{exemploSelecionado.nome}</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="text-base font-semibold">{exemploSelecionado.nome}</h3>
+                <p className="text-xs text-muted-foreground">
                   {exemploSelecionado.descricao}
                 </p>
               </div>
-              <Badge variant="default" className="text-base px-3 py-1">
+              <Badge variant="default" className="text-sm px-2 py-0.5">
                 {exemploSelecionado.classificacaoEsperada}
               </Badge>
             </div>
 
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription>
+            <Alert className="py-2 [&>svg]:top-2">
+              <Info className="h-3 w-3" />
+              <AlertDescription className="text-xs">
                 Este exemplo carregará todos os dados automaticamente. Os dados atuais serão substituídos.
               </AlertDescription>
             </Alert>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold">Dados Gerais</h4>
-                <div className="text-sm space-y-1">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <h4 className="text-xs font-semibold">Dados Gerais</h4>
+                <div className="text-xs space-y-0.5">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Massa Total:</span>
                     <span className="font-medium">{exemploSelecionado.massaTotal} g</span>
@@ -154,16 +154,16 @@ export default function DialogExemplos({ onCarregarExemplo }: DialogExemplosProp
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold">Peneiras Incluídas</h4>
+              <div className="space-y-1">
+                <h4 className="text-xs font-semibold">Peneiras Incluídas</h4>
                 <div className="flex flex-wrap gap-1">
                   {exemploSelecionado.peneiras.slice(0, 8).map((p) => (
-                    <Badge key={p.numero} variant="secondary" className="text-xs">
+                    <Badge key={p.numero} variant="secondary" className="text-[10px] px-1.5 py-0">
                       {p.numero}
                     </Badge>
                   ))}
                   {exemploSelecionado.peneiras.length > 8 && (
-                    <Badge variant="secondary" className="text-xs">
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                       +{exemploSelecionado.peneiras.length - 8}
                     </Badge>
                   )}
@@ -171,9 +171,9 @@ export default function DialogExemplos({ onCarregarExemplo }: DialogExemplosProp
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-muted/50 max-h-[200px] overflow-y-auto">
-              <h4 className="text-sm font-semibold mb-2">Distribuição das Massas</h4>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="p-2 rounded-lg bg-muted/50 max-h-[120px] overflow-y-auto">
+              <h4 className="text-xs font-semibold mb-1">Distribuição das Massas</h4>
+              <div className="grid grid-cols-2 gap-1 text-[10px]">
                 {exemploSelecionado.peneiras.map((peneira) => (
                   <div key={peneira.numero} className="flex justify-between items-center">
                     <span className="text-muted-foreground">
@@ -186,23 +186,24 @@ export default function DialogExemplos({ onCarregarExemplo }: DialogExemplosProp
             </div>
 
             {exemploSelecionado.observacoes && (
-              <Alert>
-                <AlertDescription className="text-sm">
+              <Alert className="py-2">
+                <AlertDescription className="text-xs">
                   <strong>Observações:</strong> {exemploSelecionado.observacoes}
                 </AlertDescription>
               </Alert>
             )}
 
-            <div className="flex gap-2 pt-4">
+            <div className="flex gap-2 pt-2">
               <Button 
                 onClick={confirmarCarregamento} 
-                className="flex-1"
+                className="flex-1 h-9 text-sm"
               >
                 Carregar Este Exemplo
               </Button>
               <Button 
                 onClick={() => setExemploSelecionado(null)} 
                 variant="outline"
+                className="h-9 text-sm"
               >
                 Voltar
               </Button>

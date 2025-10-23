@@ -29,7 +29,7 @@ import SavedCalculations from "@/components/SavedCalculations";
 import SaveDialog from "@/components/SaveDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
-import { exportToPDF, ExportData, formatNumberForExport } from "@/lib/export-utils";
+import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, captureChartAsImage } from "@/lib/export-utils";
 
 // --- Esquema Zod (Inalterado) ---
 const pontoLLSchema = z.object({
@@ -172,6 +172,10 @@ export default function LimitesConsistencia() {
     if (!results) return;
     const formData = form.getValues();
     
+    // Capturar imagem do gráfico de plasticidade
+    toast({ title: "Capturando gráfico..." });
+    const chartImage = await captureChartAsImage('plasticity-chart');
+    
     const inputs: { label: string; value: string }[] = [];
     formData.pontosLL.forEach((p, i) => {
       inputs.push({ label: `Ponto LL ${i + 1} - Golpes`, value: p.numGolpes });
@@ -200,8 +204,10 @@ export default function LimitesConsistencia() {
       moduleTitle: "Limites de Consistência",
       inputs,
       results: resultsList,
+      chartImage: chartImage || undefined
     };
 
+    toast({ title: "Gerando PDF..." });
     const success = await exportToPDF(exportData);
     if (success) {
       toast({ title: "PDF exportado!", description: "O arquivo foi baixado com sucesso." });
@@ -210,8 +216,55 @@ export default function LimitesConsistencia() {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleExportExcel = async () => {
+    if (!results) return;
+    const formData = form.getValues();
+    
+    // Sheet de Entrada - Pontos LL
+    const entradaLLData: { label: string; value: string | number }[] = [];
+    formData.pontosLL.forEach((p, i) => {
+      entradaLLData.push({ label: `Ponto LL ${i + 1} - Golpes`, value: p.numGolpes });
+      entradaLLData.push({ label: `Ponto LL ${i + 1} - Massa Úmida+Rec (g)`, value: p.massaUmidaRecipiente });
+      entradaLLData.push({ label: `Ponto LL ${i + 1} - Massa Seca+Rec (g)`, value: p.massaSecaRecipiente });
+      entradaLLData.push({ label: `Ponto LL ${i + 1} - Massa Recipiente (g)`, value: p.massaRecipiente });
+    });
+
+    // Sheet de Entrada - LP e Adicionais
+    const entradaLPData: { label: string; value: string | number }[] = [
+      { label: "LP - Massa Úmida+Rec (g)", value: formData.massaUmidaRecipienteLP },
+      { label: "LP - Massa Seca+Rec (g)", value: formData.massaSecaRecipienteLP },
+      { label: "LP - Massa Recipiente (g)", value: formData.massaRecipienteLP },
+    ];
+    if (formData.umidadeNatural) entradaLPData.push({ label: "Umidade Natural (%)", value: formData.umidadeNatural });
+    if (formData.percentualArgila) entradaLPData.push({ label: "% Argila", value: formData.percentualArgila });
+
+    // Sheet de Resultados
+    const resultadosData: { label: string; value: string | number }[] = [];
+    if (results.ll !== null) resultadosData.push({ label: "Limite de Liquidez (LL) %", value: results.ll.toFixed(1) });
+    if (results.lp !== null) resultadosData.push({ label: "Limite de Plasticidade (LP) %", value: results.lp.toFixed(1) });
+    if (results.ip !== null) resultadosData.push({ label: "Índice de Plasticidade (IP) %", value: results.ip.toFixed(1) });
+    if (results.ic !== null) resultadosData.push({ label: "Índice de Consistência (IC)", value: results.ic.toFixed(2) });
+    if (results.classificacao_plasticidade) resultadosData.push({ label: "Classificação Plasticidade", value: results.classificacao_plasticidade });
+    if (results.classificacao_consistencia) resultadosData.push({ label: "Classificação Consistência", value: results.classificacao_consistencia });
+    if (results.atividade_argila !== null) resultadosData.push({ label: "Atividade Argila (Ia)", value: results.atividade_argila.toFixed(2) });
+    if (results.classificacao_atividade) resultadosData.push({ label: "Classificação Atividade", value: results.classificacao_atividade });
+
+    const excelData: ExcelExportData = {
+      moduleName: "limites-consistencia",
+      moduleTitle: "Limites de Consistência",
+      sheets: [
+        { name: "Dados LL", data: entradaLLData },
+        { name: "Dados LP e Adicionais", data: entradaLPData },
+        { name: "Resultados", data: resultadosData }
+      ],
+    };
+
+    const success = await exportToExcel(excelData);
+    if (success) {
+      toast({ title: "Excel exportado!", description: "O arquivo foi baixado com sucesso." });
+    } else {
+      toast({ title: "Erro ao exportar", description: "Não foi possível gerar o Excel.", variant: "destructive" });
+    }
   };
 
   const onSubmit = async (data: FormInputValues) => {
@@ -255,8 +308,8 @@ export default function LimitesConsistencia() {
           <CalculationActions
             onSave={handleSaveClick}
             onLoad={() => setLoadDialogOpen(true)}
-            onExport={handleExportPDF}
-            onPrint={handlePrint}
+            onExportPDF={handleExportPDF}
+            onExportExcel={handleExportExcel}
             hasResults={!!results}
             isCalculating={isCalculating}
           />
@@ -444,7 +497,7 @@ export default function LimitesConsistencia() {
                    <CarouselItem>
                      <div className="space-y-2">
                        {(results.ll !== null && results.ip !== null) && (
-                         <div>
+                         <div id="plasticity-chart">
                            <h3 className="font-semibold text-xs text-foreground mb-1.5 flex items-center gap-1.5">
                              <LineChart className="w-3.5 h-3.5 text-primary" /> Carta de Plasticidade
                              <TooltipProvider><Tooltip><TooltipTrigger><Button variant="ghost" size="icon" className="h-4 w-4 text-muted-foreground hover:text-primary rounded-full p-0"><Info className="w-3 h-3" /></Button></TooltipTrigger><TooltipContent>{tooltips.CartaPlasticidade}</TooltipContent></Tooltip></TooltipProvider>
