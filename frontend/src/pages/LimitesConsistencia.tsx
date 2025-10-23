@@ -98,7 +98,7 @@ type Results = LimitesConsistenciaOutput;
 // --- Tooltips (mantidos) ---
 const tooltips = { numGolpes: "Número de golpes necessários para fechar a ranhura no ensaio LL (NBR 6459)", massaUmidaRecipienteLL: "Massa do recipiente (tara) + solo úmido (g) - Ensaio LL", massaSecaRecipienteLL: "Massa do recipiente (tara) + solo seco após estufa (g) - Ensaio LL", massaRecipienteLL: "Massa do recipiente (tara) utilizado no ensaio LL (g)", massaUmidaRecipienteLP: "Massa do recipiente (tara) + solo úmido (g) - Ensaio LP (NBR 7180)", massaSecaRecipienteLP: "Massa do recipiente (tara) + solo seco após estufa (g) - Ensaio LP", massaRecipienteLP: "Massa do recipiente (tara) utilizado no ensaio LP (g)", umidadeNatural: "Umidade atual do solo em campo (%) - Necessária para calcular IC", percentualArgila: "Percentual de partículas < 0.002mm (%) - Necessário para calcular Atividade (Ia)", LL: "Limite de Liquidez - teor de umidade na transição líquido/plástico", LP: "Limite de Plasticidade - teor de umidade na transição plástico/semi-sólido", IP: "Índice de Plasticidade = LL - LP (faixa de comportamento plástico)", IC: "Índice de Consistência = (LL - w_nat) / IP (estado de consistência do solo)", Atividade: "Atividade da Argila (Ia) = IP / (% argila)", CartaPlasticidade: "Carta de Plasticidade de Casagrande mostrando a classificação do solo (LL vs IP)" };
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // --- Interface ResultItemProps (mantida) ---
 interface ResultItemProps { label: string; value: number | string | null; unit: string; tooltip?: string; highlight?: boolean; precision?: number; }

@@ -103,7 +103,7 @@ const tooltips = {
   Ko: "Coeficiente de empuxo em repouso (adimensional, típico: 0.4-0.6). Padrão: 0.5 se não informado",
 };
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export default function TensoesGeostaticas() {
   const { toast: toastFn } = { toast };

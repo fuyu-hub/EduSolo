@@ -109,7 +109,7 @@ const tooltips = {
   indice_vazios_min: "Índice de vazios mínimo do solo (emin). Necessário para calcular Dr.",
 };
 
-const API_URL = import.meta.env.VITE_API_URL; // URL do backend
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'; // URL do backend
 
 export default function IndicesFisicos() {
   // Estados

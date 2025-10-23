@@ -1,6 +1,6 @@
-fastapi
-uvicorn[standard]
-numpy
-pydantic
-pytest
-requests
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+numpy==2.2.6
+pydantic==2.11.7
+pytest==8.3.4
+requests==2.32.5
