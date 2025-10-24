@@ -194,16 +194,16 @@ def post_calcular_tensoes_geostaticas(dados_entrada: TensoesGeostaticasInput):
 
 @app.post("/calcular/acrescimo-tensoes", response_model=AcrescimoTensoesOutput, tags=["Tensões"])
 def post_calcular_acrescimo_tensoes(dados_entrada: AcrescimoTensoesInput):
-    """ Calcula acréscimo de tensão para carga pontual, faixa ou circular. """
+    """ Calcula acréscimo de tensão usando Boussinesq (pontual), Carothers (faixa), Love (circular) ou Newmark (retangular). """
     # Validação: Garante que apenas um tipo de carga seja fornecido
     tipos_carga_presentes = [
         dados_entrada.carga_pontual is not None,
         dados_entrada.carga_faixa is not None,
         dados_entrada.carga_circular is not None,
-        # dados_entrada.carga_retangular is not None, # Descomentar quando implementar
+        dados_entrada.carga_retangular is not None,
     ]
     if sum(tipos_carga_presentes) != 1:
-        raise HTTPException(status_code=400, detail="Exatamente um tipo de dados de carga (pontual, faixa ou circular) deve ser fornecido.")
+        raise HTTPException(status_code=400, detail="Exatamente um tipo de dados de carga (pontual, faixa, circular ou retangular) deve ser fornecido.")
 
     resultados = calcular_acrescimo_tensoes(dados_entrada)
     if resultados.erro: raise HTTPException(status_code=400, detail=resultados.erro)

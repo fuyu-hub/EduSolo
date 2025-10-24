@@ -172,12 +172,20 @@ class CargaCircular(BaseModel):
     centro_x: float = Field(0.0, description="Coordenada X do centro do círculo na superfície")
     centro_y: float = Field(0.0, description="Coordenada Y do centro do círculo na superfície")
 
+class CargaRetangular(BaseModel):
+    largura: float = Field(..., gt=0, description="Largura da área retangular (B) (ex: m)")
+    comprimento: float = Field(..., gt=0, description="Comprimento da área retangular (L) (ex: m)")
+    intensidade: float = Field(..., gt=0, description="Pressão uniforme aplicada (p) (ex: kPa)")
+    centro_x: float = Field(0.0, description="Coordenada X do centro do retângulo na superfície")
+    centro_y: float = Field(0.0, description="Coordenada Y do centro do retângulo na superfície")
+
 class AcrescimoTensoesInput(BaseModel):
-    tipo_carga: str = Field(..., description="Tipo de carga ('pontual', 'faixa', 'circular')")
+    tipo_carga: str = Field(..., description="Tipo de carga ('pontual', 'faixa', 'circular', 'retangular')")
     ponto_interesse: PontoInteresse = Field(...)
     carga_pontual: Optional[CargaPontual] = None
     carga_faixa: Optional[CargaFaixa] = None
     carga_circular: Optional[CargaCircular] = None
+    carga_retangular: Optional[CargaRetangular] = None
 
 class AcrescimoTensoesOutput(BaseModel):
     delta_sigma_v: Optional[float] = Field(None, description="Acréscimo de tensão vertical (Δσv) no ponto (ex: kPa)")

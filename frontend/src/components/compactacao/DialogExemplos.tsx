@@ -1,4 +1,5 @@
 // frontend/src/components/compactacao/DialogExemplos.tsx
+import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,8 +12,15 @@ interface DialogExemplosProps {
 }
 
 export default function DialogExemplos({ onSelectExample, disabled }: DialogExemplosProps) {
+  const [open, setOpen] = useState(false);
+
+  const handleSelect = (exemplo: ExemploCompactacao) => {
+    onSelectExample(exemplo);
+    setOpen(false);
+  };
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" disabled={disabled} className="gap-2">
           <FileText className="w-4 h-4" />
@@ -31,7 +39,7 @@ export default function DialogExemplos({ onSelectExample, disabled }: DialogExem
             <Card 
               key={index}
               className="p-4 cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => onSelectExample(exemplo)}
+              onClick={() => handleSelect(exemplo)}
             >
               <div className="flex items-start gap-3">
                 <div className="text-3xl">{exemplo.icon}</div>

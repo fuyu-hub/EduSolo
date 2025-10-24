@@ -448,16 +448,19 @@ export default function IndicesFisicos() {
           </div>
           
           {/* Action Buttons */}
-          <TooltipProvider>
-            <CalculationActions
-              onSave={handleSaveClick}
-              onLoad={() => setLoadDialogOpen(true)}
-              onExportPDF={handleExportPDF}
-              onExportExcel={handleExportExcel}
-              hasResults={!!results}
-              isCalculating={isCalculating}
-            />
-          </TooltipProvider>
+          <div className="flex items-center gap-2">
+            <SoilExamples onSelect={handleLoadExample} disabled={isCalculating} />
+            <TooltipProvider>
+              <CalculationActions
+                onSave={handleSaveClick}
+                onLoad={() => setLoadDialogOpen(true)}
+                onExportPDF={handleExportPDF}
+                onExportExcel={handleExportExcel}
+                hasResults={!!results}
+                isCalculating={isCalculating}
+              />
+            </TooltipProvider>
+          </div>
         </div>
 
         {/* Layout Principal */}
@@ -586,7 +589,6 @@ export default function IndicesFisicos() {
                   <Calculator className="w-4 h-4 mr-2" />
                   {isCalculating ? "Calculando..." : "Calcular"}
                 </Button>
-                <SoilExamples onSelect={handleLoadExample} disabled={isCalculating} />
                 <Button 
                   onClick={handleClear} 
                   variant="outline" 

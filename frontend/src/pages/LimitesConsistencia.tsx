@@ -30,6 +30,8 @@ import SaveDialog from "@/components/SaveDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, captureChartAsImage } from "@/lib/export-utils";
+import DialogExemplos from "@/components/limites/DialogExemplos";
+import { ExemploLimites } from "@/lib/exemplos-limites";
 
 // --- Esquema Zod (Inalterado) ---
 const pontoLLSchema = z.object({
@@ -103,11 +105,6 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 // --- Interface ResultItemProps (mantida) ---
 interface ResultItemProps { label: string; value: number | string | null; unit: string; tooltip?: string; highlight?: boolean; precision?: number; }
 
-// --- Dados de Exemplo (mantidos) ---
-const exampleLLData = [ { numGolpes: "33", massaUmidaRecipiente: "42.10", massaSecaRecipiente: "36.50", massaRecipiente: "16.10" }, { numGolpes: "28", massaUmidaRecipiente: "44.80", massaSecaRecipiente: "38.20", massaRecipiente: "15.70" }, { numGolpes: "25", massaUmidaRecipiente: "45.50", massaSecaRecipiente: "38.00", massaRecipiente: "15.00" }, { numGolpes: "20", massaUmidaRecipiente: "48.10", massaSecaRecipiente: "40.00", massaRecipiente: "16.40" }, { numGolpes: "16", massaUmidaRecipiente: "50.20", massaSecaRecipiente: "41.10", massaRecipiente: "15.20" } ];
-const exampleLPData = { massaUmidaRecipienteLP: "32.80", massaSecaRecipienteLP: "29.50", massaRecipienteLP: "14.20" };
-const exampleOptionalData = { umidadeNatural: "25.0", percentualArgila: "30.0" };
-
 export default function LimitesConsistencia() {
   const { toast } = useToast();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
@@ -138,7 +135,40 @@ export default function LimitesConsistencia() {
   const goToPreviousPoint = () => { setCurrentPointIndex(prev => Math.max(prev - 1, 0)); };
 
   const handleClear = () => { form.reset({ pontosLL: [{ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },{ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }], massaUmidaRecipienteLP: "", massaSecaRecipienteLP: "", massaRecipienteLP: "", umidadeNatural: "", percentualArgila: "" }); setCurrentPointIndex(0); setResults(null); setApiError(null); };
-  const handleFillExampleData = () => { const currentLength = fields.length; if (currentLength < 5) { for (let i = 0; i < 5 - currentLength; i++) { append({ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }, { shouldFocus: false }); } } else if (currentLength > 5) { for (let i = currentLength - 1; i >= 5; i--) { remove(i); } } setTimeout(() => { form.reset({ pontosLL: exampleLLData.map(p => ({ ...p, id: crypto.randomUUID() })), massaUmidaRecipienteLP: exampleLPData.massaUmidaRecipienteLP, massaSecaRecipienteLP: exampleLPData.massaSecaRecipienteLP, massaRecipienteLP: exampleLPData.massaRecipienteLP, umidadeNatural: exampleOptionalData.umidadeNatural, percentualArgila: exampleOptionalData.percentualArgila }); setCurrentPointIndex(0); setResults(null); setApiError(null); toast({ title: "Dados de Exemplo Carregados", description: "O formulário foi preenchido com os dados de teste." }); }, 0); };
+  
+  const handleSelectExample = (exemplo: ExemploLimites) => {
+    const currentLength = fields.length;
+    const targetLength = exemplo.pontosLL.length;
+    
+    // Ajusta a quantidade de pontos
+    if (currentLength < targetLength) {
+      for (let i = 0; i < targetLength - currentLength; i++) {
+        append({ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }, { shouldFocus: false });
+      }
+    } else if (currentLength > targetLength) {
+      for (let i = currentLength - 1; i >= targetLength; i--) {
+        remove(i);
+      }
+    }
+    
+    setTimeout(() => {
+      form.reset({
+        pontosLL: exemplo.pontosLL.map(p => ({ ...p, id: crypto.randomUUID() })),
+        massaUmidaRecipienteLP: exemplo.massaUmidaRecipienteLP,
+        massaSecaRecipienteLP: exemplo.massaSecaRecipienteLP,
+        massaRecipienteLP: exemplo.massaRecipienteLP,
+        umidadeNatural: exemplo.umidadeNatural || "",
+        percentualArgila: exemplo.percentualArgila || ""
+      });
+      setCurrentPointIndex(0);
+      setResults(null);
+      setApiError(null);
+      toast({ 
+        title: "Exemplo Carregado", 
+        description: `Dados de ${exemplo.nome} preenchidos com sucesso.` 
+      });
+    }, 0);
+  };
 
   // Funções de salvamento e exportação
   const handleSaveClick = () => {
@@ -304,16 +334,19 @@ export default function LimitesConsistencia() {
           </div>
         </div>
         
-        <TooltipProvider>
-          <CalculationActions
-            onSave={handleSaveClick}
-            onLoad={() => setLoadDialogOpen(true)}
-            onExportPDF={handleExportPDF}
-            onExportExcel={handleExportExcel}
-            hasResults={!!results}
-            isCalculating={isCalculating}
-          />
-        </TooltipProvider>
+        <div className="flex items-center gap-2">
+          <DialogExemplos onSelectExample={handleSelectExample} disabled={isCalculating} />
+          <TooltipProvider>
+            <CalculationActions
+              onSave={handleSaveClick}
+              onLoad={() => setLoadDialogOpen(true)}
+              onExportPDF={handleExportPDF}
+              onExportExcel={handleExportExcel}
+              hasResults={!!results}
+              isCalculating={isCalculating}
+            />
+          </TooltipProvider>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
@@ -435,10 +468,6 @@ export default function LimitesConsistencia() {
               <Button type="submit" disabled={!canSubmit} className="flex-1 h-9">
                 <CalcIcon className="w-4 h-4 mr-1.5" />
                 {isCalculating ? "Calculando..." : "Calcular"}
-              </Button>
-              <Button type="button" onClick={handleFillExampleData} variant="outline" disabled={isCalculating} className="h-9">
-                <FileText className="w-4 h-4 mr-2" />
-                Exemplo
               </Button>
               <Button type="button" onClick={handleClear} variant="outline" disabled={isCalculating} className="h-9">
                 Limpar

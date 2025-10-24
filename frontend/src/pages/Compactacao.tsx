@@ -396,16 +396,19 @@ export default function Compactacao() {
           </div>
         </div>
 
-        <TooltipProvider>
-          <CalculationActions
-            onSave={handleSaveClick}
-            onLoad={() => setLoadDialogOpen(true)}
-            onExportPDF={handleExportPDF}
-            onExportExcel={handleExportExcel}
-            hasResults={!!results}
-            isCalculating={isCalculating}
-          />
-        </TooltipProvider>
+        <div className="flex items-center gap-2">
+          <DialogExemplos onSelectExample={handleSelectExample} disabled={isCalculating} />
+          <TooltipProvider>
+            <CalculationActions
+              onSave={handleSaveClick}
+              onLoad={() => setLoadDialogOpen(true)}
+              onExportPDF={handleExportPDF}
+              onExportExcel={handleExportExcel}
+              hasResults={!!results}
+              isCalculating={isCalculating}
+            />
+          </TooltipProvider>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
@@ -688,7 +691,6 @@ export default function Compactacao() {
                 <CalcIcon className="w-4 h-4 mr-1.5" />
                 {isCalculating ? "Calculando..." : "Calcular"}
               </Button>
-              <DialogExemplos onSelectExample={handleSelectExample} disabled={isCalculating} />
               <Button type="button" onClick={handleClear} variant="outline" disabled={isCalculating} className="h-9">
                 Limpar
               </Button>

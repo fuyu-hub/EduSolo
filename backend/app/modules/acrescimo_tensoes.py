@@ -3,7 +3,7 @@ import numpy as np
 from typing import Optional
 # Importa os modelos Pydantic do ficheiro centralizado
 from app.models import (
-    PontoInteresse, CargaPontual, CargaFaixa, CargaCircular, # Adicionado CargaFaixa, CargaCircular
+    PontoInteresse, CargaPontual, CargaFaixa, CargaCircular, CargaRetangular,
     AcrescimoTensoesInput, AcrescimoTensoesOutput
 )
 
@@ -172,12 +172,139 @@ def calcular_acrescimo_love_circular_abaco(carga: CargaCircular, ponto: PontoInt
     delta_sigma_v = p * fator_I
     return delta_sigma_v
 
+def calcular_acrescimo_newmark_retangular(carga: CargaRetangular, ponto: PontoInteresse) -> float:
+    """
+    Calcula o acréscimo de tensão vertical (Δσv) num ponto sob uma área retangular
+    uniformemente carregada usando a solução de Newmark baseada na integração da equação de Boussinesq.
+    
+    A fórmula considera um ponto (x, y, z) em relação ao canto da área retangular.
+    Usa a solução para um quadrante e aplica o princípio da superposição.
+    
+    Fórmula de Newmark para um retângulo com vértice na origem:
+    Δσv = (p / (4π)) * [2mn√(m²+n²+1) / (m²+n²+1+m²n²) * (m²+n²+2) / (m²+n²+1) + arctan(2mn√(m²+n²+1) / (m²+n²+1-m²n²))]
+    
+    Onde:
+    - m = B/z (B é a dimensão na direção x)
+    - n = L/z (L é a dimensão na direção y)
+    - z é a profundidade
+    
+    Args:
+        carga: Objeto CargaRetangular com largura (B), comprimento (L) e intensidade (p).
+        ponto: Ponto de interesse com coordenadas (x, y, z).
+    
+    Referências:
+    - Newmark, N.M. (1942)
+    - Das, B.M. - Fundamentos de Engenharia Geotécnica
+    """
+    p = carga.intensidade
+    B = carga.largura
+    L = carga.comprimento
+    z = ponto.z
+    
+    # Posição relativa ao centro da área retangular
+    x_rel = ponto.x - carga.centro_x
+    y_rel = ponto.y - carga.centro_y
+    
+    if z <= EPSILON:
+        # Na superfície: retorna p se está dentro da área, 0 caso contrário
+        if abs(x_rel) <= B/2 and abs(y_rel) <= L/2:
+            return p
+        else:
+            return 0.0
+    
+    # Divide o retângulo em 4 quadrantes em relação ao ponto
+    # Calcula a contribuição de cada quadrante usando a fórmula de Newmark
+    
+    def calcular_quadrante(b: float, l: float, profundidade: float) -> float:
+        """
+        Calcula o fator de influência para um retângulo com um vértice no ponto de cálculo.
+        
+        b: dimensão na direção x
+        l: dimensão na direção y
+        profundidade: profundidade z
+        """
+        if b <= EPSILON or l <= EPSILON or profundidade <= EPSILON:
+            return 0.0
+        
+        m = b / profundidade
+        n = l / profundidade
+        
+        m2 = m * m
+        n2 = n * n
+        m2n2 = m2 * n2
+        
+        # Termo 1: m² + n² + 1
+        termo1 = m2 + n2 + 1.0
+        
+        # Raiz: √(m² + n² + 1)
+        raiz = np.sqrt(termo1)
+        
+        # Numerador do arctan: 2mn√(m²+n²+1)
+        numerador_arctan = 2 * m * n * raiz
+        
+        # Denominador do arctan: m²+n²+1-m²n²
+        denominador_arctan = termo1 - m2n2
+        
+        # Evita divisão por zero
+        if abs(denominador_arctan) < EPSILON:
+            angulo = np.pi / 2 if numerador_arctan > 0 else 0
+        else:
+            angulo = np.arctan(numerador_arctan / denominador_arctan)
+        
+        # Termo do produto: [2mn√(m²+n²+1) * (m²+n²+2)] / [(m²+n²+1+m²n²) * (m²+n²+1)]
+        numerador_produto = 2 * m * n * raiz * (m2 + n2 + 2.0)
+        denominador_produto = (termo1 + m2n2) * termo1
+        
+        if abs(denominador_produto) < EPSILON:
+            termo_produto = 0.0
+        else:
+            termo_produto = numerador_produto / denominador_produto
+        
+        # Fator de influência I = (1/(4π)) * [termo_produto + arctan]
+        fator_I = (1.0 / (4.0 * PI)) * (termo_produto + angulo)
+        
+        return fator_I
+    
+    # Calcula as distâncias do ponto aos 4 cantos do retângulo
+    # Dividimos o retângulo em 4 sub-retângulos com vértice no ponto
+    
+    # Distâncias aos limites
+    x1 = B/2 + x_rel  # Distância ao lado direito
+    x2 = B/2 - x_rel  # Distância ao lado esquerdo
+    y1 = L/2 + y_rel  # Distância ao lado frontal
+    y2 = L/2 - y_rel  # Distância ao lado traseiro
+    
+    # Calcula o fator de influência total somando os 4 quadrantes
+    # Cada quadrante contribui com um retângulo de dimensões (xi, yj)
+    I_total = 0.0
+    
+    # Quadrante 1: (+x1, +y1)
+    if x1 > 0 and y1 > 0:
+        I_total += calcular_quadrante(x1, y1, z)
+    
+    # Quadrante 2: (+x1, -y2) - contribuição negativa se o ponto estiver fora
+    if x1 > 0 and y2 > 0:
+        I_total += calcular_quadrante(x1, y2, z)
+    
+    # Quadrante 3: (-x2, +y1) - contribuição negativa se o ponto estiver fora
+    if x2 > 0 and y1 > 0:
+        I_total += calcular_quadrante(x2, y1, z)
+    
+    # Quadrante 4: (-x2, -y2) - contribuição positiva
+    if x2 > 0 and y2 > 0:
+        I_total += calcular_quadrante(x2, y2, z)
+    
+    # Acréscimo de tensão
+    delta_sigma_v = p * I_total
+    
+    return max(0.0, delta_sigma_v)  # Garante não-negativo
+
 # --- Função Principal do Módulo ---
 
 def calcular_acrescimo_tensoes(dados: AcrescimoTensoesInput) -> AcrescimoTensoesOutput:
     """
     Calcula o acréscimo de tensão vertical com base no tipo de carga especificado.
-    Suporta: 'pontual', 'faixa', 'circular'.
+    Suporta: 'pontual', 'faixa', 'circular', 'retangular'.
     """
     try:
         tipo = dados.tipo_carga.lower()
@@ -204,16 +331,11 @@ def calcular_acrescimo_tensoes(dados: AcrescimoTensoesInput) -> AcrescimoTensoes
             # Usar ábaco para pontos fora do centro
             delta_sigma = calcular_acrescimo_love_circular_abaco(dados.carga_circular, ponto)
             metodo = "Love (Circular - Ábaco)"
-            # Se fosse apenas no centro:
-            # if abs(ponto.x) > EPSILON or abs(ponto.y) > EPSILON:
-            #     return AcrescimoTensoesOutput(metodo="Love (Circular)", erro="Cálculo fora do centro requer ábaco/métodos numéricos (não implementado).")
-            # else:
-            #     delta_sigma = calcular_acrescimo_love_circular_centro(dados.carga_circular, ponto)
-            #     metodo = "Love (Circular - Centro)"
 
-        # elif tipo == "retangular":
-             # Implementação futura usando Newmark (integração ou ábaco digitalizado)
-             # return AcrescimoTensoesOutput(erro="Cálculo para carga retangular ainda não implementado.")
+        elif tipo == "retangular":
+            if dados.carga_retangular is None: raise ValueError("Dados de 'carga_retangular' necessários.")
+            delta_sigma = calcular_acrescimo_newmark_retangular(dados.carga_retangular, ponto)
+            metodo = "Newmark (Retangular)"
 
         else:
             return AcrescimoTensoesOutput(erro=f"Tipo de carga '{dados.tipo_carga}' não suportado.")
