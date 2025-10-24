@@ -6,6 +6,7 @@ export interface ExportData {
   moduleTitle: string;
   inputs: { label: string; value: string }[];
   results: { label: string; value: string; highlight?: boolean }[];
+  summary?: { label: string; value: string }[]; // Resumo da análise
   tables?: { title: string; headers: string[]; rows: (string | number)[][] }[];
   chartImage?: string; // Base64 image de gráficos
 }
@@ -132,6 +133,58 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
         // Renderizar texto com quebra de linha
         if (numLines === 1) {
           doc.text(result.value, margin + 90, yPosition);
+        } else {
+          doc.text(valueLines, margin + 90, yPosition);
+        }
+        
+        yPosition += totalHeight;
+      }
+    }
+
+    // Seção de Resumo da Análise
+    if (data.summary && data.summary.length > 0) {
+      yPosition += 10;
+      
+      if (yPosition > pageHeight - 40) {
+        doc.addPage();
+        yPosition = margin;
+      }
+
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(100, 50, 150);
+      doc.text('Resumo da Análise', margin, yPosition);
+      doc.setTextColor(0, 0, 0);
+      yPosition += 8;
+
+      doc.setFontSize(10);
+      
+      for (const item of data.summary) {
+        if (yPosition > pageHeight - 30) {
+          doc.addPage();
+          yPosition = margin;
+        }
+
+        // Calcular altura necessária para textos longos
+        const maxWidth = pageWidth - margin - 95;
+        const valueLines = doc.splitTextToSize(item.value, maxWidth);
+        const numLines = valueLines.length;
+        const lineHeight = 7;
+        const totalHeight = numLines * lineHeight;
+
+        // Verificar se precisa de nova página
+        if (yPosition + totalHeight > pageHeight - 30) {
+          doc.addPage();
+          yPosition = margin;
+        }
+
+        doc.setFont('helvetica', 'normal');
+        doc.text(`${item.label}:`, margin + 5, yPosition);
+        doc.setFont('helvetica', 'bold');
+        
+        // Renderizar texto com quebra de linha
+        if (numLines === 1) {
+          doc.text(item.value, margin + 90, yPosition);
         } else {
           doc.text(valueLines, margin + 90, yPosition);
         }

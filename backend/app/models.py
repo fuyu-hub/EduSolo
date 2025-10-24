@@ -186,11 +186,14 @@ class AcrescimoTensoesInput(BaseModel):
     carga_faixa: Optional[CargaFaixa] = None
     carga_circular: Optional[CargaCircular] = None
     carga_retangular: Optional[CargaRetangular] = None
+    usar_abaco_newmark: Optional[bool] = Field(False, description="Para Newmark: True=ábaco, False=fórmula")
 
 class AcrescimoTensoesOutput(BaseModel):
     delta_sigma_v: Optional[float] = Field(None, description="Acréscimo de tensão vertical (Δσv) no ponto (ex: kPa)")
     metodo: Optional[str] = None
     erro: Optional[str] = None
+    # Detalhes técnicos do cálculo (opcional - para Newmark)
+    detalhes: Optional[dict] = Field(None, description="Detalhes técnicos do cálculo (m, n, I, quadrantes, etc.)")
 
 # --- Modelos Módulo 5: Recalque por Adensamento Primário ---
 class RecalqueAdensamentoInput(BaseModel):

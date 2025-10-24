@@ -1,69 +1,65 @@
-import { useState } from "react";
 import { TrendingDown, Layers, Circle, Square, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import PrintHeader from "@/components/PrintHeader";
-import BoussinesqAnalise from "@/components/acrescimo-tensoes/BoussinesqAnalise";
-
-type MetodoType = "boussinesq" | "carothers" | "love" | "newmark" | null;
+import { useNavigate } from "react-router-dom";
 
 const metodos = [
   {
-    id: "boussinesq" as const,
+    id: "boussinesq",
     name: "Boussinesq",
     description: "Carga Pontual",
     detalhes: "Solução clássica para carga pontual vertical aplicada na superfície de um meio semi-infinito elástico.",
     aplicacoes: "Fundações por estacas, cargas concentradas, torres, postes",
     icon: MapPin,
     color: "from-blue-500 to-cyan-600",
+    path: "/acrescimo-tensoes/boussinesq",
     disponivel: true,
   },
   {
-    id: "carothers" as const,
+    id: "carothers",
     name: "Carothers",
     description: "Carga em Faixa",
     detalhes: "Distribuição de tensões para carregamento uniformemente distribuído em faixa de largura finita.",
     aplicacoes: "Fundações corridas, muros de arrimo, aterros lineares",
     icon: Layers,
     color: "from-green-500 to-emerald-600",
-    disponivel: false,
+    path: "/acrescimo-tensoes/carothers",
+    disponivel: true,
   },
   {
-    id: "love" as const,
+    id: "love",
     name: "Love",
     description: "Carga Circular",
     detalhes: "Solução para carregamento uniformemente distribuído sobre área circular com simetria axial.",
     aplicacoes: "Tanques circulares, silos, fundações circulares",
     icon: Circle,
     color: "from-purple-500 to-pink-600",
-    disponivel: false,
+    path: "/acrescimo-tensoes/love",
+    disponivel: true,
   },
   {
-    id: "newmark" as const,
+    id: "newmark",
     name: "Newmark",
     description: "Carga Retangular",
     detalhes: "Método para carregamento uniformemente distribuído em área retangular utilizando fator de influência.",
     aplicacoes: "Fundações rasas, sapatas, edifícios, galpões",
     icon: Square,
     color: "from-orange-500 to-red-600",
-    disponivel: false,
+    path: "/acrescimo-tensoes/newmark",
+    disponivel: true,
   },
 ];
 
 export default function AcrescimoTensoes() {
-  const [metodoSelecionado, setMetodoSelecionado] = useState<MetodoType>(null);
+  const navigate = useNavigate();
 
-  const handleVoltar = () => {
-    setMetodoSelecionado(null);
+  const handleMetodoClick = (metodo: typeof metodos[0]) => {
+    if (metodo.disponivel) {
+      navigate(metodo.path);
+    }
   };
 
-  // Se selecionou Boussinesq, renderiza o componente específico
-  if (metodoSelecionado === "boussinesq") {
-    return <BoussinesqAnalise onVoltar={handleVoltar} />;
-  }
-
-  // Tela de seleção de método
   return (
     <div className="space-y-4 max-w-7xl mx-auto">
       <PrintHeader moduleTitle="Acréscimo de Tensões" moduleName="acrescimo-tensoes" />
@@ -102,7 +98,7 @@ export default function AcrescimoTensoes() {
                       ? "cursor-pointer hover:shadow-lg hover:border-primary group" 
                       : "opacity-60 cursor-not-allowed"
                   }`}
-                  onClick={() => isDisponivel && setMetodoSelecionado(metodo.id)}
+                  onClick={() => handleMetodoClick(metodo)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">

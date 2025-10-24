@@ -45,7 +45,6 @@ const modules = [
     description: "Métodos de Boussinesq e análise de carregamentos",
     path: "/acrescimo-tensoes",
     color: "from-orange-500 to-red-600",
-    comingSoon: true,
   },
   {
     icon: TrendingUp,

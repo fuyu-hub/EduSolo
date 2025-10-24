@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Target, BookOpen } from "lucide-react";
+import { useState, useRef } from "react";
+import { ArrowLeft, Square, BookOpen, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import axios from "axios";
 import PrintHeader from "@/components/PrintHeader";
-import CanvasBoussinesq from "./CanvasBoussinesq";
+import CanvasNewmark from "./CanvasNewmark";
 import PainelResultados, { PontoAnalise } from "./PainelResultados";
-import CargaPopup from "./CargaPopup";
+import CargaRetangularPopup from "./CargaRetangularPopup";
 import PontoAnalisePopup from "./PontoAnalisePopup";
 import CalculationActions from "@/components/CalculationActions";
 import SaveDialog from "@/components/SaveDialog";
@@ -14,62 +14,43 @@ import SavedCalculations from "@/components/SavedCalculations";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport } from "@/lib/export-utils";
 import { useSettings } from "@/hooks/use-settings";
+import DialogExemplosNewmark from "./DialogExemplosNewmark";
+import DialogConfiguracoesNewmark from "./DialogConfiguracoesNewmark";
 
-interface BoussinesqAnaliseProps {
+interface NewmarkAnaliseProps {
   onVoltar: () => void;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-/**
- * Calcula a tensão vertical (sigma_z) usando a fórmula de Boussinesq.
- * @param P - Carga pontual (kN)
- * @param x - Distância horizontal (m)
- * @param z - Profundidade (m)
- * @returns Tensão (kPa)
- */
-function calcularTensaoBoussinesqLocal(P: number, x: number, z: number): number {
-  if (z <= 0) return 0; // Não calcular na superfície ou acima
-  
-  // r² = x² + z²
-  const r2 = Math.pow(x, 2) + Math.pow(z, 2);
-  
-  // Evita divisão por zero se o ponto estiver exatamente em (0,0)
-  if (r2 === 0) return 0;
-  
-  // R⁵ = (r²)^2.5
-  const R5 = Math.pow(r2, 2.5);
-  // z³
-  const z3 = Math.pow(z, 3);
-  
-  // sigma_z = (3 * P * z³) / (2 * pi * R⁵)
-  const sigma_z = (3 * P * z3) / (2 * Math.PI * R5);
-  
-  return sigma_z; // Resultado em kPa (kN/m²)
-}
-
-export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) {
+export default function NewmarkAnalise({ onVoltar }: NewmarkAnaliseProps) {
   // Configurações
   const { settings } = useSettings();
   
   // Estado principal
   const [pontos, setPontos] = useState<PontoAnalise[]>([]);
-  const [cargaP, setCargaP] = useState<number | undefined>(100); // Valor padrão: 100 kN
+  const [largura, setLargura] = useState<number | undefined>(3);
+  const [comprimento, setComprimento] = useState<number | undefined>(2);
+  const [intensidade, setIntensidade] = useState<number | undefined>(100);
+  const [nomeSapata, setNomeSapata] = useState<string>("Sapata 1");
+  const [usarAbaco, setUsarAbaco] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [calculoFeito, setCalculoFeito] = useState(false);
   
   // Estado dos popups
   const [cargaPopupOpen, setCargaPopupOpen] = useState(false);
   const [pontoPopupOpen, setPontoPopupOpen] = useState(false);
-  const [pontoPopupCoords, setPontoPopupCoords] = useState({ x: 0, z: 0.5 });
+  const [pontoPopupCoords, setPontoPopupCoords] = useState({ x: 0, y: 0, z: 0 });
   const [pontoEditando, setPontoEditando] = useState<PontoAnalise | null>(null);
   const [nomePadraoNovoPonto, setNomePadraoNovoPonto] = useState("");
+  const [exemplosDialogOpen, setExemplosDialogOpen] = useState(false);
+  const [configuracoesDialogOpen, setConfiguracoesDialogOpen] = useState(false);
   
   // Save/Load
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
-  const { calculations, saveCalculation, deleteCalculation, renameCalculation } = useSavedCalculations("boussinesq");
+  const { calculations, saveCalculation, deleteCalculation, renameCalculation } = useSavedCalculations("newmark");
 
   // Ref para evitar cálculos duplicados
   const isCalculatingRef = useRef(false);
@@ -77,7 +58,7 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
   // Função para calcular tensões (chamada explicitamente)
   const calcularTensoes = async () => {
     // Só calcula se houver carga definida e pontos
-    if (!cargaP || cargaP <= 0 || pontos.length === 0) {
+    if (!largura || largura <= 0 || !comprimento || comprimento <= 0 || !intensidade || intensidade <= 0 || pontos.length === 0) {
       return;
     }
 
@@ -92,45 +73,48 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
     try {
       // Captura os pontos atuais no momento do cálculo
       const pontosParaCalcular = [...pontos];
-      const resultadosMap = new Map<string, number | undefined>();
+      const resultadosMap = new Map<string, { tensao?: number; detalhes?: any }>();
 
       for (const ponto of pontosParaCalcular) {
         try {
           const response = await axios.post(`${API_URL}/calcular/acrescimo-tensoes`, {
-            tipo_carga: "pontual",
-            carga_pontual: {
-              P: cargaP,
-              x: 0,
-              y: 0
+            tipo_carga: "retangular",
+            carga_retangular: {
+              largura: largura,
+              comprimento: comprimento,
+              intensidade: intensidade,
+              centro_x: 0,
+              centro_y: 0
             },
             ponto_interesse: {
               x: ponto.x,
-              y: 0, // Boussinesq é 2D (apenas X-Z)
+              y: ponto.y,
               z: ponto.z
-            }
+            },
+            usar_abaco_newmark: usarAbaco
           });
 
           if (response.data.erro) {
-            resultadosMap.set(ponto.id, undefined);
+            resultadosMap.set(ponto.id, { tensao: undefined });
           } else {
-            resultadosMap.set(ponto.id, response.data.delta_sigma_v);
+            resultadosMap.set(ponto.id, {
+              tensao: response.data.delta_sigma_v,
+              detalhes: response.data.detalhes
+            });
           }
         } catch (error) {
           console.error(`Erro ao calcular ponto ${ponto.nome}:`, error);
-          resultadosMap.set(ponto.id, undefined);
+          resultadosMap.set(ponto.id, { tensao: undefined });
         }
       }
 
-      // Atualiza apenas as tensões dos pontos que foram calculados,
-      // sem sobrescrever o array completo
+      // Atualiza as tensões e detalhes dos pontos que foram calculados
       setPontos(prevPontos => 
         prevPontos.map(p => {
-          const tensao = resultadosMap.get(p.id);
-          // Se o ponto foi calculado, atualiza a tensão
-          if (resultadosMap.has(p.id)) {
-            return { ...p, tensao };
+          const resultado = resultadosMap.get(p.id);
+          if (resultado) {
+            return { ...p, tensao: resultado.tensao, detalhes: resultado.detalhes };
           }
-          // Se o ponto é novo (não estava no cálculo), mantém como está
           return p;
         })
       );
@@ -148,10 +132,9 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
     setCargaPopupOpen(true);
   };
 
-  const handleDuploCliqueGrid = (x: number, z: number) => {
-    setPontoPopupCoords({ x, z });
+  const handleDuploCliqueGrid = (x: number, y: number, z: number) => {
+    setPontoPopupCoords({ x, y, z });
     setPontoEditando(null);
-    // Gera um nome padrão baseado no número de pontos
     const numeroPonto = pontos.length + 1;
     const nomePadrao = `Ponto ${numeroPonto}`;
     setNomePadraoNovoPonto(nomePadrao);
@@ -160,34 +143,35 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
 
   const handleDuploCliquePonto = (ponto: PontoAnalise) => {
     setPontoEditando(ponto);
-    setPontoPopupCoords({ x: ponto.x, z: ponto.z });
+    setPontoPopupCoords({ x: ponto.x, y: ponto.y, z: ponto.z });
     setPontoPopupOpen(true);
   };
 
   // Handlers de confirmação de popups
-  const handleConfirmarCarga = (valor: number) => {
-    setCargaP(valor);
-    toast("Carga definida!", { description: `P = ${valor.toFixed(2)} kN` });
-    // Limpa as tensões calculadas (precisam ser recalculadas)
+  const handleConfirmarCarga = (dados: { largura: number; comprimento: number; intensidade: number; nomeSapata: string }) => {
+    setLargura(dados.largura);
+    setComprimento(dados.comprimento);
+    setIntensidade(dados.intensidade);
+    setNomeSapata(dados.nomeSapata);
+    toast("Carga definida!", { description: `${dados.nomeSapata}: L = ${dados.largura.toFixed(2)} m, C = ${dados.comprimento.toFixed(2)} m, p = ${dados.intensidade.toFixed(2)} kPa` });
+    // Limpa as tensões calculadas
     setPontos(prevPontos => prevPontos.map(p => ({ ...p, tensao: undefined })));
     setCalculoFeito(false);
   };
 
   const handleConfirmarPonto = (nome: string, x: number, y: number, z: number) => {
-    // y é ignorado pois Boussinesq é 2D (apenas X-Z)
     if (pontoEditando) {
-      // Editando ponto existente
       setPontos(prevPontos => prevPontos.map(p => 
-        p.id === pontoEditando.id ? { ...p, nome, x, z, tensao: undefined } : p
+        p.id === pontoEditando.id ? { ...p, nome, x, y, z, tensao: undefined } : p
       ));
       toast("Ponto atualizado!", { description: `"${nome}" foi atualizado.` });
       setCalculoFeito(false);
     } else {
-      // Criando novo ponto
       const novoPonto: PontoAnalise = {
         id: crypto.randomUUID(),
         nome,
         x,
+        y,
         z,
         tensao: undefined
       };
@@ -196,40 +180,65 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
     }
   };
 
-  // Handler de movimentação de ponto (enquanto arrasta)
-  const handleMovimentarPonto = (id: string, x: number, z: number) => {
+  // Handler de movimentação de ponto
+  const handleMovimentarPonto = (id: string, x: number, y: number, z: number) => {
     setPontos(prevPontos => prevPontos.map(p => 
-      p.id === id ? { ...p, x, z, tensao: undefined } : p
+      p.id === id ? { ...p, x, y, z, tensao: undefined } : p
     ));
     setCalculoFeito(false);
   };
 
-  // Handler quando solta o ponto (após arrastar)
   const handlePontoSolto = (id: string) => {
-    // Marca que precisa recalcular
     setCalculoFeito(false);
   };
 
-
   // Handlers de exportação
   const handleExportarPDF = async () => {
-    if (!cargaP || pontos.length === 0) return;
+    if (!largura || !comprimento || !intensidade || pontos.length === 0) return;
+
+    const metodo = usarAbaco ? "Ábaco" : "Fórmula";
 
     const inputs = [
-      { label: "Carga Pontual P", value: `${cargaP.toFixed(2)} kN` }
+      { label: "Largura (B)", value: `${largura.toFixed(2)} m` },
+      { label: "Comprimento (L)", value: `${comprimento.toFixed(2)} m` },
+      { label: "Intensidade (p)", value: `${intensidade.toFixed(2)} kPa` },
+      { label: "Método de Cálculo", value: metodo }
     ];
 
     const resultsList = pontos.map((p, i) => ({
-      label: `${p.nome} (X=${p.x.toFixed(2)}m, Z=${p.z.toFixed(2)}m)`,
+      label: `${p.nome} (X=${p.x.toFixed(2)}m, Y=${p.y !== undefined ? p.y.toFixed(2) : '0.00'}m, Z=${p.z.toFixed(2)}m)`,
       value: p.tensao !== undefined ? `${formatNumberForExport(p.tensao, 4)} kPa` : "N/A",
       highlight: i === 0
     }));
 
+    // Calcular resumo
+    const pontosComTensao = pontos.filter(p => p.tensao !== undefined);
+    const tensoes = pontosComTensao.map(p => p.tensao!);
+    const tensaoMax = tensoes.length > 0 ? Math.max(...tensoes) : undefined;
+    const tensaoMin = tensoes.length > 0 ? Math.min(...tensoes) : undefined;
+    const pontoMaxTensao = pontosComTensao.find(p => p.tensao === tensaoMax);
+    const pontoMinTensao = pontosComTensao.find(p => p.tensao === tensaoMin);
+
+    const summary = tensaoMax !== undefined && tensaoMin !== undefined ? [
+      { label: "Pontos Analisados", value: pontosComTensao.length.toString() },
+      { label: "Δσz Máximo", value: `${tensaoMax.toFixed(settings.decimalPlaces)} kPa` },
+      { label: "Δσz Mínimo", value: `${tensaoMin.toFixed(settings.decimalPlaces)} kPa` },
+      { 
+        label: "Ponto de Máx", 
+        value: pontoMaxTensao ? `${pontoMaxTensao.nome} (X=${pontoMaxTensao.x.toFixed(2)}m, Y=${pontoMaxTensao.y !== undefined ? pontoMaxTensao.y.toFixed(2) : '0.00'}m, Z=${pontoMaxTensao.z.toFixed(2)}m)` : "-"
+      },
+      { 
+        label: "Ponto de Mín", 
+        value: pontoMinTensao ? `${pontoMinTensao.nome} (X=${pontoMinTensao.x.toFixed(2)}m, Y=${pontoMinTensao.y !== undefined ? pontoMinTensao.y.toFixed(2) : '0.00'}m, Z=${pontoMinTensao.z.toFixed(2)}m)` : "-"
+      }
+    ] : undefined;
+
     const exportData: ExportData = {
-      moduleName: "boussinesq",
-      moduleTitle: "Boussinesq - Acréscimo de Tensões",
+      moduleName: "newmark",
+      moduleTitle: `Newmark - Acréscimo de Tensões (Carga Retangular - ${metodo})`,
       inputs,
-      results: resultsList
+      results: resultsList,
+      summary
     };
 
     toast("Gerando PDF...");
@@ -242,22 +251,28 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
   };
 
   const handleExportarExcel = async () => {
-    if (!cargaP || pontos.length === 0) return;
+    if (!largura || !comprimento || !intensidade || pontos.length === 0) return;
+
+    const metodo = usarAbaco ? "Ábaco" : "Fórmula";
 
     const configData = [
-      { label: "Carga P (kN)", value: cargaP }
+      { label: "Largura B (m)", value: largura },
+      { label: "Comprimento L (m)", value: comprimento },
+      { label: "Intensidade p (kPa)", value: intensidade },
+      { label: "Método", value: metodo }
     ];
 
     const resultadosData = pontos.map(p => ({
       Nome: p.nome,
       "X (m)": p.x.toFixed(2),
+      "Y (m)": p.y !== undefined ? p.y.toFixed(2) : "0.00",
       "Z (m)": p.z.toFixed(2),
-      "Δσz (kPa)": p.tensao !== undefined ? p.tensao.toFixed(settings.decimalPlaces) : "N/A"
+      "Δσv (kPa)": p.tensao !== undefined ? p.tensao.toFixed(settings.decimalPlaces) : "N/A"
     }));
 
     const excelData: ExcelExportData = {
-      moduleName: "boussinesq",
-      moduleTitle: "Boussinesq - Acréscimo de Tensões",
+      moduleName: "newmark",
+      moduleTitle: `Newmark - Acréscimo de Tensões (Carga Retangular - ${metodo})`,
       sheets: [
         { name: "Configuração", data: configData },
         { name: "Resultados", data: resultadosData }
@@ -274,17 +289,17 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
 
   // Handlers de salvar/carregar
   const handleSaveClick = () => {
-    if (!cargaP || pontos.length === 0) {
+    if (!largura || !comprimento || !intensidade || pontos.length === 0) {
       toast("Nada para salvar", { description: "Defina a carga e adicione pontos antes de salvar." });
       return;
     }
-    setSaveName(`Boussinesq ${new Date().toLocaleDateString('pt-BR')}`);
+    setSaveName(`Newmark ${new Date().toLocaleDateString('pt-BR')}`);
     setSaveDialogOpen(true);
   };
 
   const handleConfirmSave = () => {
     if (!saveName.trim()) return;
-    const dados = { cargaP, pontos };
+    const dados = { largura, comprimento, intensidade, usarAbaco, pontos };
     const success = saveCalculation(saveName.trim(), dados, { pontos });
     if (success) {
       toast("Cálculo salvo!", { description: "O cálculo foi salvo com sucesso." });
@@ -297,43 +312,59 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
 
   const handleLoadCalculation = (calculation: any) => {
     const dados = calculation.formData;
-    setCargaP(dados.cargaP);
+    setLargura(dados.largura);
+    setComprimento(dados.comprimento);
+    setIntensidade(dados.intensidade);
+    setUsarAbaco(dados.usarAbaco || false);
     setPontos(dados.pontos || []);
-    setCalculoFeito(false); // Precisa recalcular
+    setCalculoFeito(false);
     toast("Cálculo carregado!", { description: `"${calculation.name}" foi carregado com sucesso.` });
   };
 
   const handleExcluirPonto = (id?: string) => {
-    // Se um ID for passado, exclui esse ponto específico
     if (id) {
       const ponto = pontos.find(p => p.id === id);
       setPontos(prevPontos => prevPontos.filter(p => p.id !== id));
       setCalculoFeito(false);
       toast("Ponto excluído!", { description: `"${ponto?.nome || 'Ponto'}" foi removido.` });
-    } 
-    // Se não for passado ID, usa o pontoEditando (para quando clicar no botão Excluir do popup)
-    else if (pontoEditando) {
+    } else if (pontoEditando) {
       setPontos(prevPontos => prevPontos.filter(p => p.id !== pontoEditando.id));
       toast("Ponto excluído!", { description: `"${pontoEditando.nome}" foi removido.` });
     }
   };
 
-  const handleCarregarExemplos = () => {
-    setCargaP(1500);
-    setPontos([
-      { id: 'exemplo-a', nome: 'Ponto A', x: -3, z: 2, tensao: undefined },
-      { id: 'exemplo-b', nome: 'Ponto B', x: 0, z: 4, tensao: undefined },
-      { id: 'exemplo-c', nome: 'Ponto C', x: 4, z: 5, tensao: undefined }
-    ]);
+  const handleCarregarExemplo = (exemplo: any) => {
+    setLargura(exemplo.largura);
+    setComprimento(exemplo.comprimento);
+    setIntensidade(exemplo.intensidade);
+    
+    const novosPontos = exemplo.pontos.map((p: any, idx: number) => ({
+      id: `exemplo-${idx}`,
+      nome: p.nome,
+      x: p.x,
+      y: p.y,
+      z: p.z,
+      tensao: undefined,
+    }));
+    
+    setPontos(novosPontos);
     setCalculoFeito(false);
-    toast("Exemplos carregados!", { description: "Clique em 'Calcular' para ver os resultados." });
+    setExemplosDialogOpen(false);
+    toast("Exemplo carregado!", { description: exemplo.titulo });
+  };
+
+  const handleToggleMetodo = (usar: boolean) => {
+    setUsarAbaco(usar);
+    setPontos(prevPontos => prevPontos.map(p => ({ ...p, tensao: undefined })));
+    setCalculoFeito(false);
+    toast("Método alterado", { description: usar ? "Usando Ábaco" : "Usando Fórmula" });
   };
 
   const temResultados = pontos.some(p => p.tensao !== undefined);
 
   return (
     <div className="space-y-4 max-w-[1800px] mx-auto">
-      <PrintHeader moduleTitle="Boussinesq - Carga Pontual" moduleName="boussinesq" />
+      <PrintHeader moduleTitle="Newmark - Carga Retangular" moduleName="newmark" />
 
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
@@ -341,19 +372,23 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
           <Button variant="ghost" size="icon" onClick={onVoltar}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg">
-            <Target className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg">
+            <Square className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Boussinesq - Carga Pontual</h1>
+            <h1 className="text-2xl font-bold text-foreground">Newmark - Carga Retangular</h1>
             <p className="text-sm text-muted-foreground hidden sm:block">
-              Análise interativa de acréscimo de tensões por carga pontual
+              Análise interativa de acréscimo de tensões por carga retangular
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleCarregarExemplos}>
+          <Button variant="outline" size="sm" onClick={() => setConfiguracoesDialogOpen(true)}>
+            <Settings className="w-4 h-4 mr-2" />
+            Configurações
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setExemplosDialogOpen(true)}>
             <BookOpen className="w-4 h-4 mr-2" />
             Exemplos
           </Button>
@@ -371,9 +406,12 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
       {/* Layout Grid */}
       <div className="grid lg:grid-cols-[1fr_400px] gap-4">
         {/* Canvas */}
-        <CanvasBoussinesq
+        <CanvasNewmark
           pontos={pontos}
-          cargaP={cargaP}
+          largura={largura}
+          comprimento={comprimento}
+          intensidade={intensidade}
+          nomeSapata={nomeSapata}
           onDuploCliqueCarga={handleDuploCliqueCarga}
           onDuploCliqueGrid={handleDuploCliqueGrid}
           onDuploCliquePonto={handleDuploCliquePonto}
@@ -386,7 +424,10 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
         {/* Painel de Resultados */}
         <PainelResultados
           pontos={pontos}
-          cargaP={cargaP}
+          largura={largura}
+          comprimento={comprimento}
+          intensidade={intensidade}
+          tipoAnalise="newmark"
           isCalculating={isCalculating}
           onExcluirPonto={handleExcluirPonto}
           onCalcular={calcularTensoes}
@@ -395,11 +436,14 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
       </div>
 
       {/* Popups */}
-      <CargaPopup
+      <CargaRetangularPopup
         open={cargaPopupOpen}
         onOpenChange={setCargaPopupOpen}
-        valorInicial={cargaP}
-        onConfirm={handleConfirmarCarga}
+        larguraInicial={largura}
+        comprimentoInicial={comprimento}
+        intensidadeInicial={intensidade}
+        nomeSapataInicial={nomeSapata}
+        onSalvar={handleConfirmarCarga}
       />
 
       <PontoAnalisePopup
@@ -408,9 +452,21 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
         coordenadas={pontoPopupCoords}
         nomeInicial={pontoEditando?.nome || nomePadraoNovoPonto}
         isEdicao={pontoEditando !== null}
-        mostrarY={false}
         onConfirm={handleConfirmarPonto}
         onExcluir={pontoEditando ? handleExcluirPonto : undefined}
+      />
+
+      <DialogConfiguracoesNewmark
+        open={configuracoesDialogOpen}
+        onOpenChange={setConfiguracoesDialogOpen}
+        usarAbaco={usarAbaco}
+        onToggleMetodo={handleToggleMetodo}
+      />
+
+      <DialogExemplosNewmark
+        open={exemplosDialogOpen}
+        onOpenChange={setExemplosDialogOpen}
+        onCarregarExemplo={handleCarregarExemplo}
       />
 
       <SaveDialog
@@ -428,7 +484,7 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
         onLoad={handleLoadCalculation}
         onDelete={deleteCalculation}
         onRename={renameCalculation}
-        moduleName="Boussinesq"
+        moduleName="Newmark"
       />
     </div>
   );

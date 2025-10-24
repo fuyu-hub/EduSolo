@@ -8,10 +8,11 @@ import { MapPin, Trash2 } from "lucide-react";
 interface PontoAnalisePopupProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  coordenadas: { x: number; z: number };
+  coordenadas: { x: number; y?: number; z: number };
   nomeInicial?: string;
   isEdicao?: boolean;
-  onConfirm: (nome: string, x: number, z: number) => void;
+  mostrarY?: boolean; // Se true, mostra campo Y (para Newmark 3D)
+  onConfirm: (nome: string, x: number, y: number, z: number) => void;
   onExcluir?: () => void;
 }
 
@@ -21,12 +22,14 @@ export default function PontoAnalisePopup({
   coordenadas,
   nomeInicial = "",
   isEdicao = false,
+  mostrarY = true,
   onConfirm,
   onExcluir
 }: PontoAnalisePopupProps) {
   const [nome, setNome] = useState(nomeInicial);
   const [x, setX] = useState(coordenadas.x);
-  const [z, setZ] = useState(coordenadas.z);
+  const [y, setY] = useState(coordenadas.y ?? 0);
+  const [z, setZ] = useState(coordenadas.z > 0 ? coordenadas.z : 0.5);
   const [erro, setErro] = useState("");
   const [canClose, setCanClose] = useState(false);
 
@@ -34,7 +37,8 @@ export default function PontoAnalisePopup({
     if (open) {
       setNome(nomeInicial);
       setX(coordenadas.x);
-      setZ(coordenadas.z);
+      setY(coordenadas.y ?? 0);
+      setZ(coordenadas.z > 0 ? coordenadas.z : 0.5);
       setErro("");
       setCanClose(false);
       
@@ -55,17 +59,17 @@ export default function PontoAnalisePopup({
       return;
     }
     
-    if (isNaN(x) || isNaN(z)) {
+    if (isNaN(x) || isNaN(z) || (mostrarY && isNaN(y))) {
       setErro("As coordenadas devem ser números válidos");
       return;
     }
     
-    if (z < 0) {
-      setErro("A profundidade (Z) não pode ser negativa");
+    if (z <= 0) {
+      setErro("A profundidade (Z) deve ser maior que zero");
       return;
     }
     
-    onConfirm(nomeTrimmed, x, z);
+    onConfirm(nomeTrimmed, x, y, z);
     onOpenChange(false);
   };
 
@@ -126,9 +130,9 @@ export default function PontoAnalisePopup({
             />
           </div>
           
-          <div className="grid grid-cols-2 gap-3">
+          <div className={`grid gap-3 ${mostrarY ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <div className="space-y-2">
-              <Label htmlFor="coordenada-x">Coordenada X (m)</Label>
+              <Label htmlFor="coordenada-x">X (m)</Label>
               <Input
                 id="coordenada-x"
                 type="number"
@@ -136,7 +140,8 @@ export default function PontoAnalisePopup({
                 placeholder="0.0"
                 value={x}
                 onChange={(e) => {
-                  setX(parseFloat(e.target.value) || 0);
+                  const val = e.target.value;
+                  setX(val === '' ? 0 : parseFloat(val));
                   setErro("");
                 }}
                 onKeyDown={handleKeyDown}
@@ -145,23 +150,45 @@ export default function PontoAnalisePopup({
               <p className="text-xs text-muted-foreground">Horizontal</p>
             </div>
             
+            {mostrarY && (
+              <div className="space-y-2">
+                <Label htmlFor="coordenada-y">Y (m)</Label>
+                <Input
+                  id="coordenada-y"
+                  type="number"
+                  step="0.5"
+                  placeholder="0.0"
+                  value={y}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setY(val === '' ? 0 : parseFloat(val));
+                    setErro("");
+                  }}
+                  onKeyDown={handleKeyDown}
+                  className={erro ? "border-red-500" : ""}
+                />
+                <p className="text-xs text-muted-foreground">Transversal</p>
+              </div>
+            )}
+            
             <div className="space-y-2">
-              <Label htmlFor="coordenada-z">Coordenada Z (m)</Label>
+              <Label htmlFor="coordenada-z">Z (m)</Label>
               <Input
                 id="coordenada-z"
                 type="number"
                 step="0.5"
-                min="0"
-                placeholder="0.0"
+                min="0.1"
+                placeholder="0.5"
                 value={z}
                 onChange={(e) => {
-                  setZ(parseFloat(e.target.value) || 0);
+                  const val = e.target.value;
+                  setZ(val === '' || isNaN(parseFloat(val)) ? 0.5 : parseFloat(val));
                   setErro("");
                 }}
                 onKeyDown={handleKeyDown}
                 className={erro ? "border-red-500" : ""}
               />
-              <p className="text-xs text-muted-foreground">Profundidade</p>
+              <p className="text-xs text-muted-foreground">Profund.</p>
             </div>
           </div>
           

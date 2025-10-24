@@ -3,35 +3,36 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Layers, Info, GripVertical } from "lucide-react";
 import { PontoAnalise } from "./PainelResultados";
 
-interface Canvas2DInterativoProps {
+interface CanvasCarothersProps {
   pontos: PontoAnalise[];
-  cargaP?: number;
-  raioCircular?: number;
+  cargaQ?: number;
+  largura?: number;
   onDuploCliqueCarga: () => void;
   onDuploCliqueGrid: (x: number, z: number) => void;
   onDuploCliquePonto: (ponto: PontoAnalise) => void;
   onMovimentarPonto: (id: string, x: number, z: number) => void;
   onPontoSolto?: (id: string) => void;
   calculoFeito?: boolean;
+  decimalPlaces?: number;
 }
 
-export default function Canvas2DInterativo({
+export default function CanvasCarothers({
   pontos,
-  cargaP,
-  raioCircular,
+  cargaQ,
+  largura,
   onDuploCliqueCarga,
   onDuploCliqueGrid,
   onDuploCliquePonto,
   onMovimentarPonto,
   onPontoSolto,
-  calculoFeito = false
-}: Canvas2DInterativoProps) {
+  calculoFeito = false,
+  decimalPlaces = 3
+}: CanvasCarothersProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [draggedPoint, setDraggedPoint] = useState<string | null>(null);
   const [offsetArraste, setOffsetArraste] = useState({ x: 0, y: 0 });
-  const [hoveredPoint, setHoveredPoint] = useState<string | null>(null);
-  const [selectedPoints, setSelectedPoints] = useState<string[]>([]); // Pontos clicados (tooltips fixos)
+  const [selectedPoints, setSelectedPoints] = useState<string[]>([]);
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isDraggingRef = useRef(false);
   const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null);
@@ -74,81 +75,71 @@ export default function Canvas2DInterativo({
   // Renderiza o grid
   const renderizarGrid = () => {
     const linhas = [];
-    const largura = containerRef.current?.getBoundingClientRect().width || 800;
+    const larguraContainer = containerRef.current?.getBoundingClientRect().width || 800;
     const altura = containerRef.current?.getBoundingClientRect().height || 600;
     
-    const metrosHorizontal = Math.ceil((largura / 2) / PIXELS_POR_METRO);
+    const metrosHorizontal = Math.ceil((larguraContainer / 2) / PIXELS_POR_METRO);
     const metrosVertical = Math.ceil((altura - origem.y) / PIXELS_POR_METRO);
     
-      // Linhas Verticais (Eixo X) - mais sutis
-      for (let x = -metrosHorizontal; x <= metrosHorizontal; x++) {
-        const isMainLine = x % 2 === 0;
-        linhas.push(
-          <line
-            key={`v-${x}`}
-            x1={x * PIXELS_POR_METRO}
-            y1={0}
-            x2={x * PIXELS_POR_METRO}
-            y2={metrosVertical * PIXELS_POR_METRO}
-            stroke={isMainLine ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.08)"}
-            strokeWidth={isMainLine ? 0.8 : 0.4}
-            strokeDasharray={isMainLine ? "none" : "2,2"}
-          />
-        );
-      }
+    // Linhas Verticais (1m em 1m)
+    for (let x = -metrosHorizontal; x <= metrosHorizontal; x++) {
+      linhas.push(
+        <line
+          key={`v-${x}`}
+          x1={x * PIXELS_POR_METRO}
+          y1={0}
+          x2={x * PIXELS_POR_METRO}
+          y2={metrosVertical * PIXELS_POR_METRO}
+          stroke="rgba(255,255,255,0.15)"
+          strokeWidth={0.8}
+        />
+      );
+    }
+    
+    // Linhas Horizontais (1m em 1m)
+    for (let z = 1; z <= metrosVertical; z++) {
+      linhas.push(
+        <line
+          key={`h-${z}`}
+          x1={-larguraContainer / 2}
+          y1={z * PIXELS_POR_METRO}
+          x2={larguraContainer / 2}
+          y2={z * PIXELS_POR_METRO}
+          stroke="rgba(255,255,255,0.2)"
+          strokeWidth={1}
+        />
+      );
       
-      // Linhas Horizontais (Eixo Z) - representando camadas
-      for (let z = 1; z <= metrosVertical; z++) {
-        const isMainLine = z % 2 === 0;
+      if (true) {
         linhas.push(
-          <line
-            key={`h-${z}`}
-            x1={-largura / 2}
-            y1={z * PIXELS_POR_METRO}
-            x2={largura / 2}
-            y2={z * PIXELS_POR_METRO}
-            stroke={isMainLine ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.1)"}
-            strokeWidth={isMainLine ? 1 : 0.5}
-          />
+          <g key={`label-group-${z}`}>
+            <rect
+              x={-origem.x + 5}
+              y={z * PIXELS_POR_METRO - 8}
+              width={35}
+              height={16}
+              fill="hsl(var(--popover))"
+              stroke="hsl(var(--border))"
+              strokeWidth="0.5"
+              rx={3}
+            />
+            <text
+              key={`label-${z}`}
+              x={-origem.x + 12}
+              y={z * PIXELS_POR_METRO + 4}
+              fontSize="11"
+              fontWeight="600"
+              fill="hsl(var(--popover-foreground))"
+              textAnchor="start"
+            >
+              {z}m
+            </text>
+          </g>
         );
-        
-        // Etiqueta de profundidade (apenas linhas principais)
-        if (isMainLine) {
-          linhas.push(
-            <g key={`label-group-${z}`}>
-              {/* Fundo para o texto */}
-              <rect
-                x={-origem.x + 5}
-                y={z * PIXELS_POR_METRO - 8}
-                width={35}
-                height={16}
-                fill="hsl(var(--popover))"
-                stroke="hsl(var(--border))"
-                strokeWidth="0.5"
-                rx={3}
-              />
-              <text
-                key={`label-${z}`}
-                x={-origem.x + 12}
-                y={z * PIXELS_POR_METRO + 4}
-                fontSize="11"
-                fontWeight="600"
-                fill="hsl(var(--popover-foreground))"
-                textAnchor="start"
-              >
-                {z}m
-              </text>
-            </g>
-          );
-        }
       }
+    }
     
     return linhas;
-  };
-  
-  // Bulbo de tensões removido - não funciona bem para Boussinesq
-  const renderizarBulbo = () => {
-    return null;
   };
   
   // Conversão de coordenadas
@@ -159,7 +150,7 @@ export default function Canvas2DInterativo({
     pt.x = e.clientX;
     pt.y = e.clientY;
     
-    const svgMundo = document.getElementById('svg-mundo') as any;
+    const svgMundo = document.getElementById('svg-mundo-carothers') as any;
     if (!svgMundo) return { x: 0, y: 0 };
     
     const ctm = svgMundo.getScreenCTM();
@@ -184,7 +175,6 @@ export default function Canvas2DInterativo({
     const ponto = pontos.find(p => p.id === pontoId);
     if (!ponto) return;
     
-    // Marca posição inicial do mouse, mas não marca como dragging ainda
     mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
     hasMovedRef.current = false;
     setDraggedPoint(pontoId);
@@ -199,19 +189,16 @@ export default function Canvas2DInterativo({
   const duranteArraste = (e: React.MouseEvent) => {
     if (!draggedPoint) return;
     
-    // Detecta se houve movimento significativo
     if (mouseDownPosRef.current && !hasMovedRef.current) {
       const deltaX = Math.abs(e.clientX - mouseDownPosRef.current.x);
       const deltaY = Math.abs(e.clientY - mouseDownPosRef.current.y);
       
-      // Threshold de 3 pixels para considerar como arraste
       if (deltaX > 3 || deltaY > 3) {
         hasMovedRef.current = true;
         isDraggingRef.current = true;
       }
     }
     
-    // Só move o ponto se já detectou movimento
     if (!hasMovedRef.current) return;
     
     const ponto = pontos.find(p => p.id === draggedPoint);
@@ -221,7 +208,6 @@ export default function Canvas2DInterativo({
     let novoSvgX = svgPt.x - offsetArraste.x;
     let novoSvgY = svgPt.y - offsetArraste.y;
     
-    // Snap ao grid
     const snapPixels = PIXELS_POR_METRO * GRID_SNAP_METROS;
     novoSvgX = Math.round(novoSvgX / snapPixels) * snapPixels;
     novoSvgY = Math.round(novoSvgY / snapPixels) * snapPixels;
@@ -232,7 +218,6 @@ export default function Canvas2DInterativo({
     
     onMovimentarPonto(draggedPoint, x, z);
     
-    // Mostra tooltip hover durante o arraste (se não estiver fixado)
     if (!selectedPoints.includes(draggedPoint)) {
       const pontoAtualizado = { ...ponto, x, z };
       mostrarTooltipHover(pontoAtualizado);
@@ -251,21 +236,19 @@ export default function Canvas2DInterativo({
       esconderTooltipHover();
     }
     
-    // Reset após um pequeno delay para evitar conflitos com click
     setTimeout(() => {
       isDraggingRef.current = false;
       hasMovedRef.current = false;
     }, 50);
   };
   
-  // Tooltip - Calcula posição relativa ao ponto no SVG
+  // Tooltip
   const calcularPosicaoTooltip = useCallback((ponto: PontoAnalise) => {
     if (!containerRef.current) return { x: 0, y: 0 };
     
     const pontoX = origem.x + (ponto.x * PIXELS_POR_METRO);
     const pontoY = origem.y + (ponto.z * PIXELS_POR_METRO);
     
-    // Posiciona à direita e abaixo do ponto
     return {
       x: pontoX + 15,
       y: pontoY + 15
@@ -273,7 +256,6 @@ export default function Canvas2DInterativo({
   }, [origem.x, origem.y]);
   
   const mostrarTooltipHover = useCallback((ponto: PontoAnalise) => {
-    // Não mostra hover se o ponto já está fixado
     if (selectedPoints.includes(ponto.id)) return;
     
     const pos = calcularPosicaoTooltip(ponto);
@@ -291,7 +273,6 @@ export default function Canvas2DInterativo({
   
   const toggleTooltipFixo = (ponto: PontoAnalise) => {
     setSelectedPoints(prev => {
-      // Se já está fixado neste ponto, remove
       if (prev.includes(ponto.id)) {
         // Desfixando: remove offsets e posição fixa
         setTooltipOffsets(offsets => {
@@ -317,11 +298,9 @@ export default function Canvas2DInterativo({
     });
   };
   
-  // Limpa pontos fixados que foram removidos
   useEffect(() => {
     const pontosIds = pontos.map(p => p.id);
     setSelectedPoints(prev => prev.filter(id => pontosIds.includes(id)));
-    // Limpa offsets de tooltips que não existem mais
     setTooltipOffsets(prev => {
       const newOffsets = { ...prev };
       Object.keys(newOffsets).forEach(id => {
@@ -377,7 +356,6 @@ export default function Canvas2DInterativo({
     tooltipDragStartRef.current = null;
   }, []);
   
-  // Adiciona listeners para drag do tooltip
   useEffect(() => {
     if (draggingTooltip) {
       document.addEventListener('mousemove', handleTooltipMouseMove);
@@ -390,27 +368,22 @@ export default function Canvas2DInterativo({
     }
   }, [draggingTooltip, handleTooltipMouseMove, handleTooltipMouseUp]);
   
-  // Handler de clique simples na carga
   const handleCliqueCanvas = (e: React.MouseEvent) => {
     const target = e.target as SVGElement;
     
-    // Se clicou no hitbox da carga ou próximo
-    if (target.id === 'carga-p-hitbox' || target.closest('#carga-p')) {
+    if (target.id === 'area-faixa-hitbox' || target.closest('#area-faixa')) {
       onDuploCliqueCarga();
       return;
     }
   };
   
-  // Handler de duplo clique no canvas
   const handleDuploCliqueCanvas = (e: React.MouseEvent) => {
     const target = e.target as SVGElement;
     
-    // Ignora clique na carga (já tratado no click simples)
-    if (target.id === 'carga-p-hitbox' || target.closest('#carga-p')) {
+    if (target.id === 'area-faixa-hitbox' || target.closest('#area-faixa')) {
       return;
     }
     
-    // Se clicou em um ponto
     const pontoId = target.closest('[data-ponto-id]')?.getAttribute('data-ponto-id');
     if (pontoId) {
       const ponto = pontos.find(p => p.id === pontoId);
@@ -420,7 +393,6 @@ export default function Canvas2DInterativo({
       }
     }
     
-    // Clicou no grid vazio - criar novo ponto
     const svgPt = converterTelaParaSVG(e);
     const { x, z } = converterSVGParaMetros(svgPt.x, svgPt.y);
     
@@ -438,17 +410,17 @@ export default function Canvas2DInterativo({
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center shadow-lg">
               <Layers className="w-5 h-5 text-white" />
             </div>
-            Perfil do Solo - Análise 2D
+            Perfil do Solo - Carothers (Carga em Faixa)
           </CardTitle>
         </div>
         <div className="mt-3 flex items-start gap-2 text-xs bg-muted/50 p-3 rounded-lg border">
           <Info className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
           <div className="space-y-1">
             <p className="text-muted-foreground">
-              <strong className="text-foreground">Clique na carga P</strong> para configurar o valor • 
+              <strong className="text-foreground">Clique na faixa</strong> para configurar • 
               <strong className="text-foreground"> Duplo clique no solo</strong> para adicionar pontos • 
               <strong className="text-foreground"> Arraste pontos</strong> para reposicionar
             </p>
@@ -470,290 +442,313 @@ export default function Canvas2DInterativo({
             onMouseLeave={terminarArraste}
             className="cursor-crosshair"
           >
-        {/* Definições (Gradientes e Padrões) */}
-        <defs>
-          {/* Gradiente para o Bulbo de Tensões */}
-          <radialGradient id="bulbo-gradiente" cx="50%" cy="0%" r="75%">
-            <stop offset="0%" stopColor="rgba(239, 68, 68, 0.3)" />
-            <stop offset="30%" stopColor="rgba(249, 115, 22, 0.2)" />
-            <stop offset="60%" stopColor="rgba(234, 179, 8, 0.15)" />
-            <stop offset="100%" stopColor="rgba(59, 130, 246, 0.0)" />
-          </radialGradient>
-          
-          {/* Gradiente para o solo (vertical) - tema escuro neutro */}
-          <linearGradient id="solo-gradiente" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="hsl(var(--muted))" />
-            <stop offset="100%" stopColor="hsl(var(--muted))" stopOpacity="0.7" />
-          </linearGradient>
-          
-          {/* Padrão de textura do solo */}
-          <pattern id="solo-textura" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-            <circle cx="3" cy="3" r="0.8" fill="rgba(0,0,0,0.05)" />
-            <circle cx="15" cy="8" r="0.6" fill="rgba(0,0,0,0.04)" />
-            <circle cx="8" cy="15" r="0.7" fill="rgba(0,0,0,0.045)" />
-            <circle cx="18" cy="18" r="0.5" fill="rgba(0,0,0,0.035)" />
-          </pattern>
-          
-          {/* Padrão para a superfície (linha simples) */}
-          <pattern id="superficie-pattern" x="0" y="0" width="40" height="4" patternUnits="userSpaceOnUse">
-            <rect width="40" height="4" fill="hsl(var(--border))" />
-          </pattern>
-        </defs>
-        
-        {/* Grupo principal */}
-        <g id="svg-mundo" transform={`translate(${origem.x}, ${origem.y})`}>
-          {/* Camada de Solo (fundo) */}
-          <rect
-            x={-origem.x}
-            y={0}
-            width={origem.x * 2}
-            height={1000}
-            fill="url(#solo-gradiente)"
-          />
-          
-          {/* Textura do solo */}
-          <rect
-            x={-origem.x}
-            y={0}
-            width={origem.x * 2}
-            height={1000}
-            fill="url(#solo-textura)"
-            opacity={0.6}
-          />
-          
-          {/* Superfície (linha do terreno) */}
-          <rect
-            x={-origem.x}
-            y={-4}
-            width={origem.x * 2}
-            height={4}
-            fill="url(#superficie-pattern)"
-          />
-          
-          {/* Bulbo de Tensões */}
-          {renderizarBulbo()}
-          
-          {/* Grid do Solo */}
-          <g id="svg-grid">{renderizarGrid()}</g>
-          
-          {/* Linha do Nível do Terreno */}
-          <line
-            id="linha-nt"
-            stroke="hsl(var(--border))"
-            strokeWidth="2"
-            x1="-10000"
-            y1="0"
-            x2="10000"
-            y2="0"
-          />
-          
-          {/* Carga P - visual melhorado */}
-          <g id="carga-p" transform="translate(0, 0)">
-            {/* Seta principal - mais grossa e destacada */}
-            <path
-              id="carga-p-seta"
-              d="M 0 -55 L 0 0 M -12 -12 L 0 0 L 12 -12"
-              stroke="hsl(var(--primary))"
-              strokeWidth="5"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            <defs>
+              <linearGradient id="solo-gradiente-carothers" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="hsl(var(--muted))" />
+                <stop offset="100%" stopColor="hsl(var(--muted))" stopOpacity="0.7" />
+              </linearGradient>
+              
+              <pattern id="solo-textura-carothers" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="3" cy="3" r="0.8" fill="rgba(0,0,0,0.05)" />
+                <circle cx="15" cy="8" r="0.6" fill="rgba(0,0,0,0.04)" />
+                <circle cx="8" cy="15" r="0.7" fill="rgba(0,0,0,0.045)" />
+                <circle cx="18" cy="18" r="0.5" fill="rgba(0,0,0,0.035)" />
+              </pattern>
+              
+              <pattern id="superficie-pattern-carothers" x="0" y="0" width="40" height="4" patternUnits="userSpaceOnUse">
+                <rect width="40" height="4" fill="hsl(var(--border))" />
+              </pattern>
+            </defs>
             
-            {/* Valor da carga ao lado */}
-            {cargaP !== undefined && (
-              <g transform="translate(20, -25)">
-                <rect
-                  x="0"
-                  y="-12"
-                  width={cargaP.toFixed(1).length * 9 + 35}
-                  height="24"
-                  fill="hsl(var(--popover))"
-                  stroke="hsl(var(--border))"
-                  strokeWidth="1"
-                  rx="4"
-                />
-                <text 
-                  x="5" 
-                  y="5" 
-                  fontSize="16" 
-                  fontWeight="bold" 
-                  fill="hsl(var(--primary))"
-                >
-                  P =
-                </text>
-                <text 
-                  x="35" 
-                  y="5" 
-                  fontSize="15" 
-                  fontWeight="600" 
-                  fill="hsl(var(--popover-foreground))"
-                >
-                  {cargaP.toFixed(1)} kN
-                </text>
-              </g>
-            )}
-            
-            <rect
-              id="carga-p-hitbox"
-              x="-15"
-              y="-60"
-              width={cargaP !== undefined ? 120 : 30}
-              height="65"
-              fill="transparent"
-              className="cursor-pointer hover:fill-primary/10"
-            />
-          </g>
-          
-          {/* Área Circular (para Love) */}
-          {raioCircular !== undefined && raioCircular > 0 && (
-            <g id="svg-area-circular">
-              <circle
-                cx="0"
-                cy="0"
-                r={raioCircular * PIXELS_POR_METRO}
-                fill="rgba(168, 85, 247, 0.15)"
-                stroke="rgb(168, 85, 247)"
-                strokeWidth="2"
-                strokeDasharray="5,5"
+            <g id="svg-mundo-carothers" transform={`translate(${origem.x}, ${origem.y})`}>
+              {/* Solo */}
+              <rect
+                x={-origem.x}
+                y={0}
+                width={origem.x * 2}
+                height={1000}
+                fill="url(#solo-gradiente-carothers)"
               />
-              {/* Linha do raio */}
+              
+              <rect
+                x={-origem.x}
+                y={0}
+                width={origem.x * 2}
+                height={1000}
+                fill="url(#solo-textura-carothers)"
+                opacity={0.6}
+              />
+              
+              {/* Superfície */}
+              <rect
+                x={-origem.x}
+                y={-4}
+                width={origem.x * 2}
+                height={4}
+                fill="url(#superficie-pattern-carothers)"
+              />
+              
+              {/* Grid */}
+              <g id="svg-grid">{renderizarGrid()}</g>
+              
+              {/* Linha do terreno */}
               <line
-                x1="0"
+                stroke="hsl(var(--border))"
+                strokeWidth="2"
+                x1="-10000"
                 y1="0"
-                x2={raioCircular * PIXELS_POR_METRO}
+                x2="10000"
                 y2="0"
-                stroke="rgb(168, 85, 247)"
-                strokeWidth="1.5"
-                strokeDasharray="3,3"
               />
-              {/* Label do raio */}
-              <text
-                x={(raioCircular * PIXELS_POR_METRO) / 2}
-                y="-5"
-                fontSize="12"
-                fontWeight="600"
-                fill="rgb(168, 85, 247)"
-                textAnchor="middle"
-              >
-                R = {raioCircular.toFixed(2)} m
-              </text>
-            </g>
-          )}
-          
-          {/* Pontos de Análise */}
-          <g id="svg-pontos">
-            {pontos.length === 0 ? (
-              <g>
-                <rect
-                  x={-200}
-                  y={135}
-                  width={400}
-                  height={30}
-                  fill="hsl(var(--popover))"
-                  stroke="hsl(var(--border))"
-                  strokeWidth="1"
-                  rx={6}
-                />
-                <text
-                  x={0}
-                  y={155}
-                  fontSize="13"
-                  fill="hsl(var(--muted-foreground))"
-                  textAnchor="middle"
-                  pointerEvents="none"
-                  fontWeight="500"
-                >
-                  Duplo clique no canvas para adicionar pontos de análise
-                </text>
-              </g>
-            ) : (
-              pontos.map(ponto => (
-                <g
-                  key={ponto.id}
-                  data-ponto-id={ponto.id}
-                  transform={`translate(${ponto.x * PIXELS_POR_METRO}, ${ponto.z * PIXELS_POR_METRO})`}
-                  onMouseEnter={() => !draggedPoint && mostrarTooltipHover(ponto)}
-                  onMouseLeave={() => !draggedPoint && esconderTooltipHover()}
-                  className="cursor-grab active:cursor-grabbing"
-                >
-                  {/* Linha tracejada conectando à carga */}
-                  <line
-                    x1={0}
-                    y1={0}
-                    x2={-(ponto.x * PIXELS_POR_METRO)}
-                    y2={-(ponto.z * PIXELS_POR_METRO)}
-                    stroke="hsl(var(--primary))"
-                    strokeWidth="2.5"
-                    strokeDasharray="5 5"
-                    opacity={0.5}
-                    pointerEvents="none"
-                  />
-                  
-                  {/* Círculo do ponto */}
-                  <circle
-                    cx={0}
-                    cy={0}
-                    r={TAMANHO_PONTO}
-                    fill={ponto.tensao !== undefined ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))"}
-                    stroke={ponto.tensao !== undefined ? "hsl(var(--primary))" : "hsl(var(--border))"}
-                    strokeWidth="2.5"
-                    className="transition-all hover:drop-shadow-[0_0_10px_rgba(0,0,0,0.4)]"
-                    onMouseDown={(e) => iniciarArraste(e, ponto.id)}
-                    onClick={(e) => {
-                      // Evita conflito com duplo clique e com arraste
-                      if (isDraggingRef.current) {
-                        return;
-                      }
-                      
-                      e.stopPropagation();
-                      
-                      // Usa timeout para diferenciar clique simples de duplo clique
-                      if (clickTimeoutRef.current) {
-                        clearTimeout(clickTimeoutRef.current);
-                        clickTimeoutRef.current = null;
-                        return; // É um duplo clique, ignora
-                      }
-                      
-                      clickTimeoutRef.current = setTimeout(() => {
-                        toggleTooltipFixo(ponto);
-                        clickTimeoutRef.current = null;
-                      }, 250);
-                    }}
-                  />
-                  
-                  {/* Fundo para o nome do ponto */}
+              
+              {/* Área em Faixa (Carothers) - Vista Lateral */}
+              {(() => {
+                const larguraDisplay = largura !== undefined && largura > 0 ? largura : 1;
+                const larguraFaixa = larguraDisplay * PIXELS_POR_METRO;
+                const alturaArea = 30;
+                const numSetinhas = Math.max(5, Math.floor(larguraDisplay));
+                
+                return (
+                <g id="area-faixa">
+                  {/* Retângulo representando a faixa carregada (vista lateral) - encostado no solo */}
                   <rect
-                    x={TAMANHO_PONTO + 2}
-                    y={-8}
-                    width={ponto.nome.length * 7 + 6}
-                    height={16}
-                    fill="hsl(var(--popover))"
-                    stroke="hsl(var(--border))"
-                    strokeWidth="0.5"
-                    rx={3}
-                    className="cursor-grab active:cursor-grabbing"
-                    onMouseDown={(e) => iniciarArraste(e, ponto.id)}
+                    x={-larguraFaixa / 2}
+                    y={-alturaArea}
+                    width={larguraFaixa}
+                    height={alturaArea}
+                    fill="rgba(34, 197, 94, 0.2)"
+                    stroke="rgb(34, 197, 94)"
+                    strokeWidth="3"
                   />
                   
-                  {/* Nome do ponto */}
-                  <text
-                    x={TAMANHO_PONTO + 5}
-                    y={3}
-                    fontSize="11"
-                    fontWeight="600"
-                    fill="hsl(var(--popover-foreground))"
-                    className="cursor-grab active:cursor-grabbing"
-                    onMouseDown={(e) => iniciarArraste(e, ponto.id)}
-                  >
-                    {ponto.nome}
-                  </text>
+                  {/* Setinhas de carga - distribuídas uniformemente */}
+                  {(() => {
+                    const setinhas = [];
+                    for (let i = 1; i < numSetinhas; i++) {
+                      const x = -larguraFaixa / 2 + (larguraFaixa / numSetinhas) * i;
+                      
+                      setinhas.push(
+                        <g key={`seta-${i}`}>
+                          <line
+                            x1={x}
+                            y1={-alturaArea + 3}
+                            x2={x}
+                            y2={-3}
+                            stroke="rgb(34, 197, 94)"
+                            strokeWidth="2"
+                          />
+                          <path
+                            d={`M ${x} ${-3} L ${x - 4} ${-9} L ${x + 4} ${-9} Z`}
+                            fill="rgb(34, 197, 94)"
+                          />
+                        </g>
+                      );
+                    }
+                    return setinhas;
+                  })()}
+                  
+                  {/* Linha de referência da largura */}
+                  <g>
+                    <line
+                      x1={-larguraFaixa / 2}
+                      y1={-alturaArea - 10}
+                      x2={larguraFaixa / 2}
+                      y2={-alturaArea - 10}
+                      stroke="rgb(34, 197, 94)"
+                      strokeWidth="1.5"
+                    />
+                    
+                    {/* Marcadores nas extremidades */}
+                    <line 
+                      x1={-larguraFaixa / 2} 
+                      y1={-alturaArea - 15} 
+                      x2={-larguraFaixa / 2} 
+                      y2={-alturaArea - 5} 
+                      stroke="rgb(34, 197, 94)" 
+                      strokeWidth="1.5" 
+                    />
+                    <line 
+                      x1={larguraFaixa / 2} 
+                      y1={-alturaArea - 15} 
+                      x2={larguraFaixa / 2} 
+                      y2={-alturaArea - 5} 
+                      stroke="rgb(34, 197, 94)" 
+                      strokeWidth="1.5" 
+                    />
+                    
+                    {/* Label B = valor */}
+                    <g transform={`translate(0, ${-alturaArea - 20})`}>
+                      <rect
+                        x={-((larguraDisplay.toFixed(1).length * 8) + 30) / 2}
+                        y="-9"
+                        width={(larguraDisplay.toFixed(1).length * 8) + 30}
+                        height="18"
+                        fill="hsl(var(--popover))"
+                        stroke="rgb(34, 197, 94)"
+                        strokeWidth="1"
+                        rx="3"
+                      />
+                      <text
+                        x="0"
+                        y="4"
+                        fontSize="12"
+                        fontWeight="600"
+                        fill="rgb(34, 197, 94)"
+                        textAnchor="middle"
+                      >
+                        B = {larguraDisplay.toFixed(1)} m
+                      </text>
+                    </g>
+                  </g>
+                  
+                  {/* Label da carga (ao lado direito) */}
+                  {cargaQ !== undefined && (
+                    <g transform={`translate(${larguraFaixa / 2 + 25}, ${-alturaArea / 2})`}>
+                      <rect
+                        x="-5"
+                        y="-10"
+                        width={cargaQ.toFixed(0).length * 8 + 55}
+                        height="20"
+                        fill="hsl(var(--popover))"
+                        stroke="rgb(34, 197, 94)"
+                        strokeWidth="1"
+                        rx="3"
+                      />
+                      <text 
+                        x="2" 
+                        y="5" 
+                        fontSize="12" 
+                        fontWeight="600" 
+                        fill="rgb(34, 197, 94)"
+                      >
+                        q = {cargaQ.toFixed(0)} kPa
+                      </text>
+                    </g>
+                  )}
+                  
+                  <rect
+                    id="area-faixa-hitbox"
+                    x={-larguraFaixa / 2 - 5}
+                    y={-alturaArea - 25}
+                    width={larguraFaixa + 10}
+                    height={alturaArea + 30}
+                    fill="transparent"
+                    className="cursor-pointer"
+                  />
                 </g>
-              ))
-            )}
-          </g>
-        </g>
-      </svg>
+                );
+              })()}
+              
+              {/* Pontos de Análise */}
+              <g id="svg-pontos">
+                {pontos.length === 0 ? (
+                  <g>
+                    <rect
+                      x={-200}
+                      y={135}
+                      width={400}
+                      height={30}
+                      fill="hsl(var(--popover))"
+                      stroke="hsl(var(--border))"
+                      strokeWidth="1"
+                      rx={6}
+                    />
+                    <text
+                      x={0}
+                      y={155}
+                      fontSize="13"
+                      fill="hsl(var(--muted-foreground))"
+                      textAnchor="middle"
+                      pointerEvents="none"
+                      fontWeight="500"
+                    >
+                      Duplo clique no canvas para adicionar pontos de análise
+                    </text>
+                  </g>
+                ) : (
+                  pontos.map(ponto => (
+                    <g
+                      key={ponto.id}
+                      data-ponto-id={ponto.id}
+                      transform={`translate(${ponto.x * PIXELS_POR_METRO}, ${ponto.z * PIXELS_POR_METRO})`}
+                      onMouseEnter={() => !draggedPoint && mostrarTooltipHover(ponto)}
+                      onMouseLeave={() => !draggedPoint && esconderTooltipHover()}
+                      className="cursor-grab active:cursor-grabbing"
+                    >
+                      {/* Linha tracejada do ponto até a superfície (carga) */}
+                      <line
+                        x1={0}
+                        y1={0}
+                        x2={0}
+                        y2={-(ponto.z * PIXELS_POR_METRO)}
+                        stroke="rgb(34, 197, 94)"
+                        strokeWidth="2.5"
+                        strokeDasharray="5 5"
+                        opacity={0.5}
+                        pointerEvents="none"
+                      />
+                      
+                      {/* Círculo do ponto */}
+                      <circle
+                        cx={0}
+                        cy={0}
+                        r={TAMANHO_PONTO}
+                        fill={ponto.tensao !== undefined ? "rgb(34, 197, 94)" : "hsl(var(--muted-foreground))"}
+                        stroke={ponto.tensao !== undefined ? "rgb(34, 197, 94)" : "hsl(var(--border))"}
+                        strokeWidth="2.5"
+                        className="transition-all hover:drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]"
+                        onMouseDown={(e) => iniciarArraste(e, ponto.id)}
+                        onClick={(e) => {
+                          if (isDraggingRef.current) {
+                            return;
+                          }
+                          
+                          e.stopPropagation();
+                          
+                          if (clickTimeoutRef.current) {
+                            clearTimeout(clickTimeoutRef.current);
+                            clickTimeoutRef.current = null;
+                            return;
+                          }
+                          
+                          clickTimeoutRef.current = setTimeout(() => {
+                            toggleTooltipFixo(ponto);
+                            clickTimeoutRef.current = null;
+                          }, 250);
+                        }}
+                      />
+                      
+                      {/* Nome do ponto */}
+                      <rect
+                        x={TAMANHO_PONTO + 2}
+                        y={-8}
+                        width={ponto.nome.length * 7 + 6}
+                        height={16}
+                        fill="hsl(var(--popover))"
+                        stroke="hsl(var(--border))"
+                        strokeWidth="0.5"
+                        rx={3}
+                        className="cursor-grab active:cursor-grabbing"
+                        onMouseDown={(e) => iniciarArraste(e, ponto.id)}
+                      />
+                      
+                      <text
+                        x={TAMANHO_PONTO + 5}
+                        y={3}
+                        fontSize="11"
+                        fontWeight="600"
+                        fill="hsl(var(--popover-foreground))"
+                        className="cursor-grab active:cursor-grabbing"
+                        onMouseDown={(e) => iniciarArraste(e, ponto.id)}
+                      >
+                        {ponto.nome}
+                      </text>
+                    </g>
+                  ))
+                )}
+              </g>
+            </g>
+          </svg>
           
           {/* Tooltips Fixos - Múltiplos */}
           {selectedPoints.map(pontoId => {
@@ -769,7 +764,7 @@ export default function Canvas2DInterativo({
             return (
               <div
                 key={`tooltip-${pontoId}`}
-                className="absolute z-50 bg-gradient-to-br from-card to-card/95 backdrop-blur-md text-card-foreground rounded-xl shadow-2xl border-2 border-primary scale-105"
+                className="absolute z-50 bg-gradient-to-br from-card to-card/95 backdrop-blur-md text-card-foreground rounded-xl shadow-2xl border-2 border-green-500 scale-105"
                 style={{
                   left: `${fixedPos.x + offset.x}px`,
                   top: `${fixedPos.y + offset.y}px`,
@@ -781,19 +776,19 @@ export default function Canvas2DInterativo({
               >
                 {/* Indicador de fixação */}
                 <div 
-                  className="absolute -top-2 -right-2 w-4 h-4 bg-primary rounded-full border-2 border-background shadow-lg animate-pulse"
+                  className="absolute -top-2 -right-2 w-4 h-4 bg-green-500 rounded-full border-2 border-background shadow-lg animate-pulse"
                   title="Clique para desfixar"
                 />
                 
                 {/* Handle de arraste */}
-                <div className="absolute top-0 left-0 right-0 h-6 flex items-center justify-center rounded-t-xl hover:bg-primary/10 transition-colors cursor-grab active:cursor-grabbing">
+                <div className="absolute top-0 left-0 right-0 h-6 flex items-center justify-center rounded-t-xl hover:bg-green-500/10 transition-colors cursor-grab active:cursor-grabbing">
                   <GripVertical className="w-4 h-4 text-muted-foreground/50" />
                 </div>
                 
                 <div className="px-4 py-3 pt-6 min-w-[180px]">
                   {/* Header com nome do ponto */}
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-primary to-primary/60 shadow-sm" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-sm" />
                     <div className="font-bold text-base text-foreground">
                       {ponto.nome}
                     </div>
@@ -818,14 +813,14 @@ export default function Canvas2DInterativo({
                   {/* Tensão calculada */}
                   {ponto.tensao !== undefined ? (
                     <div className="mt-2 pt-2 border-t border-border/50">
-                      <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-2 py-1.5 rounded">
+                      <div className="bg-gradient-to-r from-green-500/10 to-emerald-600/10 px-2 py-1.5 rounded">
                         <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
                           Acréscimo de Tensão
                         </div>
                         <div className="flex items-baseline gap-1">
-                          <span className="text-sm font-bold text-primary">Δσz =</span>
+                          <span className="text-sm font-bold text-green-600">Δσz =</span>
                           <span className="text-base font-bold text-foreground font-mono">
-                            {ponto.tensao.toFixed(4)}
+                            {ponto.tensao.toFixed(decimalPlaces)}
                           </span>
                           <span className="text-xs font-semibold text-muted-foreground">kPa</span>
                         </div>
@@ -856,7 +851,7 @@ export default function Canvas2DInterativo({
             >
               <div className="px-4 py-3 min-w-[180px]">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-primary to-primary/60 shadow-sm" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-sm" />
                   <div className="font-bold text-base text-foreground">
                     {hoverTooltip.ponto.nome}
                   </div>
@@ -879,14 +874,14 @@ export default function Canvas2DInterativo({
                 
                 {hoverTooltip.ponto.tensao !== undefined ? (
                   <div className="mt-2 pt-2 border-t border-border/50">
-                    <div className="bg-gradient-to-r from-primary/10 to-primary/5 px-2 py-1.5 rounded">
+                    <div className="bg-gradient-to-r from-green-500/10 to-emerald-600/10 px-2 py-1.5 rounded">
                       <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
                         Acréscimo de Tensão
                       </div>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-sm font-bold text-primary">Δσz =</span>
+                        <span className="text-sm font-bold text-green-600">Δσz =</span>
                         <span className="text-base font-bold text-foreground font-mono">
-                          {hoverTooltip.ponto.tensao.toFixed(4)}
+                          {hoverTooltip.ponto.tensao.toFixed(decimalPlaces)}
                         </span>
                         <span className="text-xs font-semibold text-muted-foreground">kPa</span>
                       </div>
@@ -920,15 +915,15 @@ export default function Canvas2DInterativo({
             }
           `}</style>
           
-          {/* Legenda - Melhorada */}
+          {/* Legenda */}
           <div className="absolute bottom-4 right-4 bg-card/95 backdrop-blur-md border shadow-xl rounded-lg p-3 text-xs max-w-[200px]">
             <div className="font-semibold mb-2 flex items-center gap-2 text-foreground">
-              <Info className="w-3.5 h-3.5 text-primary" />
+              <Info className="w-3.5 h-3.5 text-green-500" />
               <span>Legenda</span>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2.5 text-muted-foreground hover:text-foreground transition-colors">
-                <div className="w-2 h-2 rounded-full bg-primary shadow-sm"></div>
+                <div className="w-2 h-2 rounded-full bg-green-500 shadow-sm"></div>
                 <span className="text-[11px]">Ponto calculado</span>
               </div>
               <div className="flex items-center gap-2.5 text-muted-foreground hover:text-foreground transition-colors">
@@ -936,8 +931,8 @@ export default function Canvas2DInterativo({
                 <span className="text-[11px]">Ponto não calculado</span>
               </div>
               <div className="flex items-center gap-2.5 text-muted-foreground hover:text-foreground transition-colors">
-                <div className="w-5 h-[2px]" style={{ backgroundImage: 'repeating-linear-gradient(90deg, hsl(var(--primary)) 0, hsl(var(--primary)) 3px, transparent 3px, transparent 6px)' }}></div>
-                <span className="text-[11px]">Linha de influência</span>
+                <div className="w-4 h-4 rounded-sm border-2 border-green-500"></div>
+                <span className="text-[11px]">Faixa carregada</span>
               </div>
             </div>
           </div>

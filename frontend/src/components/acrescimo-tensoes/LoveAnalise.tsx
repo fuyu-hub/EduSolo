@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { ArrowLeft, Target, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import axios from "axios";
 import PrintHeader from "@/components/PrintHeader";
-import CanvasBoussinesq from "./CanvasBoussinesq";
+import CanvasLove from "./CanvasLove";
 import PainelResultados, { PontoAnalise } from "./PainelResultados";
-import CargaPopup from "./CargaPopup";
+import CargaCircularPopup from "./CargaCircularPopup";
 import PontoAnalisePopup from "./PontoAnalisePopup";
 import CalculationActions from "@/components/CalculationActions";
 import SaveDialog from "@/components/SaveDialog";
@@ -15,46 +15,21 @@ import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport } from "@/lib/export-utils";
 import { useSettings } from "@/hooks/use-settings";
 
-interface BoussinesqAnaliseProps {
+interface LoveAnaliseProps {
   onVoltar: () => void;
 }
 
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-/**
- * Calcula a tensão vertical (sigma_z) usando a fórmula de Boussinesq.
- * @param P - Carga pontual (kN)
- * @param x - Distância horizontal (m)
- * @param z - Profundidade (m)
- * @returns Tensão (kPa)
- */
-function calcularTensaoBoussinesqLocal(P: number, x: number, z: number): number {
-  if (z <= 0) return 0; // Não calcular na superfície ou acima
-  
-  // r² = x² + z²
-  const r2 = Math.pow(x, 2) + Math.pow(z, 2);
-  
-  // Evita divisão por zero se o ponto estiver exatamente em (0,0)
-  if (r2 === 0) return 0;
-  
-  // R⁵ = (r²)^2.5
-  const R5 = Math.pow(r2, 2.5);
-  // z³
-  const z3 = Math.pow(z, 3);
-  
-  // sigma_z = (3 * P * z³) / (2 * pi * R⁵)
-  const sigma_z = (3 * P * z3) / (2 * Math.PI * R5);
-  
-  return sigma_z; // Resultado em kPa (kN/m²)
-}
-
-export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) {
+export default function LoveAnalise({ onVoltar }: LoveAnaliseProps) {
   // Configurações
   const { settings } = useSettings();
   
   // Estado principal
   const [pontos, setPontos] = useState<PontoAnalise[]>([]);
-  const [cargaP, setCargaP] = useState<number | undefined>(100); // Valor padrão: 100 kN
+  const [cargaQ, setCargaQ] = useState<number | undefined>(50); // Valor padrão: 50 kPa
+  const [raio, setRaio] = useState<number | undefined>(2); // Valor padrão: 2 m
   const [isCalculating, setIsCalculating] = useState(false);
   const [calculoFeito, setCalculoFeito] = useState(false);
   
@@ -69,15 +44,15 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
-  const { calculations, saveCalculation, deleteCalculation, renameCalculation } = useSavedCalculations("boussinesq");
+  const { calculations, saveCalculation, deleteCalculation, renameCalculation } = useSavedCalculations("love");
 
   // Ref para evitar cálculos duplicados
   const isCalculatingRef = useRef(false);
 
   // Função para calcular tensões (chamada explicitamente)
   const calcularTensoes = async () => {
-    // Só calcula se houver carga definida e pontos
-    if (!cargaP || cargaP <= 0 || pontos.length === 0) {
+    // Só calcula se houver carga e raio definidos e pontos
+    if (!cargaQ || cargaQ <= 0 || !raio || raio <= 0 || pontos.length === 0) {
       return;
     }
 
@@ -97,15 +72,16 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
       for (const ponto of pontosParaCalcular) {
         try {
           const response = await axios.post(`${API_URL}/calcular/acrescimo-tensoes`, {
-            tipo_carga: "pontual",
-            carga_pontual: {
-              P: cargaP,
-              x: 0,
-              y: 0
+            tipo_carga: "circular",
+            carga_circular: {
+              raio: raio,
+              intensidade: cargaQ,
+              centro_x: 0,
+              centro_y: 0
             },
             ponto_interesse: {
               x: ponto.x,
-              y: 0, // Boussinesq é 2D (apenas X-Z)
+              y: 0, // Love é 2D (apenas X-Z)
               z: ponto.z
             }
           });
@@ -121,16 +97,13 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
         }
       }
 
-      // Atualiza apenas as tensões dos pontos que foram calculados,
-      // sem sobrescrever o array completo
+      // Atualiza apenas as tensões dos pontos que foram calculados
       setPontos(prevPontos => 
         prevPontos.map(p => {
           const tensao = resultadosMap.get(p.id);
-          // Se o ponto foi calculado, atualiza a tensão
           if (resultadosMap.has(p.id)) {
             return { ...p, tensao };
           }
-          // Se o ponto é novo (não estava no cálculo), mantém como está
           return p;
         })
       );
@@ -151,7 +124,6 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
   const handleDuploCliqueGrid = (x: number, z: number) => {
     setPontoPopupCoords({ x, z });
     setPontoEditando(null);
-    // Gera um nome padrão baseado no número de pontos
     const numeroPonto = pontos.length + 1;
     const nomePadrao = `Ponto ${numeroPonto}`;
     setNomePadraoNovoPonto(nomePadrao);
@@ -165,25 +137,24 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
   };
 
   // Handlers de confirmação de popups
-  const handleConfirmarCarga = (valor: number) => {
-    setCargaP(valor);
-    toast("Carga definida!", { description: `P = ${valor.toFixed(2)} kN` });
-    // Limpa as tensões calculadas (precisam ser recalculadas)
+  const handleConfirmarCarga = (q: number, r: number) => {
+    setCargaQ(q);
+    setRaio(r);
+    toast("Carga definida!", { description: `q = ${q.toFixed(2)} kPa, R = ${r.toFixed(2)} m` });
+    // Limpa as tensões calculadas
     setPontos(prevPontos => prevPontos.map(p => ({ ...p, tensao: undefined })));
     setCalculoFeito(false);
   };
 
   const handleConfirmarPonto = (nome: string, x: number, y: number, z: number) => {
-    // y é ignorado pois Boussinesq é 2D (apenas X-Z)
+    // y é ignorado pois Love é 2D (apenas X-Z)
     if (pontoEditando) {
-      // Editando ponto existente
       setPontos(prevPontos => prevPontos.map(p => 
         p.id === pontoEditando.id ? { ...p, nome, x, z, tensao: undefined } : p
       ));
       toast("Ponto atualizado!", { description: `"${nome}" foi atualizado.` });
       setCalculoFeito(false);
     } else {
-      // Criando novo ponto
       const novoPonto: PontoAnalise = {
         id: crypto.randomUUID(),
         nome,
@@ -196,7 +167,7 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
     }
   };
 
-  // Handler de movimentação de ponto (enquanto arrasta)
+  // Handler de movimentação de ponto
   const handleMovimentarPonto = (id: string, x: number, z: number) => {
     setPontos(prevPontos => prevPontos.map(p => 
       p.id === id ? { ...p, x, z, tensao: undefined } : p
@@ -204,19 +175,17 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
     setCalculoFeito(false);
   };
 
-  // Handler quando solta o ponto (após arrastar)
   const handlePontoSolto = (id: string) => {
-    // Marca que precisa recalcular
     setCalculoFeito(false);
   };
 
-
   // Handlers de exportação
   const handleExportarPDF = async () => {
-    if (!cargaP || pontos.length === 0) return;
+    if (!cargaQ || !raio || pontos.length === 0) return;
 
     const inputs = [
-      { label: "Carga Pontual P", value: `${cargaP.toFixed(2)} kN` }
+      { label: "Carga Distribuída q", value: `${cargaQ.toFixed(2)} kPa` },
+      { label: "Raio da Área Circular R", value: `${raio.toFixed(2)} m` }
     ];
 
     const resultsList = pontos.map((p, i) => ({
@@ -226,8 +195,8 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
     }));
 
     const exportData: ExportData = {
-      moduleName: "boussinesq",
-      moduleTitle: "Boussinesq - Acréscimo de Tensões",
+      moduleName: "love",
+      moduleTitle: "Love - Acréscimo de Tensões (Carga Circular)",
       inputs,
       results: resultsList
     };
@@ -242,10 +211,11 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
   };
 
   const handleExportarExcel = async () => {
-    if (!cargaP || pontos.length === 0) return;
+    if (!cargaQ || !raio || pontos.length === 0) return;
 
     const configData = [
-      { label: "Carga P (kN)", value: cargaP }
+      { label: "Carga q (kPa)", value: cargaQ },
+      { label: "Raio R (m)", value: raio }
     ];
 
     const resultadosData = pontos.map(p => ({
@@ -256,8 +226,8 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
     }));
 
     const excelData: ExcelExportData = {
-      moduleName: "boussinesq",
-      moduleTitle: "Boussinesq - Acréscimo de Tensões",
+      moduleName: "love",
+      moduleTitle: "Love - Acréscimo de Tensões (Carga Circular)",
       sheets: [
         { name: "Configuração", data: configData },
         { name: "Resultados", data: resultadosData }
@@ -274,17 +244,17 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
 
   // Handlers de salvar/carregar
   const handleSaveClick = () => {
-    if (!cargaP || pontos.length === 0) {
+    if (!cargaQ || !raio || pontos.length === 0) {
       toast("Nada para salvar", { description: "Defina a carga e adicione pontos antes de salvar." });
       return;
     }
-    setSaveName(`Boussinesq ${new Date().toLocaleDateString('pt-BR')}`);
+    setSaveName(`Love ${new Date().toLocaleDateString('pt-BR')}`);
     setSaveDialogOpen(true);
   };
 
   const handleConfirmSave = () => {
     if (!saveName.trim()) return;
-    const dados = { cargaP, pontos };
+    const dados = { cargaQ, raio, pontos };
     const success = saveCalculation(saveName.trim(), dados, { pontos });
     if (success) {
       toast("Cálculo salvo!", { description: "O cálculo foi salvo com sucesso." });
@@ -297,43 +267,49 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
 
   const handleLoadCalculation = (calculation: any) => {
     const dados = calculation.formData;
-    setCargaP(dados.cargaP);
+    setCargaQ(dados.cargaQ);
+    setRaio(dados.raio);
     setPontos(dados.pontos || []);
-    setCalculoFeito(false); // Precisa recalcular
+    setCalculoFeito(false);
     toast("Cálculo carregado!", { description: `"${calculation.name}" foi carregado com sucesso.` });
   };
 
   const handleExcluirPonto = (id?: string) => {
-    // Se um ID for passado, exclui esse ponto específico
     if (id) {
       const ponto = pontos.find(p => p.id === id);
       setPontos(prevPontos => prevPontos.filter(p => p.id !== id));
       setCalculoFeito(false);
       toast("Ponto excluído!", { description: `"${ponto?.nome || 'Ponto'}" foi removido.` });
-    } 
-    // Se não for passado ID, usa o pontoEditando (para quando clicar no botão Excluir do popup)
-    else if (pontoEditando) {
+    } else if (pontoEditando) {
       setPontos(prevPontos => prevPontos.filter(p => p.id !== pontoEditando.id));
       toast("Ponto excluído!", { description: `"${pontoEditando.nome}" foi removido.` });
     }
   };
 
   const handleCarregarExemplos = () => {
-    setCargaP(1500);
+    // Exemplo baseado em material didático:
+    // P = 240 kN, R = 3 m, z = 3 m
+    // q = P / (π × R²) = 240 / (π × 9) ≈ 8.49 kPa
+    setCargaQ(8.49);
+    setRaio(3);
     setPontos([
-      { id: 'exemplo-a', nome: 'Ponto A', x: -3, z: 2, tensao: undefined },
-      { id: 'exemplo-b', nome: 'Ponto B', x: 0, z: 4, tensao: undefined },
-      { id: 'exemplo-c', nome: 'Ponto C', x: 4, z: 5, tensao: undefined }
+      { id: 'exemplo-a', nome: 'Ponto A (Centro)', x: 0, z: 3, tensao: undefined },
+      { id: 'exemplo-b', nome: 'Ponto B (Borda)', x: 3, z: 3, tensao: undefined },
+      { id: 'exemplo-c', nome: 'Ponto C (Externo)', x: 5, z: 3, tensao: undefined }
     ]);
     setCalculoFeito(false);
-    toast("Exemplos carregados!", { description: "Clique em 'Calcular' para ver os resultados." });
+    toast("Exemplos carregados!", { description: "Baseado em R=3m, P=240kN (q≈8.49kPa). Clique em 'Calcular'." });
   };
 
   const temResultados = pontos.some(p => p.tensao !== undefined);
+  
+  // Calcular a "carga equivalente" para exibir no canvas
+  // Para Love, mostramos q*π*R² (carga total) em kN
+  const cargaEquivalente = (cargaQ && raio) ? (cargaQ * Math.PI * raio * raio) : undefined;
 
   return (
     <div className="space-y-4 max-w-[1800px] mx-auto">
-      <PrintHeader moduleTitle="Boussinesq - Carga Pontual" moduleName="boussinesq" />
+      <PrintHeader moduleTitle="Love - Carga Circular" moduleName="love" />
 
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
@@ -341,13 +317,13 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
           <Button variant="ghost" size="icon" onClick={onVoltar}>
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-lg">
             <Target className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Boussinesq - Carga Pontual</h1>
+            <h1 className="text-2xl font-bold text-foreground">Love - Carga Circular</h1>
             <p className="text-sm text-muted-foreground hidden sm:block">
-              Análise interativa de acréscimo de tensões por carga pontual
+              Análise interativa de acréscimo de tensões por carga circular
             </p>
           </div>
         </div>
@@ -371,9 +347,10 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
       {/* Layout Grid */}
       <div className="grid lg:grid-cols-[1fr_400px] gap-4">
         {/* Canvas */}
-        <CanvasBoussinesq
+        <CanvasLove
           pontos={pontos}
-          cargaP={cargaP}
+          cargaQ={cargaQ}
+          raio={raio}
           onDuploCliqueCarga={handleDuploCliqueCarga}
           onDuploCliqueGrid={handleDuploCliqueGrid}
           onDuploCliquePonto={handleDuploCliquePonto}
@@ -383,10 +360,13 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
           decimalPlaces={settings.decimalPlaces}
         />
 
-        {/* Painel de Resultados */}
+        {/* Painel de Resultados - Adaptado para Love */}
         <PainelResultados
           pontos={pontos}
-          cargaP={cargaP}
+          cargaP={cargaEquivalente}
+          cargaQ={cargaQ}
+          raio={raio}
+          tipoAnalise="love"
           isCalculating={isCalculating}
           onExcluirPonto={handleExcluirPonto}
           onCalcular={calcularTensoes}
@@ -395,10 +375,11 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
       </div>
 
       {/* Popups */}
-      <CargaPopup
+      <CargaCircularPopup
         open={cargaPopupOpen}
         onOpenChange={setCargaPopupOpen}
-        valorInicial={cargaP}
+        qInicial={cargaQ}
+        raioInicial={raio}
         onConfirm={handleConfirmarCarga}
       />
 
@@ -428,8 +409,9 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
         onLoad={handleLoadCalculation}
         onDelete={deleteCalculation}
         onRename={renameCalculation}
-        moduleName="Boussinesq"
+        moduleName="Love"
       />
     </div>
   );
 }
+

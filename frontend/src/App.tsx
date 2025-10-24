@@ -23,6 +23,12 @@ const Compactacao = lazy(() => import("./pages/Compactacao"));
 const TensoesGeostaticas = lazy(() => import("./pages/TensoesGeostaticas"));
 const AcrescimoTensoes = lazy(() => import("./pages/AcrescimoTensoes"));
 
+// Páginas de Acréscimo de Tensões (lazy loading)
+const Boussinesq = lazy(() => import("./pages/acrescimo-tensoes/Boussinesq"));
+const Love = lazy(() => import("./pages/acrescimo-tensoes/Love"));
+const Carothers = lazy(() => import("./pages/acrescimo-tensoes/Carothers"));
+const Newmark = lazy(() => import("./pages/acrescimo-tensoes/Newmark"));
+
 // Páginas auxiliares (lazy loading)
 const Educacional = lazy(() => import("./pages/Educacional"));
 const Settings = lazy(() => import("./pages/Settings"));
@@ -111,6 +117,46 @@ const App = () => (
                     <Layout>
                       <Suspense fallback={<PageLoader />}>
                         <AcrescimoTensoes />
+                      </Suspense>
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/acrescimo-tensoes/boussinesq"
+                  element={
+                    <Layout>
+                      <Suspense fallback={<PageLoader />}>
+                        <Boussinesq />
+                      </Suspense>
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/acrescimo-tensoes/love"
+                  element={
+                    <Layout>
+                      <Suspense fallback={<PageLoader />}>
+                        <Love />
+                      </Suspense>
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/acrescimo-tensoes/carothers"
+                  element={
+                    <Layout>
+                      <Suspense fallback={<PageLoader />}>
+                        <Carothers />
+                      </Suspense>
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/acrescimo-tensoes/newmark"
+                  element={
+                    <Layout>
+                      <Suspense fallback={<PageLoader />}>
+                        <Newmark />
                       </Suspense>
                     </Layout>
                   }
