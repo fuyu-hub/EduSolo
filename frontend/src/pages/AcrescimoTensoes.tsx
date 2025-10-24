@@ -17,7 +17,7 @@ const metodos = [
     aplicacoes: "Fundações por estacas, cargas concentradas, torres, postes",
     icon: MapPin,
     color: "from-blue-500 to-cyan-600",
-    disponivel: false,
+    disponivel: true,
   },
   {
     id: "carothers" as const,
