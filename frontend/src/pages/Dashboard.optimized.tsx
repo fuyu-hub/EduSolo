@@ -138,7 +138,34 @@ const ModuleCard = memo<{
 
 ModuleCard.displayName = "ModuleCard";
 
-export default function Dashboard() {
+// Componente de Estatística otimizado com memo
+const StatCard = memo<{
+  icon: React.ComponentType<{ className?: string }>;
+  value: string;
+  label: string;
+  color: string;
+}>(({ icon: Icon, value, label, color }) => {
+  return (
+    <Card className="glass p-5 border-l-4 hover:shadow-lg transition-all hover:border-l-8" style={{ borderLeftColor: color }}>
+      <div className="flex items-center gap-3">
+        <div 
+          className="w-10 h-10 rounded-lg flex items-center justify-center transition-all hover:scale-110 hover:rotate-12"
+          style={{ backgroundColor: `${color}33` }}
+        >
+          <Icon className="w-5 h-5" style={{ color }} />
+        </div>
+        <div>
+          <p className="text-2xl font-bold text-foreground tabular-nums">{value}</p>
+          <p className="text-sm text-muted-foreground">{label}</p>
+        </div>
+      </div>
+    </Card>
+  );
+});
+
+StatCard.displayName = "StatCard";
+
+export default function DashboardOptimized() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Hero Section */}
@@ -184,42 +211,26 @@ export default function Dashboard() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12">
-        <Card className="glass p-5 border-l-4 border-l-primary hover:shadow-lg transition-all hover:border-l-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center transition-all hover:scale-110 hover:rotate-12">
-              <Calculator className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground tabular-nums">8+</p>
-              <p className="text-sm text-muted-foreground">Módulos de Cálculo</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="glass p-5 border-l-4 border-l-violet-500 hover:shadow-lg transition-all hover:border-l-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center transition-all hover:scale-110 hover:rotate-12">
-              <BookOpen className="w-5 h-5 text-violet-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground tabular-nums">100%</p>
-              <p className="text-sm text-muted-foreground">Gratuito e Open Source</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="glass p-5 border-l-4 border-l-emerald-500 hover:shadow-lg transition-all hover:border-l-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center transition-all hover:scale-110 hover:rotate-12">
-              <TrendingUp className="w-5 h-5 text-emerald-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground tabular-nums">Fase 2</p>
-              <p className="text-sm text-muted-foreground">Projeto em Desenvolvimento</p>
-            </div>
-          </div>
-        </Card>
+        <StatCard
+          icon={Calculator}
+          value="8+"
+          label="Módulos de Cálculo"
+          color="hsl(var(--primary))"
+        />
+        <StatCard
+          icon={BookOpen}
+          value="100%"
+          label="Gratuito e Open Source"
+          color="rgb(139, 92, 246)"
+        />
+        <StatCard
+          icon={TrendingUp}
+          value="Fase 2"
+          label="Projeto em Desenvolvimento"
+          color="rgb(16, 185, 129)"
+        />
       </div>
     </div>
   );
 }
+

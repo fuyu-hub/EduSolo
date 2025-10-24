@@ -65,7 +65,7 @@ export default function AcrescimoTensoes() {
       <PrintHeader moduleTitle="Acréscimo de Tensões" moduleName="acrescimo-tensoes" />
       
       {/* Header */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-4 duration-500">
         <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg">
           <TrendingDown className="w-5 h-5 text-white" />
         </div>
@@ -78,7 +78,7 @@ export default function AcrescimoTensoes() {
       </div>
 
       {/* Seleção de Método */}
-      <Card>
+      <Card className="animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
         <CardHeader>
           <CardTitle className="text-xl">Selecione o Método de Análise</CardTitle>
           <p className="text-sm text-muted-foreground mt-2">
@@ -143,7 +143,7 @@ export default function AcrescimoTensoes() {
       </Card>
 
       {/* Card Informativo */}
-      <Card className="border-primary/20 bg-primary/5">
+      <Card className="border-primary/20 bg-primary/5 animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
         <CardContent className="p-5">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
