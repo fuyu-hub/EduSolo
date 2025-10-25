@@ -46,17 +46,17 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
       <div className="h-16 flex items-center justify-center px-3">
         {/* Link fecha a Sheet se onLinkClick estiver definido */}
         <ConditionalSheetClose shouldWrap={!!onLinkClick} asChild>
-          <Link to="/" className="flex items-center gap-2" onClick={onLinkClick}>
+          <Link to="/" className="flex items-center gap-2.5 group" onClick={onLinkClick}>
             {collapsed ? (
               // Mostrar "ES" quando colapsado
-              <span className="text-2xl font-bold text-primary">ES</span>
+              <span className="text-xl font-bold text-primary group-hover:scale-105 transition-transform">ES</span>
             ) : (
               // Mostrar logo completo quando expandido
-              <div className="flex items-center gap-2">
-                <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <IsometricCube className="w-8 h-8 text-primary" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md group-hover:scale-105 group-hover:rotate-3 transition-all">
+                  <IsometricCube className="w-7 h-7 text-white" />
                 </div>
-                <span className="text-xl font-bold text-foreground">
+                <span className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
                   Edu<span className="text-primary">Solo</span>
                 </span>
               </div>
@@ -70,18 +70,18 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
         {menuItems.map((section) => (
           <div key={section.title}>
             {!collapsed && (
-              <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <h3 className="px-3 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 {section.title}
               </h3>
             )}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
                 const buttonContent = (
                    <>
                     <Icon className={cn("h-5 w-5", !collapsed && "mr-3")} />
-                    {!collapsed && <span>{item.label}</span>}
+                    {!collapsed && <span className="font-medium">{item.label}</span>}
                    </>
                 );
 
@@ -93,11 +93,11 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
                   data-tour={item.tourId}
                   variant="ghost"
                   className={cn(
-                    "w-full transition-all duration-200",
-                    collapsed ? "justify-center px-2" : "justify-start",
+                    "w-full transition-all duration-300 h-10 rounded-lg",
+                    collapsed ? "justify-center px-2" : "justify-start px-3",
                     isActive
-                      ? "bg-primary/20 text-primary hover:bg-primary/30 shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                      ? "bg-gradient-to-r from-primary/20 to-primary/10 text-primary hover:from-primary/30 hover:to-primary/20 shadow-sm border border-primary/30"
+                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 hover:scale-[1.01] border border-transparent"
                   )}
                   aria-label={item.label}
                   aria-current={isActive ? "page" : undefined}
@@ -198,7 +198,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {!isMobile && (
           <aside
             className={cn(
-              "glass transition-[width] duration-300 ease-in-out border-r border-sidebar-border/50 fixed left-0 top-0 h-full z-20",
+              "glass-card transition-[width] duration-300 ease-in-out border-r border-sidebar-border/30 fixed left-0 top-0 h-full z-20 shadow-modern",
               collapsed ? "w-16" : "w-64"
             )}
           >
@@ -216,7 +216,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           )}
         >
           {/* Header */}
-          <header className="h-16 glass border-b border-border/30 sticky top-0 z-10 flex items-center px-4 md:px-6 backdrop-blur-sm">
+          <header className="h-16 glass-card border-b border-border/30 sticky top-0 z-10 flex items-center px-4 md:px-6 shadow-sm">
             {/* Button is always rendered, but wrapped by SheetTrigger conditionally */}
             <Button
               variant="ghost"
@@ -270,7 +270,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </header>
 
           {/* Page Content */}
-          <main className="p-4 md:p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">{children}</main>
+          <main className="p-4 md:p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen">{children}</main>
         </div>
       </div>
     </Sheet>
