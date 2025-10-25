@@ -157,6 +157,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     // Iniciar tour após um delay maior para garantir que todos os elementos estejam renderizados
+    // Delay maior para navegadores como Brave que podem ter renderização mais lenta
     const timer = setTimeout(() => {
       startTour([
         {
@@ -226,7 +227,7 @@ export default function Dashboard() {
           placement: "right",
         },
       ], "dashboard-main");
-    }, 800);
+    }, 1200);
 
     return () => clearTimeout(timer);
   }, [startTour]);

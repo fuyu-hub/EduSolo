@@ -40,14 +40,21 @@ export function Tour() {
       const rect = element.getBoundingClientRect();
       setTargetRect(rect);
 
-      // Aguardar o próximo frame para ter o tamanho real do tooltip
+      // Aguardar múltiplos frames para garantir renderização completa (especialmente no Brave)
       requestAnimationFrame(() => {
-        const padding = currentStepData.spotlightPadding || 12;
-        const tooltipElement = tooltipRef.current;
-        const tooltipWidth = tooltipElement?.offsetWidth || 420;
-        const tooltipHeight = tooltipElement?.offsetHeight || 250;
-        let placement = currentStepData.placement || "bottom";
-        const gap = 20;
+        requestAnimationFrame(() => {
+          const padding = currentStepData.spotlightPadding || 12;
+          const tooltipElement = tooltipRef.current;
+          
+          // Forçar reflow para garantir dimensões corretas no Brave
+          if (tooltipElement) {
+            void tooltipElement.offsetHeight;
+          }
+          
+          const tooltipWidth = tooltipElement?.offsetWidth || 420;
+          const tooltipHeight = tooltipElement?.offsetHeight || 250;
+          let placement = currentStepData.placement || "bottom";
+          const gap = 20;
 
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
@@ -137,6 +144,7 @@ export function Tour() {
         }
 
         setTooltipPosition({ top: position.top, left: position.left });
+        });
       });
     };
 
@@ -225,10 +233,18 @@ export function Tour() {
           top: tooltipPosition.top,
           left: tooltipPosition.left,
           maxWidth: "min(420px, calc(100vw - 40px))",
+          minWidth: "320px",
           zIndex: 10000,
+          willChange: "transform",
         }}
       >
-        <div className="glass-strong rounded-2xl border border-white/20 shadow-2xl p-6 backdrop-blur-xl">
+        <div 
+          className="glass-strong rounded-2xl border border-white/20 shadow-2xl p-6 backdrop-blur-xl"
+          style={{
+            WebkitBackdropFilter: "blur(12px)",
+            backdropFilter: "blur(12px)",
+          }}
+        >
           {/* Gradiente decorativo */}
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/10 via-transparent to-transparent pointer-events-none" />
           
