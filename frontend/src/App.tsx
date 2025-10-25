@@ -36,6 +36,7 @@ const Newmark = lazy(() => import("./pages/acrescimo-tensoes/Newmark"));
 const Educacional = lazy(() => import("./pages/Educacional"));
 const Settings = lazy(() => import("./pages/Settings"));
 const About = lazy(() => import("./pages/About"));
+const PlanosFuturos = lazy(() => import("./pages/PlanosFuturos"));
 
 // Configurar QueryClient com otimizações
 const queryClient = new QueryClient({
@@ -209,6 +210,16 @@ const AppContent = () => {
             <Layout>
               <Suspense fallback={<PageLoader />}>
                 <About />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/planos-futuros"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <PlanosFuturos />
               </Suspense>
             </Layout>
           }

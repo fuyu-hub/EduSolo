@@ -225,6 +225,21 @@ def calcular_indices_fisicos(dados: IndicesFisicosInput) -> IndicesFisicosOutput
 
 
         # --- Verificações Finais e Preparação da Saída ---
+        # Verifica se temos apenas massa, volume mas não Gs
+        if (mu_in is not None and ms_in is not None and v_in is not None and 
+            gs is None and e is None and n is None and S is None and 
+            gama_s is None and dados.indice_vazios is None):
+            # Usuario forneceu apenas dados básicos mas não Gs
+            # Não podemos calcular todos os índices
+            aviso = (
+                "⚠️ Cálculo parcial realizado. Com apenas massa úmida, massa seca e volume, "
+                "é possível calcular: Umidade (w), Peso Específico Natural (γn) e Peso Específico Seco (γd). "
+                "Para calcular TODOS os índices (e, n, Sr, Gs, γsat, γsub), é necessário fornecer "
+                "a Densidade Relativa dos Grãos (Gs). Valores típicos: Areias=2.65, Argilas=2.70-2.75."
+            )
+        else:
+            aviso = None
+        
         precisao_gama = 3
         precisao_indice = 4
         precisao_perc = 2
@@ -306,6 +321,8 @@ def calcular_indices_fisicos(dados: IndicesFisicosInput) -> IndicesFisicosOutput
             massa_total_calc=mt_calc_out,
             massa_solidos_calc=ms_calc_out,
             massa_agua_calc=mw_calc_out,
+            # Aviso
+            aviso=aviso,
         )
 
     except ValueError as ve:

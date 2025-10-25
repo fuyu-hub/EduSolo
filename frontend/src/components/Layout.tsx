@@ -1,6 +1,6 @@
 // Adiciona React à importação
 import React, { useState, useEffect } from "react";
-import { Menu, Calculator, FileText, BookOpen, Layers, Droplets, BarChart3, TrendingDown, ArrowLeft, Settings, Sun, Moon, Info } from "lucide-react";
+import { Menu, Calculator, FileText, BookOpen, Layers, Droplets, BarChart3, TrendingDown, ArrowLeft, Settings, Sun, Moon, Info, Rocket } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
@@ -32,6 +32,7 @@ const menuItems = [
       { icon: BookOpen, label: "Material Educacional", path: "/educacional", tourId: "" },
       { icon: Settings, label: "Configurações", path: "/settings", tourId: "settings-menu" },
       { icon: Info, label: "Sobre", path: "/about", tourId: "" },
+      { icon: Rocket, label: "Planos Futuros", path: "/planos-futuros", tourId: "" },
     ],
   },
 ];

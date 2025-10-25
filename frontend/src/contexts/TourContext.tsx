@@ -12,7 +12,7 @@ interface TourContextType {
   isActive: boolean;
   currentStep: number;
   steps: TourStep[];
-  startTour: (steps: TourStep[], tourId: string) => void;
+  startTour: (steps: TourStep[], tourId: string, force?: boolean) => void;
   endTour: () => void;
   nextStep: () => void;
   prevStep: () => void;
@@ -28,11 +28,13 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   const [steps, setSteps] = useState<TourStep[]>([]);
   const [tourId, setTourId] = useState<string | null>(null);
 
-  const startTour = useCallback((newSteps: TourStep[], id: string) => {
-    // Verificar se o usuário já viu este tour
-    const hasSeenTour = localStorage.getItem(`tour-seen-${id}`);
-    if (hasSeenTour === "true") {
-      return;
+  const startTour = useCallback((newSteps: TourStep[], id: string, force: boolean = false) => {
+    // Verificar se o usuário já viu este tour (ignorar se force=true)
+    if (!force) {
+      const hasSeenTour = localStorage.getItem(`tour-seen-${id}`);
+      if (hasSeenTour === "true") {
+        return;
+      }
     }
 
     setSteps(newSteps);

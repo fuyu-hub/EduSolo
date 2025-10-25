@@ -1,10 +1,12 @@
 // frontend/src/pages/LimitesConsistencia.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from 'axios';
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Droplets, Info, Calculator as CalcIcon, Plus, Trash2, LineChart, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, FileText } from "lucide-react";
+import { Droplets, Info, Calculator as CalcIcon, Plus, Trash2, LineChart, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, FileText, GraduationCap } from "lucide-react";
+import { useTour, TourStep } from "@/contexts/TourContext";
+import type { CarouselApi } from "@/components/ui/carousel";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,7 +33,7 @@ import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, captureChartAsImage } from "@/lib/export-utils";
 import DialogExemplos from "@/components/limites/DialogExemplos";
-import { ExemploLimites } from "@/lib/exemplos-limites";
+import { ExemploLimites, exemplosLimites } from "@/lib/exemplos-limites";
 
 // --- Esquema Zod (Inalterado) ---
 const pontoLLSchema = z.object({
@@ -107,7 +109,9 @@ interface ResultItemProps { label: string; value: number | string | null; unit: 
 
 export default function LimitesConsistencia() {
   const { toast } = useToast();
+  const { startTour, currentStep, isActive: isTourActive } = useTour();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>();
 
   const form = useForm<FormInputValues>({
     resolver: zodResolver(formSchema),
@@ -127,7 +131,116 @@ export default function LimitesConsistencia() {
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
   const { calculations, saveCalculation, deleteCalculation, renameCalculation } = useSavedCalculations("limites-consistencia");
 
+  // Definição dos steps do tour
+  const tourSteps: TourStep[] = [
+    {
+      target: "[data-tour='module-header']",
+      title: "💧 Bem-vindo aos Limites de Consistência!",
+      content: "Este módulo calcula os Limites de Atterberg (LL, LP e IP) e classifica o solo quanto à plasticidade e consistência, essenciais para projetos geotécnicos.",
+      placement: "bottom",
+      spotlightPadding: 16,
+    },
+    {
+      target: "[data-tour='pontos-ll']",
+      title: "📊 Ensaio de Limite de Liquidez (LL)",
+      content: "Insira os dados de cada ensaio: número de golpes e massas do recipiente. São necessários pelo menos 2 pontos, mas recomenda-se 4-5 para maior precisão. Use as setas para navegar entre os pontos.",
+      placement: "right",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='add-ponto']",
+      title: "➕ Adicionar Mais Pontos",
+      content: "Clique aqui para adicionar mais pontos ao ensaio de LL. Mais pontos geralmente resultam em uma curva de fluidez mais precisa.",
+      placement: "bottom",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='ensaio-lp']",
+      title: "🧵 Ensaio de Limite de Plasticidade (LP)",
+      content: "Preencha os dados do ensaio de LP (rolinho de 3mm). Este ensaio determina o teor de umidade na transição entre o estado plástico e semi-sólido.",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='dados-opcionais']",
+      title: "📐 Dados Opcionais",
+      content: "Umidade natural: necessária para calcular o Índice de Consistência (IC). Percentual de argila: necessário para calcular a Atividade da Argila (Ia).",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='btn-calcular']",
+      title: "⚡ Processar Cálculos",
+      content: "Após preencher os dados, clique aqui para calcular LL, LP, IP, classificação de plasticidade e, se aplicável, IC e Atividade.",
+      placement: "top",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='resultados']",
+      title: "🎯 Resultados e Classificações",
+      content: "Aqui estão todos os limites calculados do exemplo (LL, LP, IP, IC, Atividade). Use as setas para navegar entre os slides. Clique no ícone (i) para ver fórmulas e explicações detalhadas.",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='resultados']",
+      title: "📈 Carta de Plasticidade Interativa",
+      content: "Visualize a posição do solo na Carta de Casagrande. Este gráfico é INTERATIVO - passe o mouse sobre as linhas e áreas para ver as classificações (CL, CH, ML, MH). Este exemplo mostra uma argila CH.",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='actions']",
+      title: "💾 Salvar e Exportar",
+      content: "Salve seus ensaios para consulta posterior ou exporte em PDF/Excel. Você também pode carregar exemplos práticos para aprender!",
+      placement: "bottom",
+      spotlightPadding: 12,
+    },
+  ];
+
+  // Iniciar tour automaticamente na primeira visita
+  useEffect(() => {
+    const initTour = async () => {
+      // Verificar se já viu o tour
+      const hasSeenTour = localStorage.getItem('tour-seen-limites-consistencia');
+      if (hasSeenTour === 'true') return;
+      
+      // Carregar exemplo para demonstração
+      const exemploParaTour = exemplosLimites[0];
+      handleSelectExample(exemploParaTour);
+      
+      // Aguardar formulário ser preenchido
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Submeter automaticamente
+      form.handleSubmit(onSubmit)();
+      
+      // Aguardar cálculo
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      // Iniciar tour
+      startTour(tourSteps, "limites-consistencia");
+    };
+    
+    const timer = setTimeout(initTour, 800);
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => { if (fields.length > 0) { setCurrentPointIndex(prev => Math.min(prev, fields.length - 1)); } else { setCurrentPointIndex(0); } }, [fields.length]);
+
+  // Navegar automaticamente no carrossel quando o tour chegar no step correspondente
+  useEffect(() => {
+    if (isTourActive && carouselApi && results) {
+      // Step 6 são os Resultados Numéricos - slide 0 (padrão, já está lá)
+      if (currentStep === 6) {
+        carouselApi.scrollTo(0);
+      } 
+      // Step 7 é a Carta de Plasticidade - slide 1
+      else if (currentStep === 7) {
+        carouselApi.scrollTo(1);
+      }
+    }
+  }, [currentStep, isTourActive, carouselApi, results]);
 
   const addPontoLL = () => { append({ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }); setCurrentPointIndex(fields.length); };
   const removePontoLL = () => { if (fields.length > 2) { remove(currentPointIndex); } else { toast({ title: "Atenção", description: "São necessários pelo menos 2 pontos para o cálculo do LL.", variant: "default" }); } };
@@ -196,6 +309,30 @@ export default function LimitesConsistencia() {
     setResults(calculation.results);
     setCurrentPointIndex(0);
     toast({ title: "Cálculo carregado!", description: `"${calculation.name}" foi carregado com sucesso.` });
+  };
+
+  const handleStartTour = async () => {
+    // Carregar exemplo automaticamente para que os steps 7 e 8 tenham conteúdo
+    const exemploParaTour = exemplosLimites[0]; // Argila de Alta Plasticidade
+    
+    // Carregar dados do exemplo
+    handleSelectExample(exemploParaTour);
+    
+    // Aguardar um pouco para o formulário ser preenchido
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Submeter o formulário automaticamente
+    form.handleSubmit(onSubmit)();
+    
+    // Aguardar cálculo completar
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Iniciar o tour
+    startTour(tourSteps, "limites-consistencia", true); // Force = true para reiniciar
+    toast({
+      title: "Tour iniciado!",
+      description: "Exemplo carregado automaticamente para demonstração.",
+    });
   };
 
   const handleExportPDF = async () => {
@@ -325,7 +462,7 @@ export default function LimitesConsistencia() {
       <PrintHeader moduleTitle="Limites de Consistência" moduleName="limites-consistencia" />
       
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 animate-in fade-in slide-in-from-left-4 duration-500">
+      <div className="flex items-center justify-between gap-3 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-3">
            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3"> <Droplets className="w-6 h-6 text-white" /> </div>
           <div>
@@ -334,8 +471,23 @@ export default function LimitesConsistencia() {
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-tour="actions">
           <DialogExemplos onSelectExample={handleSelectExample} disabled={isCalculating} />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleStartTour}
+                className="h-10 w-10"
+              >
+                <GraduationCap className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Iniciar tour guiado</p>
+            </TooltipContent>
+          </Tooltip>
           <TooltipProvider>
             <CalculationActions
               onSave={handleSaveClick}
@@ -365,13 +517,13 @@ export default function LimitesConsistencia() {
                          <div className="flex items-center gap-1.5"> <Droplets className="w-4 h-4 text-indigo-500" /> Limite de Liquidez (LL) </div>
                       </AccordionTrigger>
                       <AccordionContent className="p-0 pt-2">
-                        <div className="space-y-2 rounded-lg bg-background/30 border border-accent/20 border-t-0 rounded-t-none p-3">
+                        <div className="space-y-2 rounded-lg bg-background/30 border border-accent/20 border-t-0 rounded-t-none p-3" data-tour="pontos-ll">
                            <div className="flex items-center justify-between mb-1">
                                <h4 className="font-medium text-xs text-muted-foreground"> Ponto {currentPointIndex + 1} / {fields.length} </h4>
                                <div className="flex items-center gap-1">
                                   <Button type="button" onClick={goToPreviousPoint} size="icon" variant="outline" className="h-6 w-6" disabled={currentPointIndex === 0}> <ChevronLeft className="w-3.5 h-3.5" /> </Button>
                                   <Button type="button" onClick={goToNextPoint} size="icon" variant="outline" className="h-6 w-6" disabled={currentPointIndex === fields.length - 1}> <ChevronRight className="w-3.5 h-3.5" /> </Button>
-                                  <Button type="button" onClick={addPontoLL} size="icon" variant="outline" className="h-6 w-6 ml-1.5"> <Plus className="w-3.5 h-3.5" /> </Button>
+                                  <Button type="button" onClick={addPontoLL} size="icon" variant="outline" className="h-6 w-6 ml-1.5" data-tour="add-ponto"> <Plus className="w-3.5 h-3.5" /> </Button>
                                   <Button type="button" onClick={removePontoLL} size="icon" variant="destructive" className="h-6 w-6" disabled={fields.length <= 2}> <Trash2 className="w-3.5 h-3.5" /> </Button>
                                </div>
                            </div>
@@ -416,7 +568,7 @@ export default function LimitesConsistencia() {
                           <div className="flex items-center gap-1.5"> <Droplets className="w-4 h-4 text-blue-500" /> Limite de Plasticidade (LP) </div>
                        </AccordionTrigger>
                        <AccordionContent className="p-3 bg-accent/5 rounded-b-lg border border-t-0 border-accent/20">
-                          <div className="space-y-2">
+                          <div className="space-y-2" data-tour="ensaio-lp">
                              <div className="grid grid-cols-3 gap-2">
                                 {/* Inputs com Controller (compactados) */}
                                 <div className="space-y-0.5">
@@ -445,7 +597,7 @@ export default function LimitesConsistencia() {
                           <div className="flex items-center gap-1.5"> <Info className="w-3.5 h-3.5 text-cyan-500" /> Dados Adicionais (Opcional) </div>
                        </AccordionTrigger>
                        <AccordionContent className="p-3 bg-accent/5 rounded-b-lg border border-t-0 border-accent/20">
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-2 gap-3" data-tour="dados-opcionais">
                              {/* Inputs com Controller (compactados) */}
                              <div className="space-y-0.5">
                                 <Label htmlFor="umidadeNatural" className={cn("flex items-center gap-1 text-xs", errors.umidadeNatural && "text-destructive")}> Umidade Natural (%) <Tooltip><TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.umidadeNatural}</TooltipContent></Tooltip> </Label>
@@ -465,7 +617,7 @@ export default function LimitesConsistencia() {
             </CardContent>
             {/* Footer com botões */}
             <CardFooter className="flex gap-3 pt-3 border-t border-border/50 mt-auto">
-              <Button type="submit" disabled={!canSubmit} className="flex-1 h-9">
+              <Button type="submit" disabled={!canSubmit} className="flex-1 h-9" data-tour="btn-calcular">
                 <CalcIcon className="w-4 h-4 mr-1.5" />
                 {isCalculating ? "Calculando..." : "Calcular"}
               </Button>
@@ -492,7 +644,8 @@ export default function LimitesConsistencia() {
                  <Skeleton className="h-[300px] w-full mt-3" />
                </div>
             ) : results && !results.erro ? (
-               <Carousel className="w-full px-8 relative">
+               <div data-tour="resultados" data-tour-carta="carta-plasticidade">
+                <Carousel className="w-full px-8 relative" setApi={setCarouselApi}>
                  <CarouselContent>
                    {/* Slide 1: Resultados Numéricos e Classificações Gerais */}
                   <CarouselItem>
@@ -540,6 +693,7 @@ export default function LimitesConsistencia() {
                  <CarouselPrevious className="absolute left-[-8px] top-1/2 -translate-y-1/2 h-8 w-8" />
                  <CarouselNext className="absolute right-[-8px] top-1/2 -translate-y-1/2 h-8 w-8" />
                </Carousel>
+               </div>
             ) : ( /* Placeholder ou Erro */
                <div className="flex flex-col items-center justify-center h-56 text-center">
                  <Droplets className="w-12 h-12 text-indigo-500/30 mb-3" />

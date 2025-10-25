@@ -1,12 +1,13 @@
 // frontend/src/pages/IndicesFisicos.tsx
-import { useState, useMemo } from "react";
-import { Calculator, Info, BarChart3, ArrowLeft, ArrowRight, Save, FolderOpen, Download, Printer, FileText } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Calculator, Info, BarChart3, ArrowLeft, ArrowRight, Save, FolderOpen, Download, Printer, FileText, AlertCircle, GraduationCap } from "lucide-react";
 import axios from 'axios';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -53,11 +54,12 @@ import SoilExamples from "@/components/soil/SoilExamples";
 import GsSuggestions from "@/components/soil/GsSuggestions";
 import ResultInterpretation from "@/components/soil/ResultInterpretation";
 import InputWithValidation from "@/components/soil/InputWithValidation";
-import { SoilExample } from "@/lib/soil-constants";
+import { SoilExample, soilExamples } from "@/lib/soil-constants";
 import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/use-settings";
 import { formatNumber } from "@/lib/format-number";
 import { AppSettings } from "@/contexts/SettingsContext";
+import { useTour, TourStep } from "@/contexts/TourContext";
 
 // Interface local que reflete a API Output
 interface IndicesFisicosOutput {
@@ -85,6 +87,7 @@ interface IndicesFisicosOutput {
   massa_total_calc: number | null;
   massa_solidos_calc: number | null;
   massa_agua_calc: number | null;
+  aviso?: string | null;
   erro?: string | null;
 }
 
@@ -106,7 +109,7 @@ const tooltips = {
   massaUmida: "Massa total da amostra de solo incluindo a água (g)",
   massaSeca: "Massa da amostra após secagem em estufa (g)",
   volume: "Volume total da amostra incluindo vazios (cm³)",
-  Gs: "Densidade relativa dos grãos (adimensional, ex: 2.65)",
+  Gs: "Densidade relativa dos grãos (adimensional, ex: 2.65). OBRIGATÓRIO para calcular índice de vazios, porosidade e saturação!",
   pesoEspecificoAgua: "Peso específico da água (kN/m³, padrão 10.0)",
   indice_vazios_max: "Índice de vazios máximo do solo (emax). Necessário para calcular Dr.",
   indice_vazios_min: "Índice de vazios mínimo do solo (emin). Necessário para calcular Dr.",
@@ -117,6 +120,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'; // URL 
 export default function IndicesFisicos() {
   // Configurações
   const { settings } = useSettings();
+  const { startTour } = useTour();
   
   // Estados
   const [formData, setFormData] = useState<FormData>({
@@ -132,6 +136,94 @@ export default function IndicesFisicos() {
   const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Definição dos steps do tour
+  const tourSteps: TourStep[] = [
+    {
+      target: "[data-tour='module-header']",
+      title: "🧮 Bem-vindo aos Índices Físicos!",
+      content: "Este módulo permite calcular as propriedades físicas fundamentais do solo, como peso específico, índice de vazios, porosidade e grau de saturação.",
+      placement: "bottom",
+      spotlightPadding: 16,
+    },
+    {
+      target: "[data-tour='input-basicos']",
+      title: "📊 Dados Básicos de Entrada",
+      content: "Insira os três valores fundamentais obtidos no ensaio: massa úmida, massa seca e volume total. Com apenas esses dados, o sistema calcula: umidade, peso específico natural e seco.",
+      placement: "right",
+      spotlightPadding: 12,
+    },
+    {
+      target: "#Gs",
+      title: "🔬 Densidade Relativa dos Grãos (Gs)",
+      content: "IMPORTANTE: Para calcular TODOS os índices (vazios, porosidade, saturação), você DEVE fornecer o Gs. Ele não pode ser calculado apenas com massa e volume. Use as sugestões para valores típicos de cada tipo de solo.",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "#indice_vazios_max",
+      title: "📐 Índices de Vazios (Opcional)",
+      content: "Para calcular a compacidade relativa (Dr) de solos granulares, forneça os valores de emax e emin do solo, obtidos em ensaios específicos.",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='btn-calcular']",
+      title: "⚡ Calcular Resultados",
+      content: "Após preencher os dados necessários, clique aqui para processar os cálculos. Os resultados aparecerão instantaneamente no painel ao lado.",
+      placement: "top",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='diagrama-fases']",
+      title: "🎨 Diagrama de Fases",
+      content: "Esta visualização mostra a distribuição das três fases do solo (sólidos, água e ar). Neste exemplo de areia compacta, note os volumes relativos de cada fase.",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='resultados']",
+      title: "📈 Resultados Numéricos",
+      content: "Todos os índices calculados do exemplo estão aqui. Use as setas para navegar. Clique no ícone (i) para ver fórmulas e explicações, incluindo compacidade relativa (Dr).",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='actions']",
+      title: "💾 Salvar e Exportar",
+      content: "Salve seus cálculos para consulta posterior ou exporte os resultados em PDF ou Excel. Você também pode carregar exemplos práticos para aprender!",
+      placement: "bottom",
+      spotlightPadding: 12,
+    },
+  ];
+
+  // Iniciar tour automaticamente na primeira visita
+  useEffect(() => {
+    const initTour = async () => {
+      // Verificar se já viu o tour
+      const hasSeenTour = localStorage.getItem('tour-seen-indices-fisicos');
+      if (hasSeenTour === 'true') return;
+      
+      // Carregar exemplo para demonstração (Areia Compacta)
+      const exemploParaTour = soilExamples[1]; // Areia Compacta com todos os dados
+      handleLoadExample(exemploParaTour);
+      
+      // Aguardar formulário ser preenchido
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Calcular automaticamente
+      await handleCalculate();
+      
+      // Aguardar cálculo
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      // Iniciar tour
+      startTour(tourSteps, "indices-fisicos");
+    };
+    
+    const timer = setTimeout(initTour, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Estados para salvamento e exportação
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -295,6 +387,28 @@ export default function IndicesFisicos() {
     });
   };
 
+  const handleStartTour = async () => {
+    // Carregar exemplo automaticamente para demonstração
+    const exemploParaTour = soilExamples[1]; // Areia Compacta
+    handleLoadExample(exemploParaTour);
+    
+    // Aguardar formulário ser preenchido
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Calcular automaticamente
+    await handleCalculate();
+    
+    // Aguardar cálculo completar
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Iniciar o tour
+    startTour(tourSteps, "indices-fisicos", true); // Force = true para reiniciar
+    toast({
+      title: "Tour iniciado!",
+      description: "Exemplo carregado automaticamente para demonstração.",
+    });
+  };
+
   const handleExportPDF = async () => {
     if (!results) return;
 
@@ -396,7 +510,8 @@ export default function IndicesFisicos() {
     }
   };
 
-  // Validação: precisa de pelo menos 3 dos 4 básicos OU Gs
+  // Validação: precisa dos 3 dados básicos (massa úmida, massa seca, volume) 
+  // OU apenas Gs (para cálculos limitados)
   const isFormValid =
     (Object.values(formData).filter((v, i) => i < 3 && v && !isNaN(parseFloat(v))).length >= 3) ||
     (formData.Gs && !isNaN(parseFloat(formData.Gs)));
@@ -436,7 +551,7 @@ export default function IndicesFisicos() {
         <PrintHeader moduleTitle="Índices Físicos" moduleName="indices-fisicos" />
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-left-4 duration-500">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
               <Calculator className="w-6 h-6 text-white" />
@@ -448,8 +563,23 @@ export default function IndicesFisicos() {
           </div>
           
           {/* Action Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2" data-tour="actions">
             <SoilExamples onSelect={handleLoadExample} disabled={isCalculating} />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleStartTour}
+                  className="h-10 w-10"
+                >
+                  <GraduationCap className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Iniciar tour guiado</p>
+              </TooltipContent>
+            </Tooltip>
             <TooltipProvider>
               <CalculationActions
                 onSave={handleSaveClick}
@@ -474,7 +604,7 @@ export default function IndicesFisicos() {
              {/* Aumentado gap e mb */}
              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mb-8" role="group" aria-labelledby="input-section-title">
               {/* Coluna 1 Inputs */}
-              <div className="space-y-5">
+              <div className="space-y-5" data-tour="input-basicos">
                 <InputWithValidation
                   id="massaUmida"
                   label="Massa Úmida (g)"
@@ -539,12 +669,12 @@ export default function IndicesFisicos() {
                  <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <Label htmlFor="Gs">Densidade Relativa Grãos (Gs)</Label>
-                        <Tooltip><TooltipTrigger asChild><Info className="w-4 h-4 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent className="max-w-xs"><p>{tooltips.Gs} (Opcional se massas/volume fornecidos)</p></TooltipContent></Tooltip>
+                        <Label htmlFor="Gs">Densidade Relativa Grãos (Gs) *</Label>
+                        <Tooltip><TooltipTrigger asChild><Info className="w-4 h-4 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent className="max-w-xs"><p>{tooltips.Gs}</p></TooltipContent></Tooltip>
                       </div>
                       <GsSuggestions onSelect={handleSelectGs} />
                     </div>
-                    <Input id="Gs" type="number" step="0.01" value={formData.Gs} onChange={(e) => handleChange("Gs", e.target.value)} className="bg-background/50" placeholder="Ex: 2.65 (opcional)" />
+                    <Input id="Gs" type="number" step="0.01" value={formData.Gs} onChange={(e) => handleChange("Gs", e.target.value)} className="bg-background/50" placeholder="Ex: 2.65 (necessário)" />
                   </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
@@ -585,6 +715,7 @@ export default function IndicesFisicos() {
                   disabled={!isFormValid || isCalculating} 
                   className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
                   aria-label={isCalculating ? "Calculando dados" : "Calcular índices físicos"}
+                  data-tour="btn-calcular"
                 >
                   <Calculator className="w-4 h-4 mr-2" />
                   {isCalculating ? "Calculando..." : "Calcular"}
@@ -603,7 +734,7 @@ export default function IndicesFisicos() {
           {/* Card de Saída Unificado */}
           <Card className="glass p-4 sm:p-6 lg:col-span-1 space-y-6 animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
               {/* Seção do Diagrama de Fases */}
-              <div>
+              <div data-tour="diagrama-fases">
                 <h2 className="text-xl font-semibold text-foreground mb-4">Visualização (Diagrama de Fases)</h2>
                 <div className="flex justify-center items-center min-h-[180px]">
                   {isCalculating ? (
@@ -640,7 +771,7 @@ export default function IndicesFisicos() {
               </div>
 
               {/* Seção de Resultados Numéricos com Carrossel */}
-              <div>
+              <div data-tour="resultados">
                 <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
                    <BarChart3 className="w-5 h-10 text-primary" />
                    Resultados Numéricos
@@ -682,6 +813,16 @@ export default function IndicesFisicos() {
              </div>
           </Card>
         </div>
+
+        {/* Aviso de cálculo parcial */}
+        {results && results.aviso && !isCalculating && (
+          <Alert className="animate-in fade-in slide-in-from-bottom-4 duration-500 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900" style={{ animationDelay: '250ms' }}>
+            <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+            <AlertDescription className="text-amber-800 dark:text-amber-200 ml-2">
+              {results.aviso}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Card de Interpretação */}
         {results && !results.erro && !isCalculating && (

@@ -71,6 +71,7 @@ class IndicesFisicosOutput(BaseModel):
     massa_solidos_calc: Optional[float] = Field(None, description="Massa de sólidos calculada (ex: g)")
     massa_agua_calc: Optional[float] = Field(None, description="Massa de água calculada (ex: g)")
     # -----------------------------------------------
+    aviso: Optional[str] = Field(None, description="Mensagem de aviso sobre cálculos parciais")
     erro: Optional[str] = None
 
 
