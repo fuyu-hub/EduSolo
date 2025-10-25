@@ -80,12 +80,42 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
         if (element) {
           const rect = element.getBoundingClientRect();
           const absoluteTop = window.pageYOffset + rect.top;
-          const middle = absoluteTop - (window.innerHeight / 2) + (rect.height / 2);
           
-          window.scrollTo({
-            top: middle,
-            behavior: "smooth",
-          });
+          // Calcular posição ideal considerando espaço para o tooltip
+          // Deixar espaço extra acima e abaixo (300px de cada lado)
+          const tooltipSpace = 300;
+          const viewportHeight = window.innerHeight;
+          
+          // Se o elemento é muito grande, centralizar ele
+          if (rect.height > viewportHeight - tooltipSpace * 2) {
+            const middle = absoluteTop - (viewportHeight / 2) + (rect.height / 2);
+            window.scrollTo({
+              top: middle,
+              behavior: "smooth",
+            });
+          } else {
+            // Tentar posicionar o elemento na parte superior da tela com espaço para tooltip acima
+            const targetTop = absoluteTop - tooltipSpace;
+            
+            // Verificar se há espaço suficiente abaixo também
+            const elementBottom = absoluteTop + rect.height;
+            const bottomSpace = window.pageYOffset + viewportHeight - elementBottom;
+            
+            if (bottomSpace < tooltipSpace) {
+              // Se não há espaço embaixo, tentar centralizar
+              const middle = absoluteTop - (viewportHeight / 2) + (rect.height / 2);
+              window.scrollTo({
+                top: Math.max(0, middle),
+                behavior: "smooth",
+              });
+            } else {
+              // Há espaço, posicionar com margem superior
+              window.scrollTo({
+                top: Math.max(0, targetTop),
+                behavior: "smooth",
+              });
+            }
+          }
         }
       }, 100);
       

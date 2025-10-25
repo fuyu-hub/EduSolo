@@ -46,50 +46,97 @@ export function Tour() {
         const tooltipElement = tooltipRef.current;
         const tooltipWidth = tooltipElement?.offsetWidth || 420;
         const tooltipHeight = tooltipElement?.offsetHeight || 250;
-        const placement = currentStepData.placement || "bottom";
+        let placement = currentStepData.placement || "bottom";
         const gap = 20;
 
-        let top = 0;
-        let left = 0;
-
-        switch (placement) {
-          case "bottom":
-            top = rect.bottom + padding + gap;
-            left = rect.left + rect.width / 2 - tooltipWidth / 2;
-            break;
-          case "top":
-            top = rect.top - padding - tooltipHeight - gap;
-            left = rect.left + rect.width / 2 - tooltipWidth / 2;
-            break;
-          case "left":
-            top = rect.top + rect.height / 2 - tooltipHeight / 2;
-            left = rect.left - padding - tooltipWidth - gap;
-            break;
-          case "right":
-            top = rect.top + rect.height / 2 - tooltipHeight / 2;
-            left = rect.right + padding + gap;
-            break;
-        }
-
-        // Ajustar para não sair da tela
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
         const margin = 20;
 
-        if (left < margin) left = margin;
-        if (left + tooltipWidth > windowWidth - margin) left = windowWidth - tooltipWidth - margin;
-        if (top < margin) top = margin;
-        if (top + tooltipHeight > windowHeight - margin) {
-          // Se não cabe embaixo, tentar em cima
-          const topPosition = rect.top - padding - tooltipHeight - gap;
-          if (topPosition > margin) {
-            top = topPosition;
-          } else {
-            top = windowHeight - tooltipHeight - margin;
+        // Função auxiliar para verificar se o tooltip cabe em uma posição
+        const checkFit = (pos: { top: number; left: number }) => {
+          return {
+            top: pos.top >= margin,
+            bottom: pos.top + tooltipHeight <= windowHeight - margin,
+            left: pos.left >= margin,
+            right: pos.left + tooltipWidth <= windowWidth - margin,
+          };
+        };
+
+        // Função para calcular posição baseada no placement
+        const calculatePosition = (pos: string) => {
+          let top = 0;
+          let left = 0;
+
+          switch (pos) {
+            case "bottom":
+              top = rect.bottom + padding + gap;
+              left = rect.left + rect.width / 2 - tooltipWidth / 2;
+              break;
+            case "top":
+              top = rect.top - padding - tooltipHeight - gap;
+              left = rect.left + rect.width / 2 - tooltipWidth / 2;
+              break;
+            case "left":
+              top = rect.top + rect.height / 2 - tooltipHeight / 2;
+              left = rect.left - padding - tooltipWidth - gap;
+              break;
+            case "right":
+              top = rect.top + rect.height / 2 - tooltipHeight / 2;
+              left = rect.right + padding + gap;
+              break;
           }
+
+          return { top, left };
+        };
+
+        // Tentar o placement preferido
+        let position = calculatePosition(placement);
+        let fit = checkFit(position);
+
+        // Se não couber, tentar outros placements automaticamente
+        if (!fit.top || !fit.bottom || !fit.left || !fit.right) {
+          const placements = ["bottom", "top", "right", "left"];
+          let bestPlacement = placement;
+          let bestFit = fit;
+          let bestScore = Object.values(fit).filter(Boolean).length;
+
+          for (const tryPlacement of placements) {
+            if (tryPlacement === placement) continue;
+            
+            const tryPosition = calculatePosition(tryPlacement);
+            const tryFit = checkFit(tryPosition);
+            const tryScore = Object.values(tryFit).filter(Boolean).length;
+
+            if (tryScore > bestScore) {
+              bestScore = tryScore;
+              bestFit = tryFit;
+              bestPlacement = tryPlacement;
+              position = tryPosition;
+            }
+          }
+
+          placement = bestPlacement;
+          fit = bestFit;
         }
 
-        setTooltipPosition({ top, left });
+        // Ajustar horizontalmente para não sair da tela
+        if (position.left < margin) {
+          position.left = margin;
+        }
+        if (position.left + tooltipWidth > windowWidth - margin) {
+          position.left = windowWidth - tooltipWidth - margin;
+        }
+
+        // Ajustar verticalmente para não sair da tela
+        if (position.top < margin) {
+          position.top = margin;
+        }
+        if (position.top + tooltipHeight > windowHeight - margin) {
+          position.top = windowHeight - tooltipHeight - margin;
+        }
+
+        setTooltipPosition({ top: position.top, left: position.left });
       });
     };
 
