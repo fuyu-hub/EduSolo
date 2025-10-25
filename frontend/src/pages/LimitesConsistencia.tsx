@@ -25,7 +25,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import PlasticityChart, { PlasticityChartRef } from "@/components/visualizations/PlasticityChart";
+import LimiteLiquidezChart from "@/components/limites/LimiteLiquidezChart";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import SavedCalculations from "@/components/SavedCalculations";
 import SaveDialog from "@/components/SaveDialog";
@@ -97,7 +97,12 @@ type ApiInputData = {
 };
 
 // --- Interfaces (mantidas) ---
-interface LimitesConsistenciaOutput { ll: number | null; lp: number | null; ip: number | null; ic: number | null; classificacao_plasticidade: string | null; classificacao_consistencia: string | null; atividade_argila: number | null; classificacao_atividade: string | null; erro?: string | null; }
+interface PontoCurva {
+  x: number; // log10(num_golpes)
+  y: number; // umidade (%)
+}
+
+interface LimitesConsistenciaOutput { ll: number | null; lp: number | null; ip: number | null; ic: number | null; classificacao_plasticidade: string | null; classificacao_consistencia: string | null; atividade_argila: number | null; classificacao_atividade: string | null; pontos_grafico_ll?: PontoCurva[] | null; erro?: string | null; }
 type Results = LimitesConsistenciaOutput;
 
 // --- Tooltips (mantidos) ---
@@ -136,7 +141,7 @@ export default function LimitesConsistencia() {
   const [exportPDFDialogOpen, setExportPDFDialogOpen] = useState(false);
   const [pdfFileName, setPdfFileName] = useState("");
   const [isExportingPDF, setIsExportingPDF] = useState(false);
-  const plasticityChartRef = useRef<PlasticityChartRef>(null);
+  const limiteLiquidezChartRef = useRef<HTMLDivElement>(null);
 
   // Definição dos steps do tour
   const tourSteps: TourStep[] = [
@@ -191,8 +196,8 @@ export default function LimitesConsistencia() {
     },
     {
       target: "[data-tour='resultados']",
-      title: "📈 Carta de Plasticidade Interativa",
-      content: "Visualize a posição do solo na Carta de Casagrande. Este gráfico é INTERATIVO - passe o mouse sobre as linhas e áreas para ver as classificações (CL, CH, ML, MH). Este exemplo mostra uma argila CH.",
+      title: "📈 Gráfico do Limite de Liquidez",
+      content: "Visualize o gráfico de fluidez com a linha de tendência (regressão linear) e os pontos do ensaio. A linha verde marca o LL determinado a 25 golpes. Use as setas do carrossel para navegar entre resultados e gráfico.",
       placement: "left",
       spotlightPadding: 12,
     },
@@ -242,7 +247,7 @@ export default function LimitesConsistencia() {
       if (currentStep === 6) {
         carouselApi.scrollTo(0);
       } 
-      // Step 7 é a Carta de Plasticidade - slide 1
+      // Step 7 é o Gráfico do Limite de Liquidez - slide 1
       else if (currentStep === 7) {
         carouselApi.scrollTo(1);
       }
@@ -358,11 +363,9 @@ export default function LimitesConsistencia() {
     
     setIsExportingPDF(true);
     
-    // Capturar imagem do gráfico de plasticidade usando a função do componente
+    // Capturar imagem do gráfico do Limite de Liquidez
     toast({ title: "Capturando gráfico..." });
-    const chartImage = plasticityChartRef.current 
-      ? await plasticityChartRef.current.getImageForExport()
-      : null;
+    const chartImage = await captureChartAsImage('limite-liquidez-ampliado');
     
     const inputs: { label: string; value: string }[] = [];
     if (formData.umidadeNatural) inputs.push({ label: "Umidade Natural", value: `${formData.umidadeNatural}%` });
@@ -681,24 +684,13 @@ export default function LimitesConsistencia() {
         </Card>
 
         {/* --- Card de Resultados com Carrossel (Inalterado) --- */}
-        <Card className="glass animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
+        <Card className="glass animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }} data-tour="resultados">
            <CardHeader>
                <CardTitle className="flex items-center justify-between text-xl">
                    <div className="flex items-center gap-2">
                        <BarChart3 className="w-5 h-5 text-primary" />
                        Resultados
                    </div>
-                   {results && results.ll !== null && results.ip !== null && (
-                       <Button
-                           onClick={() => plasticityChartRef.current?.exportAsJPG()}
-                           variant="outline"
-                           size="sm"
-                           className="gap-2"
-                       >
-                           <Download className="w-4 h-4" />
-                           Salvar Carta JPG
-                       </Button>
-                   )}
                </CardTitle>
            </CardHeader>
            <CardContent className="pt-0 px-2 sm:px-4">
@@ -739,12 +731,12 @@ export default function LimitesConsistencia() {
                       </div>
                     </div>
                   </CarouselItem>
-                   {/* Slide 2: Carta de Plasticidade e Classificação Detalhada */}
+                   {/* Slide 2: Gráfico do Limite de Liquidez */}
                    <CarouselItem>
                      <div className="space-y-2">
-                      {(results.ll !== null && results.ip !== null) && (
-                        <div id="plasticity-chart">
-                          <PlasticityChart ref={plasticityChartRef} ll={results.ll} ip={results.ip} />
+                      {(results.pontos_grafico_ll && results.pontos_grafico_ll.length > 0) && (
+                        <div id="limite-liquidez-chart">
+                          <LimiteLiquidezChart ref={limiteLiquidezChartRef} pontos={results.pontos_grafico_ll} ll={results.ll} />
                         </div>
                       )}
                      </div>

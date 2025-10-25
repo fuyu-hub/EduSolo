@@ -6,6 +6,7 @@ export interface TourStep {
   content: string;
   placement?: "top" | "bottom" | "left" | "right";
   spotlightPadding?: number;
+  action?: () => void; // Ação a ser executada ao chegar neste step
 }
 
 interface TourContextType {
@@ -74,6 +75,11 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   // Scroll to element when step changes
   useEffect(() => {
     if (isActive && steps[currentStep]) {
+      // Executar ação do step se existir
+      if (steps[currentStep].action) {
+        steps[currentStep].action!();
+      }
+      
       // Pequeno delay para garantir que o elemento está renderizado
       const timer = setTimeout(() => {
         const element = document.querySelector(steps[currentStep].target);

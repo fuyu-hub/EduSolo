@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { BarChart3, Info, Calculator as CalcIcon, Plus, Trash2, Table as TableIcon, TrendingUp, GraduationCap } from "lucide-react";
+import { BarChart3, Info, Calculator as CalcIcon, Plus, Trash2, Table as TableIcon, TrendingUp, GraduationCap, Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,7 @@ import TabelaDadosGranulometricos from "@/components/granulometria/TabelaDadosGr
 import CurvaGranulometrica from "@/components/granulometria/CurvaGranulometrica";
 import SeletorPeneiras from "@/components/granulometria/SeletorPeneiras";
 import DialogExemplos from "@/components/granulometria/DialogExemplos";
+import PlasticityChart from "@/components/visualizations/PlasticityChart";
 import { ExemploGranulometria } from "@/lib/exemplos-granulometria";
 
 // Configuração da API
@@ -119,6 +120,7 @@ export default function Granulometria() {
   const [exportPDFDialogOpen, setExportPDFDialogOpen] = useState(false);
   const [pdfFileName, setPdfFileName] = useState("");
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("curva");
 
   // Definição dos steps do tour
   const tourSteps: TourStep[] = [
@@ -146,7 +148,7 @@ export default function Granulometria() {
     {
       target: "#ll",
       title: "💧 Limites de Atterberg (Opcional)",
-      content: "Para obter classificações mais precisas, especialmente pelo sistema USCS, forneça os Limites de Liquidez (LL) e Plasticidade (LP) obtidos nos ensaios correspondentes.",
+      content: "Para obter classificações mais precisas e visualizar a posição na Carta de Plasticidade, forneça os Limites de Liquidez (LL) e Plasticidade (LP). Com esses dados, o sistema plotará automaticamente o ponto na Carta de Casagrande!",
       placement: "left",
       spotlightPadding: 12,
     },
@@ -159,8 +161,8 @@ export default function Granulometria() {
     },
     {
       target: "[data-tour='classificacoes']",
-      title: "🏷️ Classificações do Solo",
-      content: "Visualize as classificações USCS e HRB/AASHTO com descrições completas. O Índice de Grupo (IG) e avaliação de subleito também são fornecidos quando aplicável.",
+      title: "🏷️ Classificações Automáticas (USCS + HRB)",
+      content: "O sistema fornece automaticamente ambas as classificações USCS e HRB/AASHTO. Quando o solo está em zonas de transição, a classificação dupla é indicada (ex: CL-ML, GW-GM). Com LL e LP, você também verá a posição na Carta de Plasticidade!",
       placement: "top",
       spotlightPadding: 12,
     },
@@ -180,9 +182,24 @@ export default function Granulometria() {
     },
     {
       target: "[data-tour='curva-tab']",
-      title: "📈 Curva Granulométrica",
-      content: "Visualize a curva granulométrica completa com os diâmetros característicos marcados. Use as abas para alternar entre gráfico, tabela detalhada e composição.",
+      title: "📈 Análise Granulométrica Completa",
+      content: "Visualize a curva granulométrica, tabela de dados detalhados, composição e a Carta de Plasticidade de Casagrande em abas separadas.",
       placement: "top",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='carta-tab']",
+      title: "🎯 Carta de Plasticidade (USCS)",
+      content: "Veja a Carta de Casagrande! Esta carta plota graficamente a classificação de solos finos baseada nos Limites de Liquidez (LL) e Plasticidade (LP).",
+      placement: "top",
+      spotlightPadding: 12,
+      action: () => setActiveTab("carta"), // Trocar para a aba da carta automaticamente
+    },
+    {
+      target: "[data-tour='carta-interativa']",
+      title: "🗺️ Zonas da Carta Interativas",
+      content: "A carta mostra diferentes zonas coloridas (CL, ML, CH, MH, CL-ML). Clique em qualquer zona colorida para ver informações detalhadas sobre aquela classificação! O ponto vermelho marca a posição do seu solo com coordenadas (LL, IP).",
+      placement: "bottom",
       spotlightPadding: 12,
     },
     {
@@ -196,11 +213,11 @@ export default function Granulometria() {
 
   // Iniciar tour automaticamente na primeira visita
   useEffect(() => {
-    const initTour = async () => {
-      const hasSeenTour = localStorage.getItem('tour-seen-granulometria');
-      if (hasSeenTour === 'true') return;
-      
-      // Carregar exemplo para demonstração
+    const hasSeenTour = localStorage.getItem('tour-seen-granulometria');
+    if (hasSeenTour === 'true') return;
+    
+    // Usar timeout inicial para carregar exemplo
+    const timerLoad = setTimeout(() => {
       const exemploParaTour = {
         nome: "Areia Siltosa",
         massaTotal: 500,
@@ -218,21 +235,24 @@ export default function Granulometria() {
         ll: 25,
         lp: 18,
       };
-      
       handleCarregarExemplo(exemploParaTour as any);
-      
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Calcular automaticamente
-      await handleCalculate();
-      
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      startTour(tourSteps, "granulometria");
-    };
+    }, 500);
     
-    const timer = setTimeout(initTour, 800);
-    return () => clearTimeout(timer);
+    // Calcular após o estado ser atualizado
+    const timerCalc = setTimeout(async () => {
+      await handleCalculate();
+    }, 1500);
+    
+    // Iniciar tour após cálculo completar
+    const timerTour = setTimeout(() => {
+      startTour(tourSteps, "granulometria");
+    }, 3500);
+    
+    return () => {
+      clearTimeout(timerLoad);
+      clearTimeout(timerCalc);
+      clearTimeout(timerTour);
+    };
   }, []);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -838,51 +858,122 @@ export default function Granulometria() {
                 <div className="space-y-2">
                   {/* Classificações - Horizontal */}
                   {(results.classificacao_uscs || results.classificacao_hrb) && (
-                    <div className="grid lg:grid-cols-2 gap-3" data-tour="classificacoes">
-                    {/* Classificação USCS */}
-                    {results.classificacao_uscs && (
-                      <div className="p-2 rounded-lg bg-gradient-to-br from-fuchsia-500/10 to-purple-600/10 border border-fuchsia-500/30">
-                        <div className="flex items-center gap-1 mb-1">
-                          <div className="w-1 h-1 rounded-full bg-fuchsia-500"></div>
-                          <p className="text-[9px] font-bold text-fuchsia-700 dark:text-fuchsia-400 uppercase tracking-wide">
-                            USCS
-                          </p>
-                        </div>
-                        <p className="text-lg font-bold bg-gradient-to-r from-fuchsia-600 to-purple-600 bg-clip-text text-transparent mb-0.5">
-                          {results.classificacao_uscs}
-                        </p>
-                        <p className="text-[10px] text-foreground/80 leading-tight">{results.descricao_uscs}</p>
-                      </div>
-                    )}
-                    
-                    {/* Classificação HRB/AASHTO */}
-                    {results.classificacao_hrb && (
-                      <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500/10 to-cyan-600/10 border border-blue-500/30">
-                        <div className="flex items-center gap-1 mb-1">
-                          <div className="w-1 h-1 rounded-full bg-blue-500"></div>
-                          <p className="text-[9px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wide">
-                            HRB/AASHTO
-                          </p>
-                        </div>
-                        <div className="flex items-baseline gap-2 mb-0.5">
-                          <p className="text-lg font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
-                            {results.classificacao_hrb}
-                          </p>
-                          {results.indice_grupo_hrb !== null && results.indice_grupo_hrb > 0 && (
-                            <span className="text-[9px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 py-0.5 rounded">
-                              IG:{results.indice_grupo_hrb}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-foreground/80 leading-tight mb-1">{results.descricao_hrb}</p>
-                        {results.avaliacao_subleito_hrb && (
-                          <p className="text-[9px] font-semibold text-blue-700 dark:text-blue-300 mt-1 pt-1 border-t border-blue-500/20">
-                            Subleito: {results.avaliacao_subleito_hrb}
-                          </p>
+                      <div className="grid lg:grid-cols-2 gap-3" data-tour="classificacoes">
+                        {/* Classificação USCS */}
+                        {results.classificacao_uscs && (
+                          <div className="p-3 rounded-lg bg-gradient-to-br from-fuchsia-500/10 to-purple-600/10 border-2 border-fuchsia-500/30 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-1.5 h-1.5 rounded-full bg-fuchsia-500"></div>
+                                <p className="text-[10px] font-bold text-fuchsia-700 dark:text-fuchsia-400 uppercase tracking-wide">
+                                  Sistema USCS
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                {results.classificacao_uscs.includes('-') && (
+                                  <span className="text-[8px] text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded-full font-bold animate-pulse">
+                                    DUPLA
+                                  </span>
+                                )}
+                                <span className="text-[8px] text-fuchsia-600 dark:text-fuchsia-400 bg-fuchsia-100 dark:bg-fuchsia-900/30 px-1.5 py-0.5 rounded font-semibold">
+                                  Unified
+                                </span>
+                              </div>
+                            </div>
+                            <p className="text-xl font-bold bg-gradient-to-r from-fuchsia-600 to-purple-600 bg-clip-text text-transparent mb-1">
+                              {results.classificacao_uscs}
+                            </p>
+                            <p className="text-[11px] text-foreground/80 leading-tight">{results.descricao_uscs}</p>
+                            
+                            {/* Explicação da classificação dupla */}
+                            {results.classificacao_uscs.includes('-') && (
+                              <div className="mt-2 pt-2 border-t border-fuchsia-500/20">
+                                <p className="text-[10px] text-fuchsia-700 dark:text-fuchsia-300 font-semibold mb-1">
+                                  🔄 Classificação Dupla
+                                </p>
+                                <p className="text-[10px] text-foreground/70 leading-tight">
+                                  {results.classificacao_uscs.includes('CL-ML') || results.classificacao_uscs.includes('ML-CL') 
+                                    ? 'Solo na zona de transição entre argila e silte. O ponto está próximo à Linha A ou na zona CL-ML (IP 4-7).'
+                                    : results.classificacao_uscs.match(/[GS][WP]-[GS][MC]/)
+                                    ? 'Solo com 5-12% de finos. Classificação baseada em graduação + plasticidade dos finos.'
+                                    : results.classificacao_uscs.includes('CL-CH') || results.classificacao_uscs.includes('CH-CL')
+                                    ? 'Argila próxima à transição entre baixa e alta plasticidade (LL próximo a 50%).'
+                                    : results.classificacao_uscs.includes('ML-MH') || results.classificacao_uscs.includes('MH-ML')
+                                    ? 'Silte próximo à transição entre baixa e alta plasticidade (LL próximo a 50%).'
+                                    : results.classificacao_uscs.includes('CH-MH') || results.classificacao_uscs.includes('MH-CH')
+                                    ? 'Solo de alta plasticidade próximo à Linha A. Características mistas de argila e silte.'
+                                    : 'Solo com características em zona de transição entre classificações.'}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* Classificação HRB/AASHTO */}
+                        {results.classificacao_hrb && (
+                          <div className="p-3 rounded-lg bg-gradient-to-br from-blue-500/10 to-cyan-600/10 border-2 border-blue-500/30 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                <p className="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wide">
+                                  Sistema HRB/AASHTO
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                {results.subgrupo_hrb && (
+                                  <span className="text-[8px] text-cyan-700 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-900/40 px-1.5 py-0.5 rounded-full font-bold">
+                                    {results.grupo_hrb}-{results.subgrupo_hrb}
+                                  </span>
+                                )}
+                                <span className="text-[8px] text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded font-semibold">
+                                  Highway
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-baseline gap-2 mb-1">
+                              <p className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                                {results.classificacao_hrb}
+                              </p>
+                              {results.indice_grupo_hrb !== null && results.indice_grupo_hrb > 0 && (
+                                <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">
+                                  IG:{results.indice_grupo_hrb}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-foreground/80 leading-tight mb-1.5">{results.descricao_hrb}</p>
+                            
+                            {/* Explicação do subgrupo quando existe */}
+                            {results.subgrupo_hrb && (
+                              <div className="mt-2 pt-2 border-t border-blue-500/20">
+                                <p className="text-[10px] text-blue-700 dark:text-blue-300 font-semibold mb-1">
+                                  📋 Subgrupo {results.subgrupo_hrb}
+                                </p>
+                                <p className="text-[10px] text-foreground/70 leading-tight">
+                                  {results.subgrupo_hrb === 'a' 
+                                    ? 'Material predominantemente pedregulho (granular grosso).'
+                                    : results.subgrupo_hrb === 'b'
+                                    ? 'Material predominantemente areia (granular fino).'
+                                    : results.subgrupo_hrb === '4'
+                                    ? 'Características siltosas. Material granular com finos não plásticos.'
+                                    : results.subgrupo_hrb === '5'
+                                    ? 'Características siltosas de alta compressibilidade.'
+                                    : results.subgrupo_hrb === '6'
+                                    ? 'Características argilosas. Material plástico.'
+                                    : results.subgrupo_hrb === '7'
+                                    ? 'Características argilosas de alta plasticidade.'
+                                    : 'Subclassificação detalhada do material.'}
+                                </p>
+                              </div>
+                            )}
+                            
+                            {results.avaliacao_subleito_hrb && (
+                              <p className="text-[10px] font-semibold text-blue-700 dark:text-blue-300 mt-2 pt-2 border-t border-blue-500/20">
+                                🛣️ Subleito: {results.avaliacao_subleito_hrb}
+                              </p>
+                            )}
+                          </div>
                         )}
                       </div>
-                      )}
-                    </div>
                   )}
 
                   {/* Composição Granulométrica */}
@@ -930,12 +1021,12 @@ export default function Granulometria() {
                 </div>
 
                 {/* Curva e Tabelas - Com Tabs */}
-                <Tabs defaultValue="curva" className="w-full" data-tour="curva-tab">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full" data-tour="curva-tab">
                   <Card className="glass">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">Análise Granulométrica Completa</CardTitle>
-                        <TabsList className="grid w-[420px] grid-cols-3">
+                        <TabsList className="grid w-[560px] grid-cols-4">
                           <TabsTrigger value="curva" className="text-xs">
                             <TrendingUp className="w-3 h-3 mr-1.5" />
                             Curva
@@ -947,6 +1038,10 @@ export default function Granulometria() {
                           <TabsTrigger value="composicao" className="text-xs">
                             <BarChart3 className="w-3 h-3 mr-1.5" />
                             Composição
+                          </TabsTrigger>
+                          <TabsTrigger value="carta" className="text-xs" data-tour="carta-tab">
+                            <Activity className="w-3 h-3 mr-1.5" />
+                            Carta Plasticidade
                           </TabsTrigger>
                         </TabsList>
                       </div>
@@ -975,6 +1070,39 @@ export default function Granulometria() {
                           massaTotal={parseFloat(formData.massaTotal)}
                           showDadosDetalhados={false}
                         />
+                      </TabsContent>
+
+                      <TabsContent value="carta" className="mt-0">
+                        <div className="space-y-3">
+                          <PlasticityChart
+                            ll={formData.limitePercent ? parseFloat(formData.limitePercent) : null}
+                            ip={formData.limitePercent && formData.limitePlasticidade 
+                              ? parseFloat(formData.limitePercent) - parseFloat(formData.limitePlasticidade)
+                              : null}
+                          />
+                          
+                          {formData.limitePercent && formData.limitePlasticidade && (
+                            <div className="p-3 rounded-lg bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 border border-amber-200 dark:border-amber-800">
+                              <p className="font-semibold mb-2 text-amber-900 dark:text-amber-300 text-xs">
+                                💡 Classificação Dupla - Zonas de Transição
+                              </p>
+                              <div className="space-y-1.5 text-xs text-amber-900/90 dark:text-amber-300/90">
+                                <p>
+                                  • <strong>CL-ML:</strong> Solo na zona de transição entre argila e silte de baixa plasticidade (IP entre 4 e 7, abaixo da Linha A)
+                                </p>
+                                <p>
+                                  • <strong>Classificação dupla automática:</strong> Quando o solo está próximo das linhas divisórias (Linha A ou LL=50), pode haver características mistas
+                                </p>
+                                <p>
+                                  • <strong>Solos orgânicos:</strong> Representados como "ou OL" e "ou OH" nas respectivas zonas
+                                </p>
+                                <p className="pt-1 mt-1 border-t border-amber-200 dark:border-amber-800">
+                                  <strong>Clique nas zonas coloridas</strong> para ver informações detalhadas de cada classificação!
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </TabsContent>
                     </CardContent>
                   </Card>

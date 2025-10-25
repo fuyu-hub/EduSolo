@@ -12,8 +12,12 @@ import {
   Customized
 } from 'recharts';
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Maximize2, Download, Activity } from "lucide-react";
 import html2canvas from 'html2canvas';
+import { toast } from "sonner";
 
 interface PlasticityChartProps {
   ll: number | null;
@@ -52,10 +56,40 @@ const zoneInfo = {
     properties: ["Comportamento expansivo", "Alta sensibilidade à água", "Requer drenagem adequada"]
   },
   "CL-ML": {
-    name: "Zona de Transição CL-ML",
-    description: "Zona de transição entre argila de baixa plasticidade e silte de baixa plasticidade.",
+    name: "Zona de Transição Argila-Silte (Baixa Plasticidade)",
+    description: "Zona de transição entre argila de baixa plasticidade e silte de baixa plasticidade. IP entre 4-7 ou próximo à Linha A.",
     color: "#8B7355", // Marrom claro
     properties: ["Características mistas", "Comportamento variável", "Análise detalhada necessária"]
+  },
+  "ML-CL": {
+    name: "Zona de Transição Silte-Argila (Baixa Plasticidade)",
+    description: "Zona de transição entre silte e argila de baixa plasticidade. Próximo à Linha A, abaixo dela.",
+    color: "#A0826D", // Marrom médio
+    properties: ["Predomínio siltoso", "Características argilosas secundárias", "Sensível à água"]
+  },
+  "CL-CH": {
+    name: "Argila na Transição Baixa/Alta Plasticidade",
+    description: "Argila próxima ao limite entre baixa e alta plasticidade (LL próximo a 50%).",
+    color: "#7FD97F", // Verde-amarelo
+    properties: ["LL próximo a 50%", "Características mistas", "Avaliar compressibilidade"]
+  },
+  "ML-MH": {
+    name: "Silte na Transição Baixa/Alta Plasticidade",
+    description: "Silte próximo ao limite entre baixa e alta plasticidade (LL próximo a 50%).",
+    color: "#AFB6E1", // Rosa-azul
+    properties: ["LL próximo a 50%", "Características mistas", "Avaliar expansividade"]
+  },
+  "CH-MH": {
+    name: "Transição Argila-Silte (Alta Plasticidade)",
+    description: "Solo de alta plasticidade próximo à Linha A, com características de argila predominantes.",
+    color: "#DAA520", // Dourado escuro
+    properties: ["Alta plasticidade", "Próximo à Linha A", "Comportamento argiloso dominante"]
+  },
+  "MH-CH": {
+    name: "Transição Silte-Argila (Alta Plasticidade)",
+    description: "Solo de alta plasticidade próximo à Linha A, com características de silte predominantes.",
+    color: "#6495ED", // Azul médio
+    properties: ["Alta plasticidade", "Próximo à Linha A", "Comportamento siltoso dominante"]
   }
 };
 
@@ -65,7 +99,7 @@ const zoneInfo = {
  * com base no domínio [0..xMax] e [0..yMax], seguindo a linha A (ip = 0.73*(ll-20)).
  */
 const CustomizedPolygonDrawer = (props: any) => {
-  const { width, height, xAxisMap, yAxisMap, xAxisProps, yAxisProps, xDomain, yDomain, onZoneClick, chartRef } = props;
+  const { width, height, xAxisMap, yAxisMap, xAxisProps, yAxisProps, xDomain, yDomain, onZoneClick, chartRef, isDialog } = props;
 
   // se não tiver escala, não desenha
   if (!xAxisMap || !yAxisMap) return null;
@@ -229,11 +263,12 @@ const CustomizedPolygonDrawer = (props: any) => {
   };
 
   // Escala global para o gráfico (ajuste este valor para redimensionar tudo)
-  const chartScale = 0.85; // Valor entre 0.5 e 2.0 (1.0 = tamanho normal)
+  // No modo ampliado, usar escala maior (mais próximo de 1.0)
+  const chartScale = isDialog ? 0.7 : 0.8; // Valor entre 0.5 e 2.0 (1.0 = tamanho normal)
   
   // Centralizar o grupo escalado e mover para a direita
-  const translateX = width * (1 - chartScale) / 2 + 25; // +25px para a direita
-  const translateY = height * (1 - chartScale) / 2 - 10; // +10px para cima
+  const translateX = width * (1 - chartScale) / 2 + (isDialog ? 15 : 25); // Menos offset no modo ampliado
+  const translateY = height * (1 - chartScale) / 2 - (isDialog ? 5 : 10); // Menos offset no modo ampliado
 
   return (
     <>
@@ -580,30 +615,41 @@ const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ 
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [showZoneInfo, setShowZoneInfo] = useState<boolean>(false);
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [dialogOpen, setDialogOpen] = useState(false);
   const popupRef = React.useRef<HTMLDivElement>(null);
   const chartRef = useRef<HTMLDivElement>(null);
+  const chartAmpliado = useRef<HTMLDivElement>(null);
 
   // Função para exportar como JPG
   const handleExportJPG = async () => {
-    if (!chartRef.current) return;
+    const elementToCapture = document.getElementById('carta-plasticidade-ampliada');
+    if (!elementToCapture) return;
     
     try {
-      const canvas = await html2canvas(chartRef.current, {
+      toast.info("Capturando carta de plasticidade...");
+      
+      const canvas = await html2canvas(elementToCapture, {
         backgroundColor: '#ffffff',
         scale: 2, // Maior qualidade
         logging: false,
+        useCORS: true,
       });
       
       // Converter para JPG
-      const image = canvas.toDataURL('image/jpeg', 0.95);
-      
-      // Criar link de download
-      const link = document.createElement('a');
-      link.href = image;
-      link.download = `carta-plasticidade-${Date.now()}.jpg`;
-      link.click();
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.download = `carta_plasticidade_${new Date().toISOString().split('T')[0]}.jpg`;
+          link.href = url;
+          link.click();
+          URL.revokeObjectURL(url);
+          toast.success("Carta exportada com sucesso!");
+        }
+      }, 'image/jpeg', 0.95);
     } catch (error) {
       console.error('Erro ao exportar imagem:', error);
+      toast.error("Erro ao exportar a carta");
     }
   };
 
@@ -654,73 +700,89 @@ const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ 
     };
   }, [showZoneInfo]);
 
-  if (ll === null || ip === null || isNaN(ll) || isNaN(ip)) {
-    return (
-      <div className="flex items-center justify-center h-[340px] bg-card p-2 rounded-md border border-border/50 shadow-inner text-muted-foreground text-sm">
-        Dados insuficientes para gerar a carta.
-      </div>
-    );
-  }
+  // Verificar se os dados são válidos para mostrar ponto e classificação
+  const hasValidData = ll !== null && ip !== null && !isNaN(ll) && !isNaN(ip) && ll > 0 && ip >= 0;
 
   // --- domains ---
-  const xMax = Math.max(100, Math.ceil((ll + 10) / 10) * 10);
-  const yMax = Math.max(60, Math.ceil((ip + 5) / 5) * 5);
+  const xMax = hasValidData ? Math.max(100, Math.ceil((ll! + 10) / 10) * 10) : 100;
+  const yMax = hasValidData ? Math.max(60, Math.ceil((ip! + 5) / 5) * 5) : 60;
   const xDomain: [number, number] = [0, xMax];
   const yDomain: [number, number] = [0, yMax];
 
   const ipA = (llVal: number) => Math.max(0, 0.73 * (llVal - 20));
   const ipA_at_50 = ipA(50);
 
-  // Função para determinar a classificação do solo
+  // Função para determinar a classificação do solo com suporte a classificação dupla
   const getSoilClassification = () => {
-    if (ll < 50) {
-      if (ip >= ipA(ll)) {
+    if (!hasValidData) return '';
+    
+    const ip_linha_a = ipA(ll!);
+    const distancia_linha_a = ip! - ip_linha_a;
+    const tolerancia_linha_a = Math.max(Math.abs(ip_linha_a) * 0.08, 1.0);
+    const tolerancia_ll_50 = 3.0;
+    const proxima_ll_50 = Math.abs(ll! - 50) <= tolerancia_ll_50;
+    
+    if (ll! < 50) {
+      // Baixa plasticidade (L)
+      if (ip! >= 4 && ip! <= 7) {
+        // Zona CL-ML tradicional (entre IP=4 e IP=7)
+        return 'CL-ML';
+      } else if (ip! > 7 && Math.abs(distancia_linha_a) <= tolerancia_linha_a) {
+        // Próximo da Linha A, acima de IP=7 -> classificação dupla
+        return distancia_linha_a >= 0 ? 'CL-ML' : 'ML-CL';
+      } else if (ip! > 7 && distancia_linha_a >= tolerancia_linha_a) {
+        // Claramente acima da linha A
         return 'CL';
-      } else if (ip >= 4 && ip <= 7) {
-        // CL-ML é a zona entre IP=4 e IP=7, abaixo da Linha A
-        // A zona se estende até onde IP=7 cruza a Linha A (aproximadamente LL=29.6)
-        const ll_ip7_onA = (7 / 0.73) + 20; // ≈ 29.59
-        if (ll <= ll_ip7_onA) {
-          return 'CL-ML';
-        } else {
-          return 'ML';
-        }
-      } else {
+      } else if (ip! < 4 && distancia_linha_a <= -tolerancia_linha_a) {
+        // Claramente abaixo da linha A
         return 'ML';
+      } else {
+        // Fallback para zona intermediária
+        return 'CL-ML';
       }
     } else {
-      if (ip >= ipA(ll)) {
-        return 'CH';
+      // Alta plasticidade (H)
+      if (Math.abs(distancia_linha_a) <= tolerancia_linha_a) {
+        // Próximo da Linha A -> classificação dupla
+        return distancia_linha_a >= 0 ? 'CH-MH' : 'MH-CH';
+      } else if (distancia_linha_a >= tolerancia_linha_a) {
+        // Claramente acima da linha A
+        return proxima_ll_50 ? 'CL-CH' : 'CH';
       } else {
-        return 'MH';
+        // Claramente abaixo da linha A
+        return proxima_ll_50 ? 'ML-MH' : 'MH';
       }
     }
   };
 
   const soilClassification = getSoilClassification();
+  const isDualClassification = soilClassification.includes('-');
 
-  return (
-    <div className="space-y-2 relative">
-      {/* Gráfico principal - compacto com fundo branco */}
-      <div ref={chartRef} className="bg-white p-3 rounded-xl border border-border shadow-sm" style={{ width: '100%' }}>
-        <div style={{ width: '100%', height: 340 }}>
-          <ResponsiveContainer>
-            <ScatterChart margin={{ top: 5, right: 5, bottom: 45, left: 50 }}>
-              <XAxis
-                type="number"
-                dataKey="ll"
-                name="LL"
-                domain={xDomain}
-                hide={true}
-              />
+  // Componente do gráfico reutilizável
+  const ChartContent = ({ isDialog = false }: { isDialog?: boolean }) => (
+    <ScatterChart 
+      width={isDialog ? 1150 : 700}
+      height={isDialog ? 580 : 340}
+      margin={isDialog 
+        ? { top: 40, right: 30, left: 50, bottom: 70 } 
+        : { top: 5, right: 5, bottom: 45, left: 50 }
+      }
+    >
+      <XAxis
+        type="number"
+        dataKey="ll"
+        name="LL"
+        domain={xDomain}
+        hide={true}
+      />
 
-              <YAxis
-                type="number"
-                dataKey="ip"
-                name="IP"
-                domain={yDomain}
-                hide={true}
-              />
+      <YAxis
+        type="number"
+        dataKey="ip"
+        name="IP"
+        domain={yDomain}
+        hide={true}
+      />
 
             {/* Customized: draw polygons that respect the Line A shape */}
             <Customized
@@ -731,6 +793,7 @@ const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ 
                     {...chartProps}
                     xDomain={xDomain}
                     yDomain={yDomain}
+                    isDialog={isDialog}
                     onZoneClick={(zone: string, event: any) => {
                       // Posição relativa à viewport (janela inteira)
                       setPopupPosition({ 
@@ -748,10 +811,11 @@ const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ 
             {/* Zone labels will be shown only when clicking on zones */}
 
             {/* Ponto do solo e suas anotações - renderizado por último para ficar em cima */}
-            <Customized
-              component={(chartProps: any) => {
-                const { width, height, xAxisMap, yAxisMap } = chartProps;
-                if (!xAxisMap || !yAxisMap) return null;
+            {hasValidData && (
+              <Customized
+                component={(chartProps: any) => {
+                  const { width, height, xAxisMap, yAxisMap } = chartProps;
+                  if (!xAxisMap || !yAxisMap) return null;
 
                 // Converter coordenadas do domínio para pixels
                 const xScale = (val: number) => {
@@ -763,54 +827,20 @@ const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ 
                   return height - ((val - dmin) / (dmax - dmin)) * height;
                 };
 
-                const px = xScale(ll);
-                const py = yScale(ip);
+                const px = xScale(ll!);
+                const py = yScale(ip!);
 
                 // Posição do label - ajustada para não sobrepor o ponto
                 const labelOffsetX = 10;
                 const labelOffsetY = -18;
 
-                // Usar a mesma escala do gráfico principal
-                const chartScale = 0.85; // Deve ser o mesmo valor do CustomizedPolygonDrawer
-                const translateX = width * (1 - chartScale) / 2 + 25; // +25px para a direita
-                const translateY = height * (1 - chartScale) / 2 - 10; // +10px para cima
+                // Usar a mesma escala do gráfico principal (deve ser consistente com CustomizedPolygonDrawer)
+                const chartScale = isDialog ? 0.7 : 0.8;
+                const translateX = width * (1 - chartScale) / 2 + (isDialog ? 15 : 25);
+                const translateY = height * (1 - chartScale) / 2 - (isDialog ? 5 : 10);
 
                 return (
                   <g transform={`translate(${translateX}, ${translateY}) scale(${chartScale})`}>
-                    {/* Linhas guia do ponto aos eixos (tracejadas finas) */}
-                    <line
-                      x1={px}
-                      y1={py}
-                      x2={px}
-                      y2={height}
-                      stroke="#dc2626"
-                      strokeWidth={1}
-                      strokeDasharray="2 3"
-                      opacity={0.3}
-                    />
-                    <line
-                      x1={0}
-                      y1={py}
-                      x2={px}
-                      y2={py}
-                      stroke="#dc2626"
-                      strokeWidth={1}
-                      strokeDasharray="2 3"
-                      opacity={0.3}
-                    />
-                    
-                    {/* Círculo de referência ao redor do ponto */}
-                    <circle
-                      cx={px}
-                      cy={py}
-                      r={10}
-                      fill="none"
-                      stroke="#dc2626"
-                      strokeWidth={1.5}
-                      strokeDasharray="3 2"
-                      opacity={0.6}
-                    />
-                    
                     {/* Ponto principal do solo */}
                     <circle
                       cx={px}
@@ -818,7 +848,8 @@ const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ 
                       r={6}
                       fill="#dc2626"
                       stroke="#ffffff"
-                      strokeWidth={2.5}
+                      strokeWidth={2}
+                      shapeRendering="geometricPrecision"
                     />
                     
                     {/* Label com coordenadas */}
@@ -831,8 +862,8 @@ const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ 
                         fill="#dc2626"
                         rx={3}
                         opacity={0.95}
-                        stroke="#ffffff"
-                        strokeWidth={1}
+                        stroke="none"
+                        shapeRendering="crispEdges"
                       />
                       <text
                         x={0}
@@ -842,16 +873,71 @@ const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ 
                         fontSize={10}
                         fontWeight="700"
                       >
-                        ({ll.toFixed(1)}, {ip.toFixed(1)})
+                        ({ll!.toFixed(1)}, {ip!.toFixed(1)})
                       </text>
                     </g>
                   </g>
                 );
               }}
             />
+            )}
 
-          </ScatterChart>
-        </ResponsiveContainer>
+    </ScatterChart>
+  );
+
+  return (
+    <div className="space-y-2 relative">
+      {/* Botões Ampliar e Exportar */}
+      <div className="flex justify-end gap-2">
+        <Button
+          onClick={handleExportJPG}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
+          <Download className="w-4 h-4" />
+          Salvar JPG
+        </Button>
+        
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Maximize2 className="w-4 h-4" />
+              Ampliar
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-[95vw] max-h-[95vh] w-full">
+            <DialogHeader>
+              <DialogTitle>Carta de Plasticidade de Casagrande - Visualização Ampliada</DialogTitle>
+            </DialogHeader>
+            <div className="w-full flex justify-center items-center p-2">
+              <div ref={chartAmpliado} className="bg-white p-4 rounded-xl border border-border shadow-sm">
+                <ChartContent isDialog={true} />
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Gráfico ampliado renderizado em background (invisível) para captura */}
+      <div 
+        className="fixed pointer-events-none" 
+        style={{ 
+          left: '-9999px', 
+          top: 0,
+          width: '1240px', // Largura fixa para o gráfico ampliado
+          zIndex: -9999 
+        }}
+      >
+        <div id="carta-plasticidade-ampliada" className="bg-white p-4">
+          <ChartContent isDialog={true} />
+        </div>
+      </div>
+
+      {/* Gráfico principal - compacto com fundo branco */}
+      <div ref={chartRef} className="bg-white p-4 rounded-xl border border-border shadow-sm w-full overflow-x-auto" data-tour="carta-interativa">
+        <div className="flex items-center justify-center">
+          <ChartContent isDialog={false} />
         </div>
       </div>
 
@@ -903,24 +989,54 @@ const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ 
         document.body
       )}
 
-      {/* Informações da classificação do solo */}
-      <Card>
+      {/* Informações da classificação do solo - apenas se houver dados válidos */}
+      {hasValidData && (
+        <Card>
         <CardHeader className="pb-2 pt-3">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            Classificação do Solo
+          <div className="flex items-center justify-between mb-1">
+            <CardTitle className="text-sm">Classificação do Solo</CardTitle>
+            {isDualClassification && (
+              <Badge variant="default" className="text-[10px] h-5 px-2 bg-amber-500 hover:bg-amber-600 animate-pulse">
+                DUPLA
+              </Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs" style={{ backgroundColor: zoneInfo[soilClassification as keyof typeof zoneInfo]?.color + '20' }}>
               {soilClassification}
             </Badge>
-          </CardTitle>
-          <CardDescription className="text-xs">
-            {zoneInfo[soilClassification as keyof typeof zoneInfo]?.name}
+          </div>
+          <CardDescription className="text-xs mt-1">
+            {zoneInfo[soilClassification as keyof typeof zoneInfo]?.name || "Classificação em zona de transição"}
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-0 pb-3">
           <p className="text-xs text-muted-foreground mb-1.5 leading-tight">
-            {zoneInfo[soilClassification as keyof typeof zoneInfo]?.description}
+            {zoneInfo[soilClassification as keyof typeof zoneInfo]?.description || 
+             "Solo com características mistas, localizado em zona de transição entre classificações."}
           </p>
-          <div className="flex flex-wrap gap-1">
+          
+          {/* Explicação da classificação dupla */}
+          {isDualClassification && (
+            <div className="mt-2 p-2 rounded-md bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+              <p className="text-[10px] font-semibold text-amber-900 dark:text-amber-300 mb-1">
+                🔄 Classificação Dupla
+              </p>
+              <p className="text-[10px] text-amber-800 dark:text-amber-400 leading-tight">
+                {soilClassification.includes('CL-ML') || soilClassification.includes('ML-CL')
+                  ? 'Solo na zona de transição entre argila e silte de baixa plasticidade. Pode estar na zona CL-ML (IP 4-7) ou próximo à Linha A.'
+                  : soilClassification.includes('CL-CH')
+                  ? 'Argila próxima à transição entre baixa e alta plasticidade (LL próximo a 50%).'
+                  : soilClassification.includes('ML-MH')
+                  ? 'Silte próximo à transição entre baixa e alta plasticidade (LL próximo a 50%).'
+                  : soilClassification.includes('CH-MH') || soilClassification.includes('MH-CH')
+                  ? 'Solo de alta plasticidade próximo à Linha A, com características mistas de argila e silte.'
+                  : 'Solo com características em zona de transição. Ensaios complementares recomendados.'}
+              </p>
+            </div>
+          )}
+          
+          <div className="flex flex-wrap gap-1 mt-2">
             {zoneInfo[soilClassification as keyof typeof zoneInfo]?.properties.map((prop, index) => (
               <Badge key={index} variant="secondary" className="text-[10px] py-0 px-1.5 h-5">
                 {prop}
@@ -929,7 +1045,7 @@ const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ 
           </div>
         </CardContent>
       </Card>
-
+      )}
 
     </div>
   );

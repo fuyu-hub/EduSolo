@@ -143,34 +143,17 @@ def _classificar_solo_fino(dados: ClassificacaoUSCSInput) -> ClassificacaoUSCSOu
     LL = dados.ll
     IP = dados.ip if dados.ip is not None else 0.0
     
-    # Determinar se é solo de alta ou baixa plasticidade
-    if LL < 50.0:
-        # Baixa plasticidade (L)
-        if IP > 7.0 and IP >= 0.73 * (LL - 20.0):
-            # Acima da linha A
-            classificacao = "CL"
-            descricao = "Argila de baixa plasticidade"
-        elif IP < 4.0:
-            # Abaixo da linha A, baixa plasticidade
-            classificacao = "ML"
-            descricao = "Silte de baixa plasticidade"
-        else:
-            # Zona intermediária (CL-ML)
-            classificacao = "CL-ML"
-            descricao = "Silte argiloso de baixa plasticidade"
+    # Calcular IP na Linha A para o LL do solo
+    ip_linha_a = 0.73 * (LL - 20.0)
     
-    else:
-        # Alta plasticidade (H)
-        if IP >= 0.73 * (LL - 20.0):
-            # Acima da linha A
-            classificacao = "CH"
-            descricao = "Argila de alta plasticidade"
-        else:
-            # Abaixo da linha A
-            classificacao = "MH"
-            descricao = "Silte de alta plasticidade"
+    # Tolerância para classificação dupla (5-10% do IP ou distância mínima)
+    # Usar o maior entre: 5% do IP da Linha A ou 1.0 de IP absoluto
+    tolerancia_linha_a = max(abs(ip_linha_a) * 0.08, 1.0)
     
-    # Verificar se é solo orgânico
+    # Tolerância para LL=50 (± 3 unidades)
+    tolerancia_ll_50 = 3.0
+    
+    # Verificar se é solo orgânico primeiro
     if dados.is_organico_fino:
         if LL < 50.0:
             classificacao = "OL"
@@ -178,6 +161,78 @@ def _classificar_solo_fino(dados: ClassificacaoUSCSInput) -> ClassificacaoUSCSOu
         else:
             classificacao = "OH"
             descricao = "Silte/argila orgânico de alta plasticidade"
+        return ClassificacaoUSCSOutput(
+            classificacao=classificacao,
+            descricao=descricao
+        )
+    
+    # Determinar se é solo de alta ou baixa plasticidade
+    if LL < 50.0:
+        # Baixa plasticidade (L)
+        
+        # Calcular distância até a Linha A
+        distancia_linha_a = IP - ip_linha_a
+        
+        if IP >= 4.0 and IP <= 7.0:
+            # Zona CL-ML (entre IP=4 e IP=7)
+            classificacao = "CL-ML"
+            descricao = "Silte argiloso de baixa plasticidade"
+        elif IP > 7.0 and distancia_linha_a >= tolerancia_linha_a:
+            # Claramente acima da linha A
+            classificacao = "CL"
+            descricao = "Argila de baixa plasticidade"
+        elif IP < 4.0 and distancia_linha_a <= -tolerancia_linha_a:
+            # Claramente abaixo da linha A
+            classificacao = "ML"
+            descricao = "Silte de baixa plasticidade"
+        elif abs(distancia_linha_a) <= tolerancia_linha_a and IP > 7.0:
+            # Próximo da Linha A, acima de IP=7 -> classificação dupla
+            if distancia_linha_a >= 0:
+                classificacao = "CL-ML"
+                descricao = "Argila-silte de baixa plasticidade (próximo à Linha A)"
+            else:
+                classificacao = "ML-CL"
+                descricao = "Silte-argila de baixa plasticidade (próximo à Linha A)"
+        else:
+            # Fallback para CL-ML se estiver na zona intermediária
+            classificacao = "CL-ML"
+            descricao = "Silte argiloso de baixa plasticidade"
+    
+    else:
+        # Alta plasticidade (H)
+        
+        # Calcular distância até a Linha A
+        distancia_linha_a = IP - ip_linha_a
+        
+        # Verificar se está próximo de LL=50
+        proxima_ll_50 = abs(LL - 50.0) <= tolerancia_ll_50
+        
+        if distancia_linha_a >= tolerancia_linha_a:
+            # Claramente acima da linha A
+            if proxima_ll_50:
+                # Próximo de LL=50 -> classificação dupla L/H
+                classificacao = "CL-CH"
+                descricao = "Argila na transição entre baixa e alta plasticidade"
+            else:
+                classificacao = "CH"
+                descricao = "Argila de alta plasticidade"
+        elif distancia_linha_a <= -tolerancia_linha_a:
+            # Claramente abaixo da linha A
+            if proxima_ll_50:
+                # Próximo de LL=50 -> classificação dupla L/H
+                classificacao = "ML-MH"
+                descricao = "Silte na transição entre baixa e alta plasticidade"
+            else:
+                classificacao = "MH"
+                descricao = "Silte de alta plasticidade"
+        else:
+            # Próximo da Linha A -> classificação dupla
+            if distancia_linha_a >= 0:
+                classificacao = "CH-MH"
+                descricao = "Argila-silte de alta plasticidade (próximo à Linha A)"
+            else:
+                classificacao = "MH-CH"
+                descricao = "Silte-argila de alta plasticidade (próximo à Linha A)"
     
     return ClassificacaoUSCSOutput(
         classificacao=classificacao,
