@@ -1004,7 +1004,7 @@ export default function CanvasNewmark({
   };
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden" data-tour={vistaAtual === "lateral" ? "canvas-lateral" : "canvas-superior"}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -1033,6 +1033,7 @@ export default function CanvasNewmark({
                   size="sm"
                   onClick={() => setVistaAtual("superior")}
                   className="h-8 text-xs"
+                  data-tour="vista-superior-btn"
                 >
                   <Eye className="w-3.5 h-3.5 mr-1.5" />
                   Superior
@@ -1063,13 +1064,14 @@ export default function CanvasNewmark({
               {vistaAtual === "lateral" ? (
                 <>
                   <strong className="text-foreground">Vista Lateral (X-Z)</strong> • 
-                  <strong className="text-foreground"> Clique na área retangular</strong> para configurar • 
+                  <strong className="text-foreground" data-tour="carga-config"> Clique na área retangular</strong> para configurar • 
                   <strong className="text-foreground"> Duplo clique no solo</strong> para adicionar pontos
                 </>
               ) : (
                 <>
                   <strong className="text-foreground">Vista Superior (X-Y)</strong> • Planta da sapata • 
-                  <strong className="text-foreground"> Duplo clique</strong> para adicionar pontos com Y variável
+                  <strong className="text-foreground"> Duplo clique</strong> para adicionar pontos com Y variável • 
+                  <strong className="text-foreground"> Arraste o plano</strong> para reposicionar pontos distantes
                 </>
               )}
             </p>

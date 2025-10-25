@@ -218,6 +218,7 @@ export default function PainelResultados({
             disabled={!podeCalcular || isCalculating}
             className="w-full"
             size="lg"
+            data-tour="btn-calcular"
           >
             {isCalculating ? (
               <>
@@ -243,7 +244,7 @@ export default function PainelResultados({
             <p className="text-xs mt-1">Duplo clique no canvas para criar pontos</p>
           </div>
         ) : (
-          <Tabs defaultValue="cards" className="w-full">
+          <Tabs defaultValue="cards" className="w-full" data-tour="resultados">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="cards" className="text-xs">
                 <BarChart3 className="w-3 h-3 mr-1.5" />

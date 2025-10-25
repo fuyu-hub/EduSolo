@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { ArrowLeft, Target, BookOpen } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { ArrowLeft, Target, BookOpen, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import axios from "axios";
@@ -17,12 +17,14 @@ import { useSettings } from "@/hooks/use-settings";
 
 interface LoveAnaliseProps {
   onVoltar: () => void;
+  onStartTour?: () => void;
+  onLoadExampleRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-export default function LoveAnalise({ onVoltar }: LoveAnaliseProps) {
+export default function LoveAnalise({ onVoltar, onStartTour, onLoadExampleRef }: LoveAnaliseProps) {
   // Configurações
   const { settings } = useSettings();
   
@@ -287,19 +289,24 @@ export default function LoveAnalise({ onVoltar }: LoveAnaliseProps) {
   };
 
   const handleCarregarExemplos = () => {
-    // Exemplo baseado em material didático:
-    // P = 240 kN, R = 3 m, z = 3 m
-    // q = P / (π × R²) = 240 / (π × 9) ≈ 8.49 kPa
-    setCargaQ(8.49);
-    setRaio(3);
+    // Exemplo: Tanque circular com R = 2.5 m, q = 100 kPa
+    setCargaQ(100);
+    setRaio(2.5);
     setPontos([
-      { id: 'exemplo-a', nome: 'Ponto A (Centro)', x: 0, z: 3, tensao: undefined },
-      { id: 'exemplo-b', nome: 'Ponto B (Borda)', x: 3, z: 3, tensao: undefined },
-      { id: 'exemplo-c', nome: 'Ponto C (Externo)', x: 5, z: 3, tensao: undefined }
+      { id: 'exemplo-a', nome: 'Ponto A (Centro)', x: 0, z: 2, tensao: undefined },
+      { id: 'exemplo-b', nome: 'Ponto B (Borda)', x: 2.5, z: 3, tensao: undefined },
+      { id: 'exemplo-c', nome: 'Ponto C (Externo)', x: 4, z: 4, tensao: undefined }
     ]);
     setCalculoFeito(false);
-    toast("Exemplos carregados!", { description: "Baseado em R=3m, P=240kN (q≈8.49kPa). Clique em 'Calcular'." });
+    toast("Exemplo carregado!", { description: "3 pontos de análise prontos." });
   };
+
+  // Expor função de carregar exemplo para o tour
+  useEffect(() => {
+    if (onLoadExampleRef) {
+      onLoadExampleRef.current = handleCarregarExemplos;
+    }
+  }, [onLoadExampleRef]);
 
   const temResultados = pontos.some(p => p.tensao !== undefined);
   
@@ -312,7 +319,7 @@ export default function LoveAnalise({ onVoltar }: LoveAnaliseProps) {
       <PrintHeader moduleTitle="Love - Carga Circular" moduleName="love" />
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3" data-tour="header">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={onVoltar}>
             <ArrowLeft className="w-5 h-5" />
@@ -329,18 +336,25 @@ export default function LoveAnalise({ onVoltar }: LoveAnaliseProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {onStartTour && (
+            <Button variant="outline" size="icon" onClick={onStartTour} title="Iniciar tutorial">
+              <GraduationCap className="w-4 h-4" />
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleCarregarExemplos}>
             <BookOpen className="w-4 h-4 mr-2" />
             Exemplos
           </Button>
-          <CalculationActions
-            onSave={handleSaveClick}
-            onLoad={() => setLoadDialogOpen(true)}
-            onExportPDF={handleExportarPDF}
-            onExportExcel={handleExportarExcel}
-            hasResults={temResultados}
-            isCalculating={isCalculating}
-          />
+          <div data-tour="actions">
+            <CalculationActions
+              onSave={handleSaveClick}
+              onLoad={() => setLoadDialogOpen(true)}
+              onExportPDF={handleExportarPDF}
+              onExportExcel={handleExportarExcel}
+              hasResults={temResultados}
+              isCalculating={isCalculating}
+            />
+          </div>
         </div>
       </div>
 

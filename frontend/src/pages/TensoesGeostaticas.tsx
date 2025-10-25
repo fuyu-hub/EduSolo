@@ -4,7 +4,7 @@ import axios from "axios";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Layers, Info, Calculator as CalcIcon, Plus, Trash2, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer } from "lucide-react";
+import { Layers, Info, Calculator as CalcIcon, Plus, Trash2, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, GraduationCap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,11 +17,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
+import { useTour, TourStep } from "@/contexts/TourContext";
 import SavedCalculations from "@/components/SavedCalculations";
 import SaveDialog from "@/components/SaveDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
-import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, captureChartAsImage } from "@/lib/export-utils";
+import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, captureChartAsImage, generateDefaultPDFFileName } from "@/lib/export-utils";
+import ExportPDFDialog from "@/components/ExportPDFDialog";
 import PerfilTensoes from "@/components/tensoes/PerfilTensoes";
 import TabelaResultados from "@/components/tensoes/TabelaResultados";
 import DiagramaCamadas from "@/components/tensoes/DiagramaCamadas";
@@ -107,6 +109,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export default function TensoesGeostaticas() {
   const { toast: toastFn } = { toast };
+  const { startTour } = useTour();
   const [currentCamadaIndex, setCurrentCamadaIndex] = useState(0);
   const [config, setConfig] = useState<ConfigData>({
     pesoEspecificoAgua: "10.0",
@@ -136,6 +139,149 @@ export default function TensoesGeostaticas() {
   const [saveName, setSaveName] = useState("");
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
   const { calculations, saveCalculation, deleteCalculation, renameCalculation } = useSavedCalculations("tensoes-geostaticas");
+
+  // Estados para exportação PDF
+  const [exportPDFDialogOpen, setExportPDFDialogOpen] = useState(false);
+  const [pdfFileName, setPdfFileName] = useState("");
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+
+  // Definição dos steps do tour
+  const tourSteps: TourStep[] = [
+    {
+      target: "[data-tour='module-header']",
+      title: "🏔️ Bem-vindo às Tensões Geostáticas!",
+      content: "Este módulo permite calcular tensões verticais totais, efetivas, pressão neutra e tensões horizontais em perfis de solo estratificados. Vamos explorar com um exemplo de 3 camadas!",
+      placement: "bottom",
+      spotlightPadding: 16,
+    },
+    {
+      target: "[data-tour='diagrama-camadas']",
+      title: "📐 Perfil de Solo Carregado",
+      content: "Este perfil de exemplo possui 3 camadas: Areia (0-3m), Argila (3-8m) e Areia (8-13m). O nível d'água está a 2m de profundidade. As cores indicam o estado: cinza = não saturado, azul = saturado.",
+      placement: "right",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='diagrama-camadas']",
+      title: "✏️ Editando Camadas",
+      content: "Clique em qualquer camada do diagrama para editar suas propriedades: nome, espessura, γ natural, γ saturado, Ko e definir nível d'água. Experimente clicar na camada de Argila!",
+      placement: "right",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='diagrama-camadas']",
+      title: "➕ Adicionando Novas Camadas",
+      content: "Use o botão '+' (Adicionar Camada) no diagrama para inserir uma nova camada ao perfil. Você pode construir perfis complexos com quantas camadas precisar!",
+      placement: "right",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='config-button']",
+      title: "⚙️ Configurações Globais",
+      content: "Configure parâmetros globais como o peso específico da água (γw = 10.0 kN/m³). Estas configurações se aplicam a todo o perfil.",
+      placement: "bottom",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='btn-calcular']",
+      title: "⚡ Calcular Tensões",
+      content: "Após configurar todas as camadas, clique aqui para calcular as tensões ao longo do perfil. O sistema calcula automaticamente σv, u, σ'v e σ'h em múltiplos pontos.",
+      placement: "top",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='tabs-resultados']",
+      title: "📊 Resultados - Tabela",
+      content: "Aqui estão os resultados calculados do exemplo! Veja as tensões em cada profundidade. Note como a pressão neutra (u) começa a 2m (nível d'água) e as tensões efetivas diferem das totais.",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='tabs-resultados']",
+      title: "📈 Resultados - Perfil Gráfico",
+      content: "Alterne para a aba 'Perfil de Tensões' para visualizar graficamente. A linha vertical azul indica o nível d'água. Note como a pressão neutra é zero acima do NA!",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='actions']",
+      title: "💾 Salvar e Exportar",
+      content: "Salve perfis completos, exporte em PDF/Excel ou carregue outros exemplos pré-configurados! O botão de exemplos possui perfis típicos para você explorar.",
+      placement: "bottom",
+      spotlightPadding: 12,
+    },
+  ];
+
+  // Iniciar tour automaticamente na primeira visita
+  useEffect(() => {
+    const initTour = async () => {
+      const hasSeenTour = localStorage.getItem('tour-seen-tensoes-geostaticas');
+      if (hasSeenTour === 'true') return;
+      
+      // Carregar exemplo de perfil de 3 camadas para demonstração
+      const exemploParaTour = {
+        icon: "🏗️",
+        nome: "Perfil Estratificado com NA",
+        descricao: "Perfil típico com 3 camadas e nível d'água",
+        profundidadeNA: "2.0",
+        alturaCapilar: "0.5",
+        pesoEspecificoAgua: "10.0",
+        camadas: [
+          { 
+            id: crypto.randomUUID(), 
+            nome: "Areia Fina", 
+            espessura: "3.0", 
+            profundidadeNA: "2.0", 
+            capilaridade: "0.5", 
+            gamaNat: "17.0", 
+            gamaSat: "19.5", 
+            Ko: "0.45",
+            impermeavel: false 
+          },
+          { 
+            id: crypto.randomUUID(), 
+            nome: "Argila Mole", 
+            espessura: "5.0", 
+            profundidadeNA: "", 
+            capilaridade: "", 
+            gamaNat: "", 
+            gamaSat: "17.0", 
+            Ko: "0.60",
+            impermeavel: false 
+          },
+          { 
+            id: crypto.randomUUID(), 
+            nome: "Areia Média", 
+            espessura: "5.0", 
+            profundidadeNA: "", 
+            capilaridade: "", 
+            gamaNat: "", 
+            gamaSat: "20.0", 
+            Ko: "0.40",
+            impermeavel: false 
+          },
+        ],
+      };
+      
+      // Carregar exemplo no formulário
+      handleSelectExample(exemploParaTour as any);
+      
+      // Aguardar formulário ser preenchido
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Calcular automaticamente
+      form.handleSubmit(onSubmit)();
+      
+      // Aguardar cálculo completar
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      // Iniciar tour
+      startTour(tourSteps, "tensoes-geostaticas");
+    };
+    
+    const timer = setTimeout(initTour, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (fields.length > 0) {
@@ -327,9 +473,77 @@ export default function TensoesGeostaticas() {
     toast("Perfil carregado!", { description: `"${calculation.name}" foi carregado com sucesso.` });
   };
 
-  const handleExportPDF = async () => {
+  const handleStartTour = async () => {
+    // Carregar exemplo de perfil de 3 camadas para demonstração
+    const exemploParaTour = {
+      icon: "🏗️",
+      nome: "Perfil Estratificado com NA",
+      descricao: "Perfil típico com 3 camadas e nível d'água",
+      profundidadeNA: "2.0",
+      alturaCapilar: "0.5",
+      pesoEspecificoAgua: "10.0",
+      camadas: [
+        { 
+          id: crypto.randomUUID(), 
+          nome: "Areia Fina", 
+          espessura: "3.0", 
+          profundidadeNA: "2.0", 
+          capilaridade: "0.5", 
+          gamaNat: "17.0", 
+          gamaSat: "19.5", 
+          Ko: "0.45",
+          impermeavel: false 
+        },
+        { 
+          id: crypto.randomUUID(), 
+          nome: "Argila Mole", 
+          espessura: "5.0", 
+          profundidadeNA: "", 
+          capilaridade: "", 
+          gamaNat: "", 
+          gamaSat: "17.0", 
+          Ko: "0.60",
+          impermeavel: false 
+        },
+        { 
+          id: crypto.randomUUID(), 
+          nome: "Areia Média", 
+          espessura: "5.0", 
+          profundidadeNA: "", 
+          capilaridade: "", 
+          gamaNat: "", 
+          gamaSat: "20.0", 
+          Ko: "0.40",
+          impermeavel: false 
+        },
+      ],
+    };
+    
+    handleSelectExample(exemploParaTour as any);
+    
+    await new Promise(resolve => setTimeout(resolve, 300));
+    form.handleSubmit(onSubmit)();
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    startTour(tourSteps, "tensoes-geostaticas", true);
+    toast("Tour iniciado!", { description: "Exemplo de 3 camadas carregado para demonstração." });
+  };
+
+  const handleExportPDF = () => {
+    if (!results) return;
+    
+    // Gerar nome padrão usando a função auxiliar
+    const defaultName = generateDefaultPDFFileName("Tensões Geostáticas");
+    
+    setPdfFileName(defaultName);
+    setExportPDFDialogOpen(true);
+  };
+
+  const handleConfirmExportPDF = async () => {
     if (!results) return;
     const formData = form.getValues();
+
+    setIsExportingPDF(true);
 
     toast("Capturando gráficos...");
     const perfilImage = await captureChartAsImage('perfil-tensoes-chart');
@@ -360,13 +574,18 @@ export default function TensoesGeostaticas() {
       moduleTitle: "Tensões Geostáticas",
       inputs,
       results: resultsList,
-      chartImage: perfilImage || diagramaImage || undefined
+      chartImage: perfilImage || diagramaImage || undefined,
+      customFileName: pdfFileName
     };
 
     toast("Gerando PDF...");
     const success = await exportToPDF(exportData);
+    
+    setIsExportingPDF(false);
+    
     if (success) {
       toast("PDF exportado!", { description: "O arquivo foi baixado com sucesso." });
+      setExportPDFDialogOpen(false);
     } else {
       toast("Erro ao exportar", { description: "Não foi possível gerar o PDF." });
     }
@@ -559,7 +778,7 @@ export default function TensoesGeostaticas() {
       <PrintHeader moduleTitle="Tensões Geostáticas" moduleName="tensoes-geostaticas" />
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 animate-in fade-in slide-in-from-left-4 duration-500">
+      <div className="flex items-center justify-between gap-3 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
             <Layers className="w-6 h-6 text-white" />
@@ -570,9 +789,26 @@ export default function TensoesGeostaticas() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-tour="actions">
           <DialogExemplos onSelectExample={handleSelectExample} disabled={isCalculating} />
-          <DialogConfiguracoes configInicial={config} onConfirm={handleConfigChange} disabled={isCalculating} />
+          <div data-tour="config-button">
+            <DialogConfiguracoes configInicial={config} onConfirm={handleConfigChange} disabled={isCalculating} />
+          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleStartTour}
+                className="h-10 w-10"
+              >
+                <GraduationCap className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Iniciar tour guiado</p>
+            </TooltipContent>
+          </Tooltip>
           <TooltipProvider>
             <CalculationActions
               onSave={handleSaveClick}
@@ -617,7 +853,7 @@ export default function TensoesGeostaticas() {
             <CardContent className="space-y-3 p-4 pt-0 flex-1">
               <TooltipProvider>
                 {/* Perfil de Solo Interativo */}
-                <div className="space-y-2">
+                <div className="space-y-2" data-tour="diagrama-camadas">
                   <DiagramaCamadas 
                     camadas={camadasParaTabela} 
                     profundidadeNA={profNA} 
@@ -632,7 +868,7 @@ export default function TensoesGeostaticas() {
             </CardContent>
 
             <CardFooter className="flex gap-2 pt-3 border-t border-border/50 mt-auto">
-              <Button type="submit" disabled={!canSubmit} className="flex-1 h-9">
+              <Button type="submit" disabled={!canSubmit} className="flex-1 h-9" data-tour="btn-calcular">
                 <CalcIcon className="w-4 h-4 mr-1.5" />
                 {isCalculating ? "Calculando..." : "Calcular"}
               </Button>
@@ -656,7 +892,7 @@ export default function TensoesGeostaticas() {
         <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
           {/* Tabs com Tabela e Perfil de Tensões */}
           {!isCalculating && results && results.pontos_calculo && results.pontos_calculo.length > 0 && (
-            <Tabs defaultValue="tabela" className="w-full">
+            <Tabs defaultValue="tabela" className="w-full" data-tour="tabs-resultados">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="tabela">Tabela de Resultados</TabsTrigger>
                 <TabsTrigger value="grafico">Perfil de Tensões</TabsTrigger>
@@ -685,6 +921,15 @@ export default function TensoesGeostaticas() {
         saveName={saveName}
         onSaveNameChange={setSaveName}
         onConfirm={handleConfirmSave}
+      />
+
+      <ExportPDFDialog
+        open={exportPDFDialogOpen}
+        onOpenChange={setExportPDFDialogOpen}
+        fileName={pdfFileName}
+        onFileNameChange={setPdfFileName}
+        onConfirm={handleConfirmExportPDF}
+        isExporting={isExportingPDF}
       />
 
       <SavedCalculations

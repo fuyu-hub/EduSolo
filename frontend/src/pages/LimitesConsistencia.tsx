@@ -31,7 +31,8 @@ import SavedCalculations from "@/components/SavedCalculations";
 import SaveDialog from "@/components/SaveDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
-import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, captureChartAsImage } from "@/lib/export-utils";
+import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
+import ExportPDFDialog from "@/components/ExportPDFDialog";
 import DialogExemplos from "@/components/limites/DialogExemplos";
 import { ExemploLimites, exemplosLimites } from "@/lib/exemplos-limites";
 
@@ -130,6 +131,11 @@ export default function LimitesConsistencia() {
   const [saveName, setSaveName] = useState("");
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
   const { calculations, saveCalculation, deleteCalculation, renameCalculation } = useSavedCalculations("limites-consistencia");
+
+  // Estados para exportação PDF
+  const [exportPDFDialogOpen, setExportPDFDialogOpen] = useState(false);
+  const [pdfFileName, setPdfFileName] = useState("");
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
   const plasticityChartRef = useRef<PlasticityChartRef>(null);
 
   // Definição dos steps do tour
@@ -336,24 +342,29 @@ export default function LimitesConsistencia() {
     });
   };
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = () => {
+    if (!results) return;
+    
+    // Gerar nome padrão usando a função auxiliar
+    const defaultName = generateDefaultPDFFileName("Limites de Consistência");
+    
+    setPdfFileName(defaultName);
+    setExportPDFDialogOpen(true);
+  };
+
+  const handleConfirmExportPDF = async () => {
     if (!results) return;
     const formData = form.getValues();
     
-    // Capturar imagem do gráfico de plasticidade
+    setIsExportingPDF(true);
+    
+    // Capturar imagem do gráfico de plasticidade usando a função do componente
     toast({ title: "Capturando gráfico..." });
-    const chartImage = await captureChartAsImage('plasticity-chart');
+    const chartImage = plasticityChartRef.current 
+      ? await plasticityChartRef.current.getImageForExport()
+      : null;
     
     const inputs: { label: string; value: string }[] = [];
-    formData.pontosLL.forEach((p, i) => {
-      inputs.push({ label: `Ponto LL ${i + 1} - Golpes`, value: p.numGolpes });
-      inputs.push({ label: `Ponto LL ${i + 1} - Massa Úmida+Rec`, value: `${p.massaUmidaRecipiente} g` });
-      inputs.push({ label: `Ponto LL ${i + 1} - Massa Seca+Rec`, value: `${p.massaSecaRecipiente} g` });
-      inputs.push({ label: `Ponto LL ${i + 1} - Massa Recipiente`, value: `${p.massaRecipiente} g` });
-    });
-    inputs.push({ label: "LP - Massa Úmida+Rec", value: `${formData.massaUmidaRecipienteLP} g` });
-    inputs.push({ label: "LP - Massa Seca+Rec", value: `${formData.massaSecaRecipienteLP} g` });
-    inputs.push({ label: "LP - Massa Recipiente", value: `${formData.massaRecipienteLP} g` });
     if (formData.umidadeNatural) inputs.push({ label: "Umidade Natural", value: `${formData.umidadeNatural}%` });
     if (formData.percentualArgila) inputs.push({ label: "% Argila", value: `${formData.percentualArgila}%` });
 
@@ -367,18 +378,57 @@ export default function LimitesConsistencia() {
     if (results.atividade_argila !== null) resultsList.push({ label: "Atividade Argila (Ia)", value: formatNumberForExport(results.atividade_argila, 2) });
     if (results.classificacao_atividade) resultsList.push({ label: "Classificação Atividade", value: results.classificacao_atividade });
 
+    // Preparar tabelas de dados de entrada
+    const tables = [];
+
+    // TABELA 1: Ensaio de Limite de Liquidez
+    const llHeaders = ["Ponto", "Nº Golpes", "Massa Úmida+Rec (g)", "Massa Seca+Rec (g)", "Massa Recipiente (g)"];
+    const llRows = formData.pontosLL.map((p, i) => [
+      `${i + 1}`,
+      p.numGolpes,
+      p.massaUmidaRecipiente,
+      p.massaSecaRecipiente,
+      p.massaRecipiente
+    ]);
+
+    tables.push({
+      title: "Ensaio de Limite de Liquidez (LL)",
+      headers: llHeaders,
+      rows: llRows
+    });
+
+    // TABELA 2: Ensaio de Limite de Plasticidade
+    const lpHeaders = ["Parâmetro", "Valor (g)"];
+    const lpRows = [
+      ["Massa Úmida + Recipiente", formData.massaUmidaRecipienteLP],
+      ["Massa Seca + Recipiente", formData.massaSecaRecipienteLP],
+      ["Massa do Recipiente", formData.massaRecipienteLP]
+    ];
+
+    tables.push({
+      title: "Ensaio de Limite de Plasticidade (LP)",
+      headers: lpHeaders,
+      rows: lpRows
+    });
+
     const exportData: ExportData = {
       moduleName: "limites-consistencia",
       moduleTitle: "Limites de Consistência",
       inputs,
       results: resultsList,
-      chartImage: chartImage || undefined
+      tables,
+      chartImage: chartImage || undefined,
+      customFileName: pdfFileName
     };
 
     toast({ title: "Gerando PDF..." });
     const success = await exportToPDF(exportData);
+    
+    setIsExportingPDF(false);
+    
     if (success) {
       toast({ title: "PDF exportado!", description: "O arquivo foi baixado com sucesso." });
+      setExportPDFDialogOpen(false);
     } else {
       toast({ title: "Erro ao exportar", description: "Não foi possível gerar o PDF.", variant: "destructive" });
     }
@@ -721,6 +771,15 @@ export default function LimitesConsistencia() {
         saveName={saveName}
         onSaveNameChange={setSaveName}
         onConfirm={handleConfirmSave}
+      />
+
+      <ExportPDFDialog
+        open={exportPDFDialogOpen}
+        onOpenChange={setExportPDFDialogOpen}
+        fileName={pdfFileName}
+        onFileNameChange={setPdfFileName}
+        onConfirm={handleConfirmExportPDF}
+        isExporting={isExportingPDF}
       />
 
       <SavedCalculations

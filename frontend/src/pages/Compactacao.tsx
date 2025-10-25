@@ -1,10 +1,10 @@
 // frontend/src/pages/Compactacao.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Hammer, Info, Calculator as CalcIcon, Plus, Trash2, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer } from "lucide-react";
+import { Hammer, Info, Calculator as CalcIcon, Plus, Trash2, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, GraduationCap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,12 +17,14 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
+import { useTour, TourStep } from "@/contexts/TourContext";
 import SavedCalculations from "@/components/SavedCalculations";
 import SaveDialog from "@/components/SaveDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
-import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, captureChartAsImage } from "@/lib/export-utils";
-import CurvaCompactacao from "@/components/compactacao/CurvaCompactacao";
+import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
+import ExportPDFDialog from "@/components/ExportPDFDialog";
+import CurvaCompactacao, { CurvaCompactacaoRef } from "@/components/compactacao/CurvaCompactacao";
 import TabelaResultados from "@/components/compactacao/TabelaResultados";
 import DialogExemplos from "@/components/compactacao/DialogExemplos";
 import { ExemploCompactacao } from "@/lib/exemplos-compactacao";
@@ -105,6 +107,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export default function Compactacao() {
   const { toast: toastFn } = { toast };
+  const { startTour } = useTour();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
   const form = useForm<FormInputValues>({
@@ -134,6 +137,120 @@ export default function Compactacao() {
   const [saveName, setSaveName] = useState("");
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
   const { calculations, saveCalculation, deleteCalculation, renameCalculation } = useSavedCalculations("compactacao");
+
+  // Estados para exportação PDF
+  const [exportPDFDialogOpen, setExportPDFDialogOpen] = useState(false);
+  const [pdfFileName, setPdfFileName] = useState("");
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+
+  // Ref para o gráfico de compactação
+  const curvaCompactacaoRef = useRef<CurvaCompactacaoRef>(null);
+
+  // Definição dos steps do tour
+  const tourSteps: TourStep[] = [
+    {
+      target: "[data-tour='module-header']",
+      title: "🔨 Bem-vindo ao Ensaio de Compactação!",
+      content: "Este módulo permite analisar curvas de compactação (Proctor Normal ou Modificado), determinando a umidade ótima e o peso específico seco máximo do solo.",
+      placement: "bottom",
+      spotlightPadding: 16,
+    },
+    {
+      target: "[data-tour='config-gerais']",
+      title: "⚙️ Parâmetros Gerais",
+      content: "Configure o volume e peso do cilindro de compactação. O Gs (densidade relativa dos grãos) é opcional, mas necessário para traçar a curva de saturação teórica (S=100%).",
+      placement: "right",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='pontos-ensaio']",
+      title: "📋 Pontos do Ensaio",
+      content: "Adicione os pontos do ensaio (mínimo 3). Para cada ponto, registre: peso da amostra compactada + cilindro e as massas para determinação de umidade.",
+      placement: "right",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='navegacao-pontos']",
+      title: "◀️▶️ Navegação entre Pontos",
+      content: "Use as setas para navegar entre os pontos. Adicione (+) ou remova (🗑️) pontos conforme necessário. Mais pontos resultam em uma curva mais precisa!",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='btn-calcular']",
+      title: "⚡ Processar Ensaio",
+      content: "Após preencher todos os pontos, clique aqui para processar o ensaio. O sistema traçará a curva de compactação e determinará automaticamente os parâmetros ótimos.",
+      placement: "top",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='resultados']",
+      title: "📊 Tabela de Resultados",
+      content: "Visualize os dados calculados para cada ponto: umidade (w%) e peso específico seco (γd). O ponto ótimo é destacado em verde. Use as setas para navegar entre slides.",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='parametros-otimos']",
+      title: "🎯 Parâmetros Ótimos",
+      content: "Aqui estão os valores ótimos determinados: umidade ótima (w_ot) e peso específico seco máximo (γd,máx). Estes são essenciais para especificação de compactação em campo!",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='resultados']",
+      title: "📈 Curva de Compactação",
+      content: "No segundo slide, visualize a curva completa traçando umidade × γd. Se forneceu Gs, a curva de saturação S=100% também é exibida, mostrando o limite teórico.",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='actions']",
+      title: "💾 Salvar e Exportar",
+      content: "Salve seus ensaios para consulta posterior ou exporte em PDF/Excel. Use o botão de exemplos para carregar ensaios pré-configurados e explorar o módulo!",
+      placement: "bottom",
+      spotlightPadding: 12,
+    },
+  ];
+
+  // Iniciar tour automaticamente na primeira visita
+  useEffect(() => {
+    const initTour = async () => {
+      const hasSeenTour = localStorage.getItem('tour-seen-compactacao');
+      if (hasSeenTour === 'true') return;
+      
+      // Carregar exemplo para demonstração (Areia Argilosa)
+      const exemploParaTour = {
+        icon: "🏜️",
+        nome: "Areia Argilosa",
+        descricao: "Curva típica de areia argilosa",
+        volumeCilindro: "982",
+        pesoCilindro: "4100",
+        Gs: "2.68",
+        pontos: [
+          { id: crypto.randomUUID(), pesoAmostaCilindro: "6012.5", pesoBrutoUmido: "106.56", pesoBrutoSeco: "93.69", tara: "24.72" },
+          { id: crypto.randomUUID(), pesoAmostaCilindro: "6102.0", pesoBrutoUmido: "115.23", pesoBrutoSeco: "100.14", tara: "28.65" },
+          { id: crypto.randomUUID(), pesoAmostaCilindro: "6150.0", pesoBrutoUmido: "122.78", pesoBrutoSeco: "104.82", tara: "26.13" },
+          { id: crypto.randomUUID(), pesoAmostaCilindro: "6138.0", pesoBrutoUmido: "118.44", pesoBrutoSeco: "99.28", tara: "25.87" },
+          { id: crypto.randomUUID(), pesoAmostaCilindro: "6095.0", pesoBrutoUmido: "114.92", pesoBrutoSeco: "94.63", tara: "27.41" },
+        ],
+      };
+      
+      handleSelectExample(exemploParaTour as any);
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Submeter automaticamente
+      form.handleSubmit(onSubmit)();
+      
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      startTour(tourSteps, "compactacao");
+    };
+    
+    const timer = setTimeout(initTour, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (fields.length > 0) {
@@ -232,12 +349,54 @@ export default function Compactacao() {
     toast("Ensaio carregado!", { description: `"${calculation.name}" foi carregado com sucesso.` });
   };
 
-  const handleExportPDF = async () => {
+  const handleStartTour = async () => {
+    const exemploParaTour = {
+      icon: "🏜️",
+      nome: "Areia Argilosa",
+      descricao: "Curva típica de areia argilosa",
+      volumeCilindro: "982",
+      pesoCilindro: "4100",
+      Gs: "2.68",
+      pontos: [
+        { id: crypto.randomUUID(), pesoAmostaCilindro: "6012.5", pesoBrutoUmido: "106.56", pesoBrutoSeco: "93.69", tara: "24.72" },
+        { id: crypto.randomUUID(), pesoAmostaCilindro: "6102.0", pesoBrutoUmido: "115.23", pesoBrutoSeco: "100.14", tara: "28.65" },
+        { id: crypto.randomUUID(), pesoAmostaCilindro: "6150.0", pesoBrutoUmido: "122.78", pesoBrutoSeco: "104.82", tara: "26.13" },
+        { id: crypto.randomUUID(), pesoAmostaCilindro: "6138.0", pesoBrutoUmido: "118.44", pesoBrutoSeco: "99.28", tara: "25.87" },
+        { id: crypto.randomUUID(), pesoAmostaCilindro: "6095.0", pesoBrutoUmido: "114.92", pesoBrutoSeco: "94.63", tara: "27.41" },
+      ],
+    };
+    
+    handleSelectExample(exemploParaTour as any);
+    
+    await new Promise(resolve => setTimeout(resolve, 300));
+    form.handleSubmit(onSubmit)();
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    startTour(tourSteps, "compactacao", true);
+    toast("Tour iniciado!", { description: "Exemplo carregado automaticamente para demonstração." });
+  };
+
+  const handleExportPDF = () => {
+    if (!results) return;
+    
+    // Gerar nome padrão usando a função auxiliar
+    const defaultName = generateDefaultPDFFileName("Compactação");
+    
+    setPdfFileName(defaultName);
+    setExportPDFDialogOpen(true);
+  };
+
+  const handleConfirmExportPDF = async () => {
     if (!results) return;
     const formData = form.getValues();
 
+    setIsExportingPDF(true);
+
+    // Capturar imagem do gráfico usando a função do componente
     toast("Capturando gráfico...");
-    const chartImage = await captureChartAsImage('curva-compactacao-chart');
+    const chartImage = curvaCompactacaoRef.current 
+      ? await curvaCompactacaoRef.current.getImageForExport()
+      : null;
 
     const inputs: { label: string; value: string }[] = [
       { label: "Volume do Cilindro", value: `${formData.volumeCilindro} cm³` },
@@ -245,29 +404,47 @@ export default function Compactacao() {
     ];
     if (formData.Gs) inputs.push({ label: "Densidade Relativa (Gs)", value: formData.Gs });
 
-    formData.pontos.forEach((p, i) => {
-      inputs.push({ label: `Ponto ${i + 1} - Peso Amostra+Cil`, value: `${p.pesoAmostaCilindro} g` });
-      inputs.push({ label: `Ponto ${i + 1} - Peso Bruto Úmido`, value: `${p.pesoBrutoUmido} g` });
-      inputs.push({ label: `Ponto ${i + 1} - Peso Bruto Seco`, value: `${p.pesoBrutoSeco} g` });
-      inputs.push({ label: `Ponto ${i + 1} - Tara`, value: `${p.tara} g` });
-    });
-
     const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
     if (results.umidade_otima !== null) resultsList.push({ label: "Umidade Ótima (w_ot)", value: `${formatNumberForExport(results.umidade_otima, 2)}%`, highlight: true });
     if (results.peso_especifico_seco_max !== null) resultsList.push({ label: "γ seco máximo", value: `${formatNumberForExport(results.peso_especifico_seco_max / 10, 3)} g/cm³`, highlight: true });
+
+    // Preparar tabelas de dados de entrada
+    const tables = [];
+
+    // TABELA 1: Dados do Ensaio de Compactação
+    const ensaioHeaders = ["Ponto", "Peso Amostra+Cilindro (g)", "Peso Bruto Úmido (g)", "Peso Bruto Seco (g)", "Tara (g)"];
+    const ensaioRows = formData.pontos.map((p, i) => [
+      `${i + 1}`,
+      p.pesoAmostaCilindro,
+      p.pesoBrutoUmido,
+      p.pesoBrutoSeco,
+      p.tara
+    ]);
+
+    tables.push({
+      title: "Dados do Ensaio de Compactação",
+      headers: ensaioHeaders,
+      rows: ensaioRows
+    });
 
     const exportData: ExportData = {
       moduleName: "compactacao",
       moduleTitle: "Compactação (Proctor)",
       inputs,
       results: resultsList,
-      chartImage: chartImage || undefined
+      tables,
+      chartImage: chartImage || undefined,
+      customFileName: pdfFileName
     };
 
     toast("Gerando PDF...");
     const success = await exportToPDF(exportData);
+    
+    setIsExportingPDF(false);
+    
     if (success) {
       toast("PDF exportado!", { description: "O arquivo foi baixado com sucesso." });
+      setExportPDFDialogOpen(false);
     } else {
       toast("Erro ao exportar", { description: "Não foi possível gerar o PDF." });
     }
@@ -385,7 +562,7 @@ export default function Compactacao() {
       <PrintHeader moduleTitle="Compactação (Proctor)" moduleName="compactacao" />
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 animate-in fade-in slide-in-from-left-4 duration-500">
+      <div className="flex items-center justify-between gap-3 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
             <Hammer className="w-6 h-6 text-white" />
@@ -396,8 +573,23 @@ export default function Compactacao() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-tour="actions">
           <DialogExemplos onSelectExample={handleSelectExample} disabled={isCalculating} />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleStartTour}
+                className="h-10 w-10"
+              >
+                <GraduationCap className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Iniciar tour guiado</p>
+            </TooltipContent>
+          </Tooltip>
           <TooltipProvider>
             <CalculationActions
               onSave={handleSaveClick}
@@ -424,7 +616,7 @@ export default function Compactacao() {
             <CardContent className="space-y-3 p-4 pt-0 flex-1">
               <TooltipProvider>
                 {/* Dados Fixos */}
-                <div className="space-y-3 p-3 rounded-lg bg-accent/5 border border-accent/20">
+                <div className="space-y-3 p-3 rounded-lg bg-accent/5 border border-accent/20" data-tour="config-gerais">
                   <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                     <Info className="w-4 h-4 text-orange-500" />
                     Parâmetros Gerais
@@ -526,7 +718,7 @@ export default function Compactacao() {
                 </div>
 
                 {/* Pontos do Ensaio */}
-                <Accordion type="single" collapsible defaultValue="pontos" className="w-full">
+                <Accordion type="single" collapsible defaultValue="pontos" className="w-full" data-tour="pontos-ensaio">
                   <AccordionItem value="pontos" className="border-0">
                     <AccordionTrigger className="text-sm font-semibold text-foreground bg-accent/5 hover:bg-accent/10 px-3 py-2 rounded-lg border border-accent/20 [&[data-state=open]]:rounded-b-none">
                       <div className="flex items-center gap-1.5">
@@ -535,7 +727,7 @@ export default function Compactacao() {
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="p-0 pt-2">
-                      <div className="space-y-2 rounded-lg bg-background/30 border border-accent/20 border-t-0 rounded-t-none p-3">
+                      <div className="space-y-2 rounded-lg bg-background/30 border border-accent/20 border-t-0 rounded-t-none p-3" data-tour="navegacao-pontos">
                         <div className="flex items-center justify-between mb-1">
                           <h4 className="font-medium text-xs text-muted-foreground">
                             Ponto {currentPointIndex + 1} / {fields.length}
@@ -687,7 +879,7 @@ export default function Compactacao() {
             </CardContent>
 
             <CardFooter className="flex gap-3 pt-3 border-t border-border/50 mt-auto">
-              <Button type="submit" disabled={!canSubmit} className="flex-1 h-9">
+              <Button type="submit" disabled={!canSubmit} className="flex-1 h-9" data-tour="btn-calcular">
                 <CalcIcon className="w-4 h-4 mr-1.5" />
                 {isCalculating ? "Calculando..." : "Calcular"}
               </Button>
@@ -724,14 +916,14 @@ export default function Compactacao() {
                 <Skeleton className="h-[280px] w-full mt-2" />
               </div>
             ) : results && !results.erro && results.pontos_curva_compactacao ? (
-              <Carousel className="w-full px-8 relative">
+              <Carousel className="w-full px-8 relative" data-tour="resultados">
                 <CarouselContent>
                   {/* Slide 1: Tabela de Resultados */}
                   <CarouselItem>
                     <div className="space-y-2">
                       <TabelaResultados pontos={results.pontos_curva_compactacao} indiceMaximo={indiceMaximo} />
                       {/* Cards com valores principais */}
-                      <div className="grid grid-cols-2 gap-2 mt-3">
+                      <div className="grid grid-cols-2 gap-2 mt-3" data-tour="parametros-otimos">
                         {results.umidade_otima !== null && (
                           <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20">
                             <p className="text-xs text-muted-foreground mb-0.5">Umidade Ótima</p>
@@ -752,6 +944,7 @@ export default function Compactacao() {
                   <CarouselItem>
                     <div id="curva-compactacao-chart">
                       <CurvaCompactacao
+                        ref={curvaCompactacaoRef}
                         pontosEnsaio={results.pontos_curva_compactacao}
                         umidadeOtima={results.umidade_otima ?? undefined}
                         gamaSecoMax={results.peso_especifico_seco_max ?? undefined}
@@ -782,6 +975,15 @@ export default function Compactacao() {
         saveName={saveName}
         onSaveNameChange={setSaveName}
         onConfirm={handleConfirmSave}
+      />
+
+      <ExportPDFDialog
+        open={exportPDFDialogOpen}
+        onOpenChange={setExportPDFDialogOpen}
+        fileName={pdfFileName}
+        onFileNameChange={setPdfFileName}
+        onConfirm={handleConfirmExportPDF}
+        isExporting={isExportingPDF}
       />
 
       <SavedCalculations

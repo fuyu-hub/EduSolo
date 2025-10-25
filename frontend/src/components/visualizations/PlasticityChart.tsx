@@ -22,6 +22,7 @@ interface PlasticityChartProps {
 
 export interface PlasticityChartRef {
   exportAsJPG: () => Promise<void>;
+  getImageForExport: () => Promise<string | null>;
 }
 
 // Informações das zonas de classificação
@@ -606,9 +607,29 @@ const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ 
     }
   };
 
-  // Expor a função de exportação via ref
+  // Função para obter imagem para exportação (sem download)
+  const getImageForExport = async (): Promise<string | null> => {
+    if (!chartRef.current) return null;
+    
+    try {
+      const canvas = await html2canvas(chartRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2, // Maior qualidade
+        logging: false,
+      });
+      
+      // Converter para PNG para melhor qualidade no PDF
+      return canvas.toDataURL('image/png');
+    } catch (error) {
+      console.error('Erro ao capturar imagem:', error);
+      return null;
+    }
+  };
+
+  // Expor as funções via ref
   useImperativeHandle(ref, () => ({
-    exportAsJPG: handleExportJPG
+    exportAsJPG: handleExportJPG,
+    getImageForExport: getImageForExport
   }));
 
   // Fecha o popup ao clicar fora

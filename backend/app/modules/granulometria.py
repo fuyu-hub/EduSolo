@@ -290,7 +290,10 @@ def _calcular_diametro_caracteristico(
     percentual_passante: float
 ) -> Optional[float]:
     """
-    Calcula o diâmetro característico (D10, D30, D60) por interpolação linear.
+    Calcula o diâmetro característico (D10, D30, D60) por interpolação logarítmica.
+    
+    A interpolação é feita em escala logarítmica pois a curva granulométrica
+    é plotada em escala semi-log (log no eixo x das aberturas).
     
     Args:
         dados: Lista de pontos granulométricos ordenados por abertura decrescente
@@ -299,6 +302,8 @@ def _calcular_diametro_caracteristico(
     Returns:
         Diâmetro em mm correspondente ao percentual passante, ou None se não for possível calcular
     """
+    import math
+    
     if len(dados) < 2:
         return None
     
@@ -310,17 +315,25 @@ def _calcular_diametro_caracteristico(
         # p1 tem abertura maior e p2 tem abertura menor
         # p1 tem passante maior e p2 tem passante menor (ou igual)
         if p1.porc_passante >= percentual_passante >= p2.porc_passante:
-            # Interpolação linear
+            # Interpolação logarítmica
             if abs(p1.porc_passante - p2.porc_passante) < EPSILON:
-                # Se as porcentagens passantes são iguais, retorna a média das aberturas
-                return (p1.abertura + p2.abertura) / 2
+                # Se as porcentagens passantes são iguais, retorna a média geométrica das aberturas
+                return round(math.sqrt(p1.abertura * p2.abertura), 4)
             
-            # d = d2 + (d1 - d2) * (p - p2) / (p1 - p2)
-            diametro = p2.abertura + (
-                (p1.abertura - p2.abertura) * 
+            # Converter aberturas para escala logarítmica
+            log_d1 = math.log10(p1.abertura)
+            log_d2 = math.log10(p2.abertura)
+            
+            # Interpolação linear no espaço logarítmico
+            # log(d) = log(d2) + (log(d1) - log(d2)) * (p - p2) / (p1 - p2)
+            log_diametro = log_d2 + (
+                (log_d1 - log_d2) * 
                 (percentual_passante - p2.porc_passante) / 
                 (p1.porc_passante - p2.porc_passante)
             )
+            
+            # Converter de volta para escala linear
+            diametro = math.pow(10, log_diametro)
             
             return round(diametro, 4)
     

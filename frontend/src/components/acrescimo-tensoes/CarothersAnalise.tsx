@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { ArrowLeft, Target, BookOpen } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { ArrowLeft, Target, BookOpen, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import axios from "axios";
@@ -17,12 +17,14 @@ import { useSettings } from "@/hooks/use-settings";
 
 interface CarothersAnaliseProps {
   onVoltar: () => void;
+  onStartTour?: () => void;
+  onLoadExampleRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-export default function CarothersAnalise({ onVoltar }: CarothersAnaliseProps) {
+export default function CarothersAnalise({ onVoltar, onStartTour, onLoadExampleRef }: CarothersAnaliseProps) {
   // Configurações
   const { settings } = useSettings();
   
@@ -287,18 +289,24 @@ export default function CarothersAnalise({ onVoltar }: CarothersAnaliseProps) {
   };
 
   const handleCarregarExemplos = () => {
-    // Exemplo baseado em material didático:
-    // Fundação corrida com B = 4 m, q = 100 kPa
-    setCargaQ(100);
-    setLargura(4);
+    // Exemplo: Fundação corrida com B = 3 m, q = 50 kPa
+    setCargaQ(50);
+    setLargura(3);
     setPontos([
       { id: 'exemplo-a', nome: 'Ponto A (Centro)', x: 0, z: 2, tensao: undefined },
-      { id: 'exemplo-b', nome: 'Ponto B (Borda)', x: 2, z: 2, tensao: undefined },
-      { id: 'exemplo-c', nome: 'Ponto C (Externo)', x: 4, z: 2, tensao: undefined }
+      { id: 'exemplo-b', nome: 'Ponto B (Borda)', x: 1.5, z: 3, tensao: undefined },
+      { id: 'exemplo-c', nome: 'Ponto C (Externo)', x: 4, z: 4, tensao: undefined }
     ]);
     setCalculoFeito(false);
-    toast("Exemplos carregados!", { description: "Baseado em B=4m, q=100kPa. Clique em 'Calcular'." });
+    toast("Exemplo carregado!", { description: "3 pontos de análise prontos." });
   };
+
+  // Expor função de carregar exemplo para o tour
+  useEffect(() => {
+    if (onLoadExampleRef) {
+      onLoadExampleRef.current = handleCarregarExemplos;
+    }
+  }, [onLoadExampleRef]);
 
   const temResultados = pontos.some(p => p.tensao !== undefined);
   
@@ -311,7 +319,7 @@ export default function CarothersAnalise({ onVoltar }: CarothersAnaliseProps) {
       <PrintHeader moduleTitle="Carothers - Carga em Faixa" moduleName="carothers" />
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3" data-tour="header">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={onVoltar}>
             <ArrowLeft className="w-5 h-5" />
@@ -328,18 +336,25 @@ export default function CarothersAnalise({ onVoltar }: CarothersAnaliseProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {onStartTour && (
+            <Button variant="outline" size="icon" onClick={onStartTour} title="Iniciar tutorial">
+              <GraduationCap className="w-4 h-4" />
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleCarregarExemplos}>
             <BookOpen className="w-4 h-4 mr-2" />
             Exemplos
           </Button>
-          <CalculationActions
-            onSave={handleSaveClick}
-            onLoad={() => setLoadDialogOpen(true)}
-            onExportPDF={handleExportarPDF}
-            onExportExcel={handleExportarExcel}
-            hasResults={temResultados}
-            isCalculating={isCalculating}
-          />
+          <div data-tour="actions">
+            <CalculationActions
+              onSave={handleSaveClick}
+              onLoad={() => setLoadDialogOpen(true)}
+              onExportPDF={handleExportarPDF}
+              onExportExcel={handleExportarExcel}
+              hasResults={temResultados}
+              isCalculating={isCalculating}
+            />
+          </div>
         </div>
       </div>
 

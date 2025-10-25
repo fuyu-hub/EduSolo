@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { ArrowLeft, Square, BookOpen, Settings } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { ArrowLeft, Square, BookOpen, Settings, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import axios from "axios";
@@ -19,11 +19,13 @@ import DialogConfiguracoesNewmark from "./DialogConfiguracoesNewmark";
 
 interface NewmarkAnaliseProps {
   onVoltar: () => void;
+  onStartTour?: () => void;
+  onLoadExampleRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-export default function NewmarkAnalise({ onVoltar }: NewmarkAnaliseProps) {
+export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef }: NewmarkAnaliseProps) {
   // Configurações
   const { settings } = useSettings();
   
@@ -353,6 +355,29 @@ export default function NewmarkAnalise({ onVoltar }: NewmarkAnaliseProps) {
     toast("Exemplo carregado!", { description: exemplo.titulo });
   };
 
+  const handleCarregarExemploParaTour = () => {
+    // Exemplo padrão para o tour: Sapata 4m × 3m, q=200 kPa
+    const exemploPadrao = {
+      titulo: "Sapata 4m × 3m",
+      largura: 3,
+      comprimento: 4,
+      intensidade: 200,
+      pontos: [
+        { nome: "Ponto A (Centro)", x: 0, y: 0, z: 2 },
+        { nome: "Ponto B (Borda)", x: 2, y: 0, z: 3 },
+        { nome: "Ponto C (Canto)", x: 2, y: 1.5, z: 4 }
+      ]
+    };
+    handleCarregarExemplo(exemploPadrao);
+  };
+
+  // Expor função de carregar exemplo para o tour
+  useEffect(() => {
+    if (onLoadExampleRef) {
+      onLoadExampleRef.current = handleCarregarExemploParaTour;
+    }
+  }, [onLoadExampleRef]);
+
   const handleToggleMetodo = (usar: boolean) => {
     setUsarAbaco(usar);
     setPontos(prevPontos => prevPontos.map(p => ({ ...p, tensao: undefined })));
@@ -367,7 +392,7 @@ export default function NewmarkAnalise({ onVoltar }: NewmarkAnaliseProps) {
       <PrintHeader moduleTitle="Newmark - Carga Retangular" moduleName="newmark" />
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3" data-tour="header">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={onVoltar}>
             <ArrowLeft className="w-5 h-5" />
@@ -384,6 +409,11 @@ export default function NewmarkAnalise({ onVoltar }: NewmarkAnaliseProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {onStartTour && (
+            <Button variant="outline" size="icon" onClick={onStartTour} title="Iniciar tutorial">
+              <GraduationCap className="w-4 h-4" />
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => setConfiguracoesDialogOpen(true)}>
             <Settings className="w-4 h-4 mr-2" />
             Configurações
@@ -392,14 +422,16 @@ export default function NewmarkAnalise({ onVoltar }: NewmarkAnaliseProps) {
             <BookOpen className="w-4 h-4 mr-2" />
             Exemplos
           </Button>
-          <CalculationActions
-            onSave={handleSaveClick}
-            onLoad={() => setLoadDialogOpen(true)}
-            onExportPDF={handleExportarPDF}
-            onExportExcel={handleExportarExcel}
-            hasResults={temResultados}
-            isCalculating={isCalculating}
-          />
+          <div data-tour="actions">
+            <CalculationActions
+              onSave={handleSaveClick}
+              onLoad={() => setLoadDialogOpen(true)}
+              onExportPDF={handleExportarPDF}
+              onExportExcel={handleExportarExcel}
+              hasResults={temResultados}
+              isCalculating={isCalculating}
+            />
+          </div>
         </div>
       </div>
 

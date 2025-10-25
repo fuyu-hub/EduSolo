@@ -1,8 +1,12 @@
-import { TrendingDown, Layers, Circle, Square, MapPin } from "lucide-react";
+import { useEffect } from "react";
+import { TrendingDown, Layers, Circle, Square, MapPin, GraduationCap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PrintHeader from "@/components/PrintHeader";
 import { useNavigate } from "react-router-dom";
+import { useTour, TourStep } from "@/contexts/TourContext";
 
 const metodos = [
   {
@@ -53,6 +57,73 @@ const metodos = [
 
 export default function AcrescimoTensoes() {
   const navigate = useNavigate();
+  const { startTour } = useTour();
+
+  const tourSteps: TourStep[] = [
+    {
+      target: "[data-tour='header']",
+      title: "🎯 Bem-vindo ao Acréscimo de Tensões!",
+      content: "Este módulo permite analisar a distribuição de tensões no solo devido a diferentes tipos de carregamentos superficiais. Escolha o método adequado ao seu caso!",
+      placement: "bottom",
+      spotlightPadding: 16,
+    },
+    {
+      target: "[data-tour='metodos-grid']",
+      title: "📐 Métodos Disponíveis",
+      content: "Cada método é adequado para um tipo específico de carregamento. Clique em qualquer card para acessar o módulo correspondente.",
+      placement: "bottom",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='metodo-boussinesq']",
+      title: "📍 Boussinesq - Carga Pontual",
+      content: "Para cargas concentradas como estacas, postes e torres. Solução clássica para carga pontual vertical.",
+      placement: "right",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='metodo-carothers']",
+      title: "📏 Carothers - Carga em Faixa",
+      content: "Para cargas distribuídas em faixas como fundações corridas, muros de arrimo e aterros lineares.",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='metodo-love']",
+      title: "⭕ Love - Carga Circular",
+      content: "Para cargas circulares como tanques, silos e fundações circulares. Utiliza simetria axial.",
+      placement: "right",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='metodo-newmark']",
+      title: "⬛ Newmark - Carga Retangular",
+      content: "Para sapatas e fundações rasas retangulares. Método do fator de influência para áreas retangulares.",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='info-card']",
+      title: "ℹ️ Análise 2D Interativa",
+      content: "Todos os métodos incluem visualização 2D interativa, permitindo adicionar múltiplos pontos de análise e comparar resultados!",
+      placement: "top",
+      spotlightPadding: 12,
+    },
+  ];
+
+  useEffect(() => {
+    const initTour = () => {
+      const hasSeenTour = localStorage.getItem('tour-seen-acrescimo-tensoes');
+      if (hasSeenTour !== 'true') {
+        setTimeout(() => startTour(tourSteps, "acrescimo-tensoes"), 800);
+      }
+    };
+    initTour();
+  }, []);
+
+  const handleStartTour = () => {
+    startTour(tourSteps, "acrescimo-tensoes", true);
+  };
 
   const handleMetodoClick = (metodo: typeof metodos[0]) => {
     if (metodo.disponivel) {
@@ -65,16 +136,35 @@ export default function AcrescimoTensoes() {
       <PrintHeader moduleTitle="Acréscimo de Tensões" moduleName="acrescimo-tensoes" />
       
       {/* Header */}
-      <div className="flex items-center gap-2 animate-in fade-in slide-in-from-left-4 duration-500">
-        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg">
-          <TrendingDown className="w-5 h-5 text-white" />
+      <div className="flex items-center justify-between gap-2 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="header">
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg">
+            <TrendingDown className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Acréscimo de Tensões</h1>
+            <p className="text-sm text-muted-foreground hidden sm:block">
+              Distribuição de tensões no solo devido a carregamentos superficiais - Análise 2D
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Acréscimo de Tensões</h1>
-          <p className="text-sm text-muted-foreground hidden sm:block">
-            Distribuição de tensões no solo devido a carregamentos superficiais - Análise 2D
-          </p>
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleStartTour}
+                className="h-10 w-10"
+              >
+                <GraduationCap className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Iniciar tour guiado</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       {/* Seleção de Método */}
@@ -86,13 +176,15 @@ export default function AcrescimoTensoes() {
           </p>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" data-tour="metodos-grid">
             {metodos.map((metodo) => {
               const Icon = metodo.icon;
               const isDisponivel = metodo.disponivel;
+              const tourId = `metodo-${metodo.id}`;
               return (
                 <Card
                   key={metodo.id}
+                  data-tour={tourId}
                   className={`transition-all ${
                     isDisponivel 
                       ? "cursor-pointer hover:shadow-lg hover:border-primary group" 
@@ -143,7 +235,7 @@ export default function AcrescimoTensoes() {
       </Card>
 
       {/* Card Informativo */}
-      <Card className="border-primary/20 bg-primary/5 animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
+      <Card className="border-primary/20 bg-primary/5 animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }} data-tour="info-card">
         <CardContent className="p-5">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">

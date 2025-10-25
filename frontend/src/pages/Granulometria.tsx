@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import { BarChart3, Info, Calculator as CalcIcon, Plus, Trash2, Table as TableIcon, TrendingUp } from "lucide-react";
+import { BarChart3, Info, Calculator as CalcIcon, Plus, Trash2, Table as TableIcon, TrendingUp, GraduationCap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,11 +11,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { useSettings } from "@/hooks/use-settings";
+import { useTour, TourStep } from "@/contexts/TourContext";
 import SavedCalculations from "@/components/SavedCalculations";
 import SaveDialog from "@/components/SaveDialog";
+import ExportPDFDialog from "@/components/ExportPDFDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
-import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, captureChartAsImage } from "@/lib/export-utils";
+import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, captureChartAsImage, generateDefaultPDFFileName } from "@/lib/export-utils";
 import TabelaDadosGranulometricos from "@/components/granulometria/TabelaDadosGranulometricos";
 import CurvaGranulometrica from "@/components/granulometria/CurvaGranulometrica";
 import SeletorPeneiras from "@/components/granulometria/SeletorPeneiras";
@@ -96,6 +98,7 @@ const peneirasComuns = [
 
 export default function Granulometria() {
   const { settings } = useSettings();
+  const { startTour } = useTour();
   const [formData, setFormData] = useState<FormData>({
     massaTotal: "",
     peneiras: [],
@@ -111,6 +114,126 @@ export default function Granulometria() {
   const [saveName, setSaveName] = useState("");
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
   const { calculations, saveCalculation, deleteCalculation, renameCalculation } = useSavedCalculations("granulometria");
+
+  // Estados para exportação PDF
+  const [exportPDFDialogOpen, setExportPDFDialogOpen] = useState(false);
+  const [pdfFileName, setPdfFileName] = useState("");
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+
+  // Definição dos steps do tour
+  const tourSteps: TourStep[] = [
+    {
+      target: "[data-tour='module-header']",
+      title: "📊 Bem-vindo à Granulometria!",
+      content: "Este módulo permite analisar a distribuição de tamanho de partículas do solo e obter classificações automáticas pelos sistemas USCS e AASHTO/HRB.",
+      placement: "bottom",
+      spotlightPadding: 16,
+    },
+    {
+      target: "#massaTotal",
+      title: "⚖️ Massa Total da Amostra",
+      content: "Insira a massa total da amostra seca utilizada no ensaio de granulometria (NBR 7181). Este valor é fundamental para calcular as porcentagens.",
+      placement: "right",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='peneiras-input']",
+      title: "🔍 Dados das Peneiras",
+      content: "Adicione as peneiras utilizadas no ensaio e as massas retidas em cada uma. Use o botão de sugestão para carregar conjuntos padrão de peneiras ou adicione manualmente.",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "#ll",
+      title: "💧 Limites de Atterberg (Opcional)",
+      content: "Para obter classificações mais precisas, especialmente pelo sistema USCS, forneça os Limites de Liquidez (LL) e Plasticidade (LP) obtidos nos ensaios correspondentes.",
+      placement: "left",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='btn-analisar']",
+      title: "⚡ Analisar Granulometria",
+      content: "Após preencher os dados, clique aqui para processar a análise. O sistema calculará a curva granulométrica, diâmetros característicos e fornecerá as classificações.",
+      placement: "top",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='classificacoes']",
+      title: "🏷️ Classificações do Solo",
+      content: "Visualize as classificações USCS e HRB/AASHTO com descrições completas. O Índice de Grupo (IG) e avaliação de subleito também são fornecidos quando aplicável.",
+      placement: "top",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='composicao']",
+      title: "📐 Composição Granulométrica",
+      content: "Veja a distribuição percentual entre pedregulho, areia e finos (silte + argila) do solo analisado.",
+      placement: "top",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='diametros']",
+      title: "🔬 Diâmetros Característicos",
+      content: "D10 (diâmetro efetivo), D30 e D60 são fundamentais. Os coeficientes Cu e Cc indicam a uniformidade e curvatura da granulometria.",
+      placement: "top",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='curva-tab']",
+      title: "📈 Curva Granulométrica",
+      content: "Visualize a curva granulométrica completa com os diâmetros característicos marcados. Use as abas para alternar entre gráfico, tabela detalhada e composição.",
+      placement: "top",
+      spotlightPadding: 12,
+    },
+    {
+      target: "[data-tour='actions']",
+      title: "💾 Salvar e Exportar",
+      content: "Salve suas análises para consulta posterior ou exporte em PDF/Excel. O botão de exemplos carrega ensaios pré-configurados para você explorar!",
+      placement: "bottom",
+      spotlightPadding: 12,
+    },
+  ];
+
+  // Iniciar tour automaticamente na primeira visita
+  useEffect(() => {
+    const initTour = async () => {
+      const hasSeenTour = localStorage.getItem('tour-seen-granulometria');
+      if (hasSeenTour === 'true') return;
+      
+      // Carregar exemplo para demonstração
+      const exemploParaTour = {
+        nome: "Areia Siltosa",
+        massaTotal: 500,
+        peneiras: [
+          { aberturaMM: 9.52, massaRetida: 0 },
+          { aberturaMM: 4.76, massaRetida: 5 },
+          { aberturaMM: 2.0, massaRetida: 45 },
+          { aberturaMM: 1.19, massaRetida: 85 },
+          { aberturaMM: 0.59, massaRetida: 120 },
+          { aberturaMM: 0.42, massaRetida: 95 },
+          { aberturaMM: 0.25, massaRetida: 65 },
+          { aberturaMM: 0.149, massaRetida: 40 },
+          { aberturaMM: 0.074, massaRetida: 30 },
+        ],
+        ll: 25,
+        lp: 18,
+      };
+      
+      handleCarregarExemplo(exemploParaTour as any);
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Calcular automaticamente
+      await handleCalculate();
+      
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      startTour(tourSteps, "granulometria");
+    };
+    
+    const timer = setTimeout(initTour, 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -242,53 +365,163 @@ export default function Granulometria() {
     toast.success(`Exemplo "${exemplo.nome}" carregado com sucesso!`);
   };
 
-  const handleExportPDF = async () => {
+  const handleStartTour = async () => {
+    const exemploParaTour = {
+      nome: "Areia Siltosa",
+      massaTotal: 500,
+      peneiras: [
+        { aberturaMM: 9.52, massaRetida: 0 },
+        { aberturaMM: 4.76, massaRetida: 5 },
+        { aberturaMM: 2.0, massaRetida: 45 },
+        { aberturaMM: 1.19, massaRetida: 85 },
+        { aberturaMM: 0.59, massaRetida: 120 },
+        { aberturaMM: 0.42, massaRetida: 95 },
+        { aberturaMM: 0.25, massaRetida: 65 },
+        { aberturaMM: 0.149, massaRetida: 40 },
+        { aberturaMM: 0.074, massaRetida: 30 },
+      ],
+      ll: 25,
+      lp: 18,
+    };
+    
+    handleCarregarExemplo(exemploParaTour as any);
+    
+    await new Promise(resolve => setTimeout(resolve, 300));
+    await handleCalculate();
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    startTour(tourSteps, "granulometria", true);
+    toast.success("Tour iniciado!", { description: "Exemplo carregado automaticamente para demonstração." });
+  };
+
+  const handleExportPDF = () => {
     if (!results) return;
     
-    // Capturar imagem do gráfico
-    toast.info("Capturando gráfico...");
-    const chartImage = await captureChartAsImage('curva-granulometrica-chart');
+    // Gerar nome padrão usando a função auxiliar
+    const defaultName = generateDefaultPDFFileName("Granulometria e Classificação");
     
+    setPdfFileName(defaultName);
+    setExportPDFDialogOpen(true);
+  };
+
+  const handleConfirmExportPDF = async () => {
+    if (!results) return;
+    
+    setIsExportingPDF(true);
+    
+    // Capturar imagem do gráfico ampliado em alta qualidade
+    toast.info("Capturando gráfico em alta qualidade...");
+    const chartImage = await captureChartAsImage('curva-granulometrica-ampliada');
+    
+    if (!chartImage) {
+      console.warn("Gráfico não foi capturado corretamente");
+      toast.warning("Gráfico não incluído no PDF");
+    } else {
+      console.log("Gráfico capturado com sucesso");
+    }
+    
+    // Dados de entrada como valores simples
     const inputs: { label: string; value: string }[] = [
       { label: "Massa Total", value: `${formData.massaTotal} g` },
     ];
-    formData.peneiras.forEach((p, i) => {
-      if (p.abertura && p.massaRetida) {
-        inputs.push({ label: `Peneira ${i + 1} - Abertura`, value: `${p.abertura} mm` });
-        inputs.push({ label: `Peneira ${i + 1} - Massa Retida`, value: `${p.massaRetida} g` });
-      }
-    });
-    if (formData.limitePercent) inputs.push({ label: "LL", value: `${formData.limitePercent}%` });
-    if (formData.limitePlasticidade) inputs.push({ label: "LP", value: `${formData.limitePlasticidade}%` });
+    if (formData.limitePercent) inputs.push({ label: "Limite de Liquidez (LL)", value: `${formData.limitePercent}%` });
+    if (formData.limitePlasticidade) inputs.push({ label: "Limite de Plasticidade (LP)", value: `${formData.limitePlasticidade}%` });
 
+    // Lista vazia de resultados (vamos usar tabelas ao invés)
     const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
-    
-    // Classificação USCS
-    if (results.classificacao_uscs) {
-      resultsList.push({ label: "Classificação USCS", value: results.classificacao_uscs, highlight: true });
-      if (results.descricao_uscs) resultsList.push({ label: "Descrição USCS", value: results.descricao_uscs });
-    }
-    
-    // Classificação HRB
-    if (results.classificacao_hrb) {
-      resultsList.push({ label: "Classificação HRB", value: results.classificacao_hrb, highlight: true });
-      if (results.descricao_hrb) resultsList.push({ label: "Descrição HRB", value: results.descricao_hrb });
-      if (results.avaliacao_subleito_hrb) resultsList.push({ label: "Avaliação Subleito", value: results.avaliacao_subleito_hrb });
-    }
-    
-    // Composição
-    if (results.percentagem_pedregulho !== null) resultsList.push({ label: "% Pedregulho", value: `${formatNumberForExport(results.percentagem_pedregulho, 1)}%` });
-    if (results.percentagem_areia !== null) resultsList.push({ label: "% Areia", value: `${formatNumberForExport(results.percentagem_areia, 1)}%` });
-    if (results.percentagem_finos !== null) resultsList.push({ label: "% Finos", value: `${formatNumberForExport(results.percentagem_finos, 1)}%` });
-    
-    // Diâmetros e coeficientes
-    if (results.d10) resultsList.push({ label: "D10", value: `${formatNumberForExport(results.d10, 4)} mm` });
-    if (results.d30) resultsList.push({ label: "D30", value: `${formatNumberForExport(results.d30, 4)} mm` });
-    if (results.d60) resultsList.push({ label: "D60", value: `${formatNumberForExport(results.d60, 4)} mm` });
-    if (results.coef_uniformidade) resultsList.push({ label: "Cu", value: formatNumberForExport(results.coef_uniformidade, 2) });
-    if (results.coef_curvatura) resultsList.push({ label: "Cc", value: formatNumberForExport(results.coef_curvatura, 2) });
 
-    // Tabela de dados granulométricos
+    // Preparar todas as tabelas
+    const tables = [];
+
+    // TABELA 1: Dados de Entrada - Peneiras
+    const peneirasHeaders = ["Peneira", "Abertura (mm)", "Massa Retida (g)"];
+    const peneirasRows = formData.peneiras
+      .filter(p => p.abertura && p.massaRetida)
+      .map((p, i) => [
+        `#${i + 1}`,
+        p.abertura,
+        p.massaRetida
+      ]);
+    
+    if (peneirasRows.length > 0) {
+      tables.push({
+        title: "Dados de Entrada - Peneiras",
+        headers: peneirasHeaders,
+        rows: peneirasRows
+      });
+    }
+
+    // TABELA 2: Classificações
+    if (results.classificacao_uscs || results.classificacao_hrb) {
+      const classificacoesHeaders = ["Sistema", "Classificação", "Descrição"];
+      const classificacoesRows = [];
+      
+      if (results.classificacao_uscs) {
+        classificacoesRows.push([
+          "USCS",
+          results.classificacao_uscs,
+          results.descricao_uscs || "-"
+        ]);
+      }
+      
+      if (results.classificacao_hrb) {
+        const hrb = results.classificacao_hrb + 
+          (results.indice_grupo_hrb !== null && results.indice_grupo_hrb > 0 ? ` (IG: ${results.indice_grupo_hrb})` : '');
+        classificacoesRows.push([
+          "HRB/AASHTO",
+          hrb,
+          results.descricao_hrb || "-"
+        ]);
+      }
+      
+      tables.push({
+        title: "Classificação do Solo",
+        headers: classificacoesHeaders,
+        rows: classificacoesRows
+      });
+    }
+
+    // TABELA 3: Composição Granulométrica
+    if (results.percentagem_pedregulho !== null || results.percentagem_areia !== null || results.percentagem_finos !== null) {
+      const composicaoHeaders = ["Fração", "Faixa de Tamanho", "Percentual (%)"];
+      const composicaoRows = [];
+      
+      if (results.percentagem_pedregulho !== null) {
+        composicaoRows.push(["Pedregulho", "> 2.0 mm", formatNumberForExport(results.percentagem_pedregulho, 1)]);
+      }
+      if (results.percentagem_areia !== null) {
+        composicaoRows.push(["Areia", "0.06 - 2.0 mm", formatNumberForExport(results.percentagem_areia, 1)]);
+      }
+      if (results.percentagem_finos !== null) {
+        composicaoRows.push(["Finos (Silte + Argila)", "< 0.06 mm", formatNumberForExport(results.percentagem_finos, 1)]);
+      }
+      
+      tables.push({
+        title: "Composição Granulométrica",
+        headers: composicaoHeaders,
+        rows: composicaoRows
+      });
+    }
+
+    // TABELA 4: Diâmetros Característicos e Coeficientes
+    if (results.d10 || results.d30 || results.d60 || results.coef_uniformidade || results.coef_curvatura) {
+      const diametrosHeaders = ["Parâmetro", "Valor", "Unidade"];
+      const diametrosRows = [];
+      
+      if (results.d10) diametrosRows.push(["D10 (Diâmetro Efetivo)", formatNumberForExport(results.d10, 4), "mm"]);
+      if (results.d30) diametrosRows.push(["D30", formatNumberForExport(results.d30, 4), "mm"]);
+      if (results.d60) diametrosRows.push(["D60", formatNumberForExport(results.d60, 4), "mm"]);
+      if (results.coef_uniformidade) diametrosRows.push(["Cu (Coef. Uniformidade)", formatNumberForExport(results.coef_uniformidade, 2), "-"]);
+      if (results.coef_curvatura) diametrosRows.push(["Cc (Coef. Curvatura)", formatNumberForExport(results.coef_curvatura, 2), "-"]);
+      
+      tables.push({
+        title: "Diâmetros Característicos e Coeficientes",
+        headers: diametrosHeaders,
+        rows: diametrosRows
+      });
+    }
+
+    // TABELA 5: Dados Granulométricos Completos
     const tableHeaders = ["Peneira", "Abertura (mm)", "Massa Retida (g)", "% Retida", "% Retida Ac.", "% Passante"];
     const tableRows = results.dados_granulometricos.map(d => [
       d.peneira || '-',
@@ -299,23 +532,38 @@ export default function Granulometria() {
       d.porc_passante.toFixed(2)
     ]);
 
+    tables.push({
+      title: "Dados Granulométricos Completos",
+      headers: tableHeaders,
+      rows: tableRows
+    });
+
     const exportData: ExportData = {
       moduleName: "granulometria",
       moduleTitle: "Granulometria e Classificação",
       inputs,
       results: resultsList,
-      tables: [{
-        title: "Dados Granulométricos",
-        headers: tableHeaders,
-        rows: tableRows
-      }],
-      chartImage: chartImage || undefined
+      tables,
+      chartImage: chartImage || undefined,
+      customFileName: pdfFileName
     };
+
+    console.log("Dados para exportação:", {
+      numInputs: inputs.length,
+      numTables: tables.length,
+      tablesTitles: tables.map(t => t.title),
+      hasChart: !!chartImage,
+      fileName: pdfFileName
+    });
 
     toast.info("Gerando PDF...");
     const success = await exportToPDF(exportData);
+    
+    setIsExportingPDF(false);
+    
     if (success) {
       toast.success("PDF exportado com sucesso!");
+      setExportPDFDialogOpen(false);
     } else {
       toast.error("Erro ao exportar PDF.");
     }
@@ -388,7 +636,7 @@ export default function Granulometria() {
     <div className="space-y-3 max-w-7xl mx-auto">
       <PrintHeader moduleTitle="Granulometria e Classificação" moduleName="granulometria" />
       
-      <div className="flex items-center justify-between gap-2 animate-in fade-in slide-in-from-left-4 duration-500">
+      <div className="flex items-center justify-between gap-2 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center shadow-md transition-transform hover:scale-110 hover:rotate-3">
             <BarChart3 className="w-5 h-5 text-white" />
@@ -399,8 +647,24 @@ export default function Granulometria() {
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-tour="actions">
           <DialogExemplos onCarregarExemplo={handleCarregarExemplo} />
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleStartTour}
+                className="h-10 w-10"
+              >
+                <GraduationCap className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Iniciar tour guiado</p>
+            </TooltipContent>
+          </Tooltip>
           
           <TooltipProvider>
             <CalculationActions
@@ -533,7 +797,7 @@ export default function Granulometria() {
 
                 {/* Botões */}
                 <div className="flex gap-2">
-                  <Button onClick={handleCalculate} disabled={!formData.massaTotal || isCalculating} className="flex-1 h-8 text-xs">
+                  <Button onClick={handleCalculate} disabled={!formData.massaTotal || isCalculating} className="flex-1 h-8 text-xs" data-tour="btn-analisar">
                     <CalcIcon className="w-3 h-3 mr-1.5" />
                     {isCalculating ? "Analisando..." : "Analisar"}
                   </Button>
@@ -544,7 +808,7 @@ export default function Granulometria() {
               </div>
 
               {/* Coluna 2 e 3 - Peneiras (ocupa 2 colunas) */}
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2" data-tour="peneiras-input">
                 <SeletorPeneiras 
                   peneiras={formData.peneiras}
                   onChange={(novasPeneiras) => setFormData(prev => ({ ...prev, peneiras: novasPeneiras }))}
@@ -574,7 +838,7 @@ export default function Granulometria() {
                 <div className="space-y-2">
                   {/* Classificações - Horizontal */}
                   {(results.classificacao_uscs || results.classificacao_hrb) && (
-                    <div className="grid lg:grid-cols-2 gap-3">
+                    <div className="grid lg:grid-cols-2 gap-3" data-tour="classificacoes">
                     {/* Classificação USCS */}
                     {results.classificacao_uscs && (
                       <div className="p-2 rounded-lg bg-gradient-to-br from-fuchsia-500/10 to-purple-600/10 border border-fuchsia-500/30">
@@ -622,7 +886,7 @@ export default function Granulometria() {
                   )}
 
                   {/* Composição Granulométrica */}
-                  <div className="grid lg:grid-cols-3 gap-2">
+                  <div className="grid lg:grid-cols-3 gap-2" data-tour="composicao">
                   <div className="p-2 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 border border-gray-300 dark:border-gray-700 text-center">
                     <p className="text-[9px] text-muted-foreground mb-0.5 font-medium">Pedregulho</p>
                     <p className="text-base font-bold text-gray-700 dark:text-gray-300">
@@ -644,7 +908,7 @@ export default function Granulometria() {
                   </div>
 
                   {/* Diâmetros e Coeficientes - Grid horizontal */}
-                  <div className="grid lg:grid-cols-5 gap-3">
+                  <div className="grid lg:grid-cols-5 gap-3" data-tour="diametros">
                     <ResultItem label="D10" value={results.d10 ? `${results.d10.toFixed(4)} mm` : "N/A"} tooltip={tooltips.d10} color="red" showTooltips={settings.showEducationalTips} />
                     <ResultItem label="D30" value={results.d30 ? `${results.d30.toFixed(4)} mm` : "N/A"} tooltip={tooltips.d30} color="amber" showTooltips={settings.showEducationalTips} />
                     <ResultItem label="D60" value={results.d60 ? `${results.d60.toFixed(4)} mm` : "N/A"} tooltip={tooltips.d60} color="green" showTooltips={settings.showEducationalTips} />
@@ -665,33 +929,56 @@ export default function Granulometria() {
                   </div>
                 </div>
 
-                {/* Curva e Tabela - Unificadas */}
-                <Card className="glass">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg">Análise Granulométrica Completa</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid lg:grid-cols-2 gap-4">
-                      {/* Curva Granulométrica */}
-                      <div>
+                {/* Curva e Tabelas - Com Tabs */}
+                <Tabs defaultValue="curva" className="w-full" data-tour="curva-tab">
+                  <Card className="glass">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">Análise Granulométrica Completa</CardTitle>
+                        <TabsList className="grid w-[420px] grid-cols-3">
+                          <TabsTrigger value="curva" className="text-xs">
+                            <TrendingUp className="w-3 h-3 mr-1.5" />
+                            Curva
+                          </TabsTrigger>
+                          <TabsTrigger value="dados" className="text-xs">
+                            <TableIcon className="w-3 h-3 mr-1.5" />
+                            Dados Detalhados
+                          </TabsTrigger>
+                          <TabsTrigger value="composicao" className="text-xs">
+                            <BarChart3 className="w-3 h-3 mr-1.5" />
+                            Composição
+                          </TabsTrigger>
+                        </TabsList>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <TabsContent value="curva" className="mt-0">
                         <CurvaGranulometrica 
                           dados={results.dados_granulometricos}
                           d10={results.d10}
                           d30={results.d30}
                           d60={results.d60}
                         />
-                      </div>
+                      </TabsContent>
                       
-                      {/* Tabela de Dados */}
-                      <div>
+                      <TabsContent value="dados" className="mt-0">
                         <TabelaDadosGranulometricos 
                           dados={results.dados_granulometricos}
                           massaTotal={parseFloat(formData.massaTotal)}
+                          showComposicao={false}
                         />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      </TabsContent>
+
+                      <TabsContent value="composicao" className="mt-0">
+                        <TabelaDadosGranulometricos 
+                          dados={results.dados_granulometricos}
+                          massaTotal={parseFloat(formData.massaTotal)}
+                          showDadosDetalhados={false}
+                        />
+                      </TabsContent>
+                    </CardContent>
+                  </Card>
+                </Tabs>
               </div>
             )}
           </CardContent>
@@ -705,6 +992,15 @@ export default function Granulometria() {
         saveName={saveName}
         onSaveNameChange={setSaveName}
         onConfirm={handleConfirmSave}
+      />
+
+      <ExportPDFDialog
+        open={exportPDFDialogOpen}
+        onOpenChange={setExportPDFDialogOpen}
+        fileName={pdfFileName}
+        onFileNameChange={setPdfFileName}
+        onConfirm={handleConfirmExportPDF}
+        isExporting={isExportingPDF}
       />
 
       <SavedCalculations

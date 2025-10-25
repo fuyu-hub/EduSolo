@@ -406,7 +406,7 @@ export default function CanvasCarothers({
   };
   
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden" data-tour="canvas-2d">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
@@ -420,7 +420,7 @@ export default function CanvasCarothers({
           <Info className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
           <div className="space-y-1">
             <p className="text-muted-foreground">
-              <strong className="text-foreground">Clique na faixa</strong> para configurar • 
+              <strong className="text-foreground" data-tour="carga-config">Clique na faixa</strong> para configurar • 
               <strong className="text-foreground"> Duplo clique no solo</strong> para adicionar pontos • 
               <strong className="text-foreground"> Arraste pontos</strong> para reposicionar
             </p>

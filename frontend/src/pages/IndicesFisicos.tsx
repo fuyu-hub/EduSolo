@@ -47,9 +47,10 @@ import { conteudoIndicesFisicos, ConteudoIndice } from "@/lib/geotecnia/indicesF
 import { cn } from "@/lib/utils";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import SavedCalculations from "@/components/SavedCalculations";
+import ExportPDFDialog from "@/components/ExportPDFDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
-import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport } from "@/lib/export-utils";
+import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
 import SoilExamples from "@/components/soil/SoilExamples";
 import GsSuggestions from "@/components/soil/GsSuggestions";
 import ResultInterpretation from "@/components/soil/ResultInterpretation";
@@ -231,6 +232,11 @@ export default function IndicesFisicos() {
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
   const { calculations, saveCalculation, deleteCalculation, renameCalculation, getCalculation } = useSavedCalculations("indices-fisicos");
 
+  // Estados para exportação PDF
+  const [exportPDFDialogOpen, setExportPDFDialogOpen] = useState(false);
+  const [pdfFileName, setPdfFileName] = useState("");
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+
   // Estados para modo comparação
   const [compareMode, setCompareMode] = useState(false);
   const [formDataB, setFormDataB] = useState<FormData>({
@@ -409,8 +415,20 @@ export default function IndicesFisicos() {
     });
   };
 
-  const handleExportPDF = async () => {
+  const handleExportPDF = () => {
     if (!results) return;
+    
+    // Gerar nome padrão usando a função auxiliar
+    const defaultName = generateDefaultPDFFileName("Índices Físicos");
+    
+    setPdfFileName(defaultName);
+    setExportPDFDialogOpen(true);
+  };
+
+  const handleConfirmExportPDF = async () => {
+    if (!results) return;
+    
+    setIsExportingPDF(true);
 
     const inputs: { label: string; value: string }[] = [
       { label: "Massa Úmida", value: `${formData.massaUmida} g` },
@@ -440,14 +458,19 @@ export default function IndicesFisicos() {
       moduleTitle: "Índices Físicos",
       inputs,
       results: resultsList,
+      customFileName: pdfFileName
     };
 
     const success = await exportToPDF(exportData);
+    
+    setIsExportingPDF(false);
+    
     if (success) {
       toast({
         title: "PDF exportado!",
         description: "O arquivo foi baixado com sucesso.",
       });
+      setExportPDFDialogOpen(false);
     } else {
       toast({
         title: "Erro ao exportar",
@@ -864,6 +887,15 @@ export default function IndicesFisicos() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <ExportPDFDialog
+          open={exportPDFDialogOpen}
+          onOpenChange={setExportPDFDialogOpen}
+          fileName={pdfFileName}
+          onFileNameChange={setPdfFileName}
+          onConfirm={handleConfirmExportPDF}
+          isExporting={isExportingPDF}
+        />
 
         {/* Dialog para carregar cálculos salvos */}
         <SavedCalculations

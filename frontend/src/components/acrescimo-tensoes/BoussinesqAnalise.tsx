@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft, Target, BookOpen } from "lucide-react";
+import { ArrowLeft, Target, BookOpen, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import axios from "axios";
@@ -17,6 +17,8 @@ import { useSettings } from "@/hooks/use-settings";
 
 interface BoussinesqAnaliseProps {
   onVoltar: () => void;
+  onStartTour?: () => void;
+  onLoadExampleRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -48,7 +50,7 @@ function calcularTensaoBoussinesqLocal(P: number, x: number, z: number): number 
   return sigma_z; // Resultado em kPa (kN/m²)
 }
 
-export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) {
+export default function BoussinesqAnalise({ onVoltar, onStartTour, onLoadExampleRef }: BoussinesqAnaliseProps) {
   // Configurações
   const { settings } = useSettings();
   
@@ -326,8 +328,15 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
       { id: 'exemplo-c', nome: 'Ponto C', x: 4, z: 5, tensao: undefined }
     ]);
     setCalculoFeito(false);
-    toast("Exemplos carregados!", { description: "Clique em 'Calcular' para ver os resultados." });
+    toast("Exemplo carregado!", { description: "3 pontos de análise prontos." });
   };
+
+  // Expor função de carregar exemplo para o tour
+  useEffect(() => {
+    if (onLoadExampleRef) {
+      onLoadExampleRef.current = handleCarregarExemplos;
+    }
+  }, [onLoadExampleRef]);
 
   const temResultados = pontos.some(p => p.tensao !== undefined);
 
@@ -336,7 +345,7 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
       <PrintHeader moduleTitle="Boussinesq - Carga Pontual" moduleName="boussinesq" />
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3" data-tour="header">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={onVoltar}>
             <ArrowLeft className="w-5 h-5" />
@@ -353,18 +362,25 @@ export default function BoussinesqAnalise({ onVoltar }: BoussinesqAnaliseProps) 
         </div>
 
         <div className="flex items-center gap-2">
+          {onStartTour && (
+            <Button variant="outline" size="icon" onClick={onStartTour} title="Iniciar tutorial">
+              <GraduationCap className="w-4 h-4" />
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleCarregarExemplos}>
             <BookOpen className="w-4 h-4 mr-2" />
             Exemplos
           </Button>
-          <CalculationActions
-            onSave={handleSaveClick}
-            onLoad={() => setLoadDialogOpen(true)}
-            onExportPDF={handleExportarPDF}
-            onExportExcel={handleExportarExcel}
-            hasResults={temResultados}
-            isCalculating={isCalculating}
-          />
+          <div data-tour="actions">
+            <CalculationActions
+              onSave={handleSaveClick}
+              onLoad={() => setLoadDialogOpen(true)}
+              onExportPDF={handleExportarPDF}
+              onExportExcel={handleExportarExcel}
+              hasResults={temResultados}
+              isCalculating={isCalculating}
+            />
+          </div>
         </div>
       </div>
 
