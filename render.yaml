@@ -17,9 +17,13 @@ services:
   # Frontend - React + Vite
   - type: web
     name: edusolo-frontend
-    runtime: node
+    runtime: static
     buildCommand: "cd frontend && npm install && npm run build"
     staticPublishPath: ./frontend/dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: NODE_VERSION
         value: 18.17.0
