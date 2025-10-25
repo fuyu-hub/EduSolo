@@ -25,7 +25,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import PlasticityChart from "@/components/visualizations/PlasticityChart";
+import PlasticityChart, { PlasticityChartRef } from "@/components/visualizations/PlasticityChart";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import SavedCalculations from "@/components/SavedCalculations";
 import SaveDialog from "@/components/SaveDialog";
@@ -130,6 +130,7 @@ export default function LimitesConsistencia() {
   const [saveName, setSaveName] = useState("");
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
   const { calculations, saveCalculation, deleteCalculation, renameCalculation } = useSavedCalculations("limites-consistencia");
+  const plasticityChartRef = useRef<PlasticityChartRef>(null);
 
   // Definição dos steps do tour
   const tourSteps: TourStep[] = [
@@ -632,9 +633,22 @@ export default function LimitesConsistencia() {
         {/* --- Card de Resultados com Carrossel (Inalterado) --- */}
         <Card className="glass animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
            <CardHeader>
-               <CardTitle className="flex items-center gap-2 text-xl">
-                   <BarChart3 className="w-5 h-5 text-primary" />
-                   Resultados
+               <CardTitle className="flex items-center justify-between text-xl">
+                   <div className="flex items-center gap-2">
+                       <BarChart3 className="w-5 h-5 text-primary" />
+                       Resultados
+                   </div>
+                   {results && results.ll !== null && results.ip !== null && (
+                       <Button
+                           onClick={() => plasticityChartRef.current?.exportAsJPG()}
+                           variant="outline"
+                           size="sm"
+                           className="gap-2"
+                       >
+                           <Download className="w-4 h-4" />
+                           Salvar Carta JPG
+                       </Button>
+                   )}
                </CardTitle>
            </CardHeader>
            <CardContent className="pt-0 px-2 sm:px-4">
@@ -680,7 +694,7 @@ export default function LimitesConsistencia() {
                      <div className="space-y-2">
                       {(results.ll !== null && results.ip !== null) && (
                         <div id="plasticity-chart">
-                          <PlasticityChart ll={results.ll} ip={results.ip} />
+                          <PlasticityChart ref={plasticityChartRef} ll={results.ll} ip={results.ip} />
                         </div>
                       )}
                      </div>

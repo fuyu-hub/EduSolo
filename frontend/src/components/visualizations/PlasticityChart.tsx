@@ -1,6 +1,6 @@
 // src/components/visualizations/PlasticityChart.tsx
 import * as React from 'react';
-import { useState } from 'react';
+import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ScatterChart,
@@ -13,10 +13,15 @@ import {
 } from 'recharts';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import html2canvas from 'html2canvas';
 
 interface PlasticityChartProps {
   ll: number | null;
   ip: number | null;
+}
+
+export interface PlasticityChartRef {
+  exportAsJPG: () => Promise<void>;
 }
 
 // Informações das zonas de classificação
@@ -570,11 +575,41 @@ const CustomizedPolygonDrawer = (props: any) => {
   );
 };
 
-const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
+const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ ll, ip }, ref) => {
   const [selectedZone, setSelectedZone] = useState<string | null>(null);
   const [showZoneInfo, setShowZoneInfo] = useState<boolean>(false);
   const [popupPosition, setPopupPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const popupRef = React.useRef<HTMLDivElement>(null);
+  const chartRef = useRef<HTMLDivElement>(null);
+
+  // Função para exportar como JPG
+  const handleExportJPG = async () => {
+    if (!chartRef.current) return;
+    
+    try {
+      const canvas = await html2canvas(chartRef.current, {
+        backgroundColor: '#ffffff',
+        scale: 2, // Maior qualidade
+        logging: false,
+      });
+      
+      // Converter para JPG
+      const image = canvas.toDataURL('image/jpeg', 0.95);
+      
+      // Criar link de download
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = `carta-plasticidade-${Date.now()}.jpg`;
+      link.click();
+    } catch (error) {
+      console.error('Erro ao exportar imagem:', error);
+    }
+  };
+
+  // Expor a função de exportação via ref
+  useImperativeHandle(ref, () => ({
+    exportAsJPG: handleExportJPG
+  }));
 
   // Fecha o popup ao clicar fora
   React.useEffect(() => {
@@ -646,7 +681,7 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
   return (
     <div className="space-y-2 relative">
       {/* Gráfico principal - compacto com fundo branco */}
-      <div className="bg-white p-3 rounded-xl border border-border shadow-sm" style={{ width: '100%' }}>
+      <div ref={chartRef} className="bg-white p-3 rounded-xl border border-border shadow-sm" style={{ width: '100%' }}>
         <div style={{ width: '100%', height: 340 }}>
           <ResponsiveContainer>
             <ScatterChart margin={{ top: 5, right: 5, bottom: 45, left: 50 }}>
@@ -877,6 +912,8 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
 
     </div>
   );
-};
+});
+
+PlasticityChart.displayName = 'PlasticityChart';
 
 export default PlasticityChart;
