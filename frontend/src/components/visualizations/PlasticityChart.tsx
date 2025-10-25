@@ -4,14 +4,11 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ScatterChart,
-  Scatter,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
   Label as RechartsLabel,
-  ZAxis,
   Customized
 } from 'recharts';
 import { Badge } from "@/components/ui/badge";
@@ -27,31 +24,31 @@ const zoneInfo = {
   CL: {
     name: "Argila de Baixa Plasticidade",
     description: "Solo argiloso com baixa plasticidade. Características: coesão moderada, compressibilidade média.",
-    color: "#C8A882", // Bege amarelado (cor de argila clara)
+    color: "#00D9A3", // Verde turquesa
     properties: ["Coesão moderada", "Compressibilidade média", "Boa para fundações rasas"]
   },
   CH: {
     name: "Argila de Alta Plasticidade", 
     description: "Solo argiloso com alta plasticidade. Características: alta coesão, alta compressibilidade.",
-    color: "#B8860B", // Dourado escuro (cor de argila mais rica)
+    color: "#FFD700", // Amarelo dourado
     properties: ["Alta coesão", "Alta compressibilidade", "Requer cuidados especiais em fundações"]
   },
   ML: {
     name: "Silte de Baixa Plasticidade",
     description: "Solo siltoso com baixa plasticidade. Características: baixa coesão, comportamento intermediário.",
-    color: "#DEB887", // Burlywood (cor de silte/areia fina)
+    color: "#FFB6C1", // Rosa claro
     properties: ["Baixa coesão", "Comportamento intermediário", "Sensível à água"]
   },
   MH: {
     name: "Silte de Alta Plasticidade",
     description: "Solo siltoso com alta plasticidade. Características: comportamento expansivo, alta sensibilidade à água.",
-    color: "#8B9DC3", // Azul acinzentado (cor de silte úmido)
+    color: "#87CEEB", // Azul claro
     properties: ["Comportamento expansivo", "Alta sensibilidade à água", "Requer drenagem adequada"]
   },
   "CL-ML": {
     name: "Zona de Transição CL-ML",
     description: "Zona de transição entre argila de baixa plasticidade e silte de baixa plasticidade.",
-    color: "#A0826D", // Marrom rosado (cor de solo misto)
+    color: "#8B7355", // Marrom claro
     properties: ["Características mistas", "Comportamento variável", "Análise detalhada necessária"]
   }
 };
@@ -104,49 +101,49 @@ const CustomizedPolygonDrawer = (props: any) => {
   //  - CH (right-up): LL >=50 and IP >= Linha A
   //  - MH/OH (right-bottom): LL >=50 and IP < Linha A
 
+  // Calculate LL values where IP=4 and IP=7 intersect Line A
+  const ll_ip4_onA = (4 / 0.73) + 20;
+  const ll_ip7_onA = (7 / 0.73) + 20;
+
   // polygon for left-up (CL):
-  // trace from LL=0 at top (yMax) down to intersection with LineA, then along LineA to LL=50, then up to yMax at LL=50, then close.
+  // CL está ACIMA da Linha A, LL < 50, e ACIMA de IP=7
   const leftCL: { x: number; y: number }[] = [];
   // top-left corner
   leftCL.push({ x: xScale(xMin), y: yScale(yMax) });
   // top edge until LL=50
   leftCL.push({ x: xScale(Math.min(50, xMax)), y: yScale(yMax) });
 
-  // Go back along Line A from LL=50 to LL where Line A crosses near left side
-  // We'll walk line A backwards from LL=50 down to the left domain min, and add only points where ip >= IP (so the polygon top boundary).
-  const aPointsTo50 = aPoints.filter(p => p[0] <= 50).reverse();
-  // Ensure we clamp ip to yMax (if line below domain)
+  // Go back along Line A from LL=50 to ll_ip7_onA (onde IP=7 cruza a Linha A)
+  const aPointsTo50 = aPoints.filter(p => p[0] <= 50 && p[0] >= ll_ip7_onA).reverse();
   aPointsTo50.forEach(([llv, ipv]) => {
-    const px = xScale(llv);
-    const py = yScale(Math.min(ipv, yMax));
-    leftCL.push({ x: px, y: py });
+    leftCL.push({ x: xScale(llv), y: yScale(Math.min(ipv, yMax)) });
   });
 
-  // close polygon back to top-left at xMin
+  // ao chegar em ll_ip7_onA, seguir horizontalmente até a borda esquerda em IP=7
+  leftCL.push({ x: xScale(ll_ip7_onA), y: yScale(7) });
+  leftCL.push({ x: xScale(xMin), y: yScale(7) });
+  // fechar voltando ao topo
   leftCL.push({ x: xScale(xMin), y: yScale(yMax) });
 
-  // Calculate LL values where IP=4 and IP=7 intersect Line A
-  const ll_ip4_onA = (4 / 0.73) + 20;
-  const ll_ip7_onA = (7 / 0.73) + 20;
-
-  // polygon for left-bottom (ML/OL) - area under LineA and left of LL=50, including area under CL-ML
+  // polygon for left-bottom (ML/OL) - área abaixo da Linha A, LL < 50
+  // Rosa é constante até IP=4, depois segue a Linha A
   const leftML: { x: number; y: number }[] = [];
-  // start at LL=0, IP=0
+  // bottom-left corner at IP=0
   leftML.push({ x: xScale(xMin), y: yScale(yMin) });
-  // go right along bottom to LL=50 (or xMax if smaller)
-  leftML.push({ x: xScale(Math.min(50, xMax)), y: yScale(yMin) });
-  // go up along vertical at LL=50 to ip at lineA
+  // go right along bottom to LL=50
+  leftML.push({ x: xScale(50), y: yScale(yMin) });
+  // go up at LL=50 to Line A
   const ipA_50 = ipA(50);
-  leftML.push({ x: xScale(Math.min(50, xMax)), y: yScale(Math.min(ipA_50, yMax)) });
-  // go back along LineA from LL=50 to ll_ip7_onA (top of CL-ML band)
-  const aPointsTo_ip7 = aPoints.filter(p => p[0] >= ll_ip7_onA && p[0] <= 50).reverse();
-  aPointsTo_ip7.forEach(([llv, ipv]) => {
+  leftML.push({ x: xScale(50), y: yScale(Math.min(ipA_50, yMax)) });
+  // go back along Line A from LL=50 to ll_ip4_onA (onde IP=4 cruza a Linha A)
+  const aPointsFrom50To4 = aPoints.filter(p => p[0] >= ll_ip4_onA && p[0] <= 50).reverse();
+  aPointsFrom50To4.forEach(([llv, ipv]) => {
     leftML.push({ x: xScale(llv), y: yScale(Math.min(ipv, yMax)) });
   });
-  // go along IP=7 line to left edge
-  leftML.push({ x: xScale(ll_ip7_onA), y: yScale(7) });
-  leftML.push({ x: xScale(xMin), y: yScale(7) });
-  // finally close at bottom-left
+  // ao chegar em ll_ip4_onA, seguir horizontalmente até a borda esquerda em IP=4
+  leftML.push({ x: xScale(ll_ip4_onA), y: yScale(4) });
+  leftML.push({ x: xScale(xMin), y: yScale(4) });
+  // fechar voltando ao fundo
   leftML.push({ x: xScale(xMin), y: yScale(yMin) });
 
   // small CL-ML band between IP=4 and IP=7 under A (left side)
@@ -216,108 +213,212 @@ const CustomizedPolygonDrawer = (props: any) => {
     return d + ' Z';
   };
 
-  // cores realistas de solo
+  // cores conforme carta de plasticidade padrão
   const colors = {
-    cl: '#C8A882', // Bege amarelado (argila de baixa plasticidade)
-    ch: '#B8860B', // Dourado escuro (argila de alta plasticidade)
-    ml_ol: '#DEB887', // Burlywood (silte de baixa plasticidade)
-    mh_oh: '#8B9DC3', // Azul acinzentado (silte de alta plasticidade)
-    cl_ml: '#A0826D' // Marrom rosado (zona de transição)
+    cl: '#00D9A3', // Verde turquesa (argila de baixa plasticidade)
+    ch: '#FFD700', // Amarelo dourado (argila de alta plasticidade)
+    ml_ol: '#FFB6C1', // Rosa claro (silte de baixa plasticidade)
+    mh_oh: '#87CEEB', // Azul claro (silte de alta plasticidade)
+    cl_ml: '#8B7355' // Marrom claro (zona de transição)
   };
 
+  // Escala global para o gráfico (ajuste este valor para redimensionar tudo)
+  const chartScale = 0.85; // Valor entre 0.5 e 2.0 (1.0 = tamanho normal)
+  
+  // Centralizar o grupo escalado e mover para a direita
+  const translateX = width * (1 - chartScale) / 2 + 25; // +25px para a direita
+  const translateY = height * (1 - chartScale) / 2 - 10; // +10px para cima
+
   return (
-    <g>
-      {/* Layer 1: Base areas */}
-      {/* Left CL (bege amarelado - argila baixa plasticidade) */}
+    <>
+    <g transform={`translate(${translateX}, ${translateY}) scale(${chartScale})`}>
+      {/* Renderizar zonas na ordem de prioridade: verde → marrom → rosa */}
+      
+      {/* 1. CL (verde turquesa - acima da Linha A, esquerda) - BASE */}
       <path 
         d={polyToPath(leftCL)} 
         fill={colors.cl} 
-        fillOpacity={0.95} 
+        fillOpacity={0.85} 
         stroke="none" 
         style={{ cursor: 'pointer' }}
         onClick={(e) => onZoneClick && onZoneClick('CL', e)}
         onMouseEnter={(e) => {
-          e.currentTarget.style.fillOpacity = '0.8';
-          e.currentTarget.style.stroke = '#333';
+          e.currentTarget.style.fillOpacity = '0.7';
+          e.currentTarget.style.stroke = '#000';
           e.currentTarget.style.strokeWidth = '2';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.fillOpacity = '0.95';
+          e.currentTarget.style.fillOpacity = '0.85';
           e.currentTarget.style.stroke = 'none';
         }}
       />
-      {/* Right CH (dourado escuro - argila alta plasticidade) */}
-      <path 
-        d={polyToPath(rightCHpoly)} 
-        fill={colors.ch} 
-        fillOpacity={0.95} 
-        stroke="none" 
-        style={{ cursor: 'pointer' }}
-        onClick={(e) => onZoneClick && onZoneClick('CH', e)}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.fillOpacity = '0.8';
-          e.currentTarget.style.stroke = '#333';
-          e.currentTarget.style.strokeWidth = '2';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.fillOpacity = '0.95';
-          e.currentTarget.style.stroke = 'none';
-        }}
-      />
-      {/* Right MH/OH (azul acinzentado - silte alta plasticidade) */}
-      <path 
-        d={polyToPath(rightBottomPoly)} 
-        fill={colors.mh_oh} 
-        fillOpacity={0.95} 
-        stroke="none" 
-        style={{ cursor: 'pointer' }}
-        onClick={(e) => onZoneClick && onZoneClick('MH', e)}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.fillOpacity = '0.8';
-          e.currentTarget.style.stroke = '#333';
-          e.currentTarget.style.strokeWidth = '2';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.fillOpacity = '0.95';
-          e.currentTarget.style.stroke = 'none';
-        }}
-      />
-      {/* Left ML/OL (burlywood - silte baixa plasticidade) */}
-      <path 
-        d={polyToPath(leftML)} 
-        fill={colors.ml_ol} 
-        fillOpacity={0.95} 
-        stroke="none" 
-        style={{ cursor: 'pointer' }}
-        onClick={(e) => onZoneClick && onZoneClick('ML', e)}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.fillOpacity = '0.8';
-          e.currentTarget.style.stroke = '#333';
-          e.currentTarget.style.strokeWidth = '2';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.fillOpacity = '0.95';
-          e.currentTarget.style.stroke = 'none';
-        }}
-      />
-      {/* Layer 2: CL-ML stripe (marrom rosado - zona de transição) - on top of ML */}
+      
+      {/* 2. CL-ML (marrom - faixa pequena entre IP=4 e IP=7) - POR CIMA DO VERDE */}
       <path 
         d={polyToPath(clmlPoly)} 
         fill={colors.cl_ml} 
-        fillOpacity={0.95} 
+        fillOpacity={0.85} 
         stroke="none" 
         style={{ cursor: 'pointer' }}
         onClick={(e) => onZoneClick && onZoneClick('CL-ML', e)}
         onMouseEnter={(e) => {
-          e.currentTarget.style.fillOpacity = '0.8';
-          e.currentTarget.style.stroke = '#333';
+          e.currentTarget.style.fillOpacity = '0.7';
+          e.currentTarget.style.stroke = '#000';
           e.currentTarget.style.strokeWidth = '2';
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.fillOpacity = '0.95';
+          e.currentTarget.style.fillOpacity = '0.85';
           e.currentTarget.style.stroke = 'none';
         }}
       />
+      
+      {/* 3. ML/OL (rosa - toda área abaixo da Linha A, LL < 50) - POR CIMA DE TUDO */}
+      <path 
+        d={polyToPath(leftML)} 
+        fill={colors.ml_ol} 
+        fillOpacity={0.85} 
+        stroke="none" 
+        style={{ cursor: 'pointer' }}
+        onClick={(e) => onZoneClick && onZoneClick('ML', e)}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.fillOpacity = '0.7';
+          e.currentTarget.style.stroke = '#000';
+          e.currentTarget.style.strokeWidth = '2';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.fillOpacity = '0.85';
+          e.currentTarget.style.stroke = 'none';
+        }}
+      />
+      
+      {/* 4. MH/OH (azul claro - abaixo da Linha A, direita) */}
+      <path 
+        d={polyToPath(rightBottomPoly)} 
+        fill={colors.mh_oh} 
+        fillOpacity={0.85} 
+        stroke="none" 
+        style={{ cursor: 'pointer' }}
+        onClick={(e) => onZoneClick && onZoneClick('MH', e)}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.fillOpacity = '0.7';
+          e.currentTarget.style.stroke = '#000';
+          e.currentTarget.style.strokeWidth = '2';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.fillOpacity = '0.85';
+          e.currentTarget.style.stroke = 'none';
+        }}
+      />
+      
+      {/* 5. CH (amarelo - acima da Linha A, direita) */}
+      <path 
+        d={polyToPath(rightCHpoly)} 
+        fill={colors.ch} 
+        fillOpacity={0.85} 
+        stroke="none" 
+        style={{ cursor: 'pointer' }}
+        onClick={(e) => onZoneClick && onZoneClick('CH', e)}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.fillOpacity = '0.7';
+          e.currentTarget.style.stroke = '#000';
+          e.currentTarget.style.strokeWidth = '2';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.fillOpacity = '0.85';
+          e.currentTarget.style.stroke = 'none';
+        }}
+      />
+      
+      {/* Grid - linhas por cima dos polígonos */}
+      <g opacity={0.6}>
+        {/* Linhas verticais a cada 10 unidades de LL */}
+        {Array.from({ length: Math.floor(xMax / 10) + 1 }, (_, i) => i * 10).map(llVal => (
+          <line
+            key={`v-${llVal}`}
+            x1={xScale(llVal)}
+            y1={yScale(yMin)}
+            x2={xScale(llVal)}
+            y2={yScale(yMax)}
+            stroke="#000"
+            strokeWidth={0.8}
+          />
+        ))}
+        
+        {/* Linhas horizontais a cada 10 unidades de IP */}
+        {Array.from({ length: Math.floor(yMax / 10) + 1 }, (_, i) => i * 10).map(ipVal => (
+          <line
+            key={`h-${ipVal}`}
+            x1={xScale(xMin)}
+            y1={yScale(ipVal)}
+            x2={xScale(xMax)}
+            y2={yScale(ipVal)}
+            stroke="#000"
+            strokeWidth={0.8}
+          />
+        ))}
+      </g>
+      
+      {/* Números do grid */}
+      <g opacity={1.0}>
+        {/* Números no lado esquerdo (eixo Y/IP) - de 10 em 10 */}
+        {Array.from({ length: 7 }, (_, i) => i * 10).map(ipVal => (
+          <text
+            key={`grid-y-${ipVal}`}
+            x={xScale(xMin) - 8}
+            y={yScale(ipVal)}
+            fill="#000"
+            fontSize={10}
+            fontWeight="700"
+            textAnchor="end"
+            dominantBaseline="central"
+          >
+            {ipVal}
+          </text>
+        ))}
+        
+        {/* Label do eixo Y - texto vertical */}
+        <text
+          x={xScale(xMin) - 30}
+          y={yScale(yMax / 2 + 5)}
+          fill="#000"
+          fontSize={16}
+          fontWeight="600"
+          textAnchor="middle"
+          dominantBaseline="central"
+          transform={`rotate(-90, ${xScale(xMin) - 30}, ${yScale(yMax / 2)})`}
+        >
+          Índice de Plasticidade (IP)
+        </text>
+        
+        {/* Números embaixo (eixo X/LL) - de 20 em 20 */}
+        {Array.from({ length: Math.floor(xMax / 20) + 1 }, (_, i) => i * 20).map(llVal => (
+          <text
+            key={`grid-x-${llVal}`}
+            x={xScale(llVal)}
+            y={yScale(yMin) + 8}
+            fill="#000"
+            fontSize={10}
+            fontWeight="700"
+            textAnchor="middle"
+            dominantBaseline="hanging"
+          >
+            {llVal}
+          </text>
+        ))}
+        
+        {/* Label do eixo X - texto horizontal */}
+        <text
+          x={xScale(xMax / 2)}
+          y={yScale(yMin) + 25}
+          fill="#000"
+          fontSize={16}
+          fontWeight="600"
+          textAnchor="middle"
+          dominantBaseline="hanging"
+        >
+          Limite de Liquidez (LL)
+        </text>
+      </g>
       
       {/* Zone Labels */}
       {/* CL label - left top area */}
@@ -348,8 +449,8 @@ const CustomizedPolygonDrawer = (props: any) => {
       
       {/* ML ou OL label - left bottom area (pink zone) */}
       <text
-        x={xScale(30)}
-        y={yScale(15)}
+        x={xScale(43)}
+        y={yScale(13)}
         fill="#000"
         fontSize={12}
         fontWeight="600"
@@ -359,8 +460,8 @@ const CustomizedPolygonDrawer = (props: any) => {
         ML
       </text>
       <text
-        x={xScale(30)}
-        y={yScale(11)}
+        x={xScale(43)}
+        y={yScale(9.5)}
         fill="#000"
         fontSize={12}
         fontWeight="600"
@@ -375,7 +476,7 @@ const CustomizedPolygonDrawer = (props: any) => {
         x={xScale(70)}
         y={yScale(22)}
         fill="#000"
-        fontSize={14}
+        fontSize={13}
         fontWeight="600"
         textAnchor="middle"
         dominantBaseline="central"
@@ -386,7 +487,7 @@ const CustomizedPolygonDrawer = (props: any) => {
         x={xScale(70)}
         y={yScale(17)}
         fill="#000"
-        fontSize={14}
+        fontSize={13}
         fontWeight="600"
         textAnchor="middle"
         dominantBaseline="central"
@@ -454,17 +555,6 @@ const CustomizedPolygonDrawer = (props: any) => {
         strokeWidth={2}
       />
       
-      {/* Linha U - dashed line */}
-      <line
-        x1={xScale(8)}
-        y1={yScale(0)}
-        x2={xScale(xMax)}
-        y2={yScale(Math.max(0, 0.9 * (xMax - 8)))}
-        stroke="#000"
-        strokeWidth={1.5}
-        strokeDasharray="4 4"
-      />
-      
       {/* Linha B - vertical line at LL=50 */}
       <line
         x1={xScale(50)}
@@ -475,6 +565,8 @@ const CustomizedPolygonDrawer = (props: any) => {
         strokeWidth={2.5}
       />
     </g>
+    </>
+    
   );
 };
 
@@ -508,7 +600,7 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
 
   if (ll === null || ip === null || isNaN(ll) || isNaN(ip)) {
     return (
-      <div className="flex items-center justify-center h-[260px] bg-card p-2 rounded-md border border-border/50 shadow-inner text-muted-foreground text-sm">
+      <div className="flex items-center justify-center h-[340px] bg-card p-2 rounded-md border border-border/50 shadow-inner text-muted-foreground text-sm">
         Dados insuficientes para gerar a carta.
       </div>
     );
@@ -523,16 +615,20 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
   const ipA = (llVal: number) => Math.max(0, 0.73 * (llVal - 20));
   const ipA_at_50 = ipA(50);
 
-  // data point
-  const data = [{ ll, ip, z: 1 }];
-
   // Função para determinar a classificação do solo
   const getSoilClassification = () => {
     if (ll < 50) {
       if (ip >= ipA(ll)) {
         return 'CL';
-      } else if (ip >= 4 && ip <= 7 && ll <= 20) {
-        return 'CL-ML';
+      } else if (ip >= 4 && ip <= 7) {
+        // CL-ML é a zona entre IP=4 e IP=7, abaixo da Linha A
+        // A zona se estende até onde IP=7 cruza a Linha A (aproximadamente LL=29.6)
+        const ll_ip7_onA = (7 / 0.73) + 20; // ≈ 29.59
+        if (ll <= ll_ip7_onA) {
+          return 'CL-ML';
+        } else {
+          return 'ML';
+        }
       } else {
         return 'ML';
       }
@@ -549,55 +645,26 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
 
   return (
     <div className="space-y-2 relative">
-      {/* Gráfico principal */}
-      <div className="bg-card p-4 rounded-md border border-border/50 shadow-inner" style={{ width: '100%', height: 280 }}>
-        <ResponsiveContainer>
-          <ScatterChart margin={{ top: 10, right: 15, bottom: 45, left: 60 }}>
-            <CartesianGrid stroke="rgba(0,0,0,0.15)" strokeDasharray="3 3" />
-            <XAxis
-              type="number"
-              dataKey="ll"
-              name="LL"
-              domain={xDomain}
-              ticks={[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].filter(t => t <= xDomain[1])}
-              stroke="rgba(0,0,0,0.9)"
-              tick={{ fill: 'rgba(0,0,0,0.9)', fontSize: 11, fontWeight: 500 }}
-              axisLine={{ stroke: 'rgba(0,0,0,0.9)', strokeWidth: 2 }}
-              tickLine={{ stroke: 'rgba(0,0,0,0.9)', strokeWidth: 1.5 }}
-            >
-              <RechartsLabel 
-                value="Limite de Liquidez (LL %)" 
-                offset={8} 
-                position="insideBottom" 
-                fill="rgba(0,0,0,0.9)" 
-                fontSize={12}
-                fontWeight={600}
-                style={{ transform: 'translateY(30px)' }}
+      {/* Gráfico principal - compacto com fundo branco */}
+      <div className="bg-white p-3 rounded-xl border border-border shadow-sm" style={{ width: '100%' }}>
+        <div style={{ width: '100%', height: 340 }}>
+          <ResponsiveContainer>
+            <ScatterChart margin={{ top: 5, right: 5, bottom: 45, left: 50 }}>
+              <XAxis
+                type="number"
+                dataKey="ll"
+                name="LL"
+                domain={xDomain}
+                hide={true}
               />
-            </XAxis>
 
-            <YAxis
-              type="number"
-              dataKey="ip"
-              name="IP"
-              domain={yDomain}
-              ticks={[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60].filter(t => t <= yDomain[1])}
-              stroke="rgba(0,0,0,0.9)"
-              tick={{ fill: 'rgba(0,0,0,0.9)', fontSize: 11, fontWeight: 500 }}
-              axisLine={{ stroke: 'rgba(0,0,0,0.9)', strokeWidth: 2 }}
-              tickLine={{ stroke: 'rgba(0,0,0,0.9)', strokeWidth: 1.5 }}
-            >
-              <RechartsLabel 
-                value="Índice de Plasticidade (IP %)" 
-                angle={-90} 
-                position="insideLeft" 
-                style={{ textAnchor: 'middle', fill: 'rgba(0,0,0,0.9)', fontSize: 12, fontWeight: 600 }} 
-                offset={0}
-                dx={-40}
+              <YAxis
+                type="number"
+                dataKey="ip"
+                name="IP"
+                domain={yDomain}
+                hide={true}
               />
-            </YAxis>
-
-            <RechartsTooltip cursor={{ strokeDasharray: '3 3' }} />
 
             {/* Customized: draw polygons that respect the Line A shape */}
             <Customized
@@ -624,12 +691,112 @@ const PlasticityChart: React.FC<PlasticityChartProps> = ({ ll, ip }) => {
 
             {/* Zone labels will be shown only when clicking on zones */}
 
-            {/* plotted soil point */}
-            <ZAxis type="number" dataKey="z" range={[120, 120]} />
-            <Scatter name={`Solo (${ll.toFixed(1)}, ${ip.toFixed(1)})`} data={data} fill="#981b1b" shape="cross" />
+            {/* Ponto do solo e suas anotações - renderizado por último para ficar em cima */}
+            <Customized
+              component={(chartProps: any) => {
+                const { width, height, xAxisMap, yAxisMap } = chartProps;
+                if (!xAxisMap || !yAxisMap) return null;
+
+                // Converter coordenadas do domínio para pixels
+                const xScale = (val: number) => {
+                  const [dmin, dmax] = xDomain;
+                  return ((val - dmin) / (dmax - dmin)) * width;
+                };
+                const yScale = (val: number) => {
+                  const [dmin, dmax] = yDomain;
+                  return height - ((val - dmin) / (dmax - dmin)) * height;
+                };
+
+                const px = xScale(ll);
+                const py = yScale(ip);
+
+                // Posição do label - ajustada para não sobrepor o ponto
+                const labelOffsetX = 10;
+                const labelOffsetY = -18;
+
+                // Usar a mesma escala do gráfico principal
+                const chartScale = 0.85; // Deve ser o mesmo valor do CustomizedPolygonDrawer
+                const translateX = width * (1 - chartScale) / 2 + 25; // +25px para a direita
+                const translateY = height * (1 - chartScale) / 2 - 10; // +10px para cima
+
+                return (
+                  <g transform={`translate(${translateX}, ${translateY}) scale(${chartScale})`}>
+                    {/* Linhas guia do ponto aos eixos (tracejadas finas) */}
+                    <line
+                      x1={px}
+                      y1={py}
+                      x2={px}
+                      y2={height}
+                      stroke="#dc2626"
+                      strokeWidth={1}
+                      strokeDasharray="2 3"
+                      opacity={0.3}
+                    />
+                    <line
+                      x1={0}
+                      y1={py}
+                      x2={px}
+                      y2={py}
+                      stroke="#dc2626"
+                      strokeWidth={1}
+                      strokeDasharray="2 3"
+                      opacity={0.3}
+                    />
+                    
+                    {/* Círculo de referência ao redor do ponto */}
+                    <circle
+                      cx={px}
+                      cy={py}
+                      r={10}
+                      fill="none"
+                      stroke="#dc2626"
+                      strokeWidth={1.5}
+                      strokeDasharray="3 2"
+                      opacity={0.6}
+                    />
+                    
+                    {/* Ponto principal do solo */}
+                    <circle
+                      cx={px}
+                      cy={py}
+                      r={6}
+                      fill="#dc2626"
+                      stroke="#ffffff"
+                      strokeWidth={2.5}
+                    />
+                    
+                    {/* Label com coordenadas */}
+                    <g transform={`translate(${px + labelOffsetX}, ${py + labelOffsetY})`}>
+                      <rect
+                        x={-28}
+                        y={-10}
+                        width={56}
+                        height={18}
+                        fill="#dc2626"
+                        rx={3}
+                        opacity={0.95}
+                        stroke="#ffffff"
+                        strokeWidth={1}
+                      />
+                      <text
+                        x={0}
+                        y={2}
+                        textAnchor="middle"
+                        fill="#ffffff"
+                        fontSize={10}
+                        fontWeight="700"
+                      >
+                        ({ll.toFixed(1)}, {ip.toFixed(1)})
+                      </text>
+                    </g>
+                  </g>
+                );
+              }}
+            />
 
           </ScatterChart>
         </ResponsiveContainer>
+        </div>
       </div>
 
       {/* Popover da zona selecionada - renderizado via Portal no body */}

@@ -510,7 +510,7 @@ export default function LimitesConsistencia() {
             </CardHeader>
             <CardContent className="space-y-3 p-4 pt-0 flex-1">
               <TooltipProvider>
-                 <Accordion type="multiple" defaultValue={["ll", "lp"]} className="w-full space-y-3">
+                 <Accordion type="multiple" defaultValue={["ll", "lp", "adicionais"]} className="w-full space-y-3">
                    {/* Item Accordion: LL */}
                    <AccordionItem value="ll" className="border-0">
                       <AccordionTrigger className="text-sm font-semibold text-foreground bg-accent/5 hover:bg-accent/10 px-3 py-2 rounded-lg border border-accent/20 [&[data-state=open]]:rounded-b-none">
@@ -678,15 +678,11 @@ export default function LimitesConsistencia() {
                    {/* Slide 2: Carta de Plasticidade e Classificação Detalhada */}
                    <CarouselItem>
                      <div className="space-y-2">
-                       {(results.ll !== null && results.ip !== null) && (
-                         <div id="plasticity-chart">
-                           <h3 className="font-semibold text-xs text-foreground mb-1.5 flex items-center gap-1.5">
-                             <LineChart className="w-3.5 h-3.5 text-primary" /> Carta de Plasticidade
-                             <TooltipProvider><Tooltip><TooltipTrigger><Button variant="ghost" size="icon" className="h-4 w-4 text-muted-foreground hover:text-primary rounded-full p-0"><Info className="w-3 h-3" /></Button></TooltipTrigger><TooltipContent>{tooltips.CartaPlasticidade}</TooltipContent></Tooltip></TooltipProvider>
-                           </h3>
-                           <PlasticityChart ll={results.ll} ip={results.ip} />
-                         </div>
-                       )}
+                      {(results.ll !== null && results.ip !== null) && (
+                        <div id="plasticity-chart">
+                          <PlasticityChart ll={results.ll} ip={results.ip} />
+                        </div>
+                      )}
                      </div>
                    </CarouselItem>
                  </CarouselContent>
