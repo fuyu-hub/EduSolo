@@ -4,6 +4,7 @@ import { Menu, Calculator, FileText, BookOpen, Layers, Droplets, BarChart3, Tren
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
+import { IsometricCube } from "@/components/ui/isometric-cube";
 import {
   Sheet,
   SheetContent,
@@ -17,20 +18,20 @@ const menuItems = [
   {
     title: "Análise Geotécnica",
     items: [
-      { icon: Calculator, label: "Índices Físicos", path: "/indices-fisicos" },
-      { icon: Droplets, label: "Limites de Consistência", path: "/limites-consistencia" },
-      { icon: BarChart3, label: "Granulometria", path: "/granulometria" },
-      { icon: Layers, label: "Compactação", path: "/compactacao" },
-      { icon: FileText, label: "Tensões Geostáticas", path: "/tensoes" },
-      { icon: TrendingDown, label: "Acréscimo de Tensões", path: "/acrescimo-tensoes" },
+      { icon: Calculator, label: "Índices Físicos", path: "/indices-fisicos", tourId: "" },
+      { icon: Droplets, label: "Limites de Consistência", path: "/limites-consistencia", tourId: "" },
+      { icon: BarChart3, label: "Granulometria", path: "/granulometria", tourId: "" },
+      { icon: Layers, label: "Compactação", path: "/compactacao", tourId: "" },
+      { icon: FileText, label: "Tensões Geostáticas", path: "/tensoes", tourId: "" },
+      { icon: TrendingDown, label: "Acréscimo de Tensões", path: "/acrescimo-tensoes", tourId: "" },
     ],
   },
   {
     title: "Ferramentas",
     items: [
-      { icon: BookOpen, label: "Material Educacional", path: "/educacional" },
-      { icon: Settings, label: "Configurações", path: "/settings" },
-      { icon: Info, label: "Sobre", path: "/about" },
+      { icon: BookOpen, label: "Material Educacional", path: "/educacional", tourId: "" },
+      { icon: Settings, label: "Configurações", path: "/settings", tourId: "settings-menu" },
+      { icon: Info, label: "Sobre", path: "/about", tourId: "" },
     ],
   },
 ];
@@ -42,7 +43,7 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
   return (
     <>
       {/* Logo */}
-      <div className="h-16 flex items-center justify-center border-b border-sidebar-border/50 px-3">
+      <div className="h-16 flex items-center justify-center px-3">
         {/* Link fecha a Sheet se onLinkClick estiver definido */}
         <ConditionalSheetClose shouldWrap={!!onLinkClick} asChild>
           <Link to="/" className="flex items-center gap-2" onClick={onLinkClick}>
@@ -52,8 +53,8 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
             ) : (
               // Mostrar logo completo quando expandido
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <Calculator className="w-5 h-5 text-primary" />
+                <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <IsometricCube className="w-8 h-8 text-primary" />
                 </div>
                 <span className="text-xl font-bold text-foreground">
                   Edu<span className="text-primary">Solo</span>
@@ -89,6 +90,7 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
                    <ConditionalSheetClose key={item.path} shouldWrap={!!onLinkClick} asChild>
                       <Link to={item.path} onClick={onLinkClick} title={collapsed ? item.label : undefined}>
                 <Button
+                  data-tour={item.tourId}
                   variant="ghost"
                   className={cn(
                     "w-full transition-all duration-200",
@@ -252,6 +254,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             
             {/* Botão de Toggle de Modo Claro/Escuro */}
             <Button
+              data-tour="theme-toggle"
               variant="ghost"
               size="icon"
               onClick={toggleMode}

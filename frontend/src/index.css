@@ -833,6 +833,14 @@ All colors MUST be HSL.
     border: 1px solid var(--glass-border);
   }
 
+  /* Glassmorphism forte para modais e overlays */
+  .glass-strong {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  }
+
   /* Smooth transitions */
   .transition-smooth {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

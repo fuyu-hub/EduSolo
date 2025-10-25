@@ -1,0 +1,120 @@
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+
+export interface TourStep {
+  target: string; // Seletor CSS ou ID do elemento
+  title: string;
+  content: string;
+  placement?: "top" | "bottom" | "left" | "right";
+  spotlightPadding?: number;
+}
+
+interface TourContextType {
+  isActive: boolean;
+  currentStep: number;
+  steps: TourStep[];
+  startTour: (steps: TourStep[], tourId: string) => void;
+  endTour: () => void;
+  nextStep: () => void;
+  prevStep: () => void;
+  skipTour: () => void;
+  tourId: string | null;
+}
+
+const TourContext = createContext<TourContextType | undefined>(undefined);
+
+export function TourProvider({ children }: { children: React.ReactNode }) {
+  const [isActive, setIsActive] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [steps, setSteps] = useState<TourStep[]>([]);
+  const [tourId, setTourId] = useState<string | null>(null);
+
+  const startTour = useCallback((newSteps: TourStep[], id: string) => {
+    // Verificar se o usuário já viu este tour
+    const hasSeenTour = localStorage.getItem(`tour-seen-${id}`);
+    if (hasSeenTour === "true") {
+      return;
+    }
+
+    setSteps(newSteps);
+    setCurrentStep(0);
+    setTourId(id);
+    setIsActive(true);
+  }, []);
+
+  const endTour = useCallback(() => {
+    if (tourId) {
+      localStorage.setItem(`tour-seen-${tourId}`, "true");
+    }
+    setIsActive(false);
+    setCurrentStep(0);
+    setSteps([]);
+    setTourId(null);
+  }, [tourId]);
+
+  const skipTour = useCallback(() => {
+    endTour();
+  }, [endTour]);
+
+  const nextStep = useCallback(() => {
+    if (currentStep < steps.length - 1) {
+      setCurrentStep((prev) => prev + 1);
+    } else {
+      endTour();
+    }
+  }, [currentStep, steps.length, endTour]);
+
+  const prevStep = useCallback(() => {
+    if (currentStep > 0) {
+      setCurrentStep((prev) => prev - 1);
+    }
+  }, [currentStep]);
+
+  // Scroll to element when step changes
+  useEffect(() => {
+    if (isActive && steps[currentStep]) {
+      // Pequeno delay para garantir que o elemento está renderizado
+      const timer = setTimeout(() => {
+        const element = document.querySelector(steps[currentStep].target);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          const absoluteTop = window.pageYOffset + rect.top;
+          const middle = absoluteTop - (window.innerHeight / 2) + (rect.height / 2);
+          
+          window.scrollTo({
+            top: middle,
+            behavior: "smooth",
+          });
+        }
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep, isActive, steps]);
+
+  return (
+    <TourContext.Provider
+      value={{
+        isActive,
+        currentStep,
+        steps,
+        startTour,
+        endTour,
+        nextStep,
+        prevStep,
+        skipTour,
+        tourId,
+      }}
+    >
+      {children}
+    </TourContext.Provider>
+  );
+}
+
+export function useTour() {
+  const context = useContext(TourContext);
+  if (context === undefined) {
+    throw new Error("useTour must be used within a TourProvider");
+  }
+  return context;
+}
+

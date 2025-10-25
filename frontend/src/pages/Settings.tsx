@@ -1,4 +1,4 @@
-import { Settings as SettingsIcon, Palette, Check, Calculator, Monitor, Eye, Database, Download, Upload, Trash2, RotateCcw, Zap } from "lucide-react";
+import { Settings as SettingsIcon, Palette, Check, Calculator, Monitor, Eye, Database, Download, Upload, Trash2, RotateCcw, Zap, HelpCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -8,11 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useTheme } from "@/hooks/use-theme";
 import { useSettings } from "@/hooks/use-settings";
+import { useTour } from "@/contexts/TourContext";
 import { ThemeColor } from "@/contexts/ThemeContext";
 import { UnitSystem, InterfaceDensity } from "@/contexts/SettingsContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -91,9 +93,26 @@ const themeColors: ThemeOption[] = [
 export default function Settings() {
   const { theme, setThemeColor } = useTheme();
   const { settings, updateSettings, resetSettings, clearAllCalculations, exportSettings, importSettings } = useSettings();
+  const { startTour } = useTour();
+  const navigate = useNavigate();
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleRestartTour = () => {
+    // Limpar todos os tours vistos
+    const keys = Object.keys(localStorage).filter(key => key.startsWith("tour-seen-"));
+    keys.forEach(key => localStorage.removeItem(key));
+    
+    toast.success("Tour reiniciado!", {
+      description: "Volte à página inicial para ver o tour novamente.",
+    });
+    
+    // Navegar para o Dashboard
+    setTimeout(() => {
+      navigate("/");
+    }, 1000);
+  };
 
   const handleImportSettings = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -431,6 +450,35 @@ export default function Settings() {
             </div>
           </Card>
         </div>
+      </section>
+
+      {/* Ajuda e Tutoriais */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <HelpCircle className="w-5 h-5 text-primary" />
+          <h2 className="text-2xl font-semibold text-foreground">Ajuda e Tutoriais</h2>
+        </div>
+
+        <Card className="glass p-5">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1 flex-1">
+              <Label className="text-base font-medium">
+                Tour Guiado
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                Reinicie o tutorial interativo do aplicativo
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={handleRestartTour}
+              className="ml-4"
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Reiniciar Tour
+            </Button>
+          </div>
+        </Card>
       </section>
 
       {/* Gerenciamento de Dados */}

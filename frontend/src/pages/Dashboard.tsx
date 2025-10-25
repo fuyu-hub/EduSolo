@@ -1,17 +1,19 @@
-import { Calculator, Layers, FileText, BookOpen, TrendingUp, TrendingDown, Ruler, Droplets, BarChart3 } from "lucide-react";
-import { memo } from "react";
+import { Calculator, Layers, FileText, BookOpen, TrendingUp, TrendingDown, Ruler, Droplets, BarChart3, Scale, Grip, ArrowDownToLine, Target, Activity, Pyramid } from "lucide-react";
+import { memo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { PreloaderLink } from "@/components/RoutePreloader";
+import { useTour } from "@/contexts/TourContext";
 
 const modules = [
   {
-    icon: Calculator,
+    icon: Scale,
     title: "Índices Físicos",
     description: "Calcule índices físicos do solo: umidade, densidade, porosidade e mais",
     path: "/indices-fisicos",
     color: "from-sky-500 to-blue-600",
     preload: () => import("./IndicesFisicos"),
+    tourId: "module-indices",
   },
   {
     icon: Droplets,
@@ -20,14 +22,16 @@ const modules = [
     path: "/limites-consistencia",
     color: "from-indigo-500 to-blue-600",
     preload: () => import("./LimitesConsistencia"),
+    tourId: "module-limites",
   },
   {
-    icon: BarChart3,
+    icon: Grip,
     title: "Granulometria e Classificação",
     description: "Análise granulométrica e classificação USCS/AASHTO",
     path: "/granulometria",
     color: "from-fuchsia-500 to-purple-600",
     preload: () => import("./Granulometria"),
+    tourId: "module-granulometria",
   },
   {
     icon: Layers,
@@ -36,38 +40,43 @@ const modules = [
     path: "/compactacao",
     color: "from-violet-500 to-purple-600",
     preload: () => import("./Compactacao"),
+    tourId: "module-compactacao",
   },
   {
-    icon: FileText,
+    icon: Pyramid,
     title: "Tensões Geostáticas",
     description: "Calcule tensões verticais, efetivas e neutras no solo",
     path: "/tensoes",
     color: "from-emerald-500 to-green-600",
     preload: () => import("./TensoesGeostaticas"),
+    tourId: "module-tensoes",
   },
   {
-    icon: TrendingDown,
+    icon: Target,
     title: "Acréscimo de Tensões",
     description: "Métodos de Boussinesq e análise de carregamentos",
     path: "/acrescimo-tensoes",
     color: "from-orange-500 to-red-600",
     preload: () => import("./AcrescimoTensoes"),
+    tourId: "module-acrescimo",
   },
   {
-    icon: TrendingUp,
+    icon: ArrowDownToLine,
     title: "Análise de Adensamento",
     description: "Teoria de Terzaghi e análise de recalques",
     path: "#",
     color: "from-amber-500 to-orange-600",
     comingSoon: true,
+    tourId: "module-adensamento",
   },
   {
-    icon: Ruler,
+    icon: Activity,
     title: "Resistência ao Cisalhamento",
     description: "Análise de ensaios triaxiais e cisalhamento direto",
     path: "#",
     color: "from-rose-500 to-pink-600",
     comingSoon: true,
+    tourId: "module-cisalhamento",
   },
   {
     icon: BookOpen,
@@ -76,6 +85,7 @@ const modules = [
     path: "/educacional",
     color: "from-cyan-500 to-teal-600",
     comingSoon: true,
+    tourId: "module-educacional",
   },
 ];
 
@@ -86,9 +96,11 @@ const ModuleCard = memo<{
   description: string;
   color: string;
   comingSoon?: boolean;
-}>(({ icon: Icon, title, description, color, comingSoon }) => {
+  tourId?: string;
+}>(({ icon: Icon, title, description, color, comingSoon, tourId }) => {
   return (
     <Card
+      data-tour={tourId}
       className={cn(
         "glass p-6 transition-smooth hover:shadow-2xl hover:shadow-primary/20 group cursor-pointer relative overflow-hidden h-full min-h-[200px] flex flex-col",
         !comingSoon && "hover:-translate-y-2 hover:scale-[1.02] active:scale-[0.98]"
@@ -139,10 +151,88 @@ const ModuleCard = memo<{
 ModuleCard.displayName = "ModuleCard";
 
 export default function Dashboard() {
+  const { startTour } = useTour();
+
+  useEffect(() => {
+    // Iniciar tour após um delay maior para garantir que todos os elementos estejam renderizados
+    const timer = setTimeout(() => {
+      startTour([
+        {
+          target: "#dashboard-hero",
+          title: "Bem-vindo ao EduSolo",
+          content: "Este é seu painel principal. Aqui você encontra todos os módulos de cálculo geotécnico disponíveis. Vamos fazer um tour rápido!",
+          placement: "bottom",
+        },
+        {
+          target: "#modules-grid",
+          title: "Módulos de Cálculo",
+          content: "Aqui estão os módulos principais para análise geotécnica. Clique em qualquer card para começar seus cálculos. Os módulos com 'Em breve' estarão disponíveis em futuras atualizações.",
+          placement: "bottom",
+        },
+        {
+          target: "[data-tour='module-indices']",
+          title: "Índices Físicos",
+          content: "Calcule propriedades fundamentais do solo como umidade, densidade, porosidade e índice de vazios. Perfeito para caracterização inicial do solo.",
+          placement: "right",
+        },
+        {
+          target: "[data-tour='module-limites']",
+          title: "Limites de Consistência",
+          content: "Determine os limites de Atterberg (LL, LP, IP) e classifique a plasticidade do solo segundo critérios estabelecidos.",
+          placement: "right",
+        },
+        {
+          target: "[data-tour='module-granulometria']",
+          title: "Granulometria",
+          content: "Analise a distribuição granulométrica do solo e obtenha classificação automática pelos sistemas USCS e AASHTO.",
+          placement: "left",
+        },
+        {
+          target: "[data-tour='module-compactacao']",
+          title: "Compactação",
+          content: "Visualize curvas de compactação, calcule grau de compactação e analise energia Proctor.",
+          placement: "right",
+        },
+        {
+          target: "[data-tour='module-tensoes']",
+          title: "Tensões Geostáticas",
+          content: "Calcule tensões verticais totais, efetivas e neutras em camadas de solo. Essencial para análise de estabilidade.",
+          placement: "right",
+        },
+        {
+          target: "[data-tour='module-acrescimo']",
+          title: "Acréscimo de Tensões",
+          content: "Use métodos de Boussinesq, Love, Newmark e Carothers para calcular tensões induzidas por carregamentos. Inclui análise interativa 2D.",
+          placement: "left",
+        },
+        {
+          target: "#dashboard-stats",
+          title: "Estatísticas do Projeto",
+          content: "Acompanhe o progresso do EduSolo. Temos diversos módulos disponíveis, 100% gratuito e em constante desenvolvimento.",
+          placement: "top",
+        },
+        {
+          target: "[data-tour='theme-toggle']",
+          title: "Modo Claro/Escuro",
+          content: "Prefere trabalhar no escuro? Alterne entre os modos claro e escuro clicando neste botão no header.",
+          placement: "bottom",
+        },
+        {
+          target: "[data-tour='settings-menu']",
+          title: "Configurações",
+          content: "Acesse as configurações do sistema, ajuste preferências de cálculo e personalize sua experiência. Você também pode reiniciar este tour a qualquer momento.",
+          placement: "right",
+        },
+      ], "dashboard-main");
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [startTour]);
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       {/* Hero Section */}
-      <div className="space-y-3">
+      <div id="dashboard-hero" className="space-y-3">
         <h1 className="text-4xl font-bold text-foreground">
           Bem-vindo ao <span className="text-primary bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">EduSolo</span>
         </h1>
@@ -152,7 +242,7 @@ export default function Dashboard() {
       </div>
 
       {/* Modules Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="list" aria-label="Módulos disponíveis">
+      <div id="modules-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="list" aria-label="Módulos disponíveis">
         {modules.map((module) => {
           const content = (
             <ModuleCard
@@ -161,6 +251,7 @@ export default function Dashboard() {
               description={module.description}
               color={module.color}
               comingSoon={module.comingSoon}
+              tourId={module.tourId}
             />
           );
 
@@ -183,7 +274,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12">
+      <div id="dashboard-stats" className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12">
         <Card className="glass p-5 border-l-4 border-l-primary hover:shadow-lg transition-all hover:border-l-8">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center transition-all hover:scale-110 hover:rotate-12">

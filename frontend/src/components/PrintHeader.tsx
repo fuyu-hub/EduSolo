@@ -1,4 +1,4 @@
-import { Calculator } from "lucide-react";
+import { IsometricCube } from "@/components/ui/isometric-cube";
 
 interface PrintHeaderProps {
   moduleTitle: string;
@@ -18,7 +18,7 @@ export default function PrintHeader({ moduleTitle, moduleName }: PrintHeaderProp
     <div className="print-header hidden">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Calculator className="w-8 h-8" />
+          <IsometricCube className="w-12 h-12" />
           <div>
             <h1 className="text-2xl font-bold">EduSolo</h1>
             <p className="text-sm text-muted-foreground">Sistema de Análise Geotécnica</p>

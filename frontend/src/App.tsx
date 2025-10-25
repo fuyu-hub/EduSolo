@@ -9,6 +9,8 @@ import { PageLoader } from "@/components/ui/loading-spinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
+import { TourProvider } from "@/contexts/TourContext";
+import { Tour } from "@/components/Tour";
 import { useRoutePreload } from "@/hooks/use-route-preload";
 
 // Lazy loading de páginas para melhor performance
@@ -224,13 +226,16 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <SettingsProvider>
         <ThemeProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AppContent />
-            </BrowserRouter>
-          </TooltipProvider>
+          <TourProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <Tour />
+              <BrowserRouter>
+                <AppContent />
+              </BrowserRouter>
+            </TooltipProvider>
+          </TourProvider>
         </ThemeProvider>
       </SettingsProvider>
     </QueryClientProvider>
