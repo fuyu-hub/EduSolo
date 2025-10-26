@@ -38,6 +38,9 @@ import autoTable from 'jspdf-autotable';
  * - Títulos de tabelas (tables)
  */
 
+export type ThemeColor = "soil" | "blue" | "green" | "purple" | "pink" | "orange" | "cyan" | "amber" | "indigo" | "red";
+export type ThemeMode = "light" | "dark";
+
 export interface ExportData {
   moduleName: string;
   moduleTitle: string;
@@ -47,6 +50,7 @@ export interface ExportData {
   tables?: { title: string; headers: string[]; rows: (string | number)[][] }[];
   chartImage?: string; // Base64 image de gráficos
   customFileName?: string; // Nome customizado para o arquivo
+  theme?: { color: ThemeColor; mode: ThemeMode }; // Tema para cores do PDF
 }
 
 export interface ExcelExportData {
@@ -280,6 +284,77 @@ function calcularLarguraTextoMatematico(
   return larguraTotal;
 }
 
+/**
+ * Obtém paleta de cores baseada no tema selecionado
+ */
+function obterPaletaCores(theme?: { color: ThemeColor; mode: ThemeMode }) {
+  const themeColor = theme?.color || 'indigo';
+  // Forçar sempre tema claro para PDFs
+  const themeMode = 'light';
+  
+  // Cores primárias por tema
+  const colorMap: Record<ThemeColor, { r: number; g: number; b: number }> = {
+    soil: { r: 138, g: 99, b: 69 },       // Terra Natural (tema oficial)
+    blue: { r: 59, g: 130, b: 246 },      // blue-500
+    green: { r: 34, g: 197, b: 94 },      // green-500
+    purple: { r: 168, g: 85, b: 247 },    // purple-500
+    pink: { r: 236, g: 72, b: 153 },      // pink-500
+    orange: { r: 249, g: 115, b: 22 },    // orange-500
+    cyan: { r: 6, g: 182, b: 212 },       // cyan-500
+    amber: { r: 245, g: 158, b: 11 },     // amber-500
+    indigo: { r: 99, g: 102, b: 241 },    // indigo-500
+    red: { r: 239, g: 68, b: 68 },        // red-500
+  };
+  
+  const primaryColor = colorMap[themeColor];
+  
+  // PDFs sempre em modo claro
+  return {
+    // Cor primária do tema
+    primary: primaryColor,
+    
+    // Cor mais escura para cabeçalhos
+    primaryDark: {
+      r: Math.max(0, primaryColor.r - 40),
+      g: Math.max(0, primaryColor.g - 40),
+      b: Math.max(0, primaryColor.b - 40),
+    },
+    
+    // Fundo do cabeçalho principal
+    headerBg: primaryColor,
+    
+    // Texto do cabeçalho
+    headerText: { r: 255, g: 255, b: 255 },
+    
+    // Fundo do título do módulo
+    moduleTitleBg: { r: 245, g: 245, b: 250 },
+    
+    // Texto do título do módulo
+    moduleTitleText: primaryColor,
+    
+    // Fundo das seções
+    sectionHeaderBg: primaryColor,
+    
+    // Fundo alternado dos itens
+    itemBg: { r: 250, g: 250, b: 252 },
+    
+    // Fundo de destaque
+    highlightBg: { r: 255, g: 245, b: 230 },
+    
+    // Texto normal
+    text: { r: 0, g: 0, b: 0 },
+    
+    // Texto secundário
+    textSecondary: { r: 100, g: 100, b: 100 },
+    
+    // Fundo da página
+    pageBg: { r: 255, g: 255, b: 255 },
+    
+    // Linhas e bordas
+    border: { r: 200, g: 200, b: 200 },
+  };
+}
+
 export async function exportToPDF(data: ExportData): Promise<boolean> {
   try {
     const doc = new jsPDF({
@@ -295,14 +370,17 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
     const margin = 20;
     let yPosition = margin;
 
-    // Cabeçalho com fundo colorido
-    doc.setFillColor(100, 50, 150); // Roxo EduSolo
+    // Obter paleta de cores baseada no tema
+    const colors = obterPaletaCores(data.theme);
+
+    // Cabeçalho com fundo colorido (tema)
+    doc.setFillColor(colors.headerBg.r, colors.headerBg.g, colors.headerBg.b);
     doc.rect(0, 0, pageWidth, 35, 'F');
     
     // Logo/Nome EduSolo
     doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(255, 255, 255);
+    doc.setTextColor(colors.headerText.r, colors.headerText.g, colors.headerText.b);
     doc.text('EduSolo', margin, yPosition + 5);
     
     // Subtítulo
@@ -322,29 +400,29 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
     doc.text(currentDate, pageWidth - margin, yPosition + 8, { align: 'right' });
     
     // Resetar cor do texto
-    doc.setTextColor(0, 0, 0);
+    doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
     yPosition = 45;
 
     // Título do módulo com fundo
-    doc.setFillColor(245, 245, 250);
+    doc.setFillColor(colors.moduleTitleBg.r, colors.moduleTitleBg.g, colors.moduleTitleBg.b);
     doc.roundedRect(margin, yPosition - 5, pageWidth - 2 * margin, 12, 2, 2, 'F');
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(100, 50, 150);
+    doc.setTextColor(colors.moduleTitleText.r, colors.moduleTitleText.g, colors.moduleTitleText.b);
     doc.text(data.moduleTitle, margin + 5, yPosition + 3);
-    doc.setTextColor(0, 0, 0);
+    doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
     yPosition += 16;
 
     // Seção de Dados de Entrada
     if (data.inputs.length > 0) {
       // Cabeçalho da seção
-      doc.setFillColor(100, 50, 150);
+      doc.setFillColor(colors.sectionHeaderBg.r, colors.sectionHeaderBg.g, colors.sectionHeaderBg.b);
       doc.rect(margin, yPosition, pageWidth - 2 * margin, 8, 'F');
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(255, 255, 255);
+      doc.setTextColor(colors.headerText.r, colors.headerText.g, colors.headerText.b);
       doc.text('DADOS DE ENTRADA', margin + 3, yPosition + 5.5);
-      doc.setTextColor(0, 0, 0);
+      doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
       yPosition += 12;
 
       doc.setFontSize(10);
@@ -357,7 +435,7 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
         }
 
         // Fundo alternado
-        doc.setFillColor(250, 250, 252);
+        doc.setFillColor(colors.itemBg.r, colors.itemBg.g, colors.itemBg.b);
         doc.rect(margin, yPosition - 4, pageWidth - 2 * margin, 7, 'F');
         
         // Renderizar label com símbolos matemáticos
@@ -385,13 +463,13 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
       }
 
       // Cabeçalho da seção
-      doc.setFillColor(100, 50, 150);
+      doc.setFillColor(colors.sectionHeaderBg.r, colors.sectionHeaderBg.g, colors.sectionHeaderBg.b);
       doc.rect(margin, yPosition, pageWidth - 2 * margin, 8, 'F');
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(255, 255, 255);
+      doc.setTextColor(colors.headerText.r, colors.headerText.g, colors.headerText.b);
       doc.text('RESULTADOS', margin + 3, yPosition + 5.5);
-      doc.setTextColor(0, 0, 0);
+      doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
       yPosition += 12;
 
       doc.setFontSize(10);
@@ -415,13 +493,8 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
           yPosition = margin;
         }
 
-        if (result.highlight) {
-          doc.setFillColor(255, 245, 230);
-          doc.rect(margin, yPosition - 4, pageWidth - 2 * margin, totalHeight + 2, 'F');
-        } else {
-          doc.setFillColor(250, 250, 252);
-          doc.rect(margin, yPosition - 4, pageWidth - 2 * margin, totalHeight + 2, 'F');
-        }
+        doc.setFillColor(colors.itemBg.r, colors.itemBg.g, colors.itemBg.b);
+        doc.rect(margin, yPosition - 4, pageWidth - 2 * margin, totalHeight + 2, 'F');
 
         // Renderizar label com símbolos matemáticos
         doc.setFont('helvetica', 'normal');
@@ -431,7 +504,7 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
         
         // Renderizar valor com símbolos matemáticos
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(result.highlight ? 100 : 0, result.highlight ? 50 : 0, result.highlight ? 150 : 0);
+        doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
         
         if (numLines === 1) {
           renderizarTextoMatematico(doc, result.value, margin + 90, yPosition, 10);
@@ -443,7 +516,7 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
             currentY += lineHeight;
           }
         }
-        doc.setTextColor(0, 0, 0);
+        doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
         
         yPosition += totalHeight;
       }
@@ -460,13 +533,13 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
       }
 
       // Cabeçalho da seção
-      doc.setFillColor(100, 50, 150);
+      doc.setFillColor(colors.sectionHeaderBg.r, colors.sectionHeaderBg.g, colors.sectionHeaderBg.b);
       doc.rect(margin, yPosition, pageWidth - 2 * margin, 8, 'F');
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(255, 255, 255);
+      doc.setTextColor(colors.headerText.r, colors.headerText.g, colors.headerText.b);
       doc.text('RESUMO DA ANÁLISE', margin + 3, yPosition + 5.5);
-      doc.setTextColor(0, 0, 0);
+      doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
       yPosition += 12;
 
       doc.setFontSize(10);
@@ -491,7 +564,7 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
         }
 
         // Fundo alternado
-        doc.setFillColor(250, 250, 252);
+        doc.setFillColor(colors.itemBg.r, colors.itemBg.g, colors.itemBg.b);
         doc.rect(margin, yPosition - 4, pageWidth - 2 * margin, totalHeight + 2, 'F');
 
         // Renderizar label com símbolos matemáticos
@@ -533,13 +606,13 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
         }
 
         // Cabeçalho da tabela
-        doc.setFillColor(100, 50, 150);
+        doc.setFillColor(colors.sectionHeaderBg.r, colors.sectionHeaderBg.g, colors.sectionHeaderBg.b);
         doc.rect(margin, yPosition, pageWidth - 2 * margin, 8, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.setTextColor(255, 255, 255);
+        doc.setTextColor(colors.headerText.r, colors.headerText.g, colors.headerText.b);
         doc.text(table.title.toUpperCase(), margin + 3, yPosition + 5.5);
-        doc.setTextColor(0, 0, 0);
+        doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
         yPosition += 10;
 
         // Headers e linhas mantêm símbolos Unicode
@@ -554,18 +627,19 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
             body: rowsFormatadas,
             theme: 'grid',
             headStyles: {
-              fillColor: [120, 70, 170],
-              textColor: [255, 255, 255],
+              fillColor: [colors.primaryDark.r, colors.primaryDark.g, colors.primaryDark.b],
+              textColor: [colors.headerText.r, colors.headerText.g, colors.headerText.b],
               fontStyle: 'bold',
               fontSize: 9,
               halign: 'center',
               lineWidth: 0.1,
-              lineColor: [100, 50, 150]
+              lineColor: [colors.primary.r, colors.primary.g, colors.primary.b]
             },
             bodyStyles: {
               fontSize: 8,
               lineWidth: 0.1,
-              lineColor: [200, 200, 200]
+              lineColor: [colors.border.r, colors.border.g, colors.border.b],
+              textColor: [colors.text.r, colors.text.g, colors.text.b],
             },
             alternateRowStyles: {
               fillColor: [248, 248, 252]
@@ -602,17 +676,17 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
       }
 
       // Cabeçalho do gráfico
-      doc.setFillColor(100, 50, 150);
+      doc.setFillColor(colors.sectionHeaderBg.r, colors.sectionHeaderBg.g, colors.sectionHeaderBg.b);
       doc.rect(margin, yPosition, pageWidth - 2 * margin, 8, 'F');
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(255, 255, 255);
+      doc.setTextColor(colors.headerText.r, colors.headerText.g, colors.headerText.b);
       doc.text('GRÁFICO', margin + 3, yPosition + 5.5);
-      doc.setTextColor(0, 0, 0);
+      doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
       yPosition += 12;
       
       // Borda ao redor do gráfico
-      doc.setDrawColor(100, 50, 150);
+      doc.setDrawColor(colors.primary.r, colors.primary.g, colors.primary.b);
       doc.setLineWidth(0.5);
       doc.rect(margin, yPosition, imgWidth, imgHeight);
       
@@ -625,16 +699,18 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
     const totalPages = doc.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
+      
+
       const footerY = pageHeight - 12;
       
       // Linha superior do rodapé
-      doc.setDrawColor(100, 50, 150);
+      doc.setDrawColor(colors.primary.r, colors.primary.g, colors.primary.b);
       doc.setLineWidth(0.3);
       doc.line(margin, footerY - 3, pageWidth - margin, footerY - 3);
       
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100, 100, 100);
+      doc.setTextColor(colors.textSecondary.r, colors.textSecondary.g, colors.textSecondary.b);
       doc.text(
         'Gerado por EduSolo - Sistema de Análise Geotécnica',
         pageWidth / 2,
@@ -642,7 +718,7 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
         { align: 'center' }
       );
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(100, 50, 150);
+      doc.setTextColor(colors.primary.r, colors.primary.g, colors.primary.b);
       doc.text(
         `${i} / ${totalPages}`,
         pageWidth - margin,

@@ -32,6 +32,8 @@ import { ExemploTensoes } from "@/lib/exemplos-tensoes";
 import { CamadaData } from "@/components/tensoes/DialogCamada";
 import DialogConfiguracoes, { ConfigData } from "@/components/tensoes/DialogConfiguracoes";
 import { transferirNAParaCamadaCorreta, CamadaTensoes } from "@/lib/tensoes-utils";
+import { MobileModuleWrapper } from "@/components/mobile";
+import TensoesGeostaticasMobile from "./mobile/TensoesGeostaticasMobile";
 
 // Schema de validação
 const camadaSchema = z.object({
@@ -107,7 +109,7 @@ const tooltips = {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-export default function TensoesGeostaticas() {
+function TensoesGeostaticasDesktop() {
   const { toast: toastFn } = { toast };
   const { startTour } = useTour();
   const [currentCamadaIndex, setCurrentCamadaIndex] = useState(0);
@@ -549,31 +551,69 @@ export default function TensoesGeostaticas() {
     const perfilImage = await captureChartAsImage('perfil-tensoes-chart');
     const diagramaImage = await captureChartAsImage('diagrama-camadas-chart');
 
-    const inputs: { label: string; value: string }[] = [
-      { label: "Profundidade do NA", value: `${formData.profundidadeNA} m` },
-      { label: "Altura Franja Capilar", value: `${formData.alturaCapilar} m` },
-    ];
-
-    formData.camadas.forEach((c, i) => {
-      inputs.push({ label: `Camada ${i + 1} - Espessura`, value: `${c.espessura} m` });
-      if (c.gamaNat) inputs.push({ label: `Camada ${i + 1} - γ natural`, value: `${c.gamaNat} kN/m³` });
-      if (c.gamaSat) inputs.push({ label: `Camada ${i + 1} - γ saturado`, value: `${c.gamaSat} kN/m³` });
-      inputs.push({ label: `Camada ${i + 1} - Ko`, value: c.Ko });
-    });
+    // Dados de entrada vazios (serão tabelas)
+    const inputs: { label: string; value: string }[] = [];
 
     const profundidadeMax = results.pontos_calculo[results.pontos_calculo.length - 1]?.profundidade || 0;
     const tensaoMaxV = Math.max(...results.pontos_calculo.map(p => p.tensao_total_vertical || 0));
 
     const resultsList: { label: string; value: string; highlight?: boolean }[] = [
       { label: "Profundidade Máxima", value: `${formatNumberForExport(profundidadeMax, 2)} m` },
-      { label: "Tensão Total Máxima (σv)", value: `${formatNumberForExport(tensaoMaxV, 2)} kPa`, highlight: true },
+      { label: "Tensão Total Vertical Máxima", value: `${formatNumberForExport(tensaoMaxV, 2)} kPa`, highlight: true },
     ];
+
+    // Tabelas
+    const tables = [];
+    
+    // TABELA 1: Configurações Gerais
+    const configHeaders = ["Parâmetro", "Valor"];
+    const configRows = [
+      ["Profundidade do NA", `${formData.profundidadeNA} m`],
+      ["Altura Franja Capilar", `${formData.alturaCapilar} m`],
+    ];
+    tables.push({
+      title: "Configurações Gerais",
+      headers: configHeaders,
+      rows: configRows
+    });
+
+    // TABELA 2: Camadas
+    const camadasHeaders = ["Camada", "Espessura (m)", "Peso Esp. Nat. (kN/m³)", "Peso Esp. Sat. (kN/m³)", "Ko"];
+    const camadasRows = formData.camadas.map((c, i) => [
+      `${i + 1}`,
+      c.espessura,
+      c.gamaNat || "-",
+      c.gamaSat || "-",
+      c.Ko
+    ]);
+    tables.push({
+      title: "Camadas do Perfil",
+      headers: camadasHeaders,
+      rows: camadasRows
+    });
+
+    // TABELA 3: Tensões nos Pontos de Cálculo
+    const tensoesHeaders = ["Prof. (m)", "Tensao Total (kPa)", "Pressao Neutra (kPa)", "Tensao Efet. V (kPa)", "Tensao Efet. H (kPa)"];
+    const tensoesRows = results.pontos_calculo.map(p => [
+      formatNumberForExport(p.profundidade, 2),
+      p.tensao_total_vertical !== null ? formatNumberForExport(p.tensao_total_vertical, 2) : "-",
+      p.pressao_neutra !== null ? formatNumberForExport(p.pressao_neutra, 2) : "-",
+      p.tensao_efetiva_vertical !== null ? formatNumberForExport(p.tensao_efetiva_vertical, 2) : "-",
+      p.tensao_efetiva_horizontal !== null ? formatNumberForExport(p.tensao_efetiva_horizontal, 2) : "-",
+    ]);
+
+    tables.push({
+      title: "Tensões nos Pontos de Cálculo",
+      headers: tensoesHeaders,
+      rows: tensoesRows
+    });
 
     const exportData: ExportData = {
       moduleName: "tensoes-geostaticas",
       moduleTitle: "Tensões Geostáticas",
       inputs,
       results: resultsList,
+      tables,
       chartImage: perfilImage || diagramaImage || undefined,
       customFileName: pdfFileName
     };
@@ -598,14 +638,14 @@ export default function TensoesGeostaticas() {
     const configData: { label: string; value: string | number }[] = [
       { label: "Profundidade do NA (m)", value: formData.profundidadeNA },
       { label: "Altura Franja Capilar (m)", value: formData.alturaCapilar },
-      { label: "γw (kN/m³)", value: formData.pesoEspecificoAgua },
+      { label: "Peso Específico da Água (kN/m³)", value: formData.pesoEspecificoAgua },
     ];
 
     const camadasData: { label: string; value: string | number }[] = [];
     formData.camadas.forEach((c, i) => {
       camadasData.push({ label: `Camada ${i + 1} - Espessura (m)`, value: c.espessura });
-      if (c.gamaNat) camadasData.push({ label: `Camada ${i + 1} - γ natural (kN/m³)`, value: c.gamaNat });
-      if (c.gamaSat) camadasData.push({ label: `Camada ${i + 1} - γ saturado (kN/m³)`, value: c.gamaSat });
+      if (c.gamaNat) camadasData.push({ label: `Camada ${i + 1} - Peso Específico Natural (kN/m³)`, value: c.gamaNat });
+      if (c.gamaSat) camadasData.push({ label: `Camada ${i + 1} - Peso Específico Saturado (kN/m³)`, value: c.gamaSat });
       camadasData.push({ label: `Camada ${i + 1} - Ko`, value: c.Ko });
     });
 
@@ -613,16 +653,16 @@ export default function TensoesGeostaticas() {
     results.pontos_calculo.forEach((p, i) => {
       resultadosData.push({ label: `Ponto ${i + 1} - Prof (m)`, value: p.profundidade.toFixed(2) });
       if (p.tensao_total_vertical !== null && p.tensao_total_vertical !== undefined) {
-        resultadosData.push({ label: `Ponto ${i + 1} - σv (kPa)`, value: p.tensao_total_vertical.toFixed(2) });
+        resultadosData.push({ label: `Ponto ${i + 1} - Tensão Total Vertical (kPa)`, value: p.tensao_total_vertical.toFixed(2) });
       }
       if (p.pressao_neutra !== null && p.pressao_neutra !== undefined) {
-        resultadosData.push({ label: `Ponto ${i + 1} - u (kPa)`, value: p.pressao_neutra.toFixed(2) });
+        resultadosData.push({ label: `Ponto ${i + 1} - Pressão Neutra (kPa)`, value: p.pressao_neutra.toFixed(2) });
       }
       if (p.tensao_efetiva_vertical !== null && p.tensao_efetiva_vertical !== undefined) {
-        resultadosData.push({ label: `Ponto ${i + 1} - σ'v (kPa)`, value: p.tensao_efetiva_vertical.toFixed(2) });
+        resultadosData.push({ label: `Ponto ${i + 1} - Tensão Efetiva Vertical (kPa)`, value: p.tensao_efetiva_vertical.toFixed(2) });
       }
       if (p.tensao_efetiva_horizontal !== null && p.tensao_efetiva_horizontal !== undefined) {
-        resultadosData.push({ label: `Ponto ${i + 1} - σ'h (kPa)`, value: p.tensao_efetiva_horizontal.toFixed(2) });
+        resultadosData.push({ label: `Ponto ${i + 1} - Tensão Efetiva Horizontal (kPa)`, value: p.tensao_efetiva_horizontal.toFixed(2) });
       }
     });
 
@@ -942,6 +982,15 @@ export default function TensoesGeostaticas() {
         moduleName="Tensões Geostáticas"
       />
     </div>
+  );
+}
+
+// Wrapper principal que escolhe versão mobile ou desktop
+export default function TensoesGeostaticas() {
+  return (
+    <MobileModuleWrapper mobileVersion={<TensoesGeostaticasMobile />}>
+      <TensoesGeostaticasDesktop />
+    </MobileModuleWrapper>
   );
 }
 

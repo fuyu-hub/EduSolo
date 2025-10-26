@@ -41,6 +41,7 @@ import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { SoilExample, soilExamples } from "@/lib/soil-constants";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
 import ExportPDFDialog from "@/components/ExportPDFDialog";
+import { useTheme } from "@/hooks/use-theme";
 import { conteudoIndicesFisicos } from "@/lib/geotecnia/indicesFisicosConteudo";
 import {
   Popover,
@@ -102,6 +103,7 @@ const gsSuggestions = [
 
 export default function IndicesFisicosMobile() {
   const { settings } = useSettings();
+  const { theme } = useTheme();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState<FormData>({
@@ -323,7 +325,8 @@ export default function IndicesFisicosMobile() {
       moduleTitle: "Índices Físicos",
       inputs,
       results: resultsList,
-      customFileName: pdfFileName
+      customFileName: pdfFileName,
+      theme
     };
 
     const success = await exportToPDF(exportData);
@@ -354,16 +357,16 @@ export default function IndicesFisicosMobile() {
       { label: "Volume Total (cm³)", value: formData.volume },
     ];
     if (formData.Gs) entradaData.push({ label: "Gs", value: formData.Gs });
-    if (formData.pesoEspecificoAgua) entradaData.push({ label: "γw (kN/m³)", value: formData.pesoEspecificoAgua });
-    if (formData.indice_vazios_max) entradaData.push({ label: "emax", value: formData.indice_vazios_max });
-    if (formData.indice_vazios_min) entradaData.push({ label: "emin", value: formData.indice_vazios_min });
+    if (formData.pesoEspecificoAgua) entradaData.push({ label: "Peso Específico da Água (kN/m³)", value: formData.pesoEspecificoAgua });
+    if (formData.indice_vazios_max) entradaData.push({ label: "Índice de Vazios Máximo", value: formData.indice_vazios_max });
+    if (formData.indice_vazios_min) entradaData.push({ label: "Índice de Vazios Mínimo", value: formData.indice_vazios_min });
 
     const resultadosData: { label: string; value: string | number }[] = [];
-    if (results.peso_especifico_natural !== null) resultadosData.push({ label: "γn (kN/m³)", value: results.peso_especifico_natural.toFixed(2) });
-    if (results.peso_especifico_seco !== null) resultadosData.push({ label: "γd (kN/m³)", value: results.peso_especifico_seco.toFixed(2) });
-    if (results.peso_especifico_saturado !== null) resultadosData.push({ label: "γsat (kN/m³)", value: results.peso_especifico_saturado.toFixed(2) });
-    if (results.peso_especifico_submerso !== null) resultadosData.push({ label: "γsub (kN/m³)", value: results.peso_especifico_submerso.toFixed(2) });
-    if (results.peso_especifico_solidos !== null) resultadosData.push({ label: "γs (kN/m³)", value: results.peso_especifico_solidos.toFixed(2) });
+    if (results.peso_especifico_natural !== null) resultadosData.push({ label: "Peso Específico Natural (kN/m³)", value: results.peso_especifico_natural.toFixed(2) });
+    if (results.peso_especifico_seco !== null) resultadosData.push({ label: "Peso Específico Seco (kN/m³)", value: results.peso_especifico_seco.toFixed(2) });
+    if (results.peso_especifico_saturado !== null) resultadosData.push({ label: "Peso Específico Saturado (kN/m³)", value: results.peso_especifico_saturado.toFixed(2) });
+    if (results.peso_especifico_submerso !== null) resultadosData.push({ label: "Peso Específico Submerso (kN/m³)", value: results.peso_especifico_submerso.toFixed(2) });
+    if (results.peso_especifico_solidos !== null) resultadosData.push({ label: "Peso Específico dos Sólidos (kN/m³)", value: results.peso_especifico_solidos.toFixed(2) });
     if (results.Gs !== null) resultadosData.push({ label: "Gs", value: results.Gs.toFixed(3) });
     if (results.indice_vazios !== null) resultadosData.push({ label: "e", value: results.indice_vazios.toFixed(3) });
     if (results.porosidade !== null) resultadosData.push({ label: "n (%)", value: results.porosidade.toFixed(2) });

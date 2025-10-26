@@ -223,8 +223,8 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
 
     const summary = tensaoMax !== undefined && tensaoMin !== undefined ? [
       { label: "Pontos Analisados", value: pontosComTensao.length.toString() },
-      { label: "Δσz Máximo", value: `${tensaoMax.toFixed(settings.decimalPlaces)} kPa` },
-      { label: "Δσz Mínimo", value: `${tensaoMin.toFixed(settings.decimalPlaces)} kPa` },
+      { label: "Acréscimo de Tensão Vertical Máximo", value: `${tensaoMax.toFixed(settings.decimalPlaces)} kPa` },
+      { label: "Acréscimo de Tensão Vertical Mínimo", value: `${tensaoMin.toFixed(settings.decimalPlaces)} kPa` },
       { 
         label: "Ponto de Máx", 
         value: pontoMaxTensao ? `${pontoMaxTensao.nome} (X=${pontoMaxTensao.x.toFixed(2)}m, Y=${pontoMaxTensao.y !== undefined ? pontoMaxTensao.y.toFixed(2) : '0.00'}m, Z=${pontoMaxTensao.z.toFixed(2)}m)` : "-"

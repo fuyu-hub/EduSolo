@@ -42,33 +42,24 @@ function misturarCores(cor1: string, cor2: string, percentualCor1: number): stri
   return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 
-// Função para gerar cores realistas baseadas no peso específico
-function getCoresSolo(gamaNat?: number | null, gamaSat?: number | null, abaixoNA: boolean = false): { bg: string; border: string; texto: string } {
-  const gamma = abaixoNA ? (gamaSat || gamaNat || 18) : (gamaNat || gamaSat || 18);
-  
-  // Classificação aproximada baseada no γ:
-  // γ < 16: Solo muito fofo/orgânico (marrom claro)
-  // 16 ≤ γ < 18: Argila mole / Silte (marrom-acinzentado)
-  // 18 ≤ γ < 19: Areia fofa / Argila média (amarelo-marrom)
-  // 19 ≤ γ < 20: Areia média / Argila rija (marrom-avermelhado)
-  // γ ≥ 20: Areia densa / Argila dura (marrom escuro)
-  
-  let bg: string;
-  let border: string;
-  
-  if (gamma < 16) {
-    bg = "#d4c5b9"; border = "#8b7355"; // Marrom claro (solo fofo/orgânico)
-  } else if (gamma < 18) {
-    bg = "#b8a99a"; border = "#6b5d50"; // Marrom-acinzentado (argila mole)
-  } else if (gamma < 19) {
-    bg = "#d9bc8c"; border = "#a67c52"; // Amarelo-marrom (areia fofa)
-  } else if (gamma < 20) {
-    bg = "#b8956a"; border = "#8b6f47"; // Marrom-avermelhado (areia média)
-  } else {
-    bg = "#9c7a5e"; border = "#6b4423"; // Marrom escuro (areia densa)
-  }
-  
-  return { bg, border, texto: getCorTexto(bg) };
+// Paleta de cores de solo realistas (fora da função para manter consistência)
+const CORES_SOLO = [
+  { bg: "#d9bc8c", border: "#a67c52" }, // Areia amarelada
+  { bg: "#c4a57b", border: "#8b7355" }, // Areia marrom-claro
+  { bg: "#b8a99a", border: "#6b5d50" }, // Argila cinza-marrom
+  { bg: "#d4c5b9", border: "#9c8b7e" }, // Silte bege claro
+  { bg: "#b8956a", border: "#8b6f47" }, // Argila marrom
+  { bg: "#9c7a5e", border: "#6b4423" }, // Argila marrom-escuro
+  { bg: "#c9b89a", border: "#a08968" }, // Solo arenoso claro
+  { bg: "#a89080", border: "#7d6b5c" }, // Solo argiloso médio
+  { bg: "#8b7968", border: "#5d4e3f" }, // Solo compacto escuro
+  { bg: "#d6c3a8", border: "#b39a7d" }, // Areia fina clara
+];
+
+// Função para gerar número pseudo-aleatório determinístico
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
 }
 
 interface NivelAgua {
@@ -219,37 +210,46 @@ export default function DiagramaCamadas({
           {/* Diagrama */}
           <div className="flex-1 relative border-l-2 border-border">
             <div style={{ height: alturaMaximaPixels + 'px' }}>
-            {camadas.map((camada, index) => {
-              const profTopo = profundidadeAcumulada;
-              const profBase = profundidadeAcumulada + camada.espessura;
-              profundidadeAcumulada = profBase;
+            {(() => {
+              let corAnterior: number | undefined = undefined;
+              return camadas.map((camada, index) => {
+                const profTopo = profundidadeAcumulada;
+                const profBase = profundidadeAcumulada + camada.espessura;
+                profundidadeAcumulada = profBase;
 
-              const altura = camada.espessura * escala;
-              
-              // Determina cor baseada no γ e saturação
-              const acimaDoNA = profBase <= profundidadeNA;
-              const abaixoDoNA = profTopo >= profundidadeNA;
-              const atravessaNA = !acimaDoNA && !abaixoDoNA;
-              
-              let cores = getCoresSolo(camada.gamaNat, camada.gamaSat, abaixoDoNA);
-              let pattern = "";
+                const altura = camada.espessura * escala;
+                
+                // Determina cor baseada no índice e saturação
+                const acimaDoNA = profBase <= profundidadeNA;
+                const abaixoDoNA = profTopo >= profundidadeNA;
+                const atravessaNA = !acimaDoNA && !abaixoDoNA;
+                
+                // Gera cor aleatória mas diferente da anterior
+                let corIndex = Math.floor(seededRandom(index * 7919 + 12345) * CORES_SOLO.length);
+                if (corAnterior !== undefined && corIndex === corAnterior) {
+                  corIndex = (corIndex + 1) % CORES_SOLO.length;
+                }
+                corAnterior = corIndex;
+                
+                const coresSelecionadas = CORES_SOLO[corIndex];
+                let cores = { bg: coresSelecionadas.bg, border: coresSelecionadas.border, texto: getCorTexto(coresSelecionadas.bg) };
+                let pattern = "";
 
-              if (acimaDoNA) {
-                pattern = ""; // Acima do NA - sem padrão
-              } else if (abaixoDoNA) {
-                // Saturado - deixa um pouco mais azulado
-                const baseColor = getCoresSolo(camada.gamaNat, camada.gamaSat, true);
-                const bgMisturada = misturarCores(baseColor.bg, '#a8c5d8', 0.7);
-                const borderMisturada = misturarCores(baseColor.border, '#6a8fb8', 0.7);
-                cores = { 
-                  bg: bgMisturada,
-                  border: borderMisturada,
-                  texto: getCorTexto(bgMisturada)
-                };
-                pattern = "url(#saturado)";
-              } else {
-                pattern = "url(#parcial)"; // Atravessa NA
-              }
+                if (acimaDoNA) {
+                  pattern = ""; // Acima do NA - sem padrão
+                } else if (abaixoDoNA) {
+                  // Saturado - deixa um pouco mais azulado
+                  const bgMisturada = misturarCores(coresSelecionadas.bg, '#a8c5d8', 0.7);
+                  const borderMisturada = misturarCores(coresSelecionadas.border, '#6a8fb8', 0.7);
+                  cores = { 
+                    bg: bgMisturada,
+                    border: borderMisturada,
+                    texto: getCorTexto(bgMisturada)
+                  };
+                  pattern = "url(#saturado)";
+                } else {
+                  pattern = "url(#parcial)"; // Atravessa NA
+                }
 
               // Adiciona padrão para camadas impermeáveis
               const isImpermeavel = camada.impermeavel || false;
@@ -310,10 +310,10 @@ export default function DiagramaCamadas({
                             {camada.espessura.toFixed(2)} m
                           </div>
                           <div className="text-[11px] leading-tight mt-0.5 flex items-center justify-center gap-2" style={{ color: cores.texto, opacity: 0.85 }}>
-                            {camada.gamaNat !== null && camada.gamaNat !== undefined && (
+                            {camada.gamaNat !== null && camada.gamaNat !== undefined && camada.gamaNat > 0 && (
                               <span>γ<sub>n</sub>:{camada.gamaNat.toFixed(1)}</span>
                             )}
-                            {camada.gamaSat !== null && camada.gamaSat !== undefined && (
+                            {camada.gamaSat !== null && camada.gamaSat !== undefined && camada.gamaSat > 0 && (
                               <span>γ<sub>s</sub>:{camada.gamaSat.toFixed(1)}</span>
                             )}
                           </div>
@@ -334,12 +334,12 @@ export default function DiagramaCamadas({
                             {camada.espessura.toFixed(2)} m
                           </div>
                           <div className="text-xs mt-1 space-y-0.5" style={{ color: cores.texto, opacity: 0.85 }}>
-                            {camada.gamaNat !== null && camada.gamaNat !== undefined && (
+                            {camada.gamaNat !== null && camada.gamaNat !== undefined && camada.gamaNat > 0 && (
                               <div>
                                 γ<sub>nat</sub>: {camada.gamaNat.toFixed(1)} kN/m³
                               </div>
                             )}
-                            {camada.gamaSat !== null && camada.gamaSat !== undefined && (
+                            {camada.gamaSat !== null && camada.gamaSat !== undefined && camada.gamaSat > 0 && (
                               <div>
                                 γ<sub>sat</sub>: {camada.gamaSat.toFixed(1)} kN/m³
                               </div>
@@ -351,7 +351,8 @@ export default function DiagramaCamadas({
                   </div>
                 </div>
               );
-            })}
+              });
+            })()}
 
             {/* Linhas dos Níveis d'Água */}
             {niveisAgua && niveisAgua.length > 0 ? (

@@ -224,7 +224,7 @@ export default function CarothersAnalise({ onVoltar, onStartTour, onLoadExampleR
       Nome: p.nome,
       "X (m)": p.x.toFixed(2),
       "Z (m)": p.z.toFixed(2),
-      "Δσz (kPa)": p.tensao !== undefined ? p.tensao.toFixed(settings.decimalPlaces) : "N/A"
+      "Acréscimo de Tensão Vertical (kPa)": p.tensao !== undefined ? p.tensao.toFixed(settings.decimalPlaces) : "N/A"
     }));
 
     const excelData: ExcelExportData = {

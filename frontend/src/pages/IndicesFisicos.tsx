@@ -54,6 +54,7 @@ import ExportPDFDialog from "@/components/ExportPDFDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
+import { useTheme } from "@/hooks/use-theme";
 import SoilExamples from "@/components/soil/SoilExamples";
 import GsSuggestions from "@/components/soil/GsSuggestions";
 import ResultInterpretation from "@/components/soil/ResultInterpretation";
@@ -125,6 +126,7 @@ function IndicesFisicosDesktop() {
   // Configurações
   const { settings } = useSettings();
   const { startTour } = useTour();
+  const { theme } = useTheme();
   
   // Estados
   const [formData, setFormData] = useState<FormData>({
@@ -461,7 +463,8 @@ function IndicesFisicosDesktop() {
       moduleTitle: "Índices Físicos",
       inputs,
       results: resultsList,
-      customFileName: pdfFileName
+      customFileName: pdfFileName,
+      theme
     };
 
     const success = await exportToPDF(exportData);

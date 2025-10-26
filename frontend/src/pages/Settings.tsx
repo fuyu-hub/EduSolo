@@ -25,6 +25,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { MobileModuleWrapper } from "@/components/mobile";
+import SettingsMobile from "./mobile/SettingsMobile";
 
 interface ThemeOption {
   value: ThemeColor;
@@ -34,6 +36,12 @@ interface ThemeOption {
 }
 
 const themeColors: ThemeOption[] = [
+  {
+    value: "soil",
+    label: "Terra Natural",
+    description: "Tema oficial EduSolo",
+    colors: ["25 65% 58%", "25 65% 48%", "25 65% 38%", "99 78% 36%", "25 50% 33%"],
+  },
   {
     value: "indigo",
     label: "Índigo Profundo",
@@ -90,7 +98,7 @@ const themeColors: ThemeOption[] = [
   },
 ];
 
-export default function Settings() {
+function SettingsDesktop() {
   const { theme, setThemeColor } = useTheme();
   const { settings, updateSettings, resetSettings, clearAllCalculations, exportSettings, importSettings } = useSettings();
   const { startTour } = useTour();
@@ -628,6 +636,15 @@ export default function Settings() {
       </AlertDialog>
       </div>
     </TooltipProvider>
+  );
+}
+
+// Wrapper principal que escolhe versão mobile ou desktop
+export default function Settings() {
+  return (
+    <MobileModuleWrapper mobileVersion={<SettingsMobile />}>
+      <SettingsDesktop />
+    </MobileModuleWrapper>
   );
 }
 

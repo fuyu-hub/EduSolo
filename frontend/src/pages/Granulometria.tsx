@@ -598,8 +598,8 @@ function GranulometriaDesktop() {
     const entradaData: { label: string; value: string | number }[] = [
       { label: "Massa Total (g)", value: formData.massaTotal },
     ];
-    if (formData.limitePercent) entradaData.push({ label: "LL (%)", value: formData.limitePercent });
-    if (formData.limitePlasticidade) entradaData.push({ label: "LP (%)", value: formData.limitePlasticidade });
+    if (formData.limitePercent) entradaData.push({ label: "Limite de Liquidez (%)", value: formData.limitePercent });
+    if (formData.limitePlasticidade) entradaData.push({ label: "Limite de Plasticidade (%)", value: formData.limitePlasticidade });
 
     // Sheet de Resultados
     const resultadosData: { label: string; value: string | number }[] = [];
@@ -618,8 +618,8 @@ function GranulometriaDesktop() {
     if (results.d10) resultadosData.push({ label: "D10 (mm)", value: results.d10.toFixed(4) });
     if (results.d30) resultadosData.push({ label: "D30 (mm)", value: results.d30.toFixed(4) });
     if (results.d60) resultadosData.push({ label: "D60 (mm)", value: results.d60.toFixed(4) });
-    if (results.coef_uniformidade) resultadosData.push({ label: "Cu", value: results.coef_uniformidade.toFixed(2) });
-    if (results.coef_curvatura) resultadosData.push({ label: "Cc", value: results.coef_curvatura.toFixed(2) });
+    if (results.coef_uniformidade) resultadosData.push({ label: "Coeficiente de Uniformidade (Cu)", value: results.coef_uniformidade.toFixed(2) });
+    if (results.coef_curvatura) resultadosData.push({ label: "Coeficiente de Curvatura (Cc)", value: results.coef_curvatura.toFixed(2) });
 
     // Tabela granulométrica
     const tableHeaders = ["Peneira", "Abertura (mm)", "Massa Retida (g)", "% Retida", "% Retida Ac.", "% Passante"];

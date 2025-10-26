@@ -28,6 +28,8 @@ import CurvaCompactacao, { CurvaCompactacaoRef } from "@/components/compactacao/
 import TabelaResultados from "@/components/compactacao/TabelaResultados";
 import DialogExemplos from "@/components/compactacao/DialogExemplos";
 import { ExemploCompactacao } from "@/lib/exemplos-compactacao";
+import { MobileModuleWrapper } from "@/components/mobile";
+import CompactacaoMobile from "./mobile/CompactacaoMobile";
 
 // Schema de validação
 const pontoCompactacaoSchema = z.object({
@@ -105,7 +107,7 @@ const tooltips = {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-export default function Compactacao() {
+function CompactacaoDesktop() {
   const { toast: toastFn } = { toast };
   const { startTour } = useTour();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
@@ -405,8 +407,8 @@ export default function Compactacao() {
     if (formData.Gs) inputs.push({ label: "Densidade Relativa (Gs)", value: formData.Gs });
 
     const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
-    if (results.umidade_otima !== null) resultsList.push({ label: "Umidade Ótima (w_ot)", value: `${formatNumberForExport(results.umidade_otima, 2)}%`, highlight: true });
-    if (results.peso_especifico_seco_max !== null) resultsList.push({ label: "γ seco máximo", value: `${formatNumberForExport(results.peso_especifico_seco_max / 10, 3)} g/cm³`, highlight: true });
+    if (results.umidade_otima !== null) resultsList.push({ label: "Umidade Ótima", value: `${formatNumberForExport(results.umidade_otima, 2)}%`, highlight: true });
+    if (results.peso_especifico_seco_max !== null) resultsList.push({ label: "Peso Específico Seco Máximo", value: `${formatNumberForExport(results.peso_especifico_seco_max / 10, 3)} g/cm³`, highlight: true });
 
     // Preparar tabelas de dados de entrada
     const tables = [];
@@ -470,7 +472,7 @@ export default function Compactacao() {
 
     const resultadosData: { label: string; value: string | number }[] = [];
     if (results.umidade_otima !== null) resultadosData.push({ label: "Umidade Ótima (%)", value: results.umidade_otima.toFixed(2) });
-    if (results.peso_especifico_seco_max !== null) resultadosData.push({ label: "γ seco máximo (g/cm³)", value: (results.peso_especifico_seco_max / 10).toFixed(3) });
+    if (results.peso_especifico_seco_max !== null) resultadosData.push({ label: "Peso Específico Seco Máximo (g/cm³)", value: (results.peso_especifico_seco_max / 10).toFixed(3) });
 
     const excelData: ExcelExportData = {
       moduleName: "compactacao",
@@ -1038,5 +1040,14 @@ export default function Compactacao() {
         moduleName="Compactação"
       />
     </div>
+  );
+}
+
+// Wrapper principal que escolhe versão mobile ou desktop
+export default function Compactacao() {
+  return (
+    <MobileModuleWrapper mobileVersion={<CompactacaoMobile />}>
+      <CompactacaoDesktop />
+    </MobileModuleWrapper>
   );
 }

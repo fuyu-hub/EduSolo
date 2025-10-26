@@ -369,77 +369,80 @@ function LimitesConsistenciaDesktop() {
     
     setIsExportingPDF(true);
     
-    // Capturar imagem do gráfico do Limite de Liquidez
-    toast({ title: "Capturando gráfico..." });
-    const chartImage = await captureChartAsImage('limite-liquidez-ampliado');
-    
-    const inputs: { label: string; value: string }[] = [];
-    if (formData.umidadeNatural) inputs.push({ label: "Umidade Natural", value: `${formData.umidadeNatural}%` });
-    if (formData.percentualArgila) inputs.push({ label: "% Argila", value: `${formData.percentualArgila}%` });
+    try {
+      toast({ title: "Gerando PDF..." });
+      
+      const inputs: { label: string; value: string }[] = [];
+      if (formData.umidadeNatural) inputs.push({ label: "Umidade Natural", value: `${formData.umidadeNatural}%` });
+      if (formData.percentualArgila) inputs.push({ label: "Percentual de Argila", value: `${formData.percentualArgila}%` });
 
-    const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
-    if (results.ll !== null) resultsList.push({ label: "Limite de Liquidez (LL)", value: `${formatNumberForExport(results.ll, 1)}%`, highlight: true });
-    if (results.lp !== null) resultsList.push({ label: "Limite de Plasticidade (LP)", value: `${formatNumberForExport(results.lp, 1)}%`, highlight: true });
-    if (results.ip !== null) resultsList.push({ label: "Índice de Plasticidade (IP)", value: `${formatNumberForExport(results.ip, 1)}%`, highlight: true });
-    if (results.ic !== null) resultsList.push({ label: "Índice de Consistência (IC)", value: formatNumberForExport(results.ic, 2) });
-    if (results.classificacao_plasticidade) resultsList.push({ label: "Classificação Plasticidade", value: results.classificacao_plasticidade });
-    if (results.classificacao_consistencia) resultsList.push({ label: "Classificação Consistência", value: results.classificacao_consistencia });
-    if (results.atividade_argila !== null) resultsList.push({ label: "Atividade Argila (Ia)", value: formatNumberForExport(results.atividade_argila, 2) });
-    if (results.classificacao_atividade) resultsList.push({ label: "Classificação Atividade", value: results.classificacao_atividade });
+      const resultsList: { label: string; value: string }[] = [];
+      if (results.ll !== null) resultsList.push({ label: "Limite de Liquidez (LL)", value: `${formatNumberForExport(results.ll, 1)}%` });
+      if (results.lp !== null) resultsList.push({ label: "Limite de Plasticidade (LP)", value: `${formatNumberForExport(results.lp, 1)}%` });
+      if (results.ip !== null) resultsList.push({ label: "Índice de Plasticidade (IP)", value: `${formatNumberForExport(results.ip, 1)}%` });
+      if (results.ic !== null) resultsList.push({ label: "Índice de Consistência (IC)", value: formatNumberForExport(results.ic, 2) });
+      if (results.classificacao_plasticidade) resultsList.push({ label: "Classificação Plasticidade", value: results.classificacao_plasticidade });
+      if (results.classificacao_consistencia) resultsList.push({ label: "Classificação Consistência", value: results.classificacao_consistencia });
+      if (results.atividade_argila !== null) resultsList.push({ label: "Atividade Argila (Ia)", value: formatNumberForExport(results.atividade_argila, 2) });
+      if (results.classificacao_atividade) resultsList.push({ label: "Classificação Atividade", value: results.classificacao_atividade });
 
-    // Preparar tabelas de dados de entrada
-    const tables = [];
+      const tables = [];
 
-    // TABELA 1: Ensaio de Limite de Liquidez
-    const llHeaders = ["Ponto", "Nº Golpes", "Massa Úmida+Rec (g)", "Massa Seca+Rec (g)", "Massa Recipiente (g)"];
-    const llRows = formData.pontosLL.map((p, i) => [
-      `${i + 1}`,
-      p.numGolpes,
-      p.massaUmidaRecipiente,
-      p.massaSecaRecipiente,
-      p.massaRecipiente
-    ]);
+      const llHeaders = ["Ponto", "Nº Golpes", "Massa Úmida+Rec (g)", "Massa Seca+Rec (g)", "Massa Recipiente (g)"];
+      const llRows = formData.pontosLL.map((p, i) => [
+        `${i + 1}`,
+        p.numGolpes,
+        p.massaUmidaRecipiente,
+        p.massaSecaRecipiente,
+        p.massaRecipiente
+      ]);
 
-    tables.push({
-      title: "Ensaio de Limite de Liquidez (LL)",
-      headers: llHeaders,
-      rows: llRows
-    });
+      tables.push({
+        title: "Ensaio de Limite de Liquidez (LL)",
+        headers: llHeaders,
+        rows: llRows
+      });
 
-    // TABELA 2: Ensaio de Limite de Plasticidade
-    const lpHeaders = ["Parâmetro", "Valor (g)"];
-    const lpRows = [
-      ["Massa Úmida + Recipiente", formData.massaUmidaRecipienteLP],
-      ["Massa Seca + Recipiente", formData.massaSecaRecipienteLP],
-      ["Massa do Recipiente", formData.massaRecipienteLP]
-    ];
+      const lpHeaders = ["Parâmetro", "Valor (g)"];
+      const lpRows = [
+        ["Massa Úmida + Recipiente", formData.massaUmidaRecipienteLP],
+        ["Massa Seca + Recipiente", formData.massaSecaRecipienteLP],
+        ["Massa do Recipiente", formData.massaRecipienteLP]
+      ];
 
-    tables.push({
-      title: "Ensaio de Limite de Plasticidade (LP)",
-      headers: lpHeaders,
-      rows: lpRows
-    });
+      tables.push({
+        title: "Ensaio de Limite de Plasticidade (LP)",
+        headers: lpHeaders,
+        rows: lpRows
+      });
 
-    const exportData: ExportData = {
-      moduleName: "limites-consistencia",
-      moduleTitle: "Limites de Consistência",
-      inputs,
-      results: resultsList,
-      tables,
-      chartImage: chartImage || undefined,
-      customFileName: pdfFileName
-    };
+      const exportData: ExportData = {
+        moduleName: "limites-consistencia",
+        moduleTitle: "Limites de Consistência",
+        inputs,
+        results: resultsList,
+        tables,
+        customFileName: pdfFileName
+      };
 
-    toast({ title: "Gerando PDF..." });
-    const success = await exportToPDF(exportData);
-    
-    setIsExportingPDF(false);
-    
-    if (success) {
-      toast({ title: "PDF exportado!", description: "O arquivo foi baixado com sucesso." });
-      setExportPDFDialogOpen(false);
-    } else {
-      toast({ title: "Erro ao exportar", description: "Não foi possível gerar o PDF.", variant: "destructive" });
+      const success = await exportToPDF(exportData);
+      
+      setIsExportingPDF(false);
+      
+      if (success) {
+        toast({ title: "PDF exportado!", description: "O arquivo foi baixado com sucesso." });
+        setExportPDFDialogOpen(false);
+      } else {
+        toast({ title: "Erro ao exportar", description: "Não foi possível gerar o PDF.", variant: "destructive" });
+      }
+    } catch (error) {
+      console.error("Erro ao exportar PDF:", error);
+      setIsExportingPDF(false);
+      toast({ 
+        title: "Erro ao exportar", 
+        description: "Ocorreu um erro ao gerar o PDF. Tente novamente.", 
+        variant: "destructive" 
+      });
     }
   };
 
@@ -463,7 +466,7 @@ function LimitesConsistenciaDesktop() {
       { label: "LP - Massa Recipiente (g)", value: formData.massaRecipienteLP },
     ];
     if (formData.umidadeNatural) entradaLPData.push({ label: "Umidade Natural (%)", value: formData.umidadeNatural });
-    if (formData.percentualArgila) entradaLPData.push({ label: "% Argila", value: formData.percentualArgila });
+    if (formData.percentualArgila) entradaLPData.push({ label: "Percentual de Argila (%)", value: formData.percentualArgila });
 
     // Sheet de Resultados
     const resultadosData: { label: string; value: string | number }[] = [];
