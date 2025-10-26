@@ -1,4 +1,4 @@
-import { Calculator, BookOpen, TrendingUp, Beaker, Droplet, Filter, Database, Mountain, Target, MoveDown, Scissors, ArrowRight } from "lucide-react";
+import { Beaker, Droplet, Filter, Database, Mountain, Target, MoveDown, Scissors, ArrowRight, BookOpen } from "lucide-react";
 import { memo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -270,12 +270,6 @@ export default function Dashboard() {
           placement: "left",
         },
         {
-          target: "#dashboard-stats",
-          title: "Estatísticas do Projeto",
-          content: "Acompanhe o progresso do EduSolo. Temos diversos módulos disponíveis, 100% gratuito e em constante desenvolvimento.",
-          placement: "top",
-        },
-        {
           target: "[data-tour='theme-toggle']",
           title: "Modo Claro/Escuro",
           content: "Prefere trabalhar no escuro? Alterne entre os modos claro e escuro clicando neste botão no header.",
@@ -344,44 +338,6 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* Quick Stats */}
-      <div id="dashboard-stats" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 mt-8 sm:mt-10">
-        <Card className="glass-card p-4 sm:p-5 rounded-lg sm:rounded-xl border border-blue-500/20 hover:shadow-modern hover:-translate-y-1 transition-all duration-300 group">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center shadow-md transition-all group-hover:scale-105 group-hover:rotate-3">
-              <Calculator className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <p className="text-xl sm:text-2xl font-bold text-foreground tabular-nums group-hover:text-blue-500 transition-colors">8+</p>
-              <p className="text-xs sm:text-sm text-muted-foreground">Módulos de Cálculo</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="glass-card p-4 sm:p-5 rounded-lg sm:rounded-xl border border-emerald-500/20 hover:shadow-modern hover:-translate-y-1 transition-all duration-300 group">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 flex items-center justify-center shadow-md transition-all group-hover:scale-105 group-hover:rotate-3">
-              <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <p className="text-xl sm:text-2xl font-bold text-foreground tabular-nums group-hover:text-emerald-500 transition-colors">100%</p>
-              <p className="text-xs sm:text-sm text-muted-foreground">Gratuito e Open Source</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="glass-card p-4 sm:p-5 rounded-lg sm:rounded-xl border border-orange-500/20 hover:shadow-modern hover:-translate-y-1 transition-all duration-300 group">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 flex items-center justify-center shadow-md transition-all group-hover:scale-105 group-hover:rotate-3">
-              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <p className="text-xl sm:text-2xl font-bold text-foreground tabular-nums group-hover:text-orange-500 transition-colors">Fase 3</p>
-              <p className="text-xs sm:text-sm text-muted-foreground">Em Desenvolvimento</p>
-            </div>
-          </div>
-        </Card>
-      </div>
     </div>
   );
 }

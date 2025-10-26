@@ -2,6 +2,18 @@ import React, { createContext, useEffect, useState } from "react";
 
 export type UnitSystem = "SI" | "CGS" | "Imperial";
 export type InterfaceDensity = "compact" | "normal" | "comfortable";
+export type PageOrientation = "portrait" | "landscape";
+export type PageMargins = "normal" | "narrow" | "wide";
+export type PaperSize = "A4" | "Letter";
+
+export interface PrintSettings {
+  pageOrientation: PageOrientation;
+  pageMargins: PageMargins;
+  includeLogo: boolean;
+  includeDate: boolean;
+  includeFormulas: boolean;
+  paperSize: PaperSize;
+}
 
 export interface AppSettings {
   // Cálculos
@@ -16,6 +28,9 @@ export interface AppSettings {
   // Exibição
   showEducationalTips: boolean;
   showFormulas: boolean;
+  
+  // Impressão e Exportação
+  printSettings: PrintSettings;
 }
 
 interface SettingsContextType {
@@ -35,6 +50,14 @@ const defaultSettings: AppSettings = {
   reduceMotion: false,
   showEducationalTips: true,
   showFormulas: true,
+  printSettings: {
+    pageOrientation: "portrait",
+    pageMargins: "normal",
+    includeLogo: true,
+    includeDate: true,
+    includeFormulas: true,
+    paperSize: "A4",
+  },
 };
 
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);

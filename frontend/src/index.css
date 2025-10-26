@@ -465,6 +465,13 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+    /* Ocultar scrollbar globalmente */
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  *::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
   }
 
   body {
@@ -739,6 +746,16 @@ html {
 /* ========== SMOOTH TRANSITIONS ========== */
 .transition-layout {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========== HIDE SCROLLBAR ========== */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
 }
 
 /* Mobile-specific scroll behavior */

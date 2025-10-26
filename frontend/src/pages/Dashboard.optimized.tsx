@@ -1,4 +1,4 @@
-import { Calculator, BookOpen, TrendingUp, Beaker, Droplet, Filter, Database, Mountain, Target, MoveDown, Scissors } from "lucide-react";
+import { Beaker, Droplet, Filter, Database, Mountain, Target, MoveDown, Scissors, BookOpen } from "lucide-react";
 import { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -138,33 +138,6 @@ const ModuleCard = memo<{
 
 ModuleCard.displayName = "ModuleCard";
 
-// Componente de Estatística otimizado com memo
-const StatCard = memo<{
-  icon: React.ComponentType<{ className?: string }>;
-  value: string;
-  label: string;
-  color: string;
-}>(({ icon: Icon, value, label, color }) => {
-  return (
-    <Card className="glass p-5 border-l-4 hover:shadow-lg transition-all hover:border-l-8" style={{ borderLeftColor: color }}>
-      <div className="flex items-center gap-3">
-        <div 
-          className="w-10 h-10 rounded-lg flex items-center justify-center transition-all hover:scale-110 hover:rotate-12"
-          style={{ backgroundColor: `${color}33` }}
-        >
-          <Icon className="w-5 h-5" style={{ color }} />
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-foreground tabular-nums">{value}</p>
-          <p className="text-sm text-muted-foreground">{label}</p>
-        </div>
-      </div>
-    </Card>
-  );
-});
-
-StatCard.displayName = "StatCard";
-
 export default function DashboardOptimized() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -209,27 +182,6 @@ export default function DashboardOptimized() {
         })}
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-12">
-        <StatCard
-          icon={Calculator}
-          value="8+"
-          label="Módulos de Cálculo"
-          color="hsl(var(--primary))"
-        />
-        <StatCard
-          icon={BookOpen}
-          value="100%"
-          label="Gratuito e Open Source"
-          color="rgb(139, 92, 246)"
-        />
-        <StatCard
-          icon={TrendingUp}
-          value="Fase 2"
-          label="Projeto em Desenvolvimento"
-          color="rgb(16, 185, 129)"
-        />
-      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Settings as SettingsIcon, Palette, Check, Calculator, Monitor, Eye, Database, Download, Upload, Trash2, RotateCcw, Zap, HelpCircle } from "lucide-react";
+import { Settings as SettingsIcon, Palette, Check, Calculator, Monitor, Eye, Database, Download, Upload, Trash2, RotateCcw, Zap, HelpCircle, Printer } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -10,7 +10,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { useSettings } from "@/hooks/use-settings";
 import { useTour } from "@/contexts/TourContext";
 import { ThemeColor } from "@/contexts/ThemeContext";
-import { UnitSystem, InterfaceDensity } from "@/contexts/SettingsContext";
+import { UnitSystem, InterfaceDensity, PageOrientation, PageMargins, PaperSize } from "@/contexts/SettingsContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useState, useRef } from "react";
@@ -75,6 +75,7 @@ function SettingsDesktop() {
   const navigate = useNavigate();
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleRestartTour = () => {
@@ -430,6 +431,41 @@ function SettingsDesktop() {
         </div>
       </section>
 
+      {/* Impressão e Exportação */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Printer className="w-5 h-5 text-primary" />
+          <h2 className="text-2xl font-semibold text-foreground">Impressão e Exportação</h2>
+        </div>
+
+        <Card className="glass p-5">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1 flex-1">
+              <h3 className="text-lg font-semibold text-foreground">Configurações de PDF</h3>
+              <p className="text-sm text-muted-foreground">
+                Personalize layout, margens e elementos dos documentos exportados
+              </p>
+              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mt-2">
+                <span>• {settings.printSettings.pageOrientation === "portrait" ? "Retrato" : "Paisagem"}</span>
+                <span>• Margens {settings.printSettings.pageMargins === "narrow" ? "estreitas" : settings.printSettings.pageMargins === "normal" ? "normais" : "amplas"}</span>
+                <span>• Papel {settings.printSettings.paperSize}</span>
+                {settings.printSettings.includeLogo && <span>• Logo</span>}
+                {settings.printSettings.includeDate && <span>• Data</span>}
+                {settings.printSettings.includeFormulas && <span>• Fórmulas</span>}
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setShowPrintDialog(true)}
+              className="ml-4"
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              Configurar
+            </Button>
+          </div>
+        </Card>
+      </section>
+
       {/* Ajuda e Tutoriais */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
@@ -569,6 +605,206 @@ function SettingsDesktop() {
           </ul>
         </Card>
       </div>
+
+      {/* Dialog de Configurações de PDF */}
+      <AlertDialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
+        <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Printer className="w-5 h-5 text-primary" />
+              Configurações de PDF
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Personalize como os documentos serão exportados em PDF
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Layout do Documento */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-foreground">Layout do Documento</h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Orientação */}
+                <div className="space-y-2">
+                  <Label htmlFor="dialog-orientation" className="text-sm font-medium">
+                    Orientação
+                  </Label>
+                  <Select
+                    value={settings.printSettings.pageOrientation}
+                    onValueChange={(value: PageOrientation) => 
+                      updateSettings({ 
+                        printSettings: { ...settings.printSettings, pageOrientation: value } 
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dialog-orientation">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="portrait">Retrato (Vertical)</SelectItem>
+                      <SelectItem value="landscape">Paisagem (Horizontal)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Tamanho do Papel */}
+                <div className="space-y-2">
+                  <Label htmlFor="dialog-paper-size" className="text-sm font-medium">
+                    Tamanho do Papel
+                  </Label>
+                  <Select
+                    value={settings.printSettings.paperSize}
+                    onValueChange={(value: PaperSize) => 
+                      updateSettings({ 
+                        printSettings: { ...settings.printSettings, paperSize: value } 
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dialog-paper-size">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A4">A4 (210 × 297 mm)</SelectItem>
+                      <SelectItem value="Letter">Letter (216 × 279 mm)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Margens */}
+              <div className="space-y-2">
+                <Label htmlFor="dialog-margins" className="text-sm font-medium">
+                  Margens
+                </Label>
+                <Select
+                  value={settings.printSettings.pageMargins}
+                  onValueChange={(value: PageMargins) => 
+                    updateSettings({ 
+                      printSettings: { ...settings.printSettings, pageMargins: value } 
+                    })
+                  }
+                >
+                  <SelectTrigger id="dialog-margins">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="narrow">Estreita (1.27 cm)</SelectItem>
+                    <SelectItem value="normal">Normal (2.54 cm)</SelectItem>
+                    <SelectItem value="wide">Ampla (3.81 cm)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Elementos do Documento */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-foreground">Elementos do Documento</h4>
+              
+              <div className="space-y-3">
+                {/* Incluir Logo */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="dialog-logo" className="text-sm font-medium">
+                      Incluir Logo EduSolo
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Adiciona o logo no cabeçalho do PDF
+                    </p>
+                  </div>
+                  <Switch
+                    id="dialog-logo"
+                    checked={settings.printSettings.includeLogo}
+                    onCheckedChange={(checked) => 
+                      updateSettings({ 
+                        printSettings: { ...settings.printSettings, includeLogo: checked } 
+                      })
+                    }
+                  />
+                </div>
+
+                {/* Incluir Data */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="dialog-date" className="text-sm font-medium">
+                      Incluir Data de Geração
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Adiciona data e hora no documento
+                    </p>
+                  </div>
+                  <Switch
+                    id="dialog-date"
+                    checked={settings.printSettings.includeDate}
+                    onCheckedChange={(checked) => 
+                      updateSettings({ 
+                        printSettings: { ...settings.printSettings, includeDate: checked } 
+                      })
+                    }
+                  />
+                </div>
+
+                {/* Incluir Fórmulas */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="dialog-formulas" className="text-sm font-medium">
+                      Incluir Fórmulas
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Mostra as fórmulas utilizadas nos cálculos
+                    </p>
+                  </div>
+                  <Switch
+                    id="dialog-formulas"
+                    checked={settings.printSettings.includeFormulas}
+                    onCheckedChange={(checked) => 
+                      updateSettings({ 
+                        printSettings: { ...settings.printSettings, includeFormulas: checked } 
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div className="space-y-2 p-4 rounded-lg bg-primary/5 border border-primary/20">
+              <h4 className="text-sm font-semibold text-foreground">Preview</h4>
+              <div className="flex items-center gap-4">
+                <div 
+                  className={cn(
+                    "rounded border-2 border-primary/30 shadow-sm flex-shrink-0 bg-background",
+                    settings.printSettings.pageOrientation === "portrait" ? "w-16 h-24" : "w-24 h-16"
+                  )}
+                >
+                  <div 
+                    className={cn(
+                      "w-full h-full rounded-sm bg-primary/10",
+                      settings.printSettings.pageMargins === "narrow" && "p-0.5",
+                      settings.printSettings.pageMargins === "normal" && "p-1.5",
+                      settings.printSettings.pageMargins === "wide" && "p-2.5"
+                    )}
+                  >
+                    <div className="w-full h-full bg-primary/20 rounded-sm"></div>
+                  </div>
+                </div>
+                <div className="flex-1 text-xs text-muted-foreground space-y-1">
+                  <p>• Orientação: <span className="font-medium text-foreground">{settings.printSettings.pageOrientation === "portrait" ? "Retrato" : "Paisagem"}</span></p>
+                  <p>• Papel: <span className="font-medium text-foreground">{settings.printSettings.paperSize}</span></p>
+                  <p>• Margens: <span className="font-medium text-foreground">
+                    {settings.printSettings.pageMargins === "narrow" ? "Estreitas" : 
+                     settings.printSettings.pageMargins === "normal" ? "Normais" : "Amplas"}
+                  </span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>Fechar</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Dialogs de Confirmação */}
       <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>

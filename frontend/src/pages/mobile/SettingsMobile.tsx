@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Settings as SettingsIcon, Palette, Check, Calculator, Monitor, Eye, Database, Download, Upload, Trash2, RotateCcw, Zap, Info } from "lucide-react";
+import { Settings as SettingsIcon, Palette, Check, Calculator, Monitor, Eye, Database, Download, Upload, Trash2, RotateCcw, Zap, Info, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useTheme } from "@/hooks/use-theme";
 import { useSettings } from "@/hooks/use-settings";
 import { ThemeColor } from "@/contexts/ThemeContext";
-import { UnitSystem, InterfaceDensity } from "@/contexts/SettingsContext";
+import { UnitSystem, InterfaceDensity, PageOrientation, PageMargins, PaperSize } from "@/contexts/SettingsContext";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -84,6 +84,7 @@ export default function SettingsMobile() {
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [themeSheetOpen, setThemeSheetOpen] = useState(false);
+  const [printSheetOpen, setPrintSheetOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImportSettings = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -246,6 +247,7 @@ export default function SettingsMobile() {
             <p className="text-xs text-muted-foreground mt-0.5">Valores muito grandes ou pequenos</p>
           </div>
           <Switch
+            variant="ios"
             checked={settings.scientificNotation}
             onCheckedChange={(checked) => updateSettings({ scientificNotation: checked })}
           />
@@ -292,6 +294,7 @@ export default function SettingsMobile() {
             <p className="text-xs text-muted-foreground mt-0.5">Desativar transições e animações</p>
           </div>
           <Switch
+            variant="ios"
             checked={settings.reduceMotion}
             onCheckedChange={(checked) => updateSettings({ reduceMotion: checked })}
           />
@@ -312,6 +315,7 @@ export default function SettingsMobile() {
             <p className="text-xs text-muted-foreground mt-0.5">Mostrar dicas e explicações</p>
           </div>
           <Switch
+            variant="ios"
             checked={settings.showEducationalTips}
             onCheckedChange={(checked) => updateSettings({ showEducationalTips: checked })}
           />
@@ -324,9 +328,37 @@ export default function SettingsMobile() {
             <p className="text-xs text-muted-foreground mt-0.5">Exibir fórmulas nos resultados</p>
           </div>
           <Switch
+            variant="ios"
             checked={settings.showFormulas}
             onCheckedChange={(checked) => updateSettings({ showFormulas: checked })}
           />
+        </div>
+      </MobileSection>
+
+      {/* Impressão e Exportação */}
+      <MobileSection
+        title="Impressão e Exportação"
+        icon={<Printer className="w-4 h-4" />}
+        defaultOpen={false}
+      >
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-foreground">Configurações de PDF</h4>
+          <p className="text-xs text-muted-foreground">
+            Personalize layout, margens e elementos dos documentos exportados
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {settings.printSettings.pageOrientation === "portrait" ? "Retrato" : "Paisagem"} • 
+            Margens {settings.printSettings.pageMargins === "narrow" ? "estreitas" : settings.printSettings.pageMargins === "normal" ? "normais" : "amplas"} • 
+            {settings.printSettings.paperSize}
+          </p>
+          <Button
+            onClick={() => setPrintSheetOpen(true)}
+            variant="outline"
+            className="w-full h-12 justify-start gap-2 focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-tap-highlight-color:transparent] active:scale-95 transition-transform"
+          >
+            <Printer className="w-4 h-4" />
+            <span className="text-sm font-medium">Configurar PDF</span>
+          </Button>
         </div>
       </MobileSection>
 
@@ -501,6 +533,173 @@ export default function SettingsMobile() {
                 </button>
               );
             })}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Sheet de Configurações de PDF */}
+      <Sheet open={printSheetOpen} onOpenChange={setPrintSheetOpen}>
+        <SheetContent side="bottom" className="h-[80vh] rounded-t-2xl px-4 py-6">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Printer className="w-5 h-5 text-primary" />
+              Configurações de PDF
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 space-y-6 overflow-y-auto max-h-[calc(80vh-100px)] pb-4 px-2 scrollbar-hide">
+            {/* Layout do Documento */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-foreground">Layout do Documento</h4>
+              
+              {/* Orientação */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Orientação</Label>
+                <Select
+                  value={settings.printSettings.pageOrientation}
+                  onValueChange={(value: PageOrientation) => 
+                    updateSettings({ 
+                      printSettings: { ...settings.printSettings, pageOrientation: value } 
+                    })
+                  }
+                >
+                  <SelectTrigger className="h-12 text-base">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="portrait">Retrato (Vertical)</SelectItem>
+                    <SelectItem value="landscape">Paisagem (Horizontal)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Tamanho do Papel */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Tamanho do Papel</Label>
+                <Select
+                  value={settings.printSettings.paperSize}
+                  onValueChange={(value: PaperSize) => 
+                    updateSettings({ 
+                      printSettings: { ...settings.printSettings, paperSize: value } 
+                    })
+                  }
+                >
+                  <SelectTrigger className="h-12 text-base">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A4">A4 (210 × 297 mm)</SelectItem>
+                    <SelectItem value="Letter">Letter (216 × 279 mm)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Margens */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Margens</Label>
+                <Select
+                  value={settings.printSettings.pageMargins}
+                  onValueChange={(value: PageMargins) => 
+                    updateSettings({ 
+                      printSettings: { ...settings.printSettings, pageMargins: value } 
+                    })
+                  }
+                >
+                  <SelectTrigger className="h-12 text-base">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="narrow">Estreita (1.27 cm)</SelectItem>
+                    <SelectItem value="normal">Normal (2.54 cm)</SelectItem>
+                    <SelectItem value="wide">Ampla (3.81 cm)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Elementos do Documento */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-foreground">Elementos do Documento</h4>
+              
+              {/* Incluir Logo */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50">
+                <div className="flex-1 pr-3">
+                  <Label className="text-sm font-medium">Incluir Logo EduSolo</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">Logo no cabeçalho do PDF</p>
+                </div>
+                <Switch
+                  variant="ios"
+                  checked={settings.printSettings.includeLogo}
+                  onCheckedChange={(checked) => 
+                    updateSettings({ 
+                      printSettings: { ...settings.printSettings, includeLogo: checked } 
+                    })
+                  }
+                />
+              </div>
+
+              {/* Incluir Data */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50">
+                <div className="flex-1 pr-3">
+                  <Label className="text-sm font-medium">Incluir Data</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">Data e hora no documento</p>
+                </div>
+                <Switch
+                  variant="ios"
+                  checked={settings.printSettings.includeDate}
+                  onCheckedChange={(checked) => 
+                    updateSettings({ 
+                      printSettings: { ...settings.printSettings, includeDate: checked } 
+                    })
+                  }
+                />
+              </div>
+
+              {/* Incluir Fórmulas */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50">
+                <div className="flex-1 pr-3">
+                  <Label className="text-sm font-medium">Incluir Fórmulas</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">Fórmulas utilizadas nos cálculos</p>
+                </div>
+                <Switch
+                  variant="ios"
+                  checked={settings.printSettings.includeFormulas}
+                  onCheckedChange={(checked) => 
+                    updateSettings({ 
+                      printSettings: { ...settings.printSettings, includeFormulas: checked } 
+                    })
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Preview */}
+            <div className="space-y-2 p-4 rounded-lg bg-primary/5 border border-primary/20">
+              <h4 className="text-sm font-semibold text-foreground">Preview</h4>
+              <div className="flex items-center gap-4">
+                <div 
+                  className={cn(
+                    "rounded border-2 border-primary/30 shadow-sm flex-shrink-0 bg-background",
+                    settings.printSettings.pageOrientation === "portrait" ? "w-16 h-24" : "w-24 h-16"
+                  )}
+                >
+                  <div 
+                    className={cn(
+                      "w-full h-full rounded-sm bg-primary/10",
+                      settings.printSettings.pageMargins === "narrow" && "p-0.5",
+                      settings.printSettings.pageMargins === "normal" && "p-1.5",
+                      settings.printSettings.pageMargins === "wide" && "p-2.5"
+                    )}
+                  >
+                    <div className="w-full h-full bg-primary/20 rounded-sm"></div>
+                  </div>
+                </div>
+                <div className="flex-1 text-xs text-muted-foreground space-y-1">
+                  <p>• {settings.printSettings.pageOrientation === "portrait" ? "Retrato" : "Paisagem"}</p>
+                  <p>• Papel {settings.printSettings.paperSize}</p>
+                  <p>• Margens {settings.printSettings.pageMargins === "narrow" ? "estreitas" : settings.printSettings.pageMargins === "normal" ? "normais" : "amplas"}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </SheetContent>
       </Sheet>

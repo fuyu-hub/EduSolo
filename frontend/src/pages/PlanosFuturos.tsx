@@ -86,12 +86,12 @@ export default function PlanosFuturos() {
               Progresso Geral do Projeto
             </h2>
             <Badge variant="secondary" className="text-base">
-              60%
+              70%
             </Badge>
           </div>
-          <Progress value={60} className="h-3" />
+          <Progress value={70} className="h-3" />
           <p className="text-sm text-muted-foreground">
-            6 de 10 módulos principais implementados
+            6 módulos frontend completos • 3 módulos backend prontos (aguardando interface)
           </p>
         </div>
       </Card>
@@ -105,6 +105,14 @@ export default function PlanosFuturos() {
         </div>
 
         <div className="space-y-3">
+          <FeatureCard
+            status="em-desenvolvimento"
+            title="Implementar Interfaces para Módulos Backend Prontos"
+            description="Desenvolver as interfaces de usuário para os 3 módulos que já possuem toda a lógica de cálculo implementada no backend: Fluxo Hidráulico, Recalque por Adensamento e Tempo de Adensamento."
+            tags={["Frontend", "UI/UX", "Integração API", "Alta Prioridade"]}
+            progress={5}
+          />
+
           <FeatureCard
             status="em-desenvolvimento"
             title="Melhorias nos Módulos Atuais"
@@ -139,28 +147,43 @@ export default function PlanosFuturos() {
         </div>
       </section>
 
-      {/* Módulos em Desenvolvimento */}
+      {/* Backend Completo - Aguardando Interface */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <Zap className="w-5 h-5 text-amber-500" />
-          <h2 className="text-2xl font-semibold text-foreground">Novos Módulos em Desenvolvimento</h2>
+          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+          <h2 className="text-2xl font-semibold text-foreground">Backend Completo - Aguardando Interface</h2>
+          <Badge className="ml-2 bg-emerald-500 hover:bg-emerald-600">Backend 100%</Badge>
         </div>
+
+        <Card className="glass p-4 border-l-4 border-l-emerald-500 bg-emerald-500/5">
+          <p className="text-sm text-muted-foreground">
+            <strong className="text-foreground">Estes módulos já possuem toda a lógica de cálculo implementada no backend.</strong> Falta apenas desenvolver a interface de usuário para torná-los acessíveis na aplicação.
+          </p>
+        </Card>
 
         <div className="space-y-3">
           <FeatureCard
-            status="em-desenvolvimento"
+            status="concluido"
             title="Análise de Fluxo Hidráulico"
-            description="Cálculo de permeabilidade, redes de fluxo e análise de percolação em solos."
-            tags={["Permeabilidade", "Redes de Fluxo", "Lei de Darcy"]}
-            progress={45}
+            description="Cálculo de permeabilidade equivalente (horizontal e vertical), velocidades de fluxo, tensões com fluxo, gradiente crítico e fator de segurança contra liquefação. Backend completo e funcional."
+            tags={["Permeabilidade", "Redes de Fluxo", "Lei de Darcy", "Gradiente Crítico"]}
+            progress={100}
           />
           
           <FeatureCard
-            status="em-desenvolvimento"
-            title="Teoria do Adensamento"
-            description="Cálculo de recalques, tempo de adensamento e análise de consolidação."
-            tags={["Recalques", "Cv", "Terzaghi"]}
-            progress={30}
+            status="concluido"
+            title="Recalque por Adensamento"
+            description="Cálculo de recalques em solos argilosos considerando estados normalmente adensado, pré-adensado e sobreadensado. Implementa teoria de Terzaghi com todos os índices de compressão."
+            tags={["Recalques", "Terzaghi", "Cc", "Cr", "OCR"]}
+            progress={100}
+          />
+
+          <FeatureCard
+            status="concluido"
+            title="Tempo de Adensamento"
+            description="Análise temporal do adensamento com cálculo de grau de adensamento, fator tempo e previsão de recalques ao longo do tempo. Suporta drenagem simples e dupla."
+            tags={["Cv", "Fator Tempo", "Grau de Adensamento", "Drenagem"]}
+            progress={100}
           />
         </div>
       </section>
@@ -286,9 +309,63 @@ export default function PlanosFuturos() {
         </div>
       </Card>
 
+      {/* Destaque Especial - Acréscimo de Tensões */}
+      <Card className="glass p-6 border-2 border-primary/50 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+        <div className="space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <Target className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-foreground mb-1">Módulo Acréscimo de Tensões - Completo!</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                Um dos módulos mais completos do EduSolo, implementando 4 métodos diferentes de cálculo de acréscimo de tensões no solo:
+              </p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="flex items-start gap-2 text-sm bg-background/50 p-3 rounded-lg border border-border/50">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
+              <div>
+                <strong className="text-foreground">Boussinesq:</strong>
+                <span className="text-muted-foreground"> Carga pontual vertical na superfície</span>
+              </div>
+            </div>
+            <div className="flex items-start gap-2 text-sm bg-background/50 p-3 rounded-lg border border-border/50">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
+              <div>
+                <strong className="text-foreground">Love:</strong>
+                <span className="text-muted-foreground"> Carga uniformemente distribuída em área circular</span>
+              </div>
+            </div>
+            <div className="flex items-start gap-2 text-sm bg-background/50 p-3 rounded-lg border border-border/50">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
+              <div>
+                <strong className="text-foreground">Carothers:</strong>
+                <span className="text-muted-foreground"> Carga uniformemente distribuída em faixa infinita</span>
+              </div>
+            </div>
+            <div className="flex items-start gap-2 text-sm bg-background/50 p-3 rounded-lg border border-border/50">
+              <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
+              <div>
+                <strong className="text-foreground">Newmark:</strong>
+                <span className="text-muted-foreground"> Carga uniformemente distribuída em área retangular</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-border/50">
+            <p className="text-xs text-muted-foreground">
+              <strong className="text-foreground">✨ Diferencial:</strong> Todos os métodos incluem análise 2D interativa, permitindo adicionar múltiplos pontos de análise e visualizar o perfil do solo com representação gráfica das tensões.
+            </p>
+          </div>
+        </div>
+      </Card>
+
       {/* Versão e Última Atualização */}
       <div className="text-center text-sm text-muted-foreground pb-4 space-y-1">
-        <p>Roadmap atualizado em Outubro/2025</p>
+        <p>Roadmap atualizado em Janeiro/2026</p>
         <p className="text-xs">As datas e prioridades podem ser ajustadas conforme o desenvolvimento evolui</p>
       </div>
     </div>
