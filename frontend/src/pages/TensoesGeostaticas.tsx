@@ -583,7 +583,7 @@ function TensoesGeostaticasDesktop() {
     // TABELA 2: Camadas
     const camadasHeaders = ["Camada", "Espessura (m)", "Peso Esp. Nat. (kN/m³)", "Peso Esp. Sat. (kN/m³)", "Ko"];
     const camadasRows = formData.camadas.map((c, i) => [
-      `${i + 1}`,
+      c.nome || `Camada ${i + 1}`,
       c.espessura,
       c.gamaNat || "-",
       c.gamaSat || "-",

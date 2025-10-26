@@ -525,39 +525,74 @@ export default function TensoesGeostaticasMobile() {
     setIsExportingPDF(true);
 
     try {
-      // Capturar gráfico
-      let perfilImage: string | undefined;
-      if (chartRef.current) {
-        perfilImage = await captureChartAsImage('perfil-tensoes-mobile-chart');
-      }
-
-      // Preparar dados de entrada
-      const inputs = [
-        { label: "γ_água (kN/m³)", value: formData.pesoEspecificoAgua },
-        { label: "Número de Camadas", value: formData.camadas.length.toString() },
-      ];
-
-      // Adicionar informações das camadas
-      formData.camadas.forEach((camada, idx) => {
-        inputs.push({ label: `\n--- ${camada.nome} ---`, value: "" });
-        inputs.push({ label: "Espessura (m)", value: camada.espessura });
-        if (camada.gamaNat) inputs.push({ label: "γ_nat (kN/m³)", value: camada.gamaNat });
-        if (camada.gamaSat) inputs.push({ label: "γ_sat (kN/m³)", value: camada.gamaSat });
-        if (camada.Ko && camada.Ko !== "") inputs.push({ label: "Ko", value: camada.Ko });
-        if (camada.profundidadeNA) inputs.push({ label: "NA (m)", value: camada.profundidadeNA });
-        if (camada.capilaridade) inputs.push({ label: "Capilaridade (m)", value: camada.capilaridade });
+      toast({
+        title: "Capturando gráficos...",
+        description: "Aguarde",
       });
+      
+      const perfilImage = await captureChartAsImage('perfil-tensoes-mobile-chart');
+      const diagramaImage = await captureChartAsImage('diagrama-camadas-mobile-chart');
+
+      // Dados de entrada vazios (serão tabelas)
+      const inputs: { label: string; value: string }[] = [];
+
+      const profundidadeMax = results.pontos_calculo[results.pontos_calculo.length - 1]?.profundidade || 0;
+      const tensaoMaxV = Math.max(...results.pontos_calculo.map(p => p.tensao_total_vertical || 0));
+
+      const resultsList: { label: string; value: string; highlight?: boolean }[] = [
+        { label: "Profundidade Máxima", value: `${formatNumberForExport(profundidadeMax, 2)} m` },
+        { label: "Tensão Total Vertical Máxima", value: `${formatNumberForExport(tensaoMaxV, 2)} kPa`, highlight: true },
+      ];
 
       // Tabelas
       const tables = [];
       
-      // TABELA: Tensões nos Pontos de Cálculo
+      // Determinar o NA global (primeiro NA encontrado)
+      let profNAGlobal = "";
+      let alturaCapilarGlobal = "";
+      
+      for (const camada of formData.camadas) {
+        if (camada.profundidadeNA && camada.profundidadeNA !== "") {
+          profNAGlobal = camada.profundidadeNA;
+          alturaCapilarGlobal = camada.capilaridade || "0";
+          break;
+        }
+      }
+      
+      // TABELA 1: Configurações Gerais
+      const configHeaders = ["Parâmetro", "Valor"];
+      const configRows = [
+        ["Profundidade do NA", `${profNAGlobal} m`],
+        ["Altura Franja Capilar", `${alturaCapilarGlobal} m`],
+      ];
+      tables.push({
+        title: "Configurações Gerais",
+        headers: configHeaders,
+        rows: configRows
+      });
+
+      // TABELA 2: Camadas
+      const camadasHeaders = ["Camada", "Espessura (m)", "Peso Esp. Nat. (kN/m³)", "Peso Esp. Sat. (kN/m³)", "Ko"];
+      const camadasRows = formData.camadas.map((c, i) => [
+        c.nome || `Camada ${i + 1}`,
+        c.espessura,
+        c.gamaNat || "-",
+        c.gamaSat || "-",
+        c.Ko || "-"
+      ]);
+      tables.push({
+        title: "Camadas do Perfil",
+        headers: camadasHeaders,
+        rows: camadasRows
+      });
+
+      // TABELA 3: Tensões nos Pontos de Cálculo
       // Verifica se há tensão horizontal nos resultados
       const temTensaoHorizontal = results.pontos_calculo.some(p => p.tensao_efetiva_horizontal !== null && p.tensao_efetiva_horizontal !== undefined);
       
-      const tensoesHeaders = ["Prof. (m)", "σ_v (kPa)", "u (kPa)", "σ'_v (kPa)"];
+      const tensoesHeaders = ["Prof. (m)", "Tensao Total (kPa)", "Pressao Neutra (kPa)", "Tensao Efet. V (kPa)"];
       if (temTensaoHorizontal) {
-        tensoesHeaders.push("σ'_h (kPa)");
+        tensoesHeaders.push("Tensao Efet. H (kPa)");
       }
       
       const tensoesRows = results.pontos_calculo.map(p => {
@@ -574,7 +609,7 @@ export default function TensoesGeostaticasMobile() {
       });
 
       tables.push({
-        title: "Tensões Calculadas",
+        title: "Tensões nos Pontos de Cálculo",
         headers: tensoesHeaders,
         rows: tensoesRows
       });
@@ -583,12 +618,17 @@ export default function TensoesGeostaticasMobile() {
         moduleName: "tensoes-geostaticas",
         moduleTitle: "Tensões Geostáticas",
         inputs,
-        results: [],
+        results: resultsList,
         tables,
-        chartImage: perfilImage,
-        customFileName: pdfFileName,
+        chartImage: perfilImage || diagramaImage || undefined,
+        customFileName: pdfFileName
       };
 
+      toast({
+        title: "Gerando PDF...",
+        description: "Aguarde",
+      });
+      
       const success = await exportToPDF(exportData);
       
       if (success) {
@@ -786,7 +826,7 @@ export default function TensoesGeostaticasMobile() {
               </div>
             </div>
             
-            <div className="pb-0">
+            <div className="pb-0" id="diagrama-camadas-mobile-chart">
               <DiagramaCamadas 
                 camadas={camadasParaDiagrama} 
                 profundidadeNA={profNA} 
