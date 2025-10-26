@@ -19,10 +19,11 @@ interface CurvaGranulometricaProps {
   d10?: number | null;
   d30?: number | null;
   d60?: number | null;
+  isMobile?: boolean;
 }
 
 // Otimizado com React.memo para evitar re-renders desnecessários
-const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30, d60 }: CurvaGranulometricaProps) {
+const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30, d60, isMobile = false }: CurvaGranulometricaProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   
   // Função para exportar o gráfico como JPG
@@ -182,12 +183,14 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
   // Componente do gráfico
   const GraficoContent = ({ isDialog = false }: { isDialog?: boolean }) => (
     <ComposedChart
-      width={isDialog ? 1200 : 1300}
-      height={isDialog ? 600 : 380}
+      width={isDialog ? 1200 : (isMobile ? 340 : 1300)}
+      height={isDialog ? 600 : (isMobile ? 300 : 380)}
       data={dadosGrafico}
       margin={isDialog 
         ? { top: 50, right: 40, left: 60, bottom: 80 } 
-        : { top: 45, right: 30, left: 60, bottom: 50 }
+        : (isMobile 
+          ? { top: 35, right: 10, left: 50, bottom: 40 }
+          : { top: 45, right: 30, left: 60, bottom: 50 })
       }
     >
       <defs>
@@ -272,12 +275,12 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
         ticks={ticksX}
         tickFormatter={formatarEixoX}
         label={{ 
-          value: 'Diâmetro das partículas (mm) - Escala Logarítmica', 
+          value: isMobile ? 'Diâmetro (mm)' : 'Diâmetro das partículas (mm) - Escala Logarítmica', 
           position: 'bottom',
-          offset: isDialog ? 5 : 10,
-          style: { fontSize: isDialog ? 14 : 13, fontWeight: 600, fill: '#374151' }
+          offset: isDialog ? 5 : (isMobile ? 5 : 10),
+          style: { fontSize: isDialog ? 14 : (isMobile ? 10 : 13), fontWeight: 600, fill: '#374151' }
         }}
-        tick={{ fontSize: isDialog ? 13 : 12, fill: '#6b7280' }}
+        tick={{ fontSize: isDialog ? 13 : (isMobile ? 9 : 12), fill: '#6b7280' }}
         stroke="#9ca3af"
         strokeWidth={1}
       />
@@ -287,21 +290,21 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
         domain={[0, 100]}
         ticks={isDialog 
           ? [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]
-          : [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+          : (isMobile ? [0, 20, 40, 60, 80, 100] : [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
         }
         label={{ 
           value: '% Passante', 
           angle: -90, 
           position: 'insideLeft',
-          offset: isDialog ? 10 : 5,
-          style: { fontSize: isDialog ? 14 : 13, fontWeight: 600, fill: '#374151' }
+          offset: isDialog ? 10 : (isMobile ? 0 : 5),
+          style: { fontSize: isDialog ? 14 : (isMobile ? 10 : 13), fontWeight: 600, fill: '#374151' }
         }}
-        tick={{ fontSize: isDialog ? 13 : 12, fill: '#6b7280' }}
+        tick={{ fontSize: isDialog ? 13 : (isMobile ? 9 : 12), fill: '#6b7280' }}
         stroke="#9ca3af"
         strokeWidth={1}
       />
       
-      <Tooltip content={<CustomTooltip />} />
+      {!isMobile && <Tooltip content={<CustomTooltip />} />}
 
       {/* Área sob a curva */}
       <defs>
@@ -316,14 +319,14 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
         type="monotone"
         dataKey="passante"
         stroke="#065f46"
-        strokeWidth={isDialog ? 3 : 2.5}
-        dot={{ 
+        strokeWidth={isDialog ? 3 : (isMobile ? 2 : 2.5)}
+        dot={isMobile ? false : { 
           fill: "#065f46", 
           stroke: "#fff",
           strokeWidth: 2,
           r: isDialog ? 5 : 4
         }}
-        activeDot={{ 
+        activeDot={isMobile ? false : { 
           r: isDialog ? 7 : 6,
           fill: "#065f46",
           stroke: "#fff",
@@ -396,6 +399,8 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
 
 
       {/* Labels das frações principais */}
+      {!isMobile && (
+      <>
       {/* Label ARGILA (< 0.02 mm) */}
       {minAberturaLog <= Math.log10(0.02) && (
         <ReferenceLine
@@ -505,7 +510,8 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
           }}
         />
       )}
-
+      </>
+      )}
 
     </ComposedChart>
   );
@@ -524,22 +530,24 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
               Salvar JPG
             </Button>
             
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Maximize2 className="w-4 h-4" />
-                  Ampliar
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-[95vw] max-h-[95vh] w-full">
-                <DialogHeader>
-                  <DialogTitle>Curva Granulométrica - Visualização Ampliada</DialogTitle>
-                </DialogHeader>
-                <div className="w-full flex justify-center items-center p-4">
-                  <GraficoContent isDialog={true} />
-                </div>
-              </DialogContent>
-            </Dialog>
+            {!isMobile && (
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Maximize2 className="w-4 h-4" />
+                    Ampliar
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-[95vw] max-h-[95vh] w-full">
+                  <DialogHeader>
+                    <DialogTitle>Curva Granulométrica - Visualização Ampliada</DialogTitle>
+                  </DialogHeader>
+                  <div className="w-full flex justify-center items-center p-4">
+                    <GraficoContent isDialog={true} />
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
       
       {/* Gráfico ampliado renderizado em background (invisível) para captura */}
@@ -558,11 +566,12 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
       </div>
 
       {/* Gráfico */}
-      <div className="w-full h-[420px] border rounded-lg overflow-x-auto overflow-y-hidden flex items-center p-2 shadow-sm" style={{ backgroundColor: 'white' }}>
+      <div className={isMobile ? "w-full h-[320px] border rounded-lg overflow-x-auto overflow-y-hidden flex items-center p-1 shadow-sm" : "w-full h-[420px] border rounded-lg overflow-x-auto overflow-y-hidden flex items-center p-2 shadow-sm"} style={{ backgroundColor: 'white' }}>
         <GraficoContent isDialog={false} />
       </div>
 
       {/* Legenda dos diâmetros característicos */}
+      {!isMobile && (
       <div className="grid grid-cols-2 gap-4">
         {/* Diâmetros característicos */}
         {(d10 || d30 || d60) && (
@@ -614,6 +623,7 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 });

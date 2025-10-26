@@ -24,6 +24,8 @@ import SeletorPeneiras from "@/components/granulometria/SeletorPeneiras";
 import DialogExemplos from "@/components/granulometria/DialogExemplos";
 import PlasticityChart from "@/components/visualizations/PlasticityChart";
 import { ExemploGranulometria } from "@/lib/exemplos-granulometria";
+import { MobileModuleWrapper } from "@/components/mobile";
+import GranulometriaMobile from "./mobile/GranulometriaMobile";
 
 // Configuração da API
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -97,7 +99,7 @@ const peneirasComuns = [
   { nome: 'Nº 200', abertura: 0.075 },
 ];
 
-export default function Granulometria() {
+function GranulometriaDesktop() {
   const { settings } = useSettings();
   const { startTour } = useTour();
   const [formData, setFormData] = useState<FormData>({
@@ -1196,5 +1198,14 @@ function ResultItem({
       </TooltipProvider>
       <span className={`font-bold ${valueFontSize} ${highlight ? "text-primary" : "text-foreground"}`}>{value}</span>
     </div>
+  );
+}
+
+// --- Wrapper Principal ---
+export default function Granulometria() {
+  return (
+    <MobileModuleWrapper mobileVersion={<GranulometriaMobile />}>
+      <GranulometriaDesktop />
+    </MobileModuleWrapper>
   );
 }

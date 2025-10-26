@@ -1,6 +1,43 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+/**
+ * SISTEMA DE RENDERIZAÇÃO DE SÍMBOLOS MATEMÁTICOS EM PDF
+ * 
+ * Este módulo implementa renderização avançada de símbolos matemáticos em PDFs,
+ * preservando os símbolos Unicode originais e aplicando formatação apropriada.
+ * 
+ * FUNCIONALIDADES:
+ * 
+ * 1. Símbolos Gregos:
+ *    - São renderizados 35% maiores que o texto normal
+ *    - Suportados: γ, σ, τ, φ, ω, μ, ε, δ, α, β, θ, ρ, Δ, Γ, Σ, Φ, Ω, Θ
+ * 
+ * 2. Subscritos:
+ *    - Detectados após underscore (_) ou diretamente após símbolo
+ *    - Exemplo: γ_sat, σ_v renderiza "sat" e "v" menores e abaixo
+ *    - Tamanho: 65% do texto base
+ * 
+ * 3. Superscritos (linha/apóstrofo):
+ *    - Detectados como apóstrofo após símbolo
+ *    - Exemplo: σ' renderiza o apóstrofo menor e elevado
+ *    - Tamanho: 75% do texto base
+ * 
+ * 4. Combinações:
+ *    - Suporta combinações complexas: Δσ_v, γ_sat, σ'_v, etc.
+ *    - Múltiplos símbolos consecutivos são tratados individualmente
+ * 
+ * EXEMPLO DE USO:
+ *    Input: "Peso específico γ_sat = 18.5 kN/m³"
+ *    Output: Texto normal + γ (grande) + "sat" (pequeno, abaixo) + = 18.5 kN/m³
+ * 
+ * As funções principais são aplicadas automaticamente em:
+ * - Labels e valores de entrada (inputs)
+ * - Labels e valores de resultados (results)
+ * - Labels e valores de resumo (summary)
+ * - Títulos de tabelas (tables)
+ */
+
 export interface ExportData {
   moduleName: string;
   moduleTitle: string;
@@ -23,28 +60,224 @@ export interface ExcelExportData {
 }
 
 /**
- * Substitui símbolos Unicode por equivalentes em notação técnica legível
- * que funcionam corretamente no PDF
+ * Interface para representar um segmento de texto formatado
  */
-function formatarSimbolosParaPDF(texto: string): string {
-  return texto
-    // Símbolos de acréscimo/variação
-    .replace(/Δσ/g, 'delta-sigma')
-    .replace(/Δ/g, 'delta')
-    // Símbolos gregos minúsculos
-    .replace(/γ/g, 'gamma')
-    .replace(/σ'/g, "sigma'") // Tensão efetiva (sigma linha)
-    .replace(/σ/g, 'sigma')
-    .replace(/τ/g, 'tau')
-    .replace(/φ/g, 'phi')
-    .replace(/ω/g, 'omega')
-    .replace(/μ/g, 'mu')
-    .replace(/ε/g, 'epsilon')
-    .replace(/δ/g, 'delta')
-    .replace(/α/g, 'alfa')
-    .replace(/β/g, 'beta')
-    .replace(/θ/g, 'theta')
-    .replace(/ρ/g, 'rho');
+interface TextoFormatado {
+  texto: string;
+  tamanho: 'normal' | 'grande' | 'pequeno';
+  tipo: 'simbolo' | 'texto' | 'subscrito' | 'superscrito';
+}
+
+/**
+ * Analisa texto e identifica símbolos matemáticos, subscritos e superscritos
+ * Retorna array de segmentos formatados
+ */
+function analisarTextoMatematico(texto: string): TextoFormatado[] {
+  const segmentos: TextoFormatado[] = [];
+  const simbolosGrecos = ['γ', 'σ', 'τ', 'φ', 'ω', 'μ', 'ε', 'δ', 'α', 'β', 'θ', 'ρ', 'Δ', 'Γ', 'Σ', 'Φ', 'Ω', 'Θ'];
+  
+  // Padrões complexos: γsat, γ_sat, σ'v, σ'_v, Δσv, Δσ_v, etc.
+  // Captura: símbolo(s) + apóstrofo opcional + underscore opcional + subscrito opcional
+  // Subscrito pode ser: letras minúsculas ou números (sat, sub, n, d, v, h, w, 0, 1, etc.)
+  const padraoComplexo = /([γσταφωμεδαβθρΔΓΣΦΩΘ]{1,2})(['']?)(_)?([a-z0-9]+)?/gi;
+  
+  let ultimoIndice = 0;
+  let match;
+  let encontrouPadrao = false;
+  
+  while ((match = padraoComplexo.exec(texto)) !== null) {
+    // Ignorar matches vazios ou apenas com o símbolo sem subscrito
+    const temConteudoRelevante = match[2] || match[4]; // tem apóstrofo ou subscrito
+    
+    // Se tem só o símbolo sem nada relevante, pular (será processado depois)
+    if (!temConteudoRelevante && match[0].length <= 2) {
+      // É apenas um ou dois símbolos isolados, processar depois
+      continue;
+    }
+    
+    encontrouPadrao = true;
+    
+    // Adicionar texto antes do match (se houver)
+    if (match.index > ultimoIndice) {
+      const textoAntes = texto.substring(ultimoIndice, match.index);
+      if (textoAntes) {
+        // Processar texto antes para símbolos isolados
+        for (let i = 0; i < textoAntes.length; i++) {
+          const char = textoAntes[i];
+          if (simbolosGrecos.includes(char)) {
+            segmentos.push({ texto: char, tamanho: 'grande', tipo: 'simbolo' });
+          } else {
+            // Adicionar caracteres normais
+            if (segmentos.length > 0 && segmentos[segmentos.length - 1].tipo === 'texto') {
+              segmentos[segmentos.length - 1].texto += char;
+            } else {
+              segmentos.push({ texto: char, tamanho: 'normal', tipo: 'texto' });
+            }
+          }
+        }
+      }
+    }
+    
+    // Processar símbolos (pode ser Δσ - dois símbolos)
+    const simbolos = match[1];
+    for (const simbolo of simbolos) {
+      segmentos.push({ 
+        texto: simbolo, 
+        tamanho: 'grande', 
+        tipo: 'simbolo' 
+      });
+    }
+    
+    // Apóstrofo (linha) - tamanho normal ao lado do símbolo
+    if (match[2]) {
+      segmentos.push({ 
+        texto: match[2] === '\u2019' ? "'" : match[2], 
+        tamanho: 'normal', 
+        tipo: 'superscrito' 
+      });
+    }
+    
+    // Subscrito (menor)
+    if (match[4]) {
+      segmentos.push({ 
+        texto: match[4], 
+        tamanho: 'pequeno', 
+        tipo: 'subscrito' 
+      });
+    }
+    
+    ultimoIndice = match.index + match[0].length;
+  }
+  
+  // Adicionar texto restante
+  if (ultimoIndice < texto.length) {
+    const textoRestante = texto.substring(ultimoIndice);
+    if (textoRestante) {
+      // Processar caractere por caractere para capturar símbolos isolados
+      for (let i = 0; i < textoRestante.length; i++) {
+        const char = textoRestante[i];
+        if (simbolosGrecos.includes(char)) {
+          segmentos.push({ texto: char, tamanho: 'grande', tipo: 'simbolo' });
+          encontrouPadrao = true;
+        } else {
+          if (segmentos.length > 0 && segmentos[segmentos.length - 1].tipo === 'texto') {
+            segmentos[segmentos.length - 1].texto += char;
+          } else {
+            segmentos.push({ texto: char, tamanho: 'normal', tipo: 'texto' });
+          }
+        }
+      }
+    }
+  }
+  
+  // Se não encontrou nenhum padrão matemático, retornar o texto completo como normal
+  if (!encontrouPadrao) {
+    return [{ texto, tamanho: 'normal', tipo: 'texto' }];
+  }
+  
+  return segmentos;
+}
+
+/**
+ * Renderiza texto com símbolos matemáticos formatados no PDF
+ */
+function renderizarTextoMatematico(
+  doc: jsPDF, 
+  texto: string, 
+  x: number, 
+  y: number, 
+  tamanhoBase: number = 10
+): number {
+  const segmentos = analisarTextoMatematico(texto);
+  let posX = x;
+  
+  for (let i = 0; i < segmentos.length; i++) {
+    const segmento = segmentos[i];
+    let tamanhoFonte = tamanhoBase;
+    let offsetY = 0;
+    let espacamentoExtra = 0;
+    
+    switch (segmento.tamanho) {
+      case 'grande':
+        tamanhoFonte = tamanhoBase * 1.35; // 35% maior para símbolos
+        // Adicionar pequeno espaço antes de símbolos (exceto no início)
+        if (i > 0 && segmentos[i - 1].tipo === 'texto') {
+          espacamentoExtra = tamanhoBase * 0.1;
+        }
+        break;
+      case 'pequeno':
+        tamanhoFonte = tamanhoBase * 0.65; // 35% menor para subscritos
+        offsetY = tamanhoBase * 0.3; // Descer um pouco
+        break;
+      case 'normal':
+        if (segmento.tipo === 'superscrito') {
+          tamanhoFonte = tamanhoBase * 0.75;
+          offsetY = -tamanhoBase * 0.25; // Subir um pouco
+        }
+        break;
+    }
+    
+    posX += espacamentoExtra;
+    doc.setFontSize(tamanhoFonte);
+    const larguraTexto = doc.getTextWidth(segmento.texto);
+    doc.text(segmento.texto, posX, y + offsetY);
+    posX += larguraTexto;
+    
+    // Adicionar pequeno espaço depois de subscritos antes de texto normal
+    if (segmento.tipo === 'subscrito' && i < segmentos.length - 1 && segmentos[i + 1].tipo === 'texto') {
+      posX += tamanhoBase * 0.15;
+    }
+  }
+  
+  // Retornar posição X final
+  return posX;
+}
+
+/**
+ * Calcula a largura total que um texto formatado ocupará
+ * Útil para centralização e alinhamento
+ */
+function calcularLarguraTextoMatematico(
+  doc: jsPDF,
+  texto: string,
+  tamanhoBase: number = 10
+): number {
+  const segmentos = analisarTextoMatematico(texto);
+  let larguraTotal = 0;
+  
+  for (let i = 0; i < segmentos.length; i++) {
+    const segmento = segmentos[i];
+    let tamanhoFonte = tamanhoBase;
+    let espacamentoExtra = 0;
+    
+    switch (segmento.tamanho) {
+      case 'grande':
+        tamanhoFonte = tamanhoBase * 1.35;
+        if (i > 0 && segmentos[i - 1].tipo === 'texto') {
+          espacamentoExtra = tamanhoBase * 0.1;
+        }
+        break;
+      case 'pequeno':
+        tamanhoFonte = tamanhoBase * 0.65;
+        break;
+      case 'normal':
+        if (segmento.tipo === 'superscrito') {
+          tamanhoFonte = tamanhoBase * 0.75;
+        }
+        break;
+    }
+    
+    const tamanhoAnterior = doc.getFontSize();
+    doc.setFontSize(tamanhoFonte);
+    larguraTotal += espacamentoExtra + doc.getTextWidth(segmento.texto);
+    doc.setFontSize(tamanhoAnterior);
+    
+    if (segmento.tipo === 'subscrito' && i < segmentos.length - 1 && segmentos[i + 1].tipo === 'texto') {
+      larguraTotal += tamanhoBase * 0.15;
+    }
+  }
+  
+  return larguraTotal;
 }
 
 export async function exportToPDF(data: ExportData): Promise<boolean> {
@@ -127,10 +360,16 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
         doc.setFillColor(250, 250, 252);
         doc.rect(margin, yPosition - 4, pageWidth - 2 * margin, 7, 'F');
         
+        // Renderizar label com símbolos matemáticos
         doc.setFont('helvetica', 'normal');
-        doc.text(formatarSimbolosParaPDF(input.label) + ':', margin + 5, yPosition);
+        const labelPosX = renderizarTextoMatematico(doc, input.label, margin + 5, yPosition, 10);
+        doc.setFontSize(10);
+        doc.text(':', labelPosX, yPosition);
+        
+        // Renderizar valor com símbolos matemáticos
         doc.setFont('helvetica', 'bold');
-        doc.text(formatarSimbolosParaPDF(input.value), margin + 90, yPosition);
+        renderizarTextoMatematico(doc, input.value, margin + 90, yPosition, 10);
+        
         yPosition += 7;
       }
       yPosition += 3;
@@ -163,13 +402,9 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
           yPosition = margin;
         }
 
-        // Formatar textos para remover símbolos Unicode
-        const labelFormatado = formatarSimbolosParaPDF(result.label);
-        const valueFormatado = formatarSimbolosParaPDF(result.value);
-        
         // Calcular altura necessária para textos longos
         const maxWidth = pageWidth - margin - 95;
-        const valueLines = doc.splitTextToSize(valueFormatado, maxWidth);
+        const valueLines = doc.splitTextToSize(result.value, maxWidth);
         const numLines = valueLines.length;
         const lineHeight = 7;
         const totalHeight = numLines * lineHeight;
@@ -188,16 +423,25 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
           doc.rect(margin, yPosition - 4, pageWidth - 2 * margin, totalHeight + 2, 'F');
         }
 
+        // Renderizar label com símbolos matemáticos
         doc.setFont('helvetica', 'normal');
-        doc.text(labelFormatado + ':', margin + 5, yPosition);
+        const labelPosX = renderizarTextoMatematico(doc, result.label, margin + 5, yPosition, 10);
+        doc.setFontSize(10);
+        doc.text(':', labelPosX, yPosition);
+        
+        // Renderizar valor com símbolos matemáticos
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(result.highlight ? 100 : 0, result.highlight ? 50 : 0, result.highlight ? 150 : 0);
         
-        // Renderizar texto com quebra de linha
         if (numLines === 1) {
-          doc.text(valueFormatado, margin + 90, yPosition);
+          renderizarTextoMatematico(doc, result.value, margin + 90, yPosition, 10);
         } else {
-          doc.text(valueLines, margin + 90, yPosition);
+          // Para textos com quebra de linha, renderizar linha por linha
+          let currentY = yPosition;
+          for (const linha of valueLines) {
+            renderizarTextoMatematico(doc, linha, margin + 90, currentY, 10);
+            currentY += lineHeight;
+          }
         }
         doc.setTextColor(0, 0, 0);
         
@@ -233,13 +477,9 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
           yPosition = margin;
         }
 
-        // Formatar textos para remover símbolos Unicode
-        const labelFormatado = formatarSimbolosParaPDF(item.label);
-        const valueFormatado = formatarSimbolosParaPDF(item.value);
-
         // Calcular altura necessária para textos longos
         const maxWidth = pageWidth - margin - 95;
-        const valueLines = doc.splitTextToSize(valueFormatado, maxWidth);
+        const valueLines = doc.splitTextToSize(item.value, maxWidth);
         const numLines = valueLines.length;
         const lineHeight = 7;
         const totalHeight = numLines * lineHeight;
@@ -254,15 +494,23 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
         doc.setFillColor(250, 250, 252);
         doc.rect(margin, yPosition - 4, pageWidth - 2 * margin, totalHeight + 2, 'F');
 
+        // Renderizar label com símbolos matemáticos
         doc.setFont('helvetica', 'normal');
-        doc.text(labelFormatado + ':', margin + 5, yPosition);
-        doc.setFont('helvetica', 'bold');
+        const labelPosX = renderizarTextoMatematico(doc, item.label, margin + 5, yPosition, 10);
+        doc.setFontSize(10);
+        doc.text(':', labelPosX, yPosition);
         
-        // Renderizar texto com quebra de linha
+        // Renderizar valor com símbolos matemáticos
+        doc.setFont('helvetica', 'bold');
         if (numLines === 1) {
-          doc.text(valueFormatado, margin + 90, yPosition);
+          renderizarTextoMatematico(doc, item.value, margin + 90, yPosition, 10);
         } else {
-          doc.text(valueLines, margin + 90, yPosition);
+          // Para textos com quebra de linha, renderizar linha por linha
+          let currentY = yPosition;
+          for (const linha of valueLines) {
+            renderizarTextoMatematico(doc, linha, margin + 90, currentY, 10);
+            currentY += lineHeight;
+          }
         }
         
         yPosition += totalHeight;
@@ -290,17 +538,13 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(255, 255, 255);
-        doc.text(formatarSimbolosParaPDF(table.title).toUpperCase(), margin + 3, yPosition + 5.5);
+        doc.text(table.title.toUpperCase(), margin + 3, yPosition + 5.5);
         doc.setTextColor(0, 0, 0);
         yPosition += 10;
 
-        // Formatar headers e linhas da tabela
-        const headersFormatados = table.headers.map(h => 
-          typeof h === 'string' ? formatarSimbolosParaPDF(h) : h
-        );
-        const rowsFormatadas = table.rows.map(row => 
-          row.map(cell => typeof cell === 'string' ? formatarSimbolosParaPDF(cell) : cell)
-        );
+        // Headers e linhas mantêm símbolos Unicode
+        const headersFormatados = table.headers;
+        const rowsFormatadas = table.rows;
 
         // Usar autoTable para criar a tabela
         try {

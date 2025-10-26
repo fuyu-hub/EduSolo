@@ -301,21 +301,21 @@ export default function IndicesFisicosMobile() {
       { label: "Volume Total", value: `${formData.volume} cm³` },
     ];
     
-    if (formData.Gs) inputs.push({ label: "Gs", value: formData.Gs });
-    if (formData.indice_vazios_max) inputs.push({ label: "emax", value: formData.indice_vazios_max });
-    if (formData.indice_vazios_min) inputs.push({ label: "emin", value: formData.indice_vazios_min });
+    if (formData.Gs) inputs.push({ label: "Densidade dos Grãos (Gs)", value: formData.Gs });
+    if (formData.indice_vazios_max) inputs.push({ label: "Índice Vazios Máx", value: formData.indice_vazios_max });
+    if (formData.indice_vazios_min) inputs.push({ label: "Índice Vazios Mín", value: formData.indice_vazios_min });
 
     const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
-    if (results.peso_especifico_natural !== null) resultsList.push({ label: "γn", value: `${formatNumberForExport(results.peso_especifico_natural)} kN/m³`, highlight: true });
-    if (results.peso_especifico_seco !== null) resultsList.push({ label: "γd", value: `${formatNumberForExport(results.peso_especifico_seco)} kN/m³` });
-    if (results.peso_especifico_saturado !== null) resultsList.push({ label: "γsat", value: `${formatNumberForExport(results.peso_especifico_saturado)} kN/m³` });
-    if (results.peso_especifico_submerso !== null) resultsList.push({ label: "γsub", value: `${formatNumberForExport(results.peso_especifico_submerso)} kN/m³` });
-    if (results.Gs !== null) resultsList.push({ label: "Gs", value: formatNumberForExport(results.Gs, 3) });
-    if (results.indice_vazios !== null) resultsList.push({ label: "e", value: formatNumberForExport(results.indice_vazios, 3) });
-    if (results.porosidade !== null) resultsList.push({ label: "n", value: `${formatNumberForExport(results.porosidade)}%` });
-    if (results.grau_saturacao !== null) resultsList.push({ label: "Sr", value: `${formatNumberForExport(results.grau_saturacao)}%` });
-    if (results.umidade !== null) resultsList.push({ label: "w", value: `${formatNumberForExport(results.umidade)}%` });
-    if (results.compacidade_relativa !== null) resultsList.push({ label: "Dr", value: `${formatNumberForExport(results.compacidade_relativa)}%` });
+    if (results.peso_especifico_natural !== null) resultsList.push({ label: "Peso Específico Natural", value: `${formatNumberForExport(results.peso_especifico_natural)} kN/m³`, highlight: true });
+    if (results.peso_especifico_seco !== null) resultsList.push({ label: "Peso Específico Seco", value: `${formatNumberForExport(results.peso_especifico_seco)} kN/m³` });
+    if (results.peso_especifico_saturado !== null) resultsList.push({ label: "Peso Específico Saturado", value: `${formatNumberForExport(results.peso_especifico_saturado)} kN/m³` });
+    if (results.peso_especifico_submerso !== null) resultsList.push({ label: "Peso Específico Submerso", value: `${formatNumberForExport(results.peso_especifico_submerso)} kN/m³` });
+    if (results.Gs !== null) resultsList.push({ label: "Densidade dos Grãos (Gs)", value: formatNumberForExport(results.Gs, 3) });
+    if (results.indice_vazios !== null) resultsList.push({ label: "Índice de Vazios", value: formatNumberForExport(results.indice_vazios, 3) });
+    if (results.porosidade !== null) resultsList.push({ label: "Porosidade", value: `${formatNumberForExport(results.porosidade)}%` });
+    if (results.grau_saturacao !== null) resultsList.push({ label: "Grau de Saturação", value: `${formatNumberForExport(results.grau_saturacao)}%` });
+    if (results.umidade !== null) resultsList.push({ label: "Umidade", value: `${formatNumberForExport(results.umidade)}%` });
+    if (results.compacidade_relativa !== null) resultsList.push({ label: "Compacidade Relativa", value: `${formatNumberForExport(results.compacidade_relativa)}%` });
     if (results.classificacao_compacidade) resultsList.push({ label: "Classificação", value: results.classificacao_compacidade });
 
     const exportData: ExportData = {

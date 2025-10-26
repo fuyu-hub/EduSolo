@@ -330,26 +330,59 @@ export default function LimitesConsistenciaMobile() {
     if (!results) return;
     setIsExportingPDF(true);
 
-    const inputs: { label: string; value: string }[] = [
-      { label: "Pontos LL", value: `${formData.pontosLL.length} pontos` },
-      { label: "LP - Massa Úmida+Rec", value: `${formData.massaUmidaRecipienteLP} g` },
-      { label: "LP - Massa Seca+Rec", value: `${formData.massaSecaRecipienteLP} g` },
-      { label: "LP - Massa Rec", value: `${formData.massaRecipienteLP} g` },
-    ];
+    const inputs: { label: string; value: string }[] = [];
+    if (formData.umidadeNatural) inputs.push({ label: "Umidade Natural", value: `${formData.umidadeNatural}%` });
+    if (formData.percentualArgila) inputs.push({ label: "% Argila", value: `${formData.percentualArgila}%` });
 
     const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
-    if (results.ll !== null) resultsList.push({ label: "LL", value: `${formatNumberForExport(results.ll)}%`, highlight: true });
-    if (results.lp !== null) resultsList.push({ label: "LP", value: `${formatNumberForExport(results.lp)}%` });
-    if (results.ip !== null) resultsList.push({ label: "IP", value: `${formatNumberForExport(results.ip)}%`, highlight: true });
-    if (results.ic !== null) resultsList.push({ label: "IC", value: formatNumberForExport(results.ic) });
-    if (results.classificacao_plasticidade) resultsList.push({ label: "Plasticidade", value: results.classificacao_plasticidade });
-    if (results.classificacao_consistencia) resultsList.push({ label: "Consistência", value: results.classificacao_consistencia });
+    if (results.ll !== null) resultsList.push({ label: "Limite de Liquidez (LL)", value: `${formatNumberForExport(results.ll, 1)}%`, highlight: true });
+    if (results.lp !== null) resultsList.push({ label: "Limite de Plasticidade (LP)", value: `${formatNumberForExport(results.lp, 1)}%`, highlight: true });
+    if (results.ip !== null) resultsList.push({ label: "Índice de Plasticidade (IP)", value: `${formatNumberForExport(results.ip, 1)}%`, highlight: true });
+    if (results.ic !== null) resultsList.push({ label: "Índice de Consistência (IC)", value: formatNumberForExport(results.ic, 2) });
+    if (results.classificacao_plasticidade) resultsList.push({ label: "Classificação Plasticidade", value: results.classificacao_plasticidade });
+    if (results.classificacao_consistencia) resultsList.push({ label: "Classificação Consistência", value: results.classificacao_consistencia });
+    if (results.atividade_argila !== null) resultsList.push({ label: "Atividade Argila (Ia)", value: formatNumberForExport(results.atividade_argila, 2) });
+    if (results.classificacao_atividade) resultsList.push({ label: "Classificação Atividade", value: results.classificacao_atividade });
+
+    // Preparar tabelas de dados de entrada
+    const tables = [];
+
+    // TABELA 1: Ensaio de Limite de Liquidez
+    const llHeaders = ["Ponto", "Nº Golpes", "Massa Úmida+Rec (g)", "Massa Seca+Rec (g)", "Massa Recipiente (g)"];
+    const llRows = formData.pontosLL.map((p, i) => [
+      `${i + 1}`,
+      p.numGolpes,
+      p.massaUmidaRecipiente,
+      p.massaSecaRecipiente,
+      p.massaRecipiente
+    ]);
+
+    tables.push({
+      title: "Ensaio de Limite de Liquidez (LL)",
+      headers: llHeaders,
+      rows: llRows
+    });
+
+    // TABELA 2: Ensaio de Limite de Plasticidade
+    const lpHeaders = ["Parâmetro", "Valor (g)"];
+    const lpRows = [
+      ["Massa Úmida + Recipiente", formData.massaUmidaRecipienteLP],
+      ["Massa Seca + Recipiente", formData.massaSecaRecipienteLP],
+      ["Massa do Recipiente", formData.massaRecipienteLP]
+    ];
+
+    tables.push({
+      title: "Ensaio de Limite de Plasticidade (LP)",
+      headers: lpHeaders,
+      rows: lpRows
+    });
 
     const exportData: ExportData = {
       moduleName: "limites-consistencia",
       moduleTitle: "Limites de Consistência",
       inputs,
       results: resultsList,
+      tables,
       customFileName: pdfFileName
     };
 
