@@ -108,7 +108,7 @@ export default function DiagramaCamadas({
       capilaridade: camada.capilaridade !== null && camada.capilaridade !== undefined ? camada.capilaridade.toString() : "",
       gamaNat: camada.gamaNat !== null && camada.gamaNat !== undefined ? camada.gamaNat.toString() : "",
       gamaSat: camada.gamaSat !== null && camada.gamaSat !== undefined ? camada.gamaSat.toString() : "",
-      Ko: camada.Ko !== undefined ? camada.Ko.toString() : "0.5",
+      Ko: camada.Ko !== null && camada.Ko !== undefined ? camada.Ko.toString() : "",
       impermeavel: camada.impermeavel || false,
     });
     setDialogOpen(true);
@@ -307,12 +307,12 @@ export default function DiagramaCamadas({
                             {camada.espessura.toFixed(2)} m
                           </div>
                           <div className="text-[11px] leading-tight mt-0.5 flex items-center justify-center gap-2" style={{ color: cores.texto, opacity: 0.85 }}>
-                            {camada.gamaNat !== null && camada.gamaNat !== undefined && camada.gamaNat > 0 && (
+                            {camada.gamaNat !== null && camada.gamaNat !== undefined && camada.gamaNat > 0 ? (
                               <span>γ<sub>n</sub>:{camada.gamaNat.toFixed(1)}</span>
-                            )}
-                            {camada.gamaSat !== null && camada.gamaSat !== undefined && camada.gamaSat > 0 && (
+                            ) : null}
+                            {camada.gamaSat !== null && camada.gamaSat !== undefined && camada.gamaSat > 0 ? (
                               <span>γ<sub>s</sub>:{camada.gamaSat.toFixed(1)}</span>
-                            )}
+                            ) : null}
                           </div>
                         </>
                       ) : (
@@ -328,16 +328,16 @@ export default function DiagramaCamadas({
                             {camada.espessura.toFixed(2)} m
                           </div>
                           <div className="text-xs mt-1 space-y-0.5" style={{ color: cores.texto, opacity: 0.85 }}>
-                            {camada.gamaNat !== null && camada.gamaNat !== undefined && camada.gamaNat > 0 && (
+                            {camada.gamaNat !== null && camada.gamaNat !== undefined && camada.gamaNat > 0 ? (
                               <div>
                                 γ<sub>nat</sub>: {camada.gamaNat.toFixed(1)} kN/m³
                               </div>
-                            )}
-                            {camada.gamaSat !== null && camada.gamaSat !== undefined && camada.gamaSat > 0 && (
+                            ) : null}
+                            {camada.gamaSat !== null && camada.gamaSat !== undefined && camada.gamaSat > 0 ? (
                               <div>
                                 γ<sub>sat</sub>: {camada.gamaSat.toFixed(1)} kN/m³
                               </div>
-                            )}
+                            ) : null}
                           </div>
                         </>
                       )}
@@ -351,37 +351,34 @@ export default function DiagramaCamadas({
             {/* Linhas dos Níveis d'Água */}
             {niveisAgua && niveisAgua.length > 0 ? (
               // Múltiplos NAs definidos nas camadas
-              niveisAgua.map((na, idx) => {
-                if (na.profundidade > 0 && na.profundidade <= profundidadeTotal) {
-                  return (
-                    <div key={`na-${idx}`}>
-                      <div
-                        className="absolute left-0 right-0 z-10 pointer-events-none"
-                        style={{ top: na.profundidade * escala + 'px' }}
-                      >
-                        <div className="absolute inset-x-0 border-t-2 border-blue-500 border-dashed" />
-                        <div className="absolute right-1 -top-3.5 bg-blue-500 text-white text-xs font-bold px-2.5 py-1 rounded-md shadow-lg">
-                          {niveisAgua.length > 1 ? `NA${idx + 1}` : 'NA'}
-                        </div>
+              niveisAgua
+                .filter(na => na.profundidade > 0 && na.profundidade <= profundidadeTotal)
+                .map((na, idx) => (
+                  <div key={`na-${idx}`}>
+                    <div
+                      className="absolute left-0 right-0 z-10 pointer-events-none"
+                      style={{ top: na.profundidade * escala + 'px' }}
+                    >
+                      <div className="absolute inset-x-0 border-t-2 border-blue-500 border-dashed" />
+                      <div className="absolute right-1 -top-3.5 bg-blue-500 text-white text-xs font-bold px-2.5 py-1 rounded-md shadow-lg">
+                        {niveisAgua.length > 1 ? `NA${idx + 1}` : 'NA'}
                       </div>
-                      {/* Franja Capilar */}
-                      {na.capilaridade && na.capilaridade > 0 && (
-                        <div
-                          className="absolute left-0 right-0 bg-blue-200/30 dark:bg-blue-900/20 border-t border-blue-300 border-dashed pointer-events-none"
-                          style={{
-                            top: Math.max(0, na.profundidade - na.capilaridade) * escala + 'px',
-                            height: na.capilaridade * escala + 'px',
-                          }}
-                        />
-                      )}
                     </div>
-                  );
-                }
-                return null;
-              })
+                    {/* Franja Capilar */}
+                    {na.capilaridade && na.capilaridade > 0 ? (
+                      <div
+                        className="absolute left-0 right-0 bg-blue-200/30 dark:bg-blue-900/20 border-t border-blue-300 border-dashed pointer-events-none"
+                        style={{
+                          top: Math.max(0, na.profundidade - na.capilaridade) * escala + 'px',
+                          height: na.capilaridade * escala + 'px',
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                ))
             ) : (
               // NA único (modo compatibilidade)
-              profundidadeNA > 0 && profundidadeNA <= profundidadeTotal && (
+              profundidadeNA > 0 && profundidadeNA <= profundidadeTotal ? (
                 <>
                   <div
                     className="absolute left-0 right-0 z-10 pointer-events-none"
@@ -393,7 +390,7 @@ export default function DiagramaCamadas({
                     </div>
                   </div>
                   {/* Franja Capilar - visual apenas */}
-                  {alturaCapilar > 0 && (
+                  {alturaCapilar > 0 ? (
                     <div
                       className="absolute left-0 right-0 bg-blue-200/30 dark:bg-blue-900/20 border-t border-blue-300 border-dashed pointer-events-none"
                       style={{
@@ -401,9 +398,9 @@ export default function DiagramaCamadas({
                         height: alturaCapilar * escala + 'px',
                       }}
                     />
-                  )}
+                  ) : null}
                 </>
-              )
+              ) : null
             )}
             </div>
 

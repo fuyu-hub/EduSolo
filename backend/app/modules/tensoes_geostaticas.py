@@ -48,7 +48,8 @@ def calcular_tensoes_geostaticas(dados: TensoesGeostaticasInput) -> TensoesGeost
 
 
         sigma_ef_v_inicial = 0.0 - u_inicial
-        sigma_ef_h_inicial = sigma_ef_v_inicial * dados.camadas[0].Ko # Usa Ko da primeira camada
+        # Calcula σ'h apenas se Ko for fornecido
+        sigma_ef_h_inicial = sigma_ef_v_inicial * dados.camadas[0].Ko if dados.camadas[0].Ko is not None else None
 
         pontos_calculo.append(TensaoPonto(
             profundidade=0.0,
@@ -85,7 +86,8 @@ def calcular_tensoes_geostaticas(dados: TensoesGeostaticasInput) -> TensoesGeost
                         u_na_camada = 0.0
                         
                         sigma_ef_v_na_camada = sigma_v_na_camada - u_na_camada
-                        sigma_ef_h_na_camada = sigma_ef_v_na_camada * camada.Ko
+                        # Calcula σ'h apenas se Ko for fornecido
+                        sigma_ef_h_na_camada = sigma_ef_v_na_camada * camada.Ko if camada.Ko is not None else None
                         
                         # Evita duplicar se já existe ponto próximo
                         if not any(np.isclose(p.profundidade, na_camada_val, atol=0.01) for p in pontos_calculo):
@@ -94,7 +96,7 @@ def calcular_tensoes_geostaticas(dados: TensoesGeostaticasInput) -> TensoesGeost
                                 tensao_total_vertical=round(sigma_v_na_camada, 4),
                                 pressao_neutra=round(u_na_camada, 4),
                                 tensao_efetiva_vertical=round(sigma_ef_v_na_camada, 4),
-                                tensao_efetiva_horizontal=round(sigma_ef_h_na_camada, 4)
+                                tensao_efetiva_horizontal=round(sigma_ef_h_na_camada, 4) if sigma_ef_h_na_camada is not None else None
                             ))
             
             # --- Adicionar ponto no início da capilaridade se estiver dentro desta camada ---
@@ -123,7 +125,8 @@ def calcular_tensoes_geostaticas(dados: TensoesGeostaticasInput) -> TensoesGeost
                         u_capilar = -altura_cap_usar * gama_w
                         
                         sigma_ef_v_capilar = sigma_v_capilar - u_capilar
-                        sigma_ef_h_capilar = sigma_ef_v_capilar * camada.Ko
+                        # Calcula σ'h apenas se Ko for fornecido
+                        sigma_ef_h_capilar = sigma_ef_v_capilar * camada.Ko if camada.Ko is not None else None
                         
                         # Evita duplicar se já existe ponto próximo
                         if not any(np.isclose(p.profundidade, prof_inicio_capilaridade_camada, atol=0.01) for p in pontos_calculo):
@@ -132,7 +135,7 @@ def calcular_tensoes_geostaticas(dados: TensoesGeostaticasInput) -> TensoesGeost
                                 tensao_total_vertical=round(sigma_v_capilar, 4),
                                 pressao_neutra=round(u_capilar, 4),
                                 tensao_efetiva_vertical=round(sigma_ef_v_capilar, 4),
-                                tensao_efetiva_horizontal=round(sigma_ef_h_capilar, 4)
+                                tensao_efetiva_horizontal=round(sigma_ef_h_capilar, 4) if sigma_ef_h_capilar is not None else None
                             ))
 
             # --- Calcular Tensão Total na Base da Camada ---
@@ -185,7 +188,8 @@ def calcular_tensoes_geostaticas(dados: TensoesGeostaticasInput) -> TensoesGeost
                 u_no_na = 0.0 # Por definição
                 sigma_v_no_na = tensao_total_na_interface
                 sigma_ef_v_no_na = sigma_v_no_na - u_no_na
-                sigma_ef_h_no_na = sigma_ef_v_no_na * camada.Ko
+                # Calcula σ'h apenas se Ko for fornecido
+                sigma_ef_h_no_na = sigma_ef_v_no_na * camada.Ko if camada.Ko is not None else None
                 # Evita duplicar se o NA coincide com interface de camadas
                 if not any(np.isclose(p.profundidade, na_para_tensao) for p in pontos_calculo):
                     pontos_calculo.append(TensaoPonto(
@@ -193,7 +197,7 @@ def calcular_tensoes_geostaticas(dados: TensoesGeostaticasInput) -> TensoesGeost
                         tensao_total_vertical=round(sigma_v_no_na, 4),
                         pressao_neutra=round(u_no_na, 4),
                         tensao_efetiva_vertical=round(sigma_ef_v_no_na, 4),
-                        tensao_efetiva_horizontal=round(sigma_ef_h_no_na, 4)
+                        tensao_efetiva_horizontal=round(sigma_ef_h_no_na, 4) if sigma_ef_h_no_na is not None else None
                     ))
 
                 # Adiciona contribuição da parte abaixo do NA para chegar na base da camada
@@ -277,7 +281,8 @@ def calcular_tensoes_geostaticas(dados: TensoesGeostaticasInput) -> TensoesGeost
                  # print(f"Aviso: Tensão efetiva vertical calculada negativa ({tensao_efetiva_vertical:.4f}) na profundidade {z_base:.2f} m. Limitando a 0.")
                  tensao_efetiva_vertical = 0.0
 
-            tensao_efetiva_horizontal = tensao_efetiva_vertical * camada.Ko
+            # Calcula σ'h apenas se Ko for fornecido
+            tensao_efetiva_horizontal = tensao_efetiva_vertical * camada.Ko if camada.Ko is not None else None
 
             # Adiciona ponto de cálculo na base da camada
             pontos_calculo.append(TensaoPonto(
@@ -285,7 +290,7 @@ def calcular_tensoes_geostaticas(dados: TensoesGeostaticasInput) -> TensoesGeost
                 tensao_total_vertical=round(tensao_total_atual, 4),
                 pressao_neutra=round(pressao_neutra, 4),
                 tensao_efetiva_vertical=round(tensao_efetiva_vertical, 4),
-                tensao_efetiva_horizontal=round(tensao_efetiva_horizontal, 4)
+                tensao_efetiva_horizontal=round(tensao_efetiva_horizontal, 4) if tensao_efetiva_horizontal is not None else None
             ))
 
             profundidade_atual = profundidade_base_camada

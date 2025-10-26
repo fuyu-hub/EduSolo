@@ -6,7 +6,7 @@ export interface CamadaSoloExemplo {
   capilaridade: string;
   gamaNat: string;
   gamaSat: string;
-  Ko: string;
+  Ko?: string;
   impermeavel?: boolean;
 }
 
@@ -36,7 +36,6 @@ export const exemplosTensoes: ExemploTensoes[] = [
         capilaridade: "0.0",
         gamaNat: "17.5",
         gamaSat: "19.2",
-        Ko: "0.4",
         impermeavel: false
       },
       {
@@ -46,7 +45,6 @@ export const exemplosTensoes: ExemploTensoes[] = [
         capilaridade: "",
         gamaNat: "",
         gamaSat: "18.8",
-        Ko: "0.6",
         impermeavel: false
       }
     ]
@@ -66,7 +64,6 @@ export const exemplosTensoes: ExemploTensoes[] = [
         capilaridade: "1.0",
         gamaNat: "18.5",
         gamaSat: "20.2",
-        Ko: "0.55",
         impermeavel: false
       },
       {
@@ -76,7 +73,6 @@ export const exemplosTensoes: ExemploTensoes[] = [
         capilaridade: "",
         gamaNat: "17.8",
         gamaSat: "19.5",
-        Ko: "0.5",
         impermeavel: false
       },
       {
@@ -86,7 +82,6 @@ export const exemplosTensoes: ExemploTensoes[] = [
         capilaridade: "",
         gamaNat: "",
         gamaSat: "19.8",
-        Ko: "0.45",
         impermeavel: false
       }
     ]
@@ -106,7 +101,6 @@ export const exemplosTensoes: ExemploTensoes[] = [
         capilaridade: "0.5",
         gamaNat: "16.5",
         gamaSat: "18.5",
-        Ko: "0.6",
         impermeavel: false
       },
       {
@@ -116,7 +110,6 @@ export const exemplosTensoes: ExemploTensoes[] = [
         capilaridade: "",
         gamaNat: "",
         gamaSat: "20.2",
-        Ko: "0.35",
         impermeavel: false
       }
     ]
@@ -136,7 +129,6 @@ export const exemplosTensoes: ExemploTensoes[] = [
         capilaridade: "0.5",
         gamaNat: "17.0",
         gamaSat: "19.0",
-        Ko: "0.4",
         impermeavel: false
       },
       {
@@ -146,7 +138,6 @@ export const exemplosTensoes: ExemploTensoes[] = [
         capilaridade: "",
         gamaNat: "19.0",
         gamaSat: "20.5",
-        Ko: "0.6",
         impermeavel: true
       },
       {
@@ -156,7 +147,6 @@ export const exemplosTensoes: ExemploTensoes[] = [
         capilaridade: "0.0",
         gamaNat: "",
         gamaSat: "20.0",
-        Ko: "0.35",
         impermeavel: false
       }
     ]
@@ -176,7 +166,6 @@ export const exemplosTensoes: ExemploTensoes[] = [
         capilaridade: "0.0",
         gamaNat: "",
         gamaSat: "18.5",
-        Ko: "0.5",
         impermeavel: false
       },
       {
@@ -186,7 +175,6 @@ export const exemplosTensoes: ExemploTensoes[] = [
         capilaridade: "",
         gamaNat: "",
         gamaSat: "19.2",
-        Ko: "0.55",
         impermeavel: false
       }
     ]

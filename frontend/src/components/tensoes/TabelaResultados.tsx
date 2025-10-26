@@ -30,6 +30,9 @@ export default function TabelaResultados({ pontos, profundidadeNA, alturaCapilar
     );
   }
 
+  // Verifica se há algum valor de tensão horizontal para exibir
+  const temTensaoHorizontal = pontos.some(p => p.tensao_efetiva_horizontal !== null && p.tensao_efetiva_horizontal !== undefined);
+
   // Calcula a cota de início da capilaridade para destacar na tabela
   const cotaInicioCapilaridade = profundidadeNA !== undefined && alturaCapilar > 0 
     ? Math.max(0, profundidadeNA - alturaCapilar)
@@ -44,7 +47,7 @@ export default function TabelaResultados({ pontos, profundidadeNA, alturaCapilar
             <TableHead className="text-center bg-muted">σ<sub>v</sub> (kPa)</TableHead>
             <TableHead className="text-center bg-muted">u (kPa)</TableHead>
             <TableHead className="text-center bg-muted">σ'<sub>v</sub> (kPa)</TableHead>
-            <TableHead className="text-center bg-muted">σ'<sub>h</sub> (kPa)</TableHead>
+            {temTensaoHorizontal && <TableHead className="text-center bg-muted">σ'<sub>h</sub> (kPa)</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -112,11 +115,13 @@ export default function TabelaResultados({ pontos, profundidadeNA, alturaCapilar
                     ? ponto.tensao_efetiva_vertical.toFixed(2) 
                     : "-"}
                 </TableCell>
-                <TableCell className="text-center font-mono">
-                  {ponto.tensao_efetiva_horizontal !== null && ponto.tensao_efetiva_horizontal !== undefined 
-                    ? ponto.tensao_efetiva_horizontal.toFixed(2) 
-                    : "-"}
-                </TableCell>
+                {temTensaoHorizontal && (
+                  <TableCell className="text-center font-mono">
+                    {ponto.tensao_efetiva_horizontal !== null && ponto.tensao_efetiva_horizontal !== undefined 
+                      ? ponto.tensao_efetiva_horizontal.toFixed(2) 
+                      : "-"}
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}

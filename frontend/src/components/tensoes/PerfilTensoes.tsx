@@ -36,17 +36,26 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
     }));
   }, [pontos]);
 
+  // Verifica se há algum valor de tensão horizontal para exibir
+  const temTensaoHorizontal = useMemo(() => {
+    return dadosGrafico.some(d => d.sigma_h_ef !== null);
+  }, [dadosGrafico]);
+
   const dominioX = useMemo(() => {
     if (dadosGrafico.length === 0) return [0, 200];
     
-    const valores = dadosGrafico.flatMap(d => [d.sigma_v, d.u, d.sigma_v_ef, d.sigma_h_ef].filter((v): v is number => v !== null));
+    // Inclui sigma_h_ef no cálculo do domínio apenas se houver tensão horizontal
+    const valores = temTensaoHorizontal 
+      ? dadosGrafico.flatMap(d => [d.sigma_v, d.u, d.sigma_v_ef, d.sigma_h_ef].filter((v): v is number => v !== null))
+      : dadosGrafico.flatMap(d => [d.sigma_v, d.u, d.sigma_v_ef].filter((v): v is number => v !== null));
+    
     if (valores.length === 0) return [0, 200];
     
     const minTensao = Math.min(...valores, 0); // Inclui 0 no mínimo
     const maxTensao = Math.max(...valores, 0); // Inclui 0 no máximo
     const margem = Math.max((maxTensao - minTensao) * 0.15, 10); // Margem mínima de 10
     return [Math.max(0, minTensao - margem * 0.5), maxTensao]; // Sem margem no máximo
-  }, [dadosGrafico]);
+  }, [dadosGrafico, temTensaoHorizontal]);
 
   const dominioY = useMemo(() => {
     if (dadosGrafico.length === 0) return [0, 10];
@@ -152,7 +161,7 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
                     {data.sigma_v_ef !== null && (
                       <p className="text-xs">σ'<sub>v</sub>: <span className="text-green-600">{data.sigma_v_ef} kPa</span></p>
                     )}
-                    {data.sigma_h_ef !== null && (
+                    {temTensaoHorizontal && data.sigma_h_ef !== null && (
                       <p className="text-xs">σ'<sub>h</sub>: <span className="text-purple-600">{data.sigma_h_ef} kPa</span></p>
                     )}
                   </div>
@@ -268,17 +277,19 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
               isAnimationActive={true}
             />
             
-            <Line
-              name="sigma_h_ef"
-              type="linear"
-              dataKey="sigma_h_ef"
-              stroke="#a855f7"
-              strokeWidth={2}
-              dot={{ r: 4, fill: "#a855f7" }}
-              activeDot={{ r: 6 }}
-              connectNulls
-              isAnimationActive={true}
-            />
+            {temTensaoHorizontal && (
+              <Line
+                name="sigma_h_ef"
+                type="linear"
+                dataKey="sigma_h_ef"
+                stroke="#a855f7"
+                strokeWidth={2}
+                dot={{ r: 4, fill: "#a855f7" }}
+                activeDot={{ r: 6 }}
+                connectNulls
+                isAnimationActive={true}
+              />
+            )}
           </LineChart>
         </ResponsiveContainer>
       </CardContent>

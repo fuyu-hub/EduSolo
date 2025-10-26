@@ -129,7 +129,7 @@ class CamadaSolo(BaseModel):
     espessura: float = Field(..., gt=0, description="Espessura da camada (m)")
     gama_nat: Optional[float] = Field(None, description="Peso específico natural (kN/m³) - Acima do NA")
     gama_sat: Optional[float] = Field(None, description="Peso específico saturado (kN/m³) - Abaixo do NA")
-    Ko: float = Field(0.5, ge=0, description="Coeficiente de empuxo em repouso (adimensional)")
+    Ko: Optional[float] = Field(None, ge=0, le=1, description="Coeficiente de empuxo em repouso (adimensional, opcional)")
     impermeavel: bool = Field(False, description="Indica se a camada é impermeável (impede passagem de água)")
     profundidade_na_camada: Optional[float] = Field(None, ge=0, description="Profundidade do NA nesta camada específica (m) - para aquíferos separados")
     altura_capilar_camada: Optional[float] = Field(None, ge=0, description="Altura capilar nesta camada específica (m)")

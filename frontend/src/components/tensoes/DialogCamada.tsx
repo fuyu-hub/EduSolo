@@ -62,7 +62,7 @@ const tooltips = {
   capilaridade: "Altura da franja capilar acima do NA (m)",
   gamaNat: "Peso específico natural do solo (kN/m³) - usado acima do NA",
   gamaSat: "Peso específico saturado do solo (kN/m³) - usado abaixo do NA",
-  Ko: "Coeficiente de empuxo em repouso (opcional, padrão: 0.5)",
+  Ko: "Coeficiente de empuxo em repouso (opcional, típico: 0.4-0.6). Deixe vazio se não desejar calcular tensões horizontais",
   impermeavel: "Marque se esta camada é impermeável (impede a passagem de água). Camadas impermeáveis podem separar diferentes níveis de água no perfil",
 };
 
@@ -83,7 +83,7 @@ export default function DialogCamada({
       capilaridade: "",
       gamaNat: "",
       gamaSat: "",
-      Ko: "0.5",
+      Ko: "",
       impermeavel: false,
     },
   });
@@ -99,7 +99,7 @@ export default function DialogCamada({
         capilaridade: "",
         gamaNat: "",
         gamaSat: "",
-        Ko: "0.5",
+        Ko: "",
         impermeavel: false,
       });
     }
@@ -113,7 +113,7 @@ export default function DialogCamada({
       capilaridade: data.capilaridade || "",
       gamaNat: data.gamaNat || "",
       gamaSat: data.gamaSat || "",
-      Ko: data.Ko || "0.5",
+      Ko: data.Ko || "",
       impermeavel: data.impermeavel || false,
     });
     onOpenChange(false);
@@ -135,10 +135,6 @@ export default function DialogCamada({
             <div className="space-y-1.5">
               <Label htmlFor="nome" className={cn("flex items-center gap-1 text-sm", errors.nome && "text-destructive")}>
                 Nome da Camada *
-                <Tooltip>
-                  <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
-                  <TooltipContent>{tooltips.nome}</TooltipContent>
-                </Tooltip>
               </Label>
               <Controller
                 name="nome"
@@ -162,10 +158,6 @@ export default function DialogCamada({
               <div className="space-y-1.5">
                 <Label htmlFor="espessura" className={cn("flex items-center gap-1 text-sm", errors.espessura && "text-destructive")}>
                   Espessura (m) *
-                  <Tooltip>
-                    <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
-                    <TooltipContent>{tooltips.espessura}</TooltipContent>
-                  </Tooltip>
                 </Label>
                 <Controller
                   name="espessura"
@@ -188,10 +180,6 @@ export default function DialogCamada({
               <div className="space-y-1.5">
                 <Label htmlFor="Ko" className={cn("flex items-center gap-1 text-sm", errors.Ko && "text-destructive")}>
                   K<sub>o</sub>
-                  <Tooltip>
-                    <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
-                    <TooltipContent>{tooltips.Ko}</TooltipContent>
-                  </Tooltip>
                 </Label>
                 <Controller
                   name="Ko"
@@ -201,7 +189,7 @@ export default function DialogCamada({
                       id="Ko"
                       type="number"
                       step="0.01"
-                      placeholder="0.5"
+                      placeholder="Opcional"
                       {...field}
                       value={field.value ?? ""}
                       className={cn("bg-background/50", errors.Ko && "border-destructive")}
@@ -218,10 +206,6 @@ export default function DialogCamada({
               <div className="space-y-1.5">
                 <Label htmlFor="profundidadeNA" className={cn("flex items-center gap-1 text-sm", errors.profundidadeNA && "text-destructive")}>
                   Prof. NA (m)
-                  <Tooltip>
-                    <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
-                    <TooltipContent>{tooltips.profundidadeNA}</TooltipContent>
-                  </Tooltip>
                 </Label>
                 <Controller
                   name="profundidadeNA"
@@ -245,10 +229,6 @@ export default function DialogCamada({
               <div className="space-y-1.5">
                 <Label htmlFor="capilaridade" className={cn("flex items-center gap-1 text-sm", errors.capilaridade && "text-destructive")}>
                   Capilaridade (m)
-                  <Tooltip>
-                    <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
-                    <TooltipContent>{tooltips.capilaridade}</TooltipContent>
-                  </Tooltip>
                 </Label>
                 <Controller
                   name="capilaridade"
@@ -275,10 +255,6 @@ export default function DialogCamada({
               <div className="space-y-1.5">
                 <Label htmlFor="gamaNat" className={cn("flex items-center gap-1 text-sm", errors.gamaNat && "text-destructive")}>
                   γ<sub>nat</sub> (kN/m³)
-                  <Tooltip>
-                    <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
-                    <TooltipContent>{tooltips.gamaNat}</TooltipContent>
-                  </Tooltip>
                 </Label>
                 <Controller
                   name="gamaNat"
@@ -302,10 +278,6 @@ export default function DialogCamada({
               <div className="space-y-1.5">
                 <Label htmlFor="gamaSat" className={cn("flex items-center gap-1 text-sm", errors.gamaSat && "text-destructive")}>
                   γ<sub>sat</sub> (kN/m³)
-                  <Tooltip>
-                    <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
-                    <TooltipContent>{tooltips.gamaSat}</TooltipContent>
-                  </Tooltip>
                 </Label>
                 <Controller
                   name="gamaSat"
@@ -345,10 +317,6 @@ export default function DialogCamada({
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1"
                 >
                   Camada impermeável
-                  <Tooltip>
-                    <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
-                    <TooltipContent>{tooltips.impermeavel}</TooltipContent>
-                  </Tooltip>
                 </Label>
                 <p className="text-xs text-muted-foreground">
                   Impede a passagem de água (ex: argila densa, rocha)
