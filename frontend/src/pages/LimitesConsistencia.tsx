@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -35,6 +36,8 @@ import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberFo
 import ExportPDFDialog from "@/components/ExportPDFDialog";
 import DialogExemplos from "@/components/limites/DialogExemplos";
 import { ExemploLimites, exemplosLimites } from "@/lib/exemplos-limites";
+import { MobileModuleWrapper } from "@/components/mobile";
+import LimitesConsistenciaMobile from "./mobile/LimitesConsistenciaMobile";
 
 // --- Esquema Zod (Inalterado) ---
 const pontoLLSchema = z.object({
@@ -110,10 +113,13 @@ const tooltips = { numGolpes: "Número de golpes necessários para fechar a ranh
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+// Função para gerar IDs únicos
+const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
 // --- Interface ResultItemProps (mantida) ---
 interface ResultItemProps { label: string; value: number | string | null; unit: string; tooltip?: string; highlight?: boolean; precision?: number; }
 
-export default function LimitesConsistencia() {
+function LimitesConsistenciaDesktop() {
   const { toast } = useToast();
   const { startTour, currentStep, isActive: isTourActive } = useTour();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
@@ -121,7 +127,7 @@ export default function LimitesConsistencia() {
 
   const form = useForm<FormInputValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { pontosLL: [{ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },{ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }], massaUmidaRecipienteLP: "", massaSecaRecipienteLP: "", massaRecipienteLP: "", umidadeNatural: "", percentualArgila: "" },
+    defaultValues: { pontosLL: [{ id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },{ id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }], massaUmidaRecipienteLP: "", massaSecaRecipienteLP: "", massaRecipienteLP: "", umidadeNatural: "", percentualArgila: "" },
     mode: "onBlur",
   });
 
@@ -254,12 +260,12 @@ export default function LimitesConsistencia() {
     }
   }, [currentStep, isTourActive, carouselApi, results]);
 
-  const addPontoLL = () => { append({ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }); setCurrentPointIndex(fields.length); };
+  const addPontoLL = () => { append({ id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }); setCurrentPointIndex(fields.length); };
   const removePontoLL = () => { if (fields.length > 2) { remove(currentPointIndex); } else { toast({ title: "Atenção", description: "São necessários pelo menos 2 pontos para o cálculo do LL.", variant: "default" }); } };
   const goToNextPoint = () => { setCurrentPointIndex(prev => Math.min(prev + 1, fields.length - 1)); };
   const goToPreviousPoint = () => { setCurrentPointIndex(prev => Math.max(prev - 1, 0)); };
 
-  const handleClear = () => { form.reset({ pontosLL: [{ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },{ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }], massaUmidaRecipienteLP: "", massaSecaRecipienteLP: "", massaRecipienteLP: "", umidadeNatural: "", percentualArgila: "" }); setCurrentPointIndex(0); setResults(null); setApiError(null); };
+  const handleClear = () => { form.reset({ pontosLL: [{ id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },{ id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }], massaUmidaRecipienteLP: "", massaSecaRecipienteLP: "", massaRecipienteLP: "", umidadeNatural: "", percentualArgila: "" }); setCurrentPointIndex(0); setResults(null); setApiError(null); };
   
   const handleSelectExample = (exemplo: ExemploLimites) => {
     const currentLength = fields.length;
@@ -268,7 +274,7 @@ export default function LimitesConsistencia() {
     // Ajusta a quantidade de pontos
     if (currentLength < targetLength) {
       for (let i = 0; i < targetLength - currentLength; i++) {
-        append({ id: crypto.randomUUID(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }, { shouldFocus: false });
+        append({ id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }, { shouldFocus: false });
       }
     } else if (currentLength > targetLength) {
       for (let i = currentLength - 1; i >= targetLength; i--) {
@@ -278,7 +284,7 @@ export default function LimitesConsistencia() {
     
     setTimeout(() => {
       form.reset({
-        pontosLL: exemplo.pontosLL.map(p => ({ ...p, id: crypto.randomUUID() })),
+        pontosLL: exemplo.pontosLL.map(p => ({ ...p, id: generateId() })),
         massaUmidaRecipienteLP: exemplo.massaUmidaRecipienteLP,
         massaSecaRecipienteLP: exemplo.massaSecaRecipienteLP,
         massaRecipienteLP: exemplo.massaRecipienteLP,
@@ -588,14 +594,16 @@ export default function LimitesConsistencia() {
                                      <div className="space-y-0.5">
                                         <div className="flex items-center gap-2">
                                           <Label htmlFor={`pontosLL.${currentPointIndex}.numGolpes`} className={cn("text-xs", errors.pontosLL?.[currentPointIndex]?.numGolpes && "text-destructive")}>Nº Golpes</Label>
-                                          <Tooltip>
-                                            <TooltipTrigger>
-                                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                                            </TooltipTrigger>
-                                            <TooltipContent className="max-w-xs">
-                                              <p>{tooltips.numGolpes}</p>
-                                            </TooltipContent>
-                                          </Tooltip>
+                                          <Popover>
+                                            <PopoverTrigger asChild>
+                                              <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                                                <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                                              </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="max-w-xs" align="start">
+                                              <p className="text-sm">{tooltips.numGolpes}</p>
+                                            </PopoverContent>
+                                          </Popover>
                                         </div>
                                         <Controller name={`pontosLL.${currentPointIndex}.numGolpes`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.numGolpes`} type="number" placeholder="Ex: 25" {...field} className={cn("bg-background/50 h-9", errors.pontosLL?.[currentPointIndex]?.numGolpes && "border-destructive")}/> )} />
                                         {errors.pontosLL?.[currentPointIndex]?.numGolpes && <p className="text-xs text-destructive mt-0.5">{errors.pontosLL[currentPointIndex]?.numGolpes?.message}</p>}
@@ -603,14 +611,16 @@ export default function LimitesConsistencia() {
                                       <div className="space-y-0.5">
                                         <div className="flex items-center gap-2">
                                           <Label htmlFor={`pontosLL.${currentPointIndex}.massaUmidaRecipiente`} className={cn("text-xs", errors.pontosLL?.[currentPointIndex]?.massaUmidaRecipiente && "text-destructive")}>M. Úmida + Recip. (g)</Label>
-                                          <Tooltip>
-                                            <TooltipTrigger>
-                                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                                            </TooltipTrigger>
-                                            <TooltipContent className="max-w-xs">
-                                              <p>{tooltips.massaUmidaRecipienteLL}</p>
-                                            </TooltipContent>
-                                          </Tooltip>
+                                          <Popover>
+                                            <PopoverTrigger asChild>
+                                              <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                                                <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                                              </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="max-w-xs" align="start">
+                                              <p className="text-sm">{tooltips.massaUmidaRecipienteLL}</p>
+                                            </PopoverContent>
+                                          </Popover>
                                         </div>
                                          <Controller name={`pontosLL.${currentPointIndex}.massaUmidaRecipiente`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.massaUmidaRecipiente`} type="number" step="0.01" placeholder="Ex: 45.50" {...field} className={cn("bg-background/50 h-9", errors.pontosLL?.[currentPointIndex]?.massaUmidaRecipiente && "border-destructive")}/> )} />
                                          {errors.pontosLL?.[currentPointIndex]?.massaUmidaRecipiente && <p className="text-xs text-destructive mt-0.5">{errors.pontosLL[currentPointIndex]?.massaUmidaRecipiente?.message}</p>}
@@ -620,14 +630,16 @@ export default function LimitesConsistencia() {
                                      <div className="space-y-0.5">
                                         <div className="flex items-center gap-2">
                                           <Label htmlFor={`pontosLL.${currentPointIndex}.massaSecaRecipiente`} className={cn("text-xs", errors.pontosLL?.[currentPointIndex]?.massaSecaRecipiente && "text-destructive")}>M. Seca + Recip. (g)</Label>
-                                          <Tooltip>
-                                            <TooltipTrigger>
-                                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                                            </TooltipTrigger>
-                                            <TooltipContent className="max-w-xs">
-                                              <p>{tooltips.massaSecaRecipienteLL}</p>
-                                            </TooltipContent>
-                                          </Tooltip>
+                                          <Popover>
+                                            <PopoverTrigger asChild>
+                                              <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                                                <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                                              </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="max-w-xs" align="start">
+                                              <p className="text-sm">{tooltips.massaSecaRecipienteLL}</p>
+                                            </PopoverContent>
+                                          </Popover>
                                         </div>
                                         <Controller name={`pontosLL.${currentPointIndex}.massaSecaRecipiente`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.massaSecaRecipiente`} type="number" step="0.01" placeholder="Ex: 38.00" {...field} className={cn("bg-background/50 h-9", errors.pontosLL?.[currentPointIndex]?.massaSecaRecipiente && "border-destructive")}/> )} />
                                         {errors.pontosLL?.[currentPointIndex]?.massaSecaRecipiente && <p className="text-xs text-destructive mt-0.5">{errors.pontosLL[currentPointIndex]?.massaSecaRecipiente?.message}</p>}
@@ -635,14 +647,16 @@ export default function LimitesConsistencia() {
                                      <div className="space-y-0.5">
                                         <div className="flex items-center gap-2">
                                           <Label htmlFor={`pontosLL.${currentPointIndex}.massaRecipiente`} className={cn("text-xs", errors.pontosLL?.[currentPointIndex]?.massaRecipiente && "text-destructive")}>M. Recipiente (g)</Label>
-                                          <Tooltip>
-                                            <TooltipTrigger>
-                                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                                            </TooltipTrigger>
-                                            <TooltipContent className="max-w-xs">
-                                              <p>{tooltips.massaRecipienteLL}</p>
-                                            </TooltipContent>
-                                          </Tooltip>
+                                          <Popover>
+                                            <PopoverTrigger asChild>
+                                              <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                                                <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                                              </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="max-w-xs" align="start">
+                                              <p className="text-sm">{tooltips.massaRecipienteLL}</p>
+                                            </PopoverContent>
+                                          </Popover>
                                         </div>
                                          <Controller name={`pontosLL.${currentPointIndex}.massaRecipiente`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.massaRecipiente`} type="number" step="0.01" placeholder="Ex: 15.00" {...field} className={cn("bg-background/50 h-9", errors.pontosLL?.[currentPointIndex]?.massaRecipiente && "border-destructive")}/> )} />
                                          {errors.pontosLL?.[currentPointIndex]?.massaRecipiente && <p className="text-xs text-destructive mt-0.5">{errors.pontosLL[currentPointIndex]?.massaRecipiente?.message}</p>}
@@ -668,14 +682,16 @@ export default function LimitesConsistencia() {
                                 <div className="space-y-0.5">
                                    <div className="flex items-center gap-2">
                                      <Label htmlFor="massaUmidaRecipienteLP" className={cn("text-xs", errors.massaUmidaRecipienteLP && "text-destructive")}>M. Úmida + Recip. (g)</Label>
-                                     <Tooltip>
-                                       <TooltipTrigger>
-                                         <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                                       </TooltipTrigger>
-                                       <TooltipContent className="max-w-xs">
-                                         <p>{tooltips.massaUmidaRecipienteLP}</p>
-                                       </TooltipContent>
-                                     </Tooltip>
+                                     <Popover>
+                                       <PopoverTrigger asChild>
+                                         <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                                           <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                                         </Button>
+                                       </PopoverTrigger>
+                                       <PopoverContent className="max-w-xs" align="start">
+                                         <p className="text-sm">{tooltips.massaUmidaRecipienteLP}</p>
+                                       </PopoverContent>
+                                     </Popover>
                                    </div>
                                    <Controller name="massaUmidaRecipienteLP" control={form.control} render={({ field }) => <Input id="massaUmidaRecipienteLP" type="number" step="0.01" placeholder="Ex: 32.80" {...field} className={cn("bg-background/50 h-9", errors.massaUmidaRecipienteLP && "border-destructive")} />} />
                                    {errors.massaUmidaRecipienteLP && <p className="text-xs text-destructive mt-0.5">{errors.massaUmidaRecipienteLP.message}</p>}
@@ -683,14 +699,16 @@ export default function LimitesConsistencia() {
                                 <div className="space-y-0.5">
                                    <div className="flex items-center gap-2">
                                      <Label htmlFor="massaSecaRecipienteLP" className={cn("text-xs", errors.massaSecaRecipienteLP && "text-destructive")}>M. Seca + Recip. (g)</Label>
-                                     <Tooltip>
-                                       <TooltipTrigger>
-                                         <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                                       </TooltipTrigger>
-                                       <TooltipContent className="max-w-xs">
-                                         <p>{tooltips.massaSecaRecipienteLP}</p>
-                                       </TooltipContent>
-                                     </Tooltip>
+                                     <Popover>
+                                       <PopoverTrigger asChild>
+                                         <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                                           <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                                         </Button>
+                                       </PopoverTrigger>
+                                       <PopoverContent className="max-w-xs" align="start">
+                                         <p className="text-sm">{tooltips.massaSecaRecipienteLP}</p>
+                                       </PopoverContent>
+                                     </Popover>
                                    </div>
                                    <Controller name="massaSecaRecipienteLP" control={form.control} render={({ field }) => <Input id="massaSecaRecipienteLP" type="number" step="0.01" placeholder="Ex: 29.50" {...field} className={cn("bg-background/50 h-9", errors.massaSecaRecipienteLP && "border-destructive")} />} />
                                    {errors.massaSecaRecipienteLP && <p className="text-xs text-destructive mt-0.5">{errors.massaSecaRecipienteLP.message}</p>}
@@ -698,14 +716,16 @@ export default function LimitesConsistencia() {
                                <div className="space-y-0.5">
                                    <div className="flex items-center gap-2">
                                      <Label htmlFor="massaRecipienteLP" className={cn("text-xs", errors.massaRecipienteLP && "text-destructive")}>M. Recipiente (g)</Label>
-                                     <Tooltip>
-                                       <TooltipTrigger>
-                                         <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                                       </TooltipTrigger>
-                                       <TooltipContent className="max-w-xs">
-                                         <p>{tooltips.massaRecipienteLP}</p>
-                                       </TooltipContent>
-                                     </Tooltip>
+                                     <Popover>
+                                       <PopoverTrigger asChild>
+                                         <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                                           <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                                         </Button>
+                                       </PopoverTrigger>
+                                       <PopoverContent className="max-w-xs" align="start">
+                                         <p className="text-sm">{tooltips.massaRecipienteLP}</p>
+                                       </PopoverContent>
+                                     </Popover>
                                    </div>
                                    <Controller name="massaRecipienteLP" control={form.control} render={({ field }) => <Input id="massaRecipienteLP" type="number" step="0.01" placeholder="Ex: 14.20" {...field} className={cn("bg-background/50 h-9", errors.massaRecipienteLP && "border-destructive")} />} />
                                    {errors.massaRecipienteLP && <p className="text-xs text-destructive mt-0.5">{errors.massaRecipienteLP.message}</p>}
@@ -726,14 +746,16 @@ export default function LimitesConsistencia() {
                              <div className="space-y-0.5">
                                 <div className="flex items-center gap-2">
                                   <Label htmlFor="umidadeNatural" className={cn("text-xs", errors.umidadeNatural && "text-destructive")}>Umidade Natural (%)</Label>
-                                  <Tooltip>
-                                    <TooltipTrigger>
-                                      <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                                    </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs">
-                                      <p>{tooltips.umidadeNatural}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                                        <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="max-w-xs" align="start">
+                                      <p className="text-sm">{tooltips.umidadeNatural}</p>
+                                    </PopoverContent>
+                                  </Popover>
                                 </div>
                                  <Controller name="umidadeNatural" control={form.control} render={({ field }) => <Input id="umidadeNatural" type="number" step="0.1" placeholder="Ex: 28.5" {...field} value={field.value ?? ""} className={cn("bg-background/50 h-9", errors.umidadeNatural && "border-destructive")} />} />
                                 {errors.umidadeNatural && <p className="text-xs text-destructive mt-0.5">{errors.umidadeNatural.message}</p>}
@@ -741,14 +763,16 @@ export default function LimitesConsistencia() {
                              <div className="space-y-0.5">
                                 <div className="flex items-center gap-2">
                                   <Label htmlFor="percentualArgila" className={cn("text-xs", errors.percentualArgila && "text-destructive")}>% Argila (&lt;0.002mm)</Label>
-                                  <Tooltip>
-                                    <TooltipTrigger>
-                                      <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                                    </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs">
-                                      <p>{tooltips.percentualArgila}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                                        <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="max-w-xs" align="start">
+                                      <p className="text-sm">{tooltips.percentualArgila}</p>
+                                    </PopoverContent>
+                                  </Popover>
                                 </div>
                                 <Controller name="percentualArgila" control={form.control} render={({ field }) => <Input id="percentualArgila" type="number" step="0.1" placeholder="Ex: 35.0" {...field} value={field.value ?? ""} className={cn("bg-background/50 h-9", errors.percentualArgila && "border-destructive")} />} />
                                 {errors.percentualArgila && <p className="text-xs text-destructive mt-0.5">{errors.percentualArgila.message}</p>}
@@ -877,8 +901,56 @@ export default function LimitesConsistencia() {
   );
 }
 
+// --- Wrapper Principal ---
+export default function LimitesConsistencia() {
+  return (
+    <MobileModuleWrapper mobileVersion={<LimitesConsistenciaMobile />}>
+      <LimitesConsistenciaDesktop />
+    </MobileModuleWrapper>
+  );
+}
+
 // --- Componentes Auxiliares (Compactados) ---
-const ResultItemGroup: React.FC<{ title?: string, children: React.ReactNode }> = ({ title, children }) => ( <div className="space-y-1"> {title && <h4 className="text-xs font-medium text-muted-foreground mb-1 pt-1 border-t border-border/30">{title}</h4>} <div className="space-y-1">{children}</div> </div> );
-function ResultItem({ label, value, unit, tooltip, highlight = false, precision = 2 }: ResultItemProps) { const displayValue = typeof value === 'number' && !isNaN(value) ? value.toFixed(precision) : (value || "-"); return ( <div className={cn( "flex justify-between items-center px-2 py-1.5 rounded-lg min-h-[36px]", highlight ? "bg-primary/10 border border-primary/20" : "bg-background/50 border border-border/50" )}> <TooltipProvider> <span className="text-xs font-medium text-muted-foreground flex items-center gap-1"> {label} {tooltip && ( <Tooltip> <TooltipTrigger> <Button variant="ghost" size="icon" className="h-4 w-4 text-muted-foreground hover:text-primary rounded-full p-0"> <Info className="w-2.5 h-2.5" /> </Button> </TooltipTrigger> <TooltipContent>{tooltip}</TooltipContent> </Tooltip> )} </span> </TooltipProvider> <span className={cn("font-semibold text-right pl-1.5", highlight ? "text-primary text-sm" : "text-foreground text-sm")}> {displayValue} {unit} </span> </div> ); }
-const MissingInfoItem = ({ label, reason }: { label: string, reason: string }) => ( <div className="flex justify-between items-center px-2 py-1.5 rounded-lg bg-muted/30 border border-border/30 border-dashed min-h-[36px]"> <span className="text-xs font-medium text-muted-foreground">{label}</span> <span className="text-xs text-muted-foreground italic text-right pl-1.5">{reason}</span> </div> );
+const ResultItemGroup: React.FC<{ title?: string, children: React.ReactNode }> = ({ title, children }) => ( 
+  <div className="space-y-1"> 
+    {title && <h4 className="text-xs font-medium text-muted-foreground mb-1 pt-1 border-t border-border/30">{title}</h4>} 
+    <div className="grid grid-cols-2 gap-2">{children}</div> 
+  </div> 
+);
+
+function ResultItem({ label, value, unit, tooltip, highlight = false, precision = 2 }: ResultItemProps) { 
+  const displayValue = typeof value === 'number' && !isNaN(value) ? value.toFixed(precision) : (value || "-"); 
+  
+  return ( 
+    <div className={cn( 
+      "flex flex-col gap-1 px-2 py-2 rounded-lg", 
+      highlight ? "bg-primary/10 border border-primary/20" : "bg-background/50 border border-border/50" 
+    )}> 
+      <div className="flex items-center gap-1">
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        {tooltip && ( 
+          <Popover> 
+            <PopoverTrigger asChild> 
+              <Button variant="ghost" size="icon" className="h-4 w-4 p-0 hover:bg-muted"> 
+                <Info className="w-3 h-3 text-muted-foreground cursor-pointer" /> 
+              </Button> 
+            </PopoverTrigger> 
+            <PopoverContent className="max-w-xs" align="start">
+              <p className="text-sm">{tooltip}</p>
+            </PopoverContent> 
+          </Popover> 
+        )} 
+      </div>
+      <span className={cn("font-bold text-lg", highlight ? "text-primary" : "text-foreground")}> 
+        {displayValue} <span className="text-xs font-normal text-muted-foreground">{unit}</span>
+      </span> 
+    </div> 
+  ); 
+}
+const MissingInfoItem = ({ label, reason }: { label: string, reason: string }) => ( 
+  <div className="flex flex-col gap-1 px-2 py-2 rounded-lg bg-muted/30 border border-border/30 border-dashed"> 
+    <span className="text-xs font-medium text-muted-foreground">{label}</span> 
+    <span className="text-xs text-muted-foreground italic">{reason}</span> 
+  </div> 
+);
 const ClassificationBadge = ({ label, value }: { label: string; value: string }) => { let badgeVariant: "default" | "secondary" | "destructive" = "default"; if (value.includes("Não") || value.includes("Inativa")) { badgeVariant = "secondary"; } return ( <div className="flex flex-col items-start gap-0.5"> <span className="text-xs text-muted-foreground">{label}</span> <Badge variant={badgeVariant} className="text-xs px-2 py-0.5">{value}</Badge> </div> ); };

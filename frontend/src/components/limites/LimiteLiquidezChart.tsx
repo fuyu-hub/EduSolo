@@ -26,10 +26,11 @@ interface PontoCurva {
 interface LimiteLiquidezChartProps {
   pontos: PontoCurva[];
   ll: number | null;
+  isMobile?: boolean;
 }
 
 const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChartProps>(
-  ({ pontos, ll }, ref) => {
+  ({ pontos, ll, isMobile = false }, ref) => {
     const [dialogOpen, setDialogOpen] = useState(false);
     const chartRef = useRef<HTMLDivElement>(null);
 
@@ -140,7 +141,7 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
 
     // Componente do gráfico reutilizável
     const ChartContent = ({ isDialog = false }: { isDialog?: boolean }) => {
-      const chartWidth = isDialog ? 1150 : 450;
+      const chartWidth = isDialog ? 1150 : (isMobile ? 340 : 450);
       const chartHeight = isDialog ? 580 : 280;
       const fontSize = isDialog ? 14 : 12;
       const labelFontSize = isDialog ? 16 : 14;
@@ -265,24 +266,26 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
             Salvar JPG
           </Button>
 
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Maximize2 className="w-4 h-4" />
-                Ampliar
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-[95vw] max-h-[95vh] w-full">
-              <DialogHeader>
-                <DialogTitle>Gráfico - Limite de Liquidez (Ampliado)</DialogTitle>
-              </DialogHeader>
-              <div className="w-full flex justify-center items-center p-2">
-                <div className="bg-white p-4 rounded-xl border border-border shadow-sm">
-                  <ChartContent isDialog={true} />
+          {!isMobile && (
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Maximize2 className="w-4 h-4" />
+                  Ampliar
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-[95vw] max-h-[95vh] w-full">
+                <DialogHeader>
+                  <DialogTitle>Gráfico - Limite de Liquidez (Ampliado)</DialogTitle>
+                </DialogHeader>
+                <div className="w-full flex justify-center items-center p-2">
+                  <div className="bg-white p-4 rounded-xl border border-border shadow-sm">
+                    <ChartContent isDialog={true} />
+                  </div>
                 </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         {/* Gráfico ampliado renderizado em background (invisível) para captura */}
