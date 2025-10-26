@@ -31,7 +31,7 @@ export default function GsSuggestions({ onSelect }: GsSuggestionsProps) {
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Valores Típicos de Gs (Densidade Relativa dos Grãos)</DialogTitle>
+          <DialogTitle>Valores Típicos de Gs (Densidade dos Grãos)</DialogTitle>
           <DialogDescription>
             Selecione um material para usar seu valor típico de Gs
           </DialogDescription>

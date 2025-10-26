@@ -352,8 +352,8 @@ function getNomePeneira(abertura: number): string {
     0.149: 'Nº 100',
     0.15: 'Nº 100',
     0.150: 'Nº 100',
-    0.074: 'Nº 200',
     0.075: 'Nº 200',
+    0.074: 'Nº 200', // Tolerância ASTM
   };
 
   // Procurar correspondência exata ou próxima

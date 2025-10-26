@@ -32,34 +32,34 @@ import { ExemploCompactacao } from "@/lib/exemplos-compactacao";
 // Schema de validação
 const pontoCompactacaoSchema = z.object({
   id: z.string(),
-  pesoAmostaCilindro: z.string().min(1, { message: "Obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser > 0" }),
-  pesoBrutoUmido: z.string().min(1, { message: "Obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser > 0" }),
-  pesoBrutoSeco: z.string().min(1, { message: "Obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser > 0" }),
-  tara: z.string().min(1, { message: "Obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, { message: "Deve ser >= 0" }),
+  pesoAmostaCilindro: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser maior que 0" }),
+  pesoBrutoUmido: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser maior que 0" }),
+  pesoBrutoSeco: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser maior que 0" }),
+  tara: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, { message: "Deve ser maior ou igual a 0" }),
 }).refine(data => {
   const umido = parseFloat(data.pesoBrutoUmido);
   const seco = parseFloat(data.pesoBrutoSeco);
   return isNaN(umido) || isNaN(seco) || umido >= seco;
 }, {
-  message: "Peso úmido >= Peso seco",
+  message: "Peso úmido deve ser maior ou igual ao peso seco",
   path: ["pesoBrutoUmido"],
 }).refine(data => {
   const seco = parseFloat(data.pesoBrutoSeco);
   const tara = parseFloat(data.tara);
   return isNaN(seco) || isNaN(tara) || seco >= tara;
 }, {
-  message: "Peso seco >= Tara",
+  message: "Peso seco deve ser maior ou igual à tara",
   path: ["pesoBrutoSeco"],
 });
 
 const formSchema = z.object({
-  volumeCilindro: z.string().min(1, { message: "Obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Volume > 0" }),
-  pesoCilindro: z.string().min(1, { message: "Obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, { message: "Peso >= 0" }),
+  volumeCilindro: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Volume deve ser maior que 0" }),
+  pesoCilindro: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, { message: "Peso deve ser maior ou igual a 0" }),
   Gs: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) > 0), {
-    message: "Gs deve ser > 0 ou vazio",
+    message: "Gs deve ser maior que 0 (ou deixe vazio)",
   }),
-  pesoEspecificoAgua: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "γw > 0" }),
-  pontos: z.array(pontoCompactacaoSchema).min(3, { message: "Mínimo 3 pontos necessários" }),
+  pesoEspecificoAgua: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Peso específico da água deve ser maior que 0" }),
+  pontos: z.array(pontoCompactacaoSchema).min(3, { message: "São necessários no mínimo 3 pontos de ensaio" }),
 });
 
 type FormInputValues = z.infer<typeof formSchema>;
@@ -96,7 +96,7 @@ interface Results {
 const tooltips = {
   volumeCilindro: "Volume interno do cilindro/molde de compactação (cm³)",
   pesoCilindro: "Peso do cilindro vazio (g)",
-  Gs: "Densidade relativa dos grãos (opcional, necessário para curva S=100%)",
+  Gs: "Densidade dos grãos (opcional, necessário para curva S=100%)",
   pesoAmostaCilindro: "Peso da amostra compactada + cilindro (g)",
   pesoBrutoUmido: "Peso do recipiente + solo úmido para determinação de umidade (g)",
   pesoBrutoSeco: "Peso do recipiente + solo seco após estufa (g)",
@@ -558,18 +558,18 @@ export default function Compactacao() {
   }, 0);
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto">
+    <div className="space-y-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <PrintHeader moduleTitle="Compactação (Proctor)" moduleName="compactacao" />
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
-            <Hammer className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
+            <Hammer className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Ensaio de Compactação</h1>
-            <p className="text-muted-foreground text-sm">Determinação da curva de compactação (Proctor)</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Ensaio de Compactação</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm">Determinação da curva de compactação (Proctor)</p>
           </div>
         </div>
 
@@ -603,9 +603,9 @@ export default function Compactacao() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {/* Formulário */}
-        <Card className="glass flex flex-col animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
+        <Card className="glass flex flex-col p-4 sm:p-6 animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl">
@@ -623,13 +623,19 @@ export default function Compactacao() {
                   </h3>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-0.5">
-                      <Label htmlFor="volumeCilindro" className={cn("flex items-center gap-1 text-xs", errors.volumeCilindro && "text-destructive")}>
-                        Volume Cilindro (cm³)
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="volumeCilindro" className={cn("text-xs", errors.volumeCilindro && "text-destructive")}>
+                          Volume Cilindro (cm³)
+                        </Label>
                         <Tooltip>
-                          <TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger>
-                          <TooltipContent>{tooltips.volumeCilindro}</TooltipContent>
+                          <TooltipTrigger>
+                            <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>{tooltips.volumeCilindro}</p>
+                          </TooltipContent>
                         </Tooltip>
-                      </Label>
+                      </div>
                       <Controller
                         name="volumeCilindro"
                         control={form.control}
@@ -648,13 +654,19 @@ export default function Compactacao() {
                     </div>
 
                     <div className="space-y-0.5">
-                      <Label htmlFor="pesoCilindro" className={cn("flex items-center gap-1 text-xs", errors.pesoCilindro && "text-destructive")}>
-                        Peso Cilindro (g)
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="pesoCilindro" className={cn("text-xs", errors.pesoCilindro && "text-destructive")}>
+                          Peso Cilindro (g)
+                        </Label>
                         <Tooltip>
-                          <TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger>
-                          <TooltipContent>{tooltips.pesoCilindro}</TooltipContent>
+                          <TooltipTrigger>
+                            <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>{tooltips.pesoCilindro}</p>
+                          </TooltipContent>
                         </Tooltip>
-                      </Label>
+                      </div>
                       <Controller
                         name="pesoCilindro"
                         control={form.control}
@@ -673,13 +685,19 @@ export default function Compactacao() {
                     </div>
 
                     <div className="space-y-0.5">
-                      <Label htmlFor="Gs" className={cn("flex items-center gap-1 text-xs", errors.Gs && "text-destructive")}>
-                        Gs (opcional)
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="Gs" className={cn("text-xs", errors.Gs && "text-destructive")}>
+                          Gs (opcional)
+                        </Label>
                         <Tooltip>
-                          <TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger>
-                          <TooltipContent>{tooltips.Gs}</TooltipContent>
+                          <TooltipTrigger>
+                            <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p>{tooltips.Gs}</p>
+                          </TooltipContent>
                         </Tooltip>
-                      </Label>
+                      </div>
                       <Controller
                         name="Gs"
                         control={form.control}
@@ -753,13 +771,19 @@ export default function Compactacao() {
                             <div className="grid grid-cols-2 gap-3">
                               {/* Peso Amostra + Cilindro */}
                               <div className="space-y-0.5 col-span-2">
-                                <Label htmlFor={`pontos.${currentPointIndex}.pesoAmostaCilindro`} className={cn("flex items-center gap-1 text-xs", errors.pontos?.[currentPointIndex]?.pesoAmostaCilindro && "text-destructive")}>
-                                  Peso Amostra + Cilindro (g)
+                                <div className="flex items-center gap-2">
+                                  <Label htmlFor={`pontos.${currentPointIndex}.pesoAmostaCilindro`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.pesoAmostaCilindro && "text-destructive")}>
+                                    Peso Amostra + Cilindro (g)
+                                  </Label>
                                   <Tooltip>
-                                    <TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger>
-                                    <TooltipContent>{tooltips.pesoAmostaCilindro}</TooltipContent>
+                                    <TooltipTrigger>
+                                      <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p>{tooltips.pesoAmostaCilindro}</p>
+                                    </TooltipContent>
                                   </Tooltip>
-                                </Label>
+                                </div>
                                 <Controller
                                   name={`pontos.${currentPointIndex}.pesoAmostaCilindro`}
                                   control={form.control}
@@ -781,13 +805,19 @@ export default function Compactacao() {
 
                               {/* Peso Bruto Úmido */}
                               <div className="space-y-0.5">
-                                <Label htmlFor={`pontos.${currentPointIndex}.pesoBrutoUmido`} className={cn("flex items-center gap-1 text-xs", errors.pontos?.[currentPointIndex]?.pesoBrutoUmido && "text-destructive")}>
-                                  Peso Bruto Úmido (g)
+                                <div className="flex items-center gap-2">
+                                  <Label htmlFor={`pontos.${currentPointIndex}.pesoBrutoUmido`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.pesoBrutoUmido && "text-destructive")}>
+                                    Peso Bruto Úmido (g)
+                                  </Label>
                                   <Tooltip>
-                                    <TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger>
-                                    <TooltipContent>{tooltips.pesoBrutoUmido}</TooltipContent>
+                                    <TooltipTrigger>
+                                      <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p>{tooltips.pesoBrutoUmido}</p>
+                                    </TooltipContent>
                                   </Tooltip>
-                                </Label>
+                                </div>
                                 <Controller
                                   name={`pontos.${currentPointIndex}.pesoBrutoUmido`}
                                   control={form.control}
@@ -809,13 +839,19 @@ export default function Compactacao() {
 
                               {/* Peso Bruto Seco */}
                               <div className="space-y-0.5">
-                                <Label htmlFor={`pontos.${currentPointIndex}.pesoBrutoSeco`} className={cn("flex items-center gap-1 text-xs", errors.pontos?.[currentPointIndex]?.pesoBrutoSeco && "text-destructive")}>
-                                  Peso Bruto Seco (g)
+                                <div className="flex items-center gap-2">
+                                  <Label htmlFor={`pontos.${currentPointIndex}.pesoBrutoSeco`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.pesoBrutoSeco && "text-destructive")}>
+                                    Peso Bruto Seco (g)
+                                  </Label>
                                   <Tooltip>
-                                    <TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger>
-                                    <TooltipContent>{tooltips.pesoBrutoSeco}</TooltipContent>
+                                    <TooltipTrigger>
+                                      <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p>{tooltips.pesoBrutoSeco}</p>
+                                    </TooltipContent>
                                   </Tooltip>
-                                </Label>
+                                </div>
                                 <Controller
                                   name={`pontos.${currentPointIndex}.pesoBrutoSeco`}
                                   control={form.control}
@@ -837,13 +873,19 @@ export default function Compactacao() {
 
                               {/* Tara */}
                               <div className="space-y-0.5 col-span-2">
-                                <Label htmlFor={`pontos.${currentPointIndex}.tara`} className={cn("flex items-center gap-1 text-xs", errors.pontos?.[currentPointIndex]?.tara && "text-destructive")}>
-                                  Tara (g)
+                                <div className="flex items-center gap-2">
+                                  <Label htmlFor={`pontos.${currentPointIndex}.tara`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.tara && "text-destructive")}>
+                                    Tara (g)
+                                  </Label>
                                   <Tooltip>
-                                    <TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger>
-                                    <TooltipContent>{tooltips.tara}</TooltipContent>
+                                    <TooltipTrigger>
+                                      <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p>{tooltips.tara}</p>
+                                    </TooltipContent>
                                   </Tooltip>
-                                </Label>
+                                </div>
                                 <Controller
                                   name={`pontos.${currentPointIndex}.tara`}
                                   control={form.control}
@@ -878,12 +920,12 @@ export default function Compactacao() {
               </TooltipProvider>
             </CardContent>
 
-            <CardFooter className="flex gap-3 pt-3 border-t border-border/50 mt-auto">
-              <Button type="submit" disabled={!canSubmit} className="flex-1 h-9" data-tour="btn-calcular">
+            <CardFooter className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 border-t border-border/50 mt-auto">
+              <Button type="submit" disabled={!canSubmit} className="flex-1 h-10" data-tour="btn-calcular">
                 <CalcIcon className="w-4 h-4 mr-1.5" />
                 {isCalculating ? "Calculando..." : "Calcular"}
               </Button>
-              <Button type="button" onClick={handleClear} variant="outline" disabled={isCalculating} className="h-9">
+              <Button type="button" onClick={handleClear} variant="outline" disabled={isCalculating} className="h-10 w-full sm:w-auto">
                 Limpar
               </Button>
             </CardFooter>
@@ -900,14 +942,14 @@ export default function Compactacao() {
         </Card>
 
         {/* Resultados */}
-        <Card className="glass animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
-          <CardHeader className="pb-3">
+        <Card className="glass p-4 sm:p-6 animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
+          <CardHeader className="pb-3 px-0">
             <CardTitle className="flex items-center gap-2 text-lg">
               <BarChart3 className="w-5 h-5 text-primary" />
               Resultados
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-0 px-2 sm:px-4">
+          <CardContent className="pt-0 px-0">
             {isCalculating ? (
               <div className="space-y-2">
                 <Skeleton className="h-10 w-full" />

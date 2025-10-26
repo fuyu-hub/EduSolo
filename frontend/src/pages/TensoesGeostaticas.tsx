@@ -36,31 +36,31 @@ import { transferirNAParaCamadaCorreta, CamadaTensoes } from "@/lib/tensoes-util
 // Schema de validação
 const camadaSchema = z.object({
   id: z.string(),
-  nome: z.string().min(1, { message: "Nome obrigatório" }),
-  espessura: z.string().min(1, { message: "Obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser > 0" }),
+  nome: z.string().min(1, { message: "Nome da camada é obrigatório" }),
+  espessura: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Espessura deve ser maior que 0" }),
   profundidadeNA: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0), {
-    message: "Profundidade >= 0 ou vazio",
+    message: "Profundidade deve ser maior ou igual a 0 (ou deixe vazio)",
   }),
   capilaridade: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0), {
-    message: "Altura >= 0 ou vazio",
+    message: "Altura deve ser maior ou igual a 0 (ou deixe vazio)",
   }),
   gamaNat: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) > 0), {
-    message: "Deve ser > 0 ou vazio",
+    message: "γ natural deve ser maior que 0 (ou deixe vazio)",
   }),
   gamaSat: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) > 0), {
-    message: "Deve ser > 0 ou vazio",
+    message: "γ saturado deve ser maior que 0 (ou deixe vazio)",
   }),
   Ko: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0 && parseFloat(val) <= 1), { 
-    message: "Ko entre 0-1 ou vazio" 
+    message: "Ko deve estar entre 0 e 1 (ou deixe vazio)" 
   }),
   impermeavel: z.boolean().optional(),
 });
 
 const formSchema = z.object({
-  profundidadeNA: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0), { message: "Profundidade >= 0 ou vazio" }),
-  alturaCapilar: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, { message: "Altura >= 0" }),
-  pesoEspecificoAgua: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "γw > 0" }),
-  camadas: z.array(camadaSchema).min(1, { message: "Pelo menos 1 camada necessária" }),
+  profundidadeNA: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0), { message: "Profundidade deve ser maior ou igual a 0 (ou deixe vazio)" }),
+  alturaCapilar: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, { message: "Altura deve ser maior ou igual a 0" }),
+  pesoEspecificoAgua: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Peso específico da água deve ser maior que 0" }),
+  camadas: z.array(camadaSchema).min(1, { message: "É necessária pelo menos 1 camada de solo" }),
 });
 
 type FormInputValues = z.infer<typeof formSchema>;
@@ -774,18 +774,18 @@ export default function TensoesGeostaticas() {
   const alturaCapilar = niveisAgua.length > 0 ? niveisAgua[0].capilaridade : 0;
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto">
+    <div className="space-y-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <PrintHeader moduleTitle="Tensões Geostáticas" moduleName="tensoes-geostaticas" />
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
-            <Layers className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
+            <Layers className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Tensões Geostáticas</h1>
-            <p className="text-muted-foreground text-sm">Cálculo de tensões totais, efetivas e pressão neutra</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Tensões Geostáticas</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm">Cálculo de tensões totais, efetivas e pressão neutra</p>
           </div>
         </div>
 
@@ -822,9 +822,9 @@ export default function TensoesGeostaticas() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {/* Formulário */}
-        <Card className="glass flex flex-col animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
+        <Card className="glass flex flex-col p-4 sm:p-6 animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl">
@@ -867,12 +867,12 @@ export default function TensoesGeostaticas() {
               </TooltipProvider>
             </CardContent>
 
-            <CardFooter className="flex gap-2 pt-3 border-t border-border/50 mt-auto">
-              <Button type="submit" disabled={!canSubmit} className="flex-1 h-9" data-tour="btn-calcular">
+            <CardFooter className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 border-t border-border/50 mt-auto">
+              <Button type="submit" disabled={!canSubmit} className="flex-1 h-10" data-tour="btn-calcular">
                 <CalcIcon className="w-4 h-4 mr-1.5" />
                 {isCalculating ? "Calculando..." : "Calcular"}
               </Button>
-              <Button type="button" onClick={handleClear} variant="outline" disabled={isCalculating} className="h-9">
+              <Button type="button" onClick={handleClear} variant="outline" disabled={isCalculating} className="h-10 w-full sm:w-auto">
                 Limpar
               </Button>
             </CardFooter>

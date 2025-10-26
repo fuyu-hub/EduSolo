@@ -315,7 +315,7 @@ export default function LoveAnalise({ onVoltar, onStartTour, onLoadExampleRef }:
   const cargaEquivalente = (cargaQ && raio) ? (cargaQ * Math.PI * raio * raio) : undefined;
 
   return (
-    <div className="space-y-4 max-w-[1800px] mx-auto">
+    <div className="space-y-4 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
       <PrintHeader moduleTitle="Love - Carga Circular" moduleName="love" />
 
       {/* Header */}

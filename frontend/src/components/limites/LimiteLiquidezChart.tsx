@@ -315,13 +315,13 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
           <CardContent className="pt-0 pb-3">
             <div className="space-y-2 text-xs text-muted-foreground">
               <p>
-                <strong>Regressão Linear:</strong> A linha azul representa a relação entre umidade e número de golpes em escala logarítmica.
+                <strong>Regressão Linear:</strong> A linha azul representa a relação linear entre o teor de umidade e o logaritmo do número de golpes.
               </p>
               <p>
-                <strong>Limite de Liquidez (LL):</strong> Determinado pela umidade correspondente a 25 golpes (linha verde tracejada).
+                <strong>Limite de Liquidez (LL):</strong> Determinado como o teor de umidade correspondente a 25 golpes (linha verde tracejada).
               </p>
               <p>
-                <strong>Norma:</strong> NBR 6459 - Determinação do Limite de Liquidez.
+                <strong>Norma:</strong> NBR 6459 - Solo - Determinação do Limite de Liquidez.
               </p>
             </div>
           </CardContent>

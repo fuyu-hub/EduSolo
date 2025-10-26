@@ -10,20 +10,20 @@ export interface ConteudoIndice {
 export const conteudoIndicesFisicos: Record<string, ConteudoIndice> = {
   umidade: {
     formula: "w = (Mw / Ms) * 100%",
-    descricao: "Relação entre a massa de água e a massa de sólidos (partículas secas) no solo.",
-    valoresTipicos: "Geralmente entre 10% e 40%, mas pode variar muito.",
+    descricao: "Teor de umidade do solo. Relação percentual entre a massa de água e a massa de sólidos (partículas secas).",
+    valoresTipicos: "Areias: 5-25%; Argilas: 15-50%; pode variar muito conforme o solo.",
     paginaPDF: 10 // [cite: 132-138]
   },
   peso_especifico_natural: {
     formula: "γn = Pt / Vt",
-    descricao: "Peso total da amostra de solo (incluindo sólidos, água e ar) por unidade de volume total.",
-    valoresTipicos: "Comum: 16-21 kN/m³. Solos orgânicos moles: < 15 kN/m³.",
+    descricao: "Peso total da amostra de solo (incluindo sólidos, água e ar) por unidade de volume total. Representa o solo na condição de umidade natural.",
+    valoresTipicos: "Areias: 17-20 kN/m³; Argilas: 16-21 kN/m³; Solos orgânicos moles: < 15 kN/m³.",
     paginaPDF: 14 // [cite: 157-160]
   },
   peso_especifico_seco: {
     formula: "γd = Ps / Vt = γn / (1 + w)",
-    descricao: "Peso dos sólidos (partículas secas) por unidade de volume total. Indica o grau de compactação do solo.",
-    valoresTipicos: "Varia muito com o tipo de solo e compactação.",
+    descricao: "Peso dos sólidos (partículas secas) por unidade de volume total. Indica o estado de compactação do solo.",
+    valoresTipicos: "Areias: 15-20 kN/m³; Argilas: 12-18 kN/m³.",
     paginaPDF: 18 // [cite: 184-188]
   },
   peso_especifico_solidos: {
@@ -34,7 +34,7 @@ export const conteudoIndicesFisicos: Record<string, ConteudoIndice> = {
   },
   Gs: {
     formula: "Gs = γs / γw",
-    descricao: "Densidade relativa dos grãos. Relação entre o peso específico dos sólidos e o peso específico da água.",
+    descricao: "Densidade dos grãos. Relação entre o peso específico dos sólidos e o peso específico da água. Valor adimensional que caracteriza o tipo de mineral.",
     valoresTipicos: "Solos orgânicos: < 2.5; Inorgânicos: 2.6 - 2.8; Ricos em ferro: > 2.9.",
     paginaPDF: 23 // [cite: 219-230]
   },
@@ -58,27 +58,30 @@ export const conteudoIndicesFisicos: Record<string, ConteudoIndice> = {
   },
   compacidade_relativa: {
     formula: "Dr = [(emax - e) / (emax - emin)] * 100%",
-    descricao: "Indica o quão compactado um solo granular (areia/silte) está em relação aos seus estados mais fofo (emax) e mais denso (emin). Aplicável principalmente a areias.",
+    descricao: "Indica o quão compactado um solo granular (areia/silte) está em relação aos seus estados mais fofo (emax) e mais compactado (emin). Aplicável principalmente a areias.",
     valoresTipicos: "0% (muito fofo) a 100% (muito compacto).",
     paginaPDF: 31 // [cite: 347-360]
   },
   classificacao_compacidade: {
-      descricao: "Classificação qualitativa da compacidade da areia com base no Dr.",
-      valoresTipicos: "0-15%: Muito Fofa, 15-35%: Fofa, 35-65%: Média, 65-85%: Compacta, 85-100%: Muito Compacta.", // Ajustar faixas se necessário
+      descricao: "Classificação qualitativa da compacidade da areia com base na compacidade relativa (Dr).",
+      valoresTipicos: "0-15%: Muito Fofa, 15-35%: Fofa, 35-65%: Média, 65-85%: Compacta, 85-100%: Muito Compacta.",
       paginaPDF: 31 // [cite: 361]
   },
    peso_especifico_saturado: {
     formula: "γsat = (Gs + e) * γw / (1 + e)",
-    descricao: "Peso específico do solo quando todos os vazios estão preenchidos com água (Sr = 100%).",
+    descricao: "Peso específico do solo quando todos os vazios estão completamente preenchidos com água (grau de saturação Sr = 100%).",
+    valoresTipicos: "Areias: 19-21 kN/m³; Argilas: 18-22 kN/m³.",
     paginaPDF: 19 // [cite: 191-195] e 29 [cite: 335-336]
   },
   peso_especifico_submerso: {
     formula: "γsub = γsat - γw = (Gs - 1) * γw / (1 + e)",
-    descricao: "Peso específico efetivo do solo quando submerso em água (considera o empuxo).",
+    descricao: "Peso específico efetivo do solo quando submerso em água. Considera a redução do peso devido ao empuxo da água.",
+    valoresTipicos: "Geralmente entre 9-12 kN/m³ (≈ γsat - 10).",
     paginaPDF: 19 // [cite: 196-197]
   },
-  // Adicione γw se quiser explicar
-   peso_especifico_agua: {
-       descricao: "Peso da água por unidade de volume. Comumente adotado como 10 kN/m³ ou 9.81 kN/m³ (ou 1 g/cm³)."
+  peso_especifico_agua: {
+       formula: "γw ≈ 10 kN/m³ (ou 9.81 kN/m³)",
+       descricao: "Peso da água por unidade de volume. Valor padrão adotado como 10 kN/m³ (arredondado) ou 9.81 kN/m³ (exato).",
+       valoresTipicos: "9.81 kN/m³ (exato) ou 10 kN/m³ (aproximado)."
    }
 };

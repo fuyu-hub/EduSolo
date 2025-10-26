@@ -315,7 +315,7 @@ export default function CarothersAnalise({ onVoltar, onStartTour, onLoadExampleR
   const cargaEquivalente = (cargaQ && largura) ? (cargaQ * largura) : undefined;
 
   return (
-    <div className="space-y-4 max-w-[1800px] mx-auto">
+    <div className="space-y-4 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
       <PrintHeader moduleTitle="Carothers - Carga em Faixa" moduleName="carothers" />
 
       {/* Header */}

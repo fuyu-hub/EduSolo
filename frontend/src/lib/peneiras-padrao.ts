@@ -39,7 +39,7 @@ export const PENEIRAS_PADRAO: PeneiraInfo[] = [
   { numero: 'Nº 140', aberturaMM: 0.105, tipo: 'areia-fina', norma: 'ASTM' },
   
   // Finos
-  { numero: 'Nº 200', aberturaMM: 0.074, tipo: 'finos', norma: 'Ambas' },
+  { numero: 'Nº 200', aberturaMM: 0.075, tipo: 'finos', norma: 'Ambas' },
   { numero: 'Nº 270', aberturaMM: 0.053, tipo: 'finos', norma: 'ASTM' },
 ];
 

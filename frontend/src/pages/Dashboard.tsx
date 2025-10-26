@@ -233,9 +233,9 @@ export default function Dashboard() {
   }, [startTour]);
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
+    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Hero Section */}
-      <div id="dashboard-hero" className="glass-card p-6 rounded-2xl shadow-modern border border-primary/20">
+      <div id="dashboard-hero" className="glass-card p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-modern border border-primary/20">
         <div className="space-y-2">
           <h1 className="text-3xl md:text-4xl font-bold">
             <span className="text-foreground">Bem-vindo ao </span>
@@ -250,7 +250,7 @@ export default function Dashboard() {
       </div>
 
       {/* Modules Grid */}
-      <div id="modules-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" role="list" aria-label="Módulos disponíveis">
+      <div id="modules-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6" role="list" aria-label="Módulos disponíveis">
         {modules.map((module) => {
           const content = (
             <ModuleCard
@@ -282,39 +282,39 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Stats */}
-      <div id="dashboard-stats" className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-10">
-        <Card className="glass-card p-5 rounded-xl border border-blue-500/20 hover:shadow-modern hover:-translate-y-1 transition-all duration-300 group">
+      <div id="dashboard-stats" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5 mt-8 sm:mt-10">
+        <Card className="glass-card p-4 sm:p-5 rounded-lg sm:rounded-xl border border-blue-500/20 hover:shadow-modern hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center shadow-md transition-all group-hover:scale-105 group-hover:rotate-3">
-              <Calculator className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 flex items-center justify-center shadow-md transition-all group-hover:scale-105 group-hover:rotate-3">
+              <Calculator className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-2xl font-bold text-foreground tabular-nums group-hover:text-blue-500 transition-colors">8+</p>
-              <p className="text-sm text-muted-foreground">Módulos de Cálculo</p>
+              <p className="text-xl sm:text-2xl font-bold text-foreground tabular-nums group-hover:text-blue-500 transition-colors">8+</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Módulos de Cálculo</p>
             </div>
           </div>
         </Card>
 
-        <Card className="glass-card p-5 rounded-xl border border-emerald-500/20 hover:shadow-modern hover:-translate-y-1 transition-all duration-300 group">
+        <Card className="glass-card p-4 sm:p-5 rounded-lg sm:rounded-xl border border-emerald-500/20 hover:shadow-modern hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 flex items-center justify-center shadow-md transition-all group-hover:scale-105 group-hover:rotate-3">
-              <BookOpen className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 flex items-center justify-center shadow-md transition-all group-hover:scale-105 group-hover:rotate-3">
+              <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-2xl font-bold text-foreground tabular-nums group-hover:text-emerald-500 transition-colors">100%</p>
-              <p className="text-sm text-muted-foreground">Gratuito e Open Source</p>
+              <p className="text-xl sm:text-2xl font-bold text-foreground tabular-nums group-hover:text-emerald-500 transition-colors">100%</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Gratuito e Open Source</p>
             </div>
           </div>
         </Card>
 
-        <Card className="glass-card p-5 rounded-xl border border-orange-500/20 hover:shadow-modern hover:-translate-y-1 transition-all duration-300 group">
+        <Card className="glass-card p-4 sm:p-5 rounded-lg sm:rounded-xl border border-orange-500/20 hover:shadow-modern hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 flex items-center justify-center shadow-md transition-all group-hover:scale-105 group-hover:rotate-3">
-              <TrendingUp className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 flex items-center justify-center shadow-md transition-all group-hover:scale-105 group-hover:rotate-3">
+              <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-2xl font-bold text-foreground tabular-nums group-hover:text-orange-500 transition-colors">Fase 2</p>
-              <p className="text-sm text-muted-foreground">Em Desenvolvimento</p>
+              <p className="text-xl sm:text-2xl font-bold text-foreground tabular-nums group-hover:text-orange-500 transition-colors">Fase 3</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Em Desenvolvimento</p>
             </div>
           </div>
         </Card>

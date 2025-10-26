@@ -132,18 +132,18 @@ export default function AcrescimoTensoes() {
   };
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto">
+    <div className="space-y-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <PrintHeader moduleTitle="Acréscimo de Tensões" moduleName="acrescimo-tensoes" />
       
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="header">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg">
-            <TrendingDown className="w-5 h-5 text-white" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="header">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg">
+            <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Acréscimo de Tensões</h1>
-            <p className="text-sm text-muted-foreground hidden sm:block">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Acréscimo de Tensões</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Distribuição de tensões no solo devido a carregamentos superficiais - Análise 2D
             </p>
           </div>
@@ -168,15 +168,15 @@ export default function AcrescimoTensoes() {
       </div>
 
       {/* Seleção de Método */}
-      <Card className="animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
-        <CardHeader>
-          <CardTitle className="text-xl">Selecione o Método de Análise</CardTitle>
-          <p className="text-sm text-muted-foreground mt-2">
+      <Card className="p-4 sm:p-6 animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
+        <CardHeader className="px-0">
+          <CardTitle className="text-lg sm:text-xl">Selecione o Método de Análise</CardTitle>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-2">
             Escolha o método mais adequado para o tipo de carregamento que deseja analisar
           </p>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" data-tour="metodos-grid">
+        <CardContent className="px-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6" data-tour="metodos-grid">
             {metodos.map((metodo) => {
               const Icon = metodo.icon;
               const isDisponivel = metodo.disponivel;

@@ -110,7 +110,7 @@ const tooltips = {
   massaUmida: "Massa total da amostra de solo incluindo a água (g)",
   massaSeca: "Massa da amostra após secagem em estufa (g)",
   volume: "Volume total da amostra incluindo vazios (cm³)",
-  Gs: "Densidade relativa dos grãos (adimensional, ex: 2.65). OBRIGATÓRIO para calcular índice de vazios, porosidade e saturação!",
+  Gs: "Densidade dos grãos (adimensional, ex: 2.65). OBRIGATÓRIO para calcular índice de vazios, porosidade e saturação!",
   pesoEspecificoAgua: "Peso específico da água (kN/m³, padrão 10.0)",
   indice_vazios_max: "Índice de vazios máximo do solo (emax). Necessário para calcular Dr.",
   indice_vazios_min: "Índice de vazios mínimo do solo (emin). Necessário para calcular Dr.",
@@ -156,7 +156,7 @@ export default function IndicesFisicos() {
     },
     {
       target: "#Gs",
-      title: "🔬 Densidade Relativa dos Grãos (Gs)",
+      title: "🔬 Densidade dos Grãos (Gs)",
       content: "IMPORTANTE: Para calcular TODOS os índices (vazios, porosidade, saturação), você DEVE fornecer o Gs. Ele não pode ser calculado apenas com massa e volume. Use as sugestões para valores típicos de cada tipo de solo.",
       placement: "left",
       spotlightPadding: 12,
@@ -353,7 +353,7 @@ export default function IndicesFisicos() {
     setFormData(prev => ({ ...prev, Gs: gsValue.toString() }));
     toast({
       title: "Gs atualizado!",
-      description: `Densidade relativa dos grãos definida como ${gsValue}`,
+      description: `Densidade dos grãos definida como ${gsValue}`,
     });
   };
 
@@ -436,7 +436,7 @@ export default function IndicesFisicos() {
       { label: "Volume Total", value: `${formData.volume} cm³` },
     ];
     
-    if (formData.Gs) inputs.push({ label: "Densidade Relativa (Gs)", value: formData.Gs });
+    if (formData.Gs) inputs.push({ label: "Densidade dos Grãos (Gs)", value: formData.Gs });
     if (formData.indice_vazios_max) inputs.push({ label: "Índice Vazios Máx", value: formData.indice_vazios_max });
     if (formData.indice_vazios_min) inputs.push({ label: "Índice Vazios Mín", value: formData.indice_vazios_min });
 
@@ -445,7 +445,7 @@ export default function IndicesFisicos() {
     if (results.peso_especifico_seco !== null) resultsList.push({ label: "Peso Específico Seco", value: `${formatNumberForExport(results.peso_especifico_seco)} kN/m³` });
     if (results.peso_especifico_saturado !== null) resultsList.push({ label: "Peso Específico Saturado", value: `${formatNumberForExport(results.peso_especifico_saturado)} kN/m³` });
     if (results.peso_especifico_submerso !== null) resultsList.push({ label: "Peso Específico Submerso", value: `${formatNumberForExport(results.peso_especifico_submerso)} kN/m³` });
-    if (results.Gs !== null) resultsList.push({ label: "Densidade Relativa (Gs)", value: formatNumberForExport(results.Gs, 3) });
+    if (results.Gs !== null) resultsList.push({ label: "Densidade dos Grãos (Gs)", value: formatNumberForExport(results.Gs, 3) });
     if (results.indice_vazios !== null) resultsList.push({ label: "Índice de Vazios", value: formatNumberForExport(results.indice_vazios, 3) });
     if (results.porosidade !== null) resultsList.push({ label: "Porosidade", value: `${formatNumberForExport(results.porosidade)}%` });
     if (results.grau_saturacao !== null) resultsList.push({ label: "Grau de Saturação", value: `${formatNumberForExport(results.grau_saturacao)}%` });
@@ -489,7 +489,7 @@ export default function IndicesFisicos() {
       { label: "Massa Seca (g)", value: formData.massaSeca },
       { label: "Volume Total (cm³)", value: formData.volume },
     ];
-    if (formData.Gs) entradaData.push({ label: "Densidade Relativa (Gs)", value: formData.Gs });
+    if (formData.Gs) entradaData.push({ label: "Densidade dos Grãos (Gs)", value: formData.Gs });
     if (formData.pesoEspecificoAgua) entradaData.push({ label: "Peso Específico Água (kN/m³)", value: formData.pesoEspecificoAgua });
     if (formData.indice_vazios_max) entradaData.push({ label: "Índice Vazios Máx", value: formData.indice_vazios_max });
     if (formData.indice_vazios_min) entradaData.push({ label: "Índice Vazios Mín", value: formData.indice_vazios_min });
@@ -501,7 +501,7 @@ export default function IndicesFisicos() {
     if (results.peso_especifico_saturado !== null) resultadosData.push({ label: "Peso Específico Saturado (kN/m³)", value: results.peso_especifico_saturado.toFixed(2) });
     if (results.peso_especifico_submerso !== null) resultadosData.push({ label: "Peso Específico Submerso (kN/m³)", value: results.peso_especifico_submerso.toFixed(2) });
     if (results.peso_especifico_solidos !== null) resultadosData.push({ label: "Peso Específico Sólidos (kN/m³)", value: results.peso_especifico_solidos.toFixed(2) });
-    if (results.Gs !== null) resultadosData.push({ label: "Densidade Relativa (Gs)", value: results.Gs.toFixed(3) });
+    if (results.Gs !== null) resultadosData.push({ label: "Densidade dos Grãos (Gs)", value: results.Gs.toFixed(3) });
     if (results.indice_vazios !== null) resultadosData.push({ label: "Índice de Vazios", value: results.indice_vazios.toFixed(3) });
     if (results.porosidade !== null) resultadosData.push({ label: "Porosidade (%)", value: results.porosidade.toFixed(2) });
     if (results.grau_saturacao !== null) resultadosData.push({ label: "Grau de Saturação (%)", value: results.grau_saturacao.toFixed(2) });
@@ -547,7 +547,7 @@ export default function IndicesFisicos() {
       results.peso_especifico_natural !== null ? <ResultItem key="gama_nat" label="Natural (γn)" value={results.peso_especifico_natural} unit="kN/m³" infoKey="peso_especifico_natural" settings={settings} /> : null,
       results.peso_especifico_seco !== null ? <ResultItem key="gama_d" label="Seco (γd)" value={results.peso_especifico_seco} unit="kN/m³" infoKey="peso_especifico_seco" settings={settings} /> : null,
       results.peso_especifico_solidos !== null ? <ResultItem key="gama_s" label="Sólidos (γs)" value={results.peso_especifico_solidos} unit="kN/m³" infoKey="peso_especifico_solidos" settings={settings} /> : null,
-      results.Gs !== null ? <ResultItem key="Gs" label="Densidade Relativa (Gs)" value={results.Gs} unit="" infoKey="Gs" settings={settings} /> : null,
+      results.Gs !== null ? <ResultItem key="Gs" label="Densidade dos Grãos (Gs)" value={results.Gs} unit="" infoKey="Gs" settings={settings} /> : null,
       results.peso_especifico_saturado !== null ? <ResultItem key="gama_sat" label="Saturado (γsat)" value={results.peso_especifico_saturado} unit="kN/m³" infoKey="peso_especifico_saturado" settings={settings} /> : null,
       results.peso_especifico_submerso !== null ? <ResultItem key="gama_sub" label="Submerso (γsub)" value={results.peso_especifico_submerso} unit="kN/m³" infoKey="peso_especifico_submerso" settings={settings} /> : null,
       results.umidade !== null ? <ResultItem key="w" label="Umidade (w)" value={results.umidade} unit="%" infoKey="umidade" settings={settings} /> : null,
@@ -617,9 +617,9 @@ export default function IndicesFisicos() {
         </div>
 
         {/* Layout Principal */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 items-start">
           {/* Input Panel - Ajustes de espaçamento aqui */}
-          <Card className="glass p-4 sm:p-6 lg:col-span-1 flex flex-col animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
+          <Card className="glass p-4 sm:p-6 md:col-span-1 flex flex-col animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
              <h2 className="text-xl font-semibold text-foreground mb-6 flex items-center gap-2"> {/* Aumentado mb-4 para mb-6 */}
               <Info className="w-5 h-5 text-primary" />
               Dados de Entrada
@@ -692,7 +692,7 @@ export default function IndicesFisicos() {
                  <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <Label htmlFor="Gs">Densidade Relativa Grãos (Gs) *</Label>
+                        <Label htmlFor="Gs">Densidade dos Grãos (Gs) *</Label>
                         <Tooltip><TooltipTrigger asChild><Info className="w-4 h-4 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent className="max-w-xs"><p>{tooltips.Gs}</p></TooltipContent></Tooltip>
                       </div>
                       <GsSuggestions onSelect={handleSelectGs} />
@@ -732,11 +732,11 @@ export default function IndicesFisicos() {
                  </Select>
               </div>
               {/* Actions */}
-              <div className="flex gap-3 md:col-span-2 mt-auto pt-4" role="group" aria-label="Ações do formulário">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:col-span-2 mt-auto pt-4" role="group" aria-label="Ações do formulário">
                 <Button 
                   onClick={handleCalculate} 
                   disabled={!isFormValid || isCalculating} 
-                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground h-10"
                   aria-label={isCalculating ? "Calculando dados" : "Calcular índices físicos"}
                   data-tour="btn-calcular"
                 >
@@ -748,6 +748,7 @@ export default function IndicesFisicos() {
                   variant="outline" 
                   disabled={isCalculating}
                   aria-label="Limpar todos os campos"
+                  className="h-10 w-full sm:w-auto"
                 >
                   Limpar
                 </Button>
@@ -755,7 +756,7 @@ export default function IndicesFisicos() {
           </Card>
 
           {/* Card de Saída Unificado */}
-          <Card className="glass p-4 sm:p-6 lg:col-span-1 space-y-6 animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
+          <Card className="glass p-4 sm:p-6 md:col-span-1 space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
               {/* Seção do Diagrama de Fases */}
               <div data-tour="diagrama-fases">
                 <h2 className="text-xl font-semibold text-foreground mb-4">Visualização (Diagrama de Fases)</h2>

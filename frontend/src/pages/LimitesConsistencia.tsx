@@ -39,50 +39,50 @@ import { ExemploLimites, exemplosLimites } from "@/lib/exemplos-limites";
 // --- Esquema Zod (Inalterado) ---
 const pontoLLSchema = z.object({
   id: z.string(),
-  numGolpes: z.string().min(1, { message: "Obrigatório" }).refine(val => !isNaN(parseInt(val)) && parseInt(val) > 0, { message: "Deve ser > 0" }),
-  massaUmidaRecipiente: z.string().min(1, { message: "Obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser > 0" }),
-  massaSecaRecipiente: z.string().min(1, { message: "Obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser > 0" }),
-  massaRecipiente: z.string().min(1, { message: "Obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, { message: "Deve ser >= 0" }),
+  numGolpes: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseInt(val)) && parseInt(val) > 0, { message: "Deve ser maior que 0" }),
+  massaUmidaRecipiente: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser maior que 0" }),
+  massaSecaRecipiente: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser maior que 0" }),
+  massaRecipiente: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, { message: "Deve ser maior ou igual a 0" }),
 }).refine(data => {
     const mu = parseFloat(data.massaUmidaRecipiente);
     const ms = parseFloat(data.massaSecaRecipiente);
     return isNaN(mu) || isNaN(ms) || mu >= ms;
 }, {
-  message: "M. úmida >= M. seca",
+  message: "Massa úmida deve ser maior ou igual à massa seca",
   path: ["massaUmidaRecipiente"],
 }).refine(data => {
     const msr = parseFloat(data.massaSecaRecipiente);
     const mr = parseFloat(data.massaRecipiente);
     return isNaN(msr) || isNaN(mr) || msr >= mr;
 }, {
-  message: "M. seca+rec >= M. rec",
+  message: "Massa seca+recipiente deve ser maior ou igual à massa do recipiente",
   path: ["massaSecaRecipiente"],
 });
 
 const formSchema = z.object({
-  pontosLL: z.array(pontoLLSchema).min(2, { message: "São necessários pelo menos 2 pontos LL válidos" }),
-  massaUmidaRecipienteLP: z.string().min(1, { message: "Obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser > 0" }),
-  massaSecaRecipienteLP: z.string().min(1, { message: "Obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser > 0" }),
-  massaRecipienteLP: z.string().min(1, { message: "Obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, { message: "Deve ser >= 0" }),
+  pontosLL: z.array(pontoLLSchema).min(2, { message: "São necessários pelo menos 2 pontos de ensaio válidos" }),
+  massaUmidaRecipienteLP: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser maior que 0" }),
+  massaSecaRecipienteLP: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser maior que 0" }),
+  massaRecipienteLP: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, { message: "Deve ser maior ou igual a 0" }),
   umidadeNatural: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0), {
-      message: "Deve ser >= 0 ou vazio",
+      message: "Deve ser maior ou igual a 0 (ou deixe vazio)",
   }),
   percentualArgila: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0 && parseFloat(val) <= 100), {
-      message: "Deve ser entre 0-100 ou vazio",
+      message: "Deve estar entre 0 e 100% (ou deixe vazio)",
   }),
 }).refine(data => {
     const mu = parseFloat(data.massaUmidaRecipienteLP);
     const ms = parseFloat(data.massaSecaRecipienteLP);
     return isNaN(mu) || isNaN(ms) || mu >= ms;
 },{
-  message: "LP: M. úmida >= M. seca",
+  message: "LP: Massa úmida deve ser maior ou igual à massa seca",
   path: ["massaUmidaRecipienteLP"],
 }).refine(data => {
      const msr = parseFloat(data.massaSecaRecipienteLP);
      const mr = parseFloat(data.massaRecipienteLP);
      return isNaN(msr) || isNaN(mr) || msr >= mr;
 },{
-  message: "LP: M. seca+rec >= M. rec",
+  message: "LP: Massa seca+recipiente deve ser maior ou igual à massa do recipiente",
   path: ["massaSecaRecipienteLP"],
 });
 
@@ -106,7 +106,7 @@ interface LimitesConsistenciaOutput { ll: number | null; lp: number | null; ip: 
 type Results = LimitesConsistenciaOutput;
 
 // --- Tooltips (mantidos) ---
-const tooltips = { numGolpes: "Número de golpes necessários para fechar a ranhura no ensaio LL (NBR 6459)", massaUmidaRecipienteLL: "Massa do recipiente (tara) + solo úmido (g) - Ensaio LL", massaSecaRecipienteLL: "Massa do recipiente (tara) + solo seco após estufa (g) - Ensaio LL", massaRecipienteLL: "Massa do recipiente (tara) utilizado no ensaio LL (g)", massaUmidaRecipienteLP: "Massa do recipiente (tara) + solo úmido (g) - Ensaio LP (NBR 7180)", massaSecaRecipienteLP: "Massa do recipiente (tara) + solo seco após estufa (g) - Ensaio LP", massaRecipienteLP: "Massa do recipiente (tara) utilizado no ensaio LP (g)", umidadeNatural: "Umidade atual do solo em campo (%) - Necessária para calcular IC", percentualArgila: "Percentual de partículas < 0.002mm (%) - Necessário para calcular Atividade (Ia)", LL: "Limite de Liquidez - teor de umidade na transição líquido/plástico", LP: "Limite de Plasticidade - teor de umidade na transição plástico/semi-sólido", IP: "Índice de Plasticidade = LL - LP (faixa de comportamento plástico)", IC: "Índice de Consistência = (LL - w_nat) / IP (estado de consistência do solo)", Atividade: "Atividade da Argila (Ia) = IP / (% argila)", CartaPlasticidade: "Carta de Plasticidade de Casagrande mostrando a classificação do solo (LL vs IP)" };
+const tooltips = { numGolpes: "Número de golpes necessários para fechar a ranhura no ensaio LL (NBR 6459)", massaUmidaRecipienteLL: "Massa do recipiente (tara) + solo úmido (g) - Ensaio LL", massaSecaRecipienteLL: "Massa do recipiente (tara) + solo seco após estufa (g) - Ensaio LL", massaRecipienteLL: "Massa do recipiente (tara) utilizado no ensaio LL (g)", massaUmidaRecipienteLP: "Massa do recipiente (tara) + solo úmido (g) - Ensaio LP (NBR 7180)", massaSecaRecipienteLP: "Massa do recipiente (tara) + solo seco após estufa (g) - Ensaio LP", massaRecipienteLP: "Massa do recipiente (tara) utilizado no ensaio LP (g)", umidadeNatural: "Umidade natural do solo em campo (%) - Necessária para calcular IC", percentualArgila: "Percentual de partículas < 0.002mm (%) - Necessário para calcular Atividade (Ia)", LL: "Limite de Liquidez - teor de umidade na transição entre os estados líquido e plástico", LP: "Limite de Plasticidade - teor de umidade na transição entre os estados plástico e semissólido", IP: "Índice de Plasticidade = LL - LP (faixa de comportamento plástico)", IC: "Índice de Consistência = (LL - w_nat) / IP (estado de consistência do solo)", Atividade: "Atividade da Argila (Ia) = IP / (% argila)", CartaPlasticidade: "Carta de Plasticidade de Casagrande mostrando a classificação do solo (LL vs IP)" };
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -169,7 +169,7 @@ export default function LimitesConsistencia() {
     {
       target: "[data-tour='ensaio-lp']",
       title: "🧵 Ensaio de Limite de Plasticidade (LP)",
-      content: "Preencha os dados do ensaio de LP (rolinho de 3mm). Este ensaio determina o teor de umidade na transição entre o estado plástico e semi-sólido.",
+      content: "Preencha os dados do ensaio de LP (rolinho de 3mm). Este ensaio determina o teor de umidade na transição entre os estados plástico e semissólido.",
       placement: "left",
       spotlightPadding: 12,
     },
@@ -512,16 +512,16 @@ export default function LimitesConsistencia() {
   const canSubmit = !isCalculating && form.formState.isValid && !apiError;
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto">
+    <div className="space-y-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <PrintHeader moduleTitle="Limites de Consistência" moduleName="limites-consistencia" />
       
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-3">
-           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3"> <Droplets className="w-6 h-6 text-white" /> </div>
+           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3"> <Droplets className="w-5 h-5 sm:w-6 sm:h-6 text-white" /> </div>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Limites de Consistência</h1>
-            <p className="text-muted-foreground text-sm">Determinação de LL, LP, IP, IC, Atividade e classificações</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Limites de Consistência</h1>
+            <p className="text-muted-foreground text-xs sm:text-sm">Determinação de LL, LP, IP, IC, Atividade e classificações</p>
           </div>
         </div>
         
@@ -555,9 +555,9 @@ export default function LimitesConsistencia() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {/* Formulário com Accordion */}
-        <Card className="glass flex flex-col animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
+        <Card className="glass flex flex-col p-4 sm:p-6 animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
             <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-xl"> <CalcIcon className="w-5 h-5" /> Dados dos Ensaios </CardTitle>
@@ -586,24 +586,64 @@ export default function LimitesConsistencia() {
                                 <div className="grid grid-cols-2 gap-3">
                                   <div className="space-y-2">
                                      <div className="space-y-0.5">
-                                        <Label htmlFor={`pontosLL.${currentPointIndex}.numGolpes`} className={cn("flex items-center gap-1 text-xs", errors.pontosLL?.[currentPointIndex]?.numGolpes && "text-destructive")}> Nº Golpes <Tooltip><TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.numGolpes}</TooltipContent></Tooltip> </Label>
+                                        <div className="flex items-center gap-2">
+                                          <Label htmlFor={`pontosLL.${currentPointIndex}.numGolpes`} className={cn("text-xs", errors.pontosLL?.[currentPointIndex]?.numGolpes && "text-destructive")}>Nº Golpes</Label>
+                                          <Tooltip>
+                                            <TooltipTrigger>
+                                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                                            </TooltipTrigger>
+                                            <TooltipContent className="max-w-xs">
+                                              <p>{tooltips.numGolpes}</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </div>
                                         <Controller name={`pontosLL.${currentPointIndex}.numGolpes`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.numGolpes`} type="number" placeholder="Ex: 25" {...field} className={cn("bg-background/50 h-9", errors.pontosLL?.[currentPointIndex]?.numGolpes && "border-destructive")}/> )} />
                                         {errors.pontosLL?.[currentPointIndex]?.numGolpes && <p className="text-xs text-destructive mt-0.5">{errors.pontosLL[currentPointIndex]?.numGolpes?.message}</p>}
                                      </div>
                                       <div className="space-y-0.5">
-                                         <Label htmlFor={`pontosLL.${currentPointIndex}.massaUmidaRecipiente`} className={cn("flex items-center gap-1 text-xs", errors.pontosLL?.[currentPointIndex]?.massaUmidaRecipiente && "text-destructive")}> M. Úmida + Recip. (g) <Tooltip><TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.massaUmidaRecipienteLL}</TooltipContent></Tooltip> </Label>
+                                        <div className="flex items-center gap-2">
+                                          <Label htmlFor={`pontosLL.${currentPointIndex}.massaUmidaRecipiente`} className={cn("text-xs", errors.pontosLL?.[currentPointIndex]?.massaUmidaRecipiente && "text-destructive")}>M. Úmida + Recip. (g)</Label>
+                                          <Tooltip>
+                                            <TooltipTrigger>
+                                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                                            </TooltipTrigger>
+                                            <TooltipContent className="max-w-xs">
+                                              <p>{tooltips.massaUmidaRecipienteLL}</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </div>
                                          <Controller name={`pontosLL.${currentPointIndex}.massaUmidaRecipiente`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.massaUmidaRecipiente`} type="number" step="0.01" placeholder="Ex: 45.50" {...field} className={cn("bg-background/50 h-9", errors.pontosLL?.[currentPointIndex]?.massaUmidaRecipiente && "border-destructive")}/> )} />
                                          {errors.pontosLL?.[currentPointIndex]?.massaUmidaRecipiente && <p className="text-xs text-destructive mt-0.5">{errors.pontosLL[currentPointIndex]?.massaUmidaRecipiente?.message}</p>}
                                       </div>
                                   </div>
                                    <div className="space-y-2">
                                      <div className="space-y-0.5">
-                                        <Label htmlFor={`pontosLL.${currentPointIndex}.massaSecaRecipiente`} className={cn("flex items-center gap-1 text-xs", errors.pontosLL?.[currentPointIndex]?.massaSecaRecipiente && "text-destructive")}> M. Seca + Recip. (g) <Tooltip><TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.massaSecaRecipienteLL}</TooltipContent></Tooltip> </Label>
+                                        <div className="flex items-center gap-2">
+                                          <Label htmlFor={`pontosLL.${currentPointIndex}.massaSecaRecipiente`} className={cn("text-xs", errors.pontosLL?.[currentPointIndex]?.massaSecaRecipiente && "text-destructive")}>M. Seca + Recip. (g)</Label>
+                                          <Tooltip>
+                                            <TooltipTrigger>
+                                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                                            </TooltipTrigger>
+                                            <TooltipContent className="max-w-xs">
+                                              <p>{tooltips.massaSecaRecipienteLL}</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </div>
                                         <Controller name={`pontosLL.${currentPointIndex}.massaSecaRecipiente`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.massaSecaRecipiente`} type="number" step="0.01" placeholder="Ex: 38.00" {...field} className={cn("bg-background/50 h-9", errors.pontosLL?.[currentPointIndex]?.massaSecaRecipiente && "border-destructive")}/> )} />
                                         {errors.pontosLL?.[currentPointIndex]?.massaSecaRecipiente && <p className="text-xs text-destructive mt-0.5">{errors.pontosLL[currentPointIndex]?.massaSecaRecipiente?.message}</p>}
                                      </div>
                                      <div className="space-y-0.5">
-                                         <Label htmlFor={`pontosLL.${currentPointIndex}.massaRecipiente`} className={cn("flex items-center gap-1 text-xs", errors.pontosLL?.[currentPointIndex]?.massaRecipiente && "text-destructive")}> M. Recipiente (g) <Tooltip><TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.massaRecipienteLL}</TooltipContent></Tooltip> </Label>
+                                        <div className="flex items-center gap-2">
+                                          <Label htmlFor={`pontosLL.${currentPointIndex}.massaRecipiente`} className={cn("text-xs", errors.pontosLL?.[currentPointIndex]?.massaRecipiente && "text-destructive")}>M. Recipiente (g)</Label>
+                                          <Tooltip>
+                                            <TooltipTrigger>
+                                              <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                                            </TooltipTrigger>
+                                            <TooltipContent className="max-w-xs">
+                                              <p>{tooltips.massaRecipienteLL}</p>
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </div>
                                          <Controller name={`pontosLL.${currentPointIndex}.massaRecipiente`} control={form.control} render={({ field }) => ( <Input id={`pontosLL.${currentPointIndex}.massaRecipiente`} type="number" step="0.01" placeholder="Ex: 15.00" {...field} className={cn("bg-background/50 h-9", errors.pontosLL?.[currentPointIndex]?.massaRecipiente && "border-destructive")}/> )} />
                                          {errors.pontosLL?.[currentPointIndex]?.massaRecipiente && <p className="text-xs text-destructive mt-0.5">{errors.pontosLL[currentPointIndex]?.massaRecipiente?.message}</p>}
                                      </div>
@@ -626,17 +666,47 @@ export default function LimitesConsistencia() {
                              <div className="grid grid-cols-3 gap-2">
                                 {/* Inputs com Controller (compactados) */}
                                 <div className="space-y-0.5">
-                                   <Label htmlFor="massaUmidaRecipienteLP" className={cn("flex items-center gap-1 text-xs", errors.massaUmidaRecipienteLP && "text-destructive")}> M. Úmida + Recip. (g) <Tooltip><TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.massaUmidaRecipienteLP}</TooltipContent></Tooltip> </Label>
+                                   <div className="flex items-center gap-2">
+                                     <Label htmlFor="massaUmidaRecipienteLP" className={cn("text-xs", errors.massaUmidaRecipienteLP && "text-destructive")}>M. Úmida + Recip. (g)</Label>
+                                     <Tooltip>
+                                       <TooltipTrigger>
+                                         <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                                       </TooltipTrigger>
+                                       <TooltipContent className="max-w-xs">
+                                         <p>{tooltips.massaUmidaRecipienteLP}</p>
+                                       </TooltipContent>
+                                     </Tooltip>
+                                   </div>
                                    <Controller name="massaUmidaRecipienteLP" control={form.control} render={({ field }) => <Input id="massaUmidaRecipienteLP" type="number" step="0.01" placeholder="Ex: 32.80" {...field} className={cn("bg-background/50 h-9", errors.massaUmidaRecipienteLP && "border-destructive")} />} />
                                    {errors.massaUmidaRecipienteLP && <p className="text-xs text-destructive mt-0.5">{errors.massaUmidaRecipienteLP.message}</p>}
                                </div>
                                 <div className="space-y-0.5">
-                                   <Label htmlFor="massaSecaRecipienteLP" className={cn("flex items-center gap-1 text-xs", errors.massaSecaRecipienteLP && "text-destructive")}> M. Seca + Recip. (g) <Tooltip><TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.massaSecaRecipienteLP}</TooltipContent></Tooltip> </Label>
+                                   <div className="flex items-center gap-2">
+                                     <Label htmlFor="massaSecaRecipienteLP" className={cn("text-xs", errors.massaSecaRecipienteLP && "text-destructive")}>M. Seca + Recip. (g)</Label>
+                                     <Tooltip>
+                                       <TooltipTrigger>
+                                         <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                                       </TooltipTrigger>
+                                       <TooltipContent className="max-w-xs">
+                                         <p>{tooltips.massaSecaRecipienteLP}</p>
+                                       </TooltipContent>
+                                     </Tooltip>
+                                   </div>
                                    <Controller name="massaSecaRecipienteLP" control={form.control} render={({ field }) => <Input id="massaSecaRecipienteLP" type="number" step="0.01" placeholder="Ex: 29.50" {...field} className={cn("bg-background/50 h-9", errors.massaSecaRecipienteLP && "border-destructive")} />} />
                                    {errors.massaSecaRecipienteLP && <p className="text-xs text-destructive mt-0.5">{errors.massaSecaRecipienteLP.message}</p>}
                                </div>
                                <div className="space-y-0.5">
-                                   <Label htmlFor="massaRecipienteLP" className={cn("flex items-center gap-1 text-xs", errors.massaRecipienteLP && "text-destructive")}> M. Recipiente (g) <Tooltip><TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.massaRecipienteLP}</TooltipContent></Tooltip> </Label>
+                                   <div className="flex items-center gap-2">
+                                     <Label htmlFor="massaRecipienteLP" className={cn("text-xs", errors.massaRecipienteLP && "text-destructive")}>M. Recipiente (g)</Label>
+                                     <Tooltip>
+                                       <TooltipTrigger>
+                                         <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                                       </TooltipTrigger>
+                                       <TooltipContent className="max-w-xs">
+                                         <p>{tooltips.massaRecipienteLP}</p>
+                                       </TooltipContent>
+                                     </Tooltip>
+                                   </div>
                                    <Controller name="massaRecipienteLP" control={form.control} render={({ field }) => <Input id="massaRecipienteLP" type="number" step="0.01" placeholder="Ex: 14.20" {...field} className={cn("bg-background/50 h-9", errors.massaRecipienteLP && "border-destructive")} />} />
                                    {errors.massaRecipienteLP && <p className="text-xs text-destructive mt-0.5">{errors.massaRecipienteLP.message}</p>}
                                </div>
@@ -654,12 +724,32 @@ export default function LimitesConsistencia() {
                           <div className="grid grid-cols-2 gap-3" data-tour="dados-opcionais">
                              {/* Inputs com Controller (compactados) */}
                              <div className="space-y-0.5">
-                                <Label htmlFor="umidadeNatural" className={cn("flex items-center gap-1 text-xs", errors.umidadeNatural && "text-destructive")}> Umidade Natural (%) <Tooltip><TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.umidadeNatural}</TooltipContent></Tooltip> </Label>
+                                <div className="flex items-center gap-2">
+                                  <Label htmlFor="umidadeNatural" className={cn("text-xs", errors.umidadeNatural && "text-destructive")}>Umidade Natural (%)</Label>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p>{tooltips.umidadeNatural}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
                                  <Controller name="umidadeNatural" control={form.control} render={({ field }) => <Input id="umidadeNatural" type="number" step="0.1" placeholder="Ex: 28.5" {...field} value={field.value ?? ""} className={cn("bg-background/50 h-9", errors.umidadeNatural && "border-destructive")} />} />
                                 {errors.umidadeNatural && <p className="text-xs text-destructive mt-0.5">{errors.umidadeNatural.message}</p>}
                              </div>
                              <div className="space-y-0.5">
-                                <Label htmlFor="percentualArgila" className={cn("flex items-center gap-1 text-xs", errors.percentualArgila && "text-destructive")}> % Argila (&lt;0.002mm) <Tooltip><TooltipTrigger><Info className="w-2.5 h-2.5 text-muted-foreground" /></TooltipTrigger><TooltipContent>{tooltips.percentualArgila}</TooltipContent></Tooltip> </Label>
+                                <div className="flex items-center gap-2">
+                                  <Label htmlFor="percentualArgila" className={cn("text-xs", errors.percentualArgila && "text-destructive")}>% Argila (&lt;0.002mm)</Label>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent className="max-w-xs">
+                                      <p>{tooltips.percentualArgila}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </div>
                                 <Controller name="percentualArgila" control={form.control} render={({ field }) => <Input id="percentualArgila" type="number" step="0.1" placeholder="Ex: 35.0" {...field} value={field.value ?? ""} className={cn("bg-background/50 h-9", errors.percentualArgila && "border-destructive")} />} />
                                 {errors.percentualArgila && <p className="text-xs text-destructive mt-0.5">{errors.percentualArgila.message}</p>}
                              </div>
@@ -670,12 +760,12 @@ export default function LimitesConsistencia() {
               </TooltipProvider>
             </CardContent>
             {/* Footer com botões */}
-            <CardFooter className="flex gap-3 pt-3 border-t border-border/50 mt-auto">
-              <Button type="submit" disabled={!canSubmit} className="flex-1 h-9" data-tour="btn-calcular">
+            <CardFooter className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 border-t border-border/50 mt-auto">
+              <Button type="submit" disabled={!canSubmit} className="flex-1 h-10" data-tour="btn-calcular">
                 <CalcIcon className="w-4 h-4 mr-1.5" />
                 {isCalculating ? "Calculando..." : "Calcular"}
               </Button>
-              <Button type="button" onClick={handleClear} variant="outline" disabled={isCalculating} className="h-9">
+              <Button type="button" onClick={handleClear} variant="outline" disabled={isCalculating} className="h-10 w-full sm:w-auto">
                 Limpar
               </Button>
             </CardFooter>
@@ -683,8 +773,8 @@ export default function LimitesConsistencia() {
            </form>
         </Card>
 
-        {/* --- Card de Resultados com Carrossel (Inalterado) --- */}
-        <Card className="glass animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }} data-tour="resultados">
+        {/* --- Card de Resultados com Carrossel --- */}
+        <Card className="glass p-4 sm:p-6 animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }} data-tour="resultados">
            <CardHeader>
                <CardTitle className="flex items-center justify-between text-xl">
                    <div className="flex items-center gap-2">

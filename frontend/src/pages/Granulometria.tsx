@@ -94,7 +94,7 @@ const peneirasComuns = [
   { nome: 'Nº 40', abertura: 0.42 },
   { nome: 'Nº 60', abertura: 0.25 },
   { nome: 'Nº 100', abertura: 0.149 },
-  { nome: 'Nº 200', abertura: 0.074 },
+  { nome: 'Nº 200', abertura: 0.075 },
 ];
 
 export default function Granulometria() {
@@ -230,7 +230,7 @@ export default function Granulometria() {
           { aberturaMM: 0.42, massaRetida: 95 },
           { aberturaMM: 0.25, massaRetida: 65 },
           { aberturaMM: 0.149, massaRetida: 40 },
-          { aberturaMM: 0.074, massaRetida: 30 },
+          { aberturaMM: 0.075, massaRetida: 30 },
         ],
         ll: 25,
         lp: 18,
@@ -281,13 +281,13 @@ export default function Granulometria() {
 
   const handleCalculate = async () => {
     if (!formData.massaTotal) {
-      toast.error("Preencha a massa total");
+      toast.error("Massa total não informada", { description: "Por favor, informe a massa total da amostra seca utilizada no ensaio." });
       return;
     }
 
     const peneirasValidas = formData.peneiras.filter((p) => p.abertura && p.massaRetida);
     if (peneirasValidas.length === 0) {
-      toast.error("Adicione pelo menos uma peneira com dados");
+      toast.error("Peneiras não informadas", { description: "Adicione pelo menos uma peneira com abertura e massa retida." });
       return;
     }
 
@@ -312,14 +312,14 @@ export default function Granulometria() {
       );
 
       setResults(response.data);
-      toast.success("Análise granulométrica concluída!");
+      toast.success("Análise concluída com sucesso!", { description: "A granulometria foi calculada e as classificações estão disponíveis." });
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.data?.detail) {
-        toast.error(`Erro: ${error.response.data.detail}`);
+        toast.error("Erro no cálculo", { description: error.response.data.detail });
       } else if (error instanceof Error) {
-        toast.error(`Erro: ${error.message}`);
+        toast.error("Erro no cálculo", { description: error.message });
       } else {
-        toast.error("Erro ao calcular. Verifique os dados e tente novamente.");
+        toast.error("Erro ao calcular", { description: "Verifique se todos os dados estão corretos e tente novamente." });
       }
     } finally {
       setIsCalculating(false);
@@ -350,18 +350,18 @@ export default function Granulometria() {
     if (!results || !saveName.trim()) return;
     const success = saveCalculation(saveName.trim(), formData, results);
     if (success) {
-      toast.success("Cálculo salvo com sucesso!");
+      toast.success("Cálculo salvo!", { description: "A análise foi salva e pode ser carregada posteriormente." });
       setSaveDialogOpen(false);
       setSaveName("");
     } else {
-      toast.error("Erro ao salvar o cálculo.");
+      toast.error("Erro ao salvar", { description: "Não foi possível salvar a análise granulométrica." });
     }
   };
 
   const handleLoadCalculation = (calculation: any) => {
     setFormData(calculation.formData);
     setResults(calculation.results);
-    toast.success(`"${calculation.name}" carregado com sucesso!`);
+    toast.success("Cálculo carregado!", { description: `"${calculation.name}" foi restaurado com sucesso.` });
   };
 
   const handleCarregarExemplo = (exemplo: ExemploGranulometria) => {
@@ -382,7 +382,7 @@ export default function Granulometria() {
     // Limpar resultados anteriores
     setResults(null);
 
-    toast.success(`Exemplo "${exemplo.nome}" carregado com sucesso!`);
+    toast.success("Exemplo carregado!", { description: `Dados de "${exemplo.nome}" foram preenchidos automaticamente.` });
   };
 
   const handleStartTour = async () => {
@@ -510,10 +510,10 @@ export default function Granulometria() {
         composicaoRows.push(["Pedregulho", "> 2.0 mm", formatNumberForExport(results.percentagem_pedregulho, 1)]);
       }
       if (results.percentagem_areia !== null) {
-        composicaoRows.push(["Areia", "0.06 - 2.0 mm", formatNumberForExport(results.percentagem_areia, 1)]);
+        composicaoRows.push(["Areia", "0.075 - 2.0 mm", formatNumberForExport(results.percentagem_areia, 1)]);
       }
       if (results.percentagem_finos !== null) {
-        composicaoRows.push(["Finos (Silte + Argila)", "< 0.06 mm", formatNumberForExport(results.percentagem_finos, 1)]);
+        composicaoRows.push(["Finos (Silte + Argila)", "< 0.075 mm", formatNumberForExport(results.percentagem_finos, 1)]);
       }
       
       tables.push({
@@ -653,17 +653,17 @@ export default function Granulometria() {
   };
 
   return (
-    <div className="space-y-3 max-w-7xl mx-auto">
+    <div className="space-y-3 sm:space-y-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <PrintHeader moduleTitle="Granulometria e Classificação" moduleName="granulometria" />
       
-      <div className="flex items-center justify-between gap-2 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
-        <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center shadow-md transition-transform hover:scale-110 hover:rotate-3">
-            <BarChart3 className="w-5 h-5 text-white" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
+            <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">Granulometria e Classificação</h1>
-            <p className="text-xs text-muted-foreground">Análise granulométrica e classificação USCS/HRB</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Granulometria e Classificação</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">Análise granulométrica e classificação USCS/HRB</p>
           </div>
         </div>
         
@@ -700,29 +700,31 @@ export default function Granulometria() {
       </div>
 
       {/* Formulário - Largura total */}
-      <Card className="glass animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <CalcIcon className="w-4 h-4" />
+      <Card className="glass p-4 sm:p-6 animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
+        <CardHeader className="pb-3 px-0">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <CalcIcon className="w-4 h-4 sm:w-5 sm:h-5" />
             Dados do Ensaio
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
           <TooltipProvider>
             <div className="grid lg:grid-cols-3 gap-4">
               {/* Coluna 1 - Massa Total e Limites */}
               <div className="space-y-3">
                 {/* Massa Total */}
                 <div className="space-y-1">
-                  <Label htmlFor="massaTotal" className="flex items-center gap-1 text-xs">
-                    Massa Total (g)
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="massaTotal" className="text-xs">Massa Total (g)</Label>
                     <Tooltip>
                       <TooltipTrigger>
-                        <Info className="w-3 h-3 text-muted-foreground" />
+                        <Info className="w-4 h-4 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
-                      <TooltipContent>{tooltips.massaTotal}</TooltipContent>
+                      <TooltipContent className="max-w-xs">
+                        <p>{tooltips.massaTotal}</p>
+                      </TooltipContent>
                     </Tooltip>
-                  </Label>
+                  </div>
                   <Input
                     id="massaTotal"
                     type="number"
@@ -816,12 +818,12 @@ export default function Granulometria() {
                 )}
 
                 {/* Botões */}
-                <div className="flex gap-2">
-                  <Button onClick={handleCalculate} disabled={!formData.massaTotal || isCalculating} className="flex-1 h-8 text-xs" data-tour="btn-analisar">
-                    <CalcIcon className="w-3 h-3 mr-1.5" />
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button onClick={handleCalculate} disabled={!formData.massaTotal || isCalculating} className="flex-1 h-10 text-sm" data-tour="btn-analisar">
+                    <CalcIcon className="w-4 h-4 mr-1.5" />
                     {isCalculating ? "Analisando..." : "Analisar"}
                   </Button>
-                  <Button onClick={handleClear} variant="outline" className="h-8 text-xs">
+                  <Button onClick={handleClear} variant="outline" className="h-10 text-sm w-full sm:w-auto">
                     Limpar
                   </Button>
                 </div>
@@ -841,11 +843,11 @@ export default function Granulometria() {
 
       {/* Resultados - Abaixo do formulário */}
       {results && (
-        <Card className="glass animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Resultados da Análise</CardTitle>
+        <Card className="glass p-4 sm:p-6 animate-in fade-in slide-in-from-bottom-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
+          <CardHeader className="pb-3 px-0">
+            <CardTitle className="text-base sm:text-lg">Resultados da Análise</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0">
             {isCalculating ? (
               <div className="grid grid-cols-4 gap-2">
                 {[...Array(8)].map((_, i) => (

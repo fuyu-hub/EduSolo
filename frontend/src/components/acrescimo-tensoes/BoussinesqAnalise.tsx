@@ -341,7 +341,7 @@ export default function BoussinesqAnalise({ onVoltar, onStartTour, onLoadExample
   const temResultados = pontos.some(p => p.tensao !== undefined);
 
   return (
-    <div className="space-y-4 max-w-[1800px] mx-auto">
+    <div className="space-y-4 max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8">
       <PrintHeader moduleTitle="Boussinesq - Carga Pontual" moduleName="boussinesq" />
 
       {/* Header */}
