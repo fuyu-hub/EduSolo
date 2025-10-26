@@ -1,7 +1,8 @@
 import { Check, X, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface ValidationRule {
@@ -42,16 +43,16 @@ export default function InputWithValidation({
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <Label htmlFor={id}>{label}</Label>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <AlertCircle className="w-4 h-4 text-muted-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p>{tooltip}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                <AlertCircle className="w-4 h-4 text-muted-foreground cursor-pointer" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="max-w-xs" align="start">
+              <p className="text-sm">{tooltip}</p>
+            </PopoverContent>
+          </Popover>
         </div>
         <Input
           id={id}
@@ -87,16 +88,16 @@ export default function InputWithValidation({
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <Label htmlFor={id}>{label}</Label>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <AlertCircle className="w-4 h-4 text-muted-foreground cursor-help" />
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
-              <p>{tooltip}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+              <AlertCircle className="w-4 h-4 text-muted-foreground cursor-pointer" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="max-w-xs" align="start">
+            <p className="text-sm">{tooltip}</p>
+          </PopoverContent>
+        </Popover>
         
         {!isEmpty && (
           <div className="ml-auto">

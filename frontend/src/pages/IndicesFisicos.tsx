@@ -3,6 +3,8 @@ import { useState, useMemo, useEffect } from "react";
 import { Calculator, Info, BarChart3, ArrowLeft, ArrowRight, Save, FolderOpen, Download, Printer, FileText, AlertCircle, GraduationCap } from "lucide-react";
 import axios from 'axios';
 import { Card } from "@/components/ui/card";
+import { MobileModuleWrapper } from "@/components/mobile";
+import IndicesFisicosMobile from "./mobile/IndicesFisicosMobile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +28,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Button as PopoverButton } from "@/components/ui/button";
 import {
   Carousel,
   CarouselContent,
@@ -110,7 +113,7 @@ const tooltips = {
   massaUmida: "Massa total da amostra de solo incluindo a água (g)",
   massaSeca: "Massa da amostra após secagem em estufa (g)",
   volume: "Volume total da amostra incluindo vazios (cm³)",
-  Gs: "Densidade dos grãos (adimensional, ex: 2.65). OBRIGATÓRIO para calcular índice de vazios, porosidade e saturação!",
+  Gs: "Densidade dos grãos (adimensional, ex: 2.65). Necessário para calcular todos os índices físicos (e, n, Sr, γsat, γsub, Dr). Use as sugestões ao lado para valores típicos.",
   pesoEspecificoAgua: "Peso específico da água (kN/m³, padrão 10.0)",
   indice_vazios_max: "Índice de vazios máximo do solo (emax). Necessário para calcular Dr.",
   indice_vazios_min: "Índice de vazios mínimo do solo (emin). Necessário para calcular Dr.",
@@ -118,7 +121,7 @@ const tooltips = {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'; // URL do backend
 
-export default function IndicesFisicos() {
+function IndicesFisicosDesktop() {
   // Configurações
   const { settings } = useSettings();
   const { startTour } = useTour();
@@ -150,14 +153,14 @@ export default function IndicesFisicos() {
     {
       target: "[data-tour='input-basicos']",
       title: "📊 Dados Básicos de Entrada",
-      content: "Insira os três valores fundamentais obtidos no ensaio: massa úmida, massa seca e volume total. Com apenas esses dados, o sistema calcula: umidade, peso específico natural e seco.",
+      content: "Insira os valores fundamentais obtidos no ensaio: massa úmida, massa seca, volume total e densidade dos grãos (Gs). Esses dados são essenciais para calcular todos os índices físicos do solo.",
       placement: "right",
       spotlightPadding: 12,
     },
     {
       target: "#Gs",
       title: "🔬 Densidade dos Grãos (Gs)",
-      content: "IMPORTANTE: Para calcular TODOS os índices (vazios, porosidade, saturação), você DEVE fornecer o Gs. Ele não pode ser calculado apenas com massa e volume. Use as sugestões para valores típicos de cada tipo de solo.",
+      content: "O Gs é essencial para calcular todos os índices físicos. Ele não pode ser calculado apenas com massa e volume - deve ser informado. Valores típicos: Areia (quartzo) = 2.65, Argila = 2.70, Silte = 2.68. Use as sugestões ao lado!",
       placement: "left",
       spotlightPadding: 12,
     },
@@ -533,11 +536,16 @@ export default function IndicesFisicos() {
     }
   };
 
-  // Validação: precisa dos 3 dados básicos (massa úmida, massa seca, volume) 
-  // OU apenas Gs (para cálculos limitados)
+  // Validação: precisa dos 3 dados básicos (massa úmida, massa seca, volume) E do Gs (OBRIGATÓRIO)
   const isFormValid =
-    (Object.values(formData).filter((v, i) => i < 3 && v && !isNaN(parseFloat(v))).length >= 3) ||
-    (formData.Gs && !isNaN(parseFloat(formData.Gs)));
+    formData.massaUmida && 
+    formData.massaSeca && 
+    formData.volume && 
+    formData.Gs &&
+    !isNaN(parseFloat(formData.massaUmida)) &&
+    !isNaN(parseFloat(formData.massaSeca)) &&
+    !isNaN(parseFloat(formData.volume)) &&
+    !isNaN(parseFloat(formData.Gs));
 
   // Agrupamento dos Resultados para o Carrossel
   const resultItems = useMemo(() => {
@@ -690,26 +698,62 @@ export default function IndicesFisicos() {
               {/* Coluna 2 Inputs */}
               <div className="space-y-5"> {/* Aumentado space-y-4 para space-y-5 */}
                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor="Gs">Densidade dos Grãos (Gs) *</Label>
-                        <Tooltip><TooltipTrigger asChild><Info className="w-4 h-4 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent className="max-w-xs"><p>{tooltips.Gs}</p></TooltipContent></Tooltip>
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="Gs">Densidade dos Grãos (Gs) *</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <PopoverButton variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                            <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                          </PopoverButton>
+                        </PopoverTrigger>
+                        <PopoverContent className="max-w-xs" align="start">
+                          <p className="text-sm">{tooltips.Gs}</p>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        id="Gs" 
+                        type="number" 
+                        step="0.01" 
+                        value={formData.Gs} 
+                        onChange={(e) => handleChange("Gs", e.target.value)} 
+                        className="bg-background/50 flex-1" 
+                        placeholder="Ex: 2.65" 
+                        required
+                      />
                       <GsSuggestions onSelect={handleSelectGs} />
                     </div>
-                    <Input id="Gs" type="number" step="0.01" value={formData.Gs} onChange={(e) => handleChange("Gs", e.target.value)} className="bg-background/50" placeholder="Ex: 2.65 (necessário)" />
                   </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Label htmlFor="indice_vazios_max">Índice de Vazios Máximo (emax)</Label>
-                    <Tooltip><TooltipTrigger asChild><Info className="w-4 h-4 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent className="max-w-xs"><p>{tooltips.indice_vazios_max}</p></TooltipContent></Tooltip>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <PopoverButton variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                          <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                        </PopoverButton>
+                      </PopoverTrigger>
+                      <PopoverContent className="max-w-xs" align="start">
+                        <p className="text-sm">{tooltips.indice_vazios_max}</p>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <Input id="indice_vazios_max" type="number" step="0.01" value={formData.indice_vazios_max} onChange={(e) => handleChange("indice_vazios_max", e.target.value)} className="bg-background/50" placeholder="Opcional (ex: 0.85)" />
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Label htmlFor="indice_vazios_min">Índice de Vazios Mínimo (emin)</Label>
-                    <Tooltip><TooltipTrigger asChild><Info className="w-4 h-4 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent className="max-w-xs"><p>{tooltips.indice_vazios_min}</p></TooltipContent></Tooltip>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <PopoverButton variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                          <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                        </PopoverButton>
+                      </PopoverTrigger>
+                      <PopoverContent className="max-w-xs" align="start">
+                        <p className="text-sm">{tooltips.indice_vazios_min}</p>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <Input id="indice_vazios_min" type="number" step="0.01" value={formData.indice_vazios_min} onChange={(e) => handleChange("indice_vazios_min", e.target.value)} className="bg-background/50" placeholder="Opcional (ex: 0.45)" />
                 </div>
@@ -719,7 +763,16 @@ export default function IndicesFisicos() {
               <div className="space-y-2 mb-8 md:col-span-2">
                  <div className="flex items-center gap-2">
                    <Label htmlFor="pesoEspecificoAgua">Peso Específico Água (kN/m³)</Label>
-                   <Tooltip><TooltipTrigger asChild><Info className="w-4 h-4 text-muted-foreground cursor-help" /></TooltipTrigger><TooltipContent className="max-w-xs"><p>{tooltips.pesoEspecificoAgua}</p></TooltipContent></Tooltip>
+                   <Popover>
+                     <PopoverTrigger asChild>
+                       <PopoverButton variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                         <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                       </PopoverButton>
+                     </PopoverTrigger>
+                     <PopoverContent className="max-w-xs" align="start">
+                       <p className="text-sm">{tooltips.pesoEspecificoAgua}</p>
+                     </PopoverContent>
+                   </Popover>
                  </div>
                  <Select value={formData.pesoEspecificoAgua} onValueChange={(value) => handleChange("pesoEspecificoAgua", value)}>
                    <SelectTrigger className="bg-background/50">
@@ -910,6 +963,15 @@ export default function IndicesFisicos() {
         />
       </div>
     </TooltipProvider>
+  );
+}
+
+// Wrapper principal que escolhe versão mobile ou desktop
+export default function IndicesFisicos() {
+  return (
+    <MobileModuleWrapper mobileVersion={<IndicesFisicosMobile />}>
+      <IndicesFisicosDesktop />
+    </MobileModuleWrapper>
   );
 }
 

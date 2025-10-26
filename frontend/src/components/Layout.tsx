@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { MobileLayout } from "@/components/mobile/MobileLayout";
 
 const menuItems = [
   {
@@ -132,148 +133,105 @@ const ConditionalSheetClose = ({ shouldWrap, children, ...props }: { shouldWrap:
 // Agora usa React.ReactNode corretamente
 export function Layout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
+  
+  // Se for mobile, usa o MobileLayout
+  if (isMobile) {
+    return <MobileLayout>{children}</MobileLayout>;
+  }
+  
+  // Caso contrário, usa o layout desktop normal
+  return <DesktopLayout>{children}</DesktopLayout>;
+}
+
+// Desktop Layout Component
+function DesktopLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleMode } = useTheme();
 
   const [collapsed, setCollapsed] = useState<boolean>(() => {
-    // Default to true (collapsed) if on mobile or no localStorage value
+    // For desktop, check localStorage, default to true if not found
     if (typeof window !== 'undefined') {
-       const mobileCheck = window.innerWidth < 768;
-       if (mobileCheck) return true; // Always default to collapsed on mobile load/check
-       // For desktop, check localStorage, default to true if not found
        return JSON.parse(localStorage.getItem('sidebarCollapsed') ?? 'true');
     }
     return true; // Fallback default
   });
 
-  const [mobileOpen, setMobileOpen] = useState(false);
-
   // Effect to save desktop state
   useEffect(() => {
-    if (!isMobile) { // Only save state when on desktop
-      localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
-    }
-  }, [collapsed, isMobile]);
-
-   // Effect to ensure sidebar is considered collapsed visually on mobile resize/load
-   useEffect(() => {
-    if (isMobile) {
-       // We don't need to visually collapse the <aside> as it's not rendered,
-       // but we ensure the logic considers it collapsed if we switch TO mobile.
-       // Set the state only if it's not already collapsed, to avoid unnecessary re-renders.
-       if(!collapsed) {
-         setCollapsed(true);
-       }
-    } else {
-        // Optional: When switching back to desktop, restore saved preference
-        const savedState = JSON.parse(localStorage.getItem('sidebarCollapsed') ?? 'true');
-        setCollapsed(savedState);
-    }
-  }, [isMobile]); // Re-run when isMobile changes
+    localStorage.setItem('sidebarCollapsed', JSON.stringify(collapsed));
+  }, [collapsed]);
 
   const toggleDesktopSidebar = () => {
-    if (!isMobile) {
-      setCollapsed((prev) => !prev); // Use functional update
-    }
-  };
-
-  // Handler for Sheet's onOpenChange - syncs with mobileOpen state
-  const handleSheetOpenChange = (open: boolean) => {
-    setMobileOpen(open);
+    setCollapsed((prev) => !prev); // Use functional update
   };
 
   return (
-    // Wrap the entire structure potentially needing Sheet context in the Sheet component
-    <Sheet open={isMobile && mobileOpen} onOpenChange={handleSheetOpenChange}>
-      <div className="flex min-h-screen w-full bg-background">
-
-        {/* -- Mobile Only: Sheet Content (Portal'ed) -- */}
-        {/* This SheetContent is controlled by the Sheet above */}
-        <SheetContent side="left" className="p-0 w-64 glass border-r border-sidebar-border/50 data-[state=closed]:duration-0 data-[state=open]:duration-0 sm:data-[state=closed]:duration-0 sm:data-[state=open]:duration-0"> {/* Remove default animations if needed */}
-          {/* Ensure onLinkClick is passed ONLY when it's for mobile */}
-          <SidebarContent collapsed={false} onLinkClick={() => setMobileOpen(false)} />
-        </SheetContent>
-
-        {/* -- Desktop Sidebar (Rendered only on Desktop) -- */}
-        {!isMobile && (
-          <aside
-            className={cn(
-              "glass-card transition-[width] duration-300 ease-in-out border-r border-sidebar-border/30 fixed left-0 top-0 h-full z-20 shadow-modern",
-              collapsed ? "w-16" : "w-64"
-            )}
-          >
-            {/* onLinkClick is not needed/passed here */}
-            <SidebarContent collapsed={collapsed} />
-          </aside>
+    <div className="flex min-h-screen w-full bg-background">
+      {/* -- Desktop Sidebar -- */}
+      <aside
+        className={cn(
+          "glass-card transition-[width] duration-300 ease-in-out border-r border-sidebar-border/30 fixed left-0 top-0 h-full z-20 shadow-modern",
+          collapsed ? "w-16" : "w-64"
         )}
+      >
+        <SidebarContent collapsed={collapsed} />
+      </aside>
 
-        {/* -- Main Content Area -- */}
-        <div
-          className={cn(
-            "flex-1 transition-[margin-left] duration-300 ease-in-out",
-             // Apply margin only on desktop
-            !isMobile && (collapsed ? "ml-16" : "ml-64")
+      {/* -- Main Content Area -- */}
+      <div
+        className={cn(
+          "flex-1 transition-[margin-left] duration-300 ease-in-out",
+          collapsed ? "ml-16" : "ml-64"
+        )}
+      >
+        {/* Header */}
+        <header className="h-16 glass-card border-b border-border/30 sticky top-0 z-10 flex items-center px-4 md:px-6 shadow-sm">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleDesktopSidebar}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          
+          {/* Botão de Voltar */}
+          {location.pathname !== "/" && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/")}
+              className="ml-2 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Voltar</span>
+            </Button>
           )}
-        >
-          {/* Header */}
-          <header className="h-16 glass-card border-b border-border/30 sticky top-0 z-10 flex items-center px-4 md:px-6 shadow-sm">
-            {/* Button is always rendered, but wrapped by SheetTrigger conditionally */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={isMobile ? undefined : toggleDesktopSidebar} // Only toggle desktop state if not mobile
-              className="text-muted-foreground hover:text-foreground"
-              aria-label={isMobile ? "Abrir menu" : (collapsed ? "Expandir menu" : "Recolher menu")}
-              asChild={isMobile} // Make the Button the child of SheetTrigger on mobile
-            >
-              {isMobile ? (
-                // On mobile, Button is wrapped by SheetTrigger
-                <SheetTrigger aria-label="Abrir menu">
-                   <Menu className="h-5 w-5" />
-                </SheetTrigger>
-              ) : (
-                // On desktop, Button is standalone
-                <Menu className="h-5 w-5" />
-              )}
-            </Button>
-            
-            {/* Botão de Voltar */}
-            {location.pathname !== "/" && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/")}
-                className="ml-2 text-muted-foreground hover:text-foreground"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Voltar</span>
-              </Button>
+          
+          <div className="flex-1"></div>
+          
+          {/* Botão de Toggle de Modo Claro/Escuro */}
+          <Button
+            data-tour="theme-toggle"
+            variant="ghost"
+            size="icon"
+            onClick={toggleMode}
+            className="text-muted-foreground hover:text-foreground transition-all duration-200 hover:bg-primary/10 hover:text-primary"
+            aria-label={theme.mode === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
+          >
+            {theme.mode === "dark" ? (
+              <Sun className="h-5 w-5 transition-transform hover:rotate-90" />
+            ) : (
+              <Moon className="h-5 w-5 transition-transform hover:-rotate-12" />
             )}
-            
-            <div className="flex-1"></div>
-            
-            {/* Botão de Toggle de Modo Claro/Escuro */}
-            <Button
-              data-tour="theme-toggle"
-              variant="ghost"
-              size="icon"
-              onClick={toggleMode}
-              className="text-muted-foreground hover:text-foreground transition-all duration-200 hover:bg-primary/10 hover:text-primary"
-              aria-label={theme.mode === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
-            >
-              {theme.mode === "dark" ? (
-                <Sun className="h-5 w-5 transition-transform hover:rotate-90" />
-              ) : (
-                <Moon className="h-5 w-5 transition-transform hover:-rotate-12" />
-              )}
-            </Button>
-          </header>
+          </Button>
+        </header>
 
-          {/* Page Content */}
-          <main className="p-4 md:p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen">{children}</main>
-        </div>
+        {/* Page Content */}
+        <main className="p-4 md:p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen">{children}</main>
       </div>
-    </Sheet>
+    </div>
   );
 }

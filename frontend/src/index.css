@@ -1042,3 +1042,70 @@ html {
   background-color: hsl(var(--primary) / 0.3);
   color: hsl(var(--foreground));
 }
+
+/* ========== MOBILE SAFE AREAS ========== */
+/* Suporte para dispositivos com notch (iPhone X+, etc) */
+.safe-area-inset-top {
+  padding-top: max(env(safe-area-inset-top), 0px);
+}
+
+.safe-area-inset-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+
+.safe-area-inset-left {
+  padding-left: max(env(safe-area-inset-left), 0px);
+}
+
+.safe-area-inset-right {
+  padding-right: max(env(safe-area-inset-right), 0px);
+}
+
+/* ========== MOBILE OPTIMIZATIONS ========== */
+/* Touch optimization for mobile devices */
+@media (hover: none) and (pointer: coarse) {
+  /* Aumenta áreas de toque para elementos pequenos */
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 44px; /* iOS recommendation */
+    min-width: 44px;
+  }
+  
+  /* Desabilita hover effects em touch devices */
+  *:hover {
+    transition-duration: 0s;
+  }
+}
+
+/* Previne zoom em inputs no iOS */
+@media screen and (max-width: 767px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* ========== SMOOTH TRANSITIONS ========== */
+.transition-layout {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile-specific scroll behavior */
+@media (max-width: 767px) {
+  /* Scroll suave para mobile */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Remove o bounce do iOS quando não é necessário */
+  body {
+    overscroll-behavior-y: none;
+  }
+}

@@ -1,4 +1,5 @@
 import { HelpCircle } from "lucide-react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -16,17 +17,23 @@ interface GsSuggestionsProps {
 }
 
 export default function GsSuggestions({ onSelect }: GsSuggestionsProps) {
+  const [open, setOpen] = useState(false);
+  
+  const handleSelect = (value: number) => {
+    onSelect?.(value);
+    setOpen(false);
+  };
+  
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 px-2 text-xs"
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 shrink-0"
           type="button"
         >
-          <HelpCircle className="w-3 h-3 mr-1" />
-          Valores Típicos
+          <HelpCircle className="w-4 h-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -61,7 +68,7 @@ export default function GsSuggestions({ onSelect }: GsSuggestionsProps) {
                 {onSelect && (
                   <Button
                     size="sm"
-                    onClick={() => onSelect(item.typical)}
+                    onClick={() => handleSelect(item.typical)}
                     variant="outline"
                   >
                     Usar {item.typical}

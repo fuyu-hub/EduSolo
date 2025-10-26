@@ -37,6 +37,7 @@ const Educacional = lazy(() => import("./pages/Educacional"));
 const Settings = lazy(() => import("./pages/Settings"));
 const About = lazy(() => import("./pages/About"));
 const PlanosFuturos = lazy(() => import("./pages/PlanosFuturos"));
+const Salvos = lazy(() => import("./pages/Salvos"));
 
 // Configurar QueryClient com otimizações
 const queryClient = new QueryClient({
@@ -220,6 +221,16 @@ const AppContent = () => {
             <Layout>
               <Suspense fallback={<PageLoader />}>
                 <PlanosFuturos />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/salvos"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Salvos />
               </Suspense>
             </Layout>
           }

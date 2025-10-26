@@ -1,9 +1,10 @@
-import { Calculator, Layers, FileText, BookOpen, TrendingUp, TrendingDown, Ruler, Droplets, BarChart3, Scale, Grip, ArrowDownToLine, Target, Activity, Pyramid } from "lucide-react";
+import { Calculator, Layers, FileText, BookOpen, TrendingUp, TrendingDown, Ruler, Droplets, BarChart3, Scale, Grip, ArrowDownToLine, Target, Activity, Pyramid, ArrowRight } from "lucide-react";
 import { memo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { PreloaderLink } from "@/components/RoutePreloader";
 import { useTour } from "@/contexts/TourContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const modules = [
   {
@@ -89,8 +90,8 @@ const modules = [
   },
 ];
 
-// Componente de Card de Módulo otimizado com memo
-const ModuleCard = memo<{
+// Card para Mobile - Simplificado
+const ModuleCardMobile = memo<{
   icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
@@ -102,58 +103,118 @@ const ModuleCard = memo<{
     <Card
       data-tour={tourId}
       className={cn(
-        "glass-card p-6 transition-all duration-300 group cursor-pointer relative overflow-hidden h-full min-h-[180px] flex flex-col",
-        "rounded-xl border",
-        !comingSoon && "hover:shadow-modern-lg hover:-translate-y-2 hover:scale-[1.01] hover:border-primary/30 active:scale-[0.98]",
-        comingSoon && "opacity-70"
+        "p-5 transition-all duration-200 group cursor-pointer relative overflow-hidden",
+        "border border-border/50 bg-card/50 backdrop-blur-sm",
+        !comingSoon && "hover:border-primary/30 hover:shadow-lg active:scale-[0.98]",
+        comingSoon && "opacity-60"
       )}
     >
-      {/* Gradient overlay on hover */}
-      <div
-        className={cn(
-          "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-[0.12] transition-all duration-500 rounded-xl",
-          color
-        )}
-      />
-
-      {/* Shine effect on hover */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-xl">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-      </div>
-
-      {/* Content */}
-      <div className="relative flex-1 flex flex-col">
+      <div className="flex items-start gap-4">
+        {/* Icon */}
         <div
           className={cn(
-            "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center mb-4 shadow-lg",
-            "transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-xl",
+            "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center shrink-0 shadow-md",
+            "transition-transform duration-200 group-hover:scale-105",
             color
           )}
         >
-          <Icon className="w-6 h-6 text-white transition-transform duration-300 group-hover:scale-110" />
+          <Icon className="w-6 h-6 text-white" />
         </div>
 
-        <h3 className="text-lg font-semibold text-foreground mb-2 flex items-center gap-2 group-hover:text-primary transition-colors">
-          {title}
-          {comingSoon && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary font-medium animate-pulse">
-              Em breve
-            </span>
-          )}
-        </h3>
-
-        <p className="text-muted-foreground text-sm leading-relaxed flex-1">
-          {description}
-        </p>
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-foreground mb-1 flex items-center gap-2">
+            {title}
+            {comingSoon && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
+                Em breve
+              </span>
+            )}
+          </h3>
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            {description}
+          </p>
+        </div>
       </div>
     </Card>
   );
 });
 
-ModuleCard.displayName = "ModuleCard";
+ModuleCardMobile.displayName = "ModuleCardMobile";
+
+// Card para Desktop - Versão Antiga Elaborada
+const ModuleCardDesktop = memo<{
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  color: string;
+  comingSoon?: boolean;
+  tourId?: string;
+}>(({ icon: Icon, title, description, color, comingSoon, tourId }) => {
+  return (
+    <Card
+      data-tour={tourId}
+      className={cn(
+        "group relative overflow-hidden transition-all duration-300",
+        "border border-border/50 bg-gradient-to-br from-card/80 via-card/60 to-card/40 backdrop-blur-sm",
+        !comingSoon && "hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer",
+        comingSoon && "opacity-60"
+      )}
+    >
+      {/* Gradient overlay on hover */}
+      <div className={cn(
+        "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-5 transition-opacity duration-300",
+        color
+      )} />
+      
+      {/* Shimmer effect */}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+      </div>
+
+      <div className="relative p-6 space-y-4">
+        {/* Icon */}
+        <div className="flex items-center justify-between">
+          <div
+            className={cn(
+              "w-14 h-14 rounded-2xl bg-gradient-to-br flex items-center justify-center shadow-lg",
+              "transition-all duration-300 group-hover:scale-110 group-hover:rotate-3",
+              color
+            )}
+          >
+            <Icon className="w-7 h-7 text-white" />
+          </div>
+          
+          {comingSoon && (
+            <span className="px-2.5 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold">
+              Em breve
+            </span>
+          )}
+          
+          {!comingSoon && (
+            <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="space-y-2">
+          <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+            {title}
+          </h3>
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+            {description}
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+});
+
+ModuleCardDesktop.displayName = "ModuleCardDesktop";
 
 export default function Dashboard() {
   const { startTour } = useTour();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // Iniciar tour após um delay maior para garantir que todos os elementos estejam renderizados
@@ -250,8 +311,10 @@ export default function Dashboard() {
       </div>
 
       {/* Modules Grid */}
-      <div id="modules-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6" role="list" aria-label="Módulos disponíveis">
+      <div id="modules-grid" className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4" role="list" aria-label="Módulos disponíveis">
         {modules.map((module) => {
+          const ModuleCard = isMobile ? ModuleCardMobile : ModuleCardDesktop;
+          
           const content = (
             <ModuleCard
               icon={module.icon}
