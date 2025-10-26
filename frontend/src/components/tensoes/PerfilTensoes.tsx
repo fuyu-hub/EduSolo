@@ -45,7 +45,7 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
     const minTensao = Math.min(...valores, 0); // Inclui 0 no mínimo
     const maxTensao = Math.max(...valores, 0); // Inclui 0 no máximo
     const margem = Math.max((maxTensao - minTensao) * 0.15, 10); // Margem mínima de 10
-    return [Math.max(0, minTensao - margem * 0.5), maxTensao + margem];
+    return [Math.max(0, minTensao - margem * 0.5), maxTensao]; // Sem margem no máximo
   }, [dadosGrafico]);
 
   const dominioY = useMemo(() => {
@@ -84,17 +84,17 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
           Perfil de Tensões
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex justify-center">
-        <ResponsiveContainer width="90%" height={400}>
+      <CardContent className="flex justify-center bg-white rounded-lg p-3">
+        <ResponsiveContainer width="100%" height={350}>
           <LineChart 
             data={dadosGrafico}
             layout="vertical"
-            margin={{ top: 10, right: 30, left: 65, bottom: 15 }}
+            margin={{ top: 20, right: 20, left: 20, bottom: 5 }}
           >
             <CartesianGrid 
               strokeDasharray="3 3" 
-              stroke="hsl(var(--border))" 
-              opacity={0.3}
+              stroke="#d1d5db" 
+              opacity={1}
               horizontal={true}
               vertical={true}
             />
@@ -107,11 +107,11 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
                 value: 'Tensão (kPa)', 
                 position: 'insideBottom', 
                 offset: -8,
-                style: { fontSize: 13, fontWeight: 600, fill: 'hsl(var(--foreground))' }
+                style: { fontSize: 13, fontWeight: 600, fill: '#000000' }
               }}
-              tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-              axisLine={{ stroke: 'hsl(var(--border))', strokeWidth: 1.5 }}
-              tickLine={{ stroke: 'hsl(var(--border))' }}
+              tick={{ fontSize: 11, fill: '#000000' }}
+              axisLine={{ stroke: '#000000', strokeWidth: 1.5 }}
+              tickLine={{ stroke: '#000000' }}
             />
             
             {/* Eixo Y (Profundidade) - 0 no topo, aumenta para baixo */}
@@ -125,12 +125,13 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
                 value: 'Profundidade (m)', 
                 angle: -90, 
                 position: 'insideLeft',
-                style: { fontSize: 13, fontWeight: 600, fill: 'hsl(var(--foreground))' },
-                offset: -10
+                style: { fontSize: 13, fontWeight: 600, fill: '#000000' },
+                offset: 20,
+                dy: 50
               }}
-              tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
-              axisLine={{ stroke: 'hsl(var(--border))', strokeWidth: 1.5 }}
-              tickLine={{ stroke: 'hsl(var(--border))' }}
+              tick={{ fontSize: 11, fill: '#000000' }}
+              axisLine={{ stroke: '#000000', strokeWidth: 1.5 }}
+              tickLine={{ stroke: '#000000' }}
             />
             
             <Tooltip 
@@ -160,15 +161,31 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
             />
             
             <Legend 
-              wrapperStyle={{ paddingTop: "20px" }}
-              formatter={(value) => {
-                const labels: Record<string, string> = {
-                  sigma_v: "σv (Tensão Total)",
-                  u: "u (Pressão Neutra)",
-                  sigma_v_ef: "σ'v (Tensão Efetiva Vertical)",
-                  sigma_h_ef: "σ'h (Tensão Efetiva Horizontal)"
-                };
-                return labels[value] || value;
+              content={({ payload }) => {
+                if (!payload) return null;
+                return (
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 justify-items-center mt-5 px-2">
+                    {payload.map((entry, index) => {
+                      const labels: Record<string, string> = {
+                        sigma_v: "σv (Total)",
+                        u: "u (Neutra)",
+                        sigma_v_ef: "σ'v (Efet. Vert.)",
+                        sigma_h_ef: "σ'h (Efet. Horiz.)"
+                      };
+                      return (
+                        <div key={`item-${index}`} className="flex items-center gap-1.5">
+                          <div 
+                            className="w-2.5 h-2.5 rounded-full" 
+                            style={{ backgroundColor: entry.color }}
+                          />
+                          <span className="text-[12px] text-black">
+                            {labels[entry.value as string] || entry.value}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
               }}
             />
             

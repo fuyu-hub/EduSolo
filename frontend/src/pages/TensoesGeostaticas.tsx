@@ -4,7 +4,7 @@ import axios from "axios";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Layers, Info, Calculator as CalcIcon, Plus, Trash2, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, GraduationCap } from "lucide-react";
+import { Mountain, Info, Calculator as CalcIcon, Plus, Trash2, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, GraduationCap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -109,6 +109,9 @@ const tooltips = {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+// Função para gerar IDs únicos (alternativa ao crypto.randomUUID para compatibilidade)
+const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+
 function TensoesGeostaticasDesktop() {
   const { toast: toastFn } = { toast };
   const { startTour } = useTour();
@@ -124,7 +127,7 @@ function TensoesGeostaticasDesktop() {
       alturaCapilar: "0.0",
       pesoEspecificoAgua: "10.0",
       camadas: [
-        { id: crypto.randomUUID(), nome: "Camada 1", espessura: "5.0", profundidadeNA: "", capilaridade: "", gamaNat: "18.0", gamaSat: "20.0", Ko: "0.5", impermeavel: false },
+        { id: generateId(), nome: "Camada 1", espessura: "5.0", profundidadeNA: "", capilaridade: "", gamaNat: "18.0", gamaSat: "20.0", Ko: "0.5", impermeavel: false },
       ],
     },
     mode: "onBlur",
@@ -230,7 +233,7 @@ function TensoesGeostaticasDesktop() {
         pesoEspecificoAgua: "10.0",
         camadas: [
           { 
-            id: crypto.randomUUID(), 
+            id: generateId(), 
             nome: "Areia Fina", 
             espessura: "3.0", 
             profundidadeNA: "2.0", 
@@ -241,7 +244,7 @@ function TensoesGeostaticasDesktop() {
             impermeavel: false 
           },
           { 
-            id: crypto.randomUUID(), 
+            id: generateId(), 
             nome: "Argila Mole", 
             espessura: "5.0", 
             profundidadeNA: "", 
@@ -252,7 +255,7 @@ function TensoesGeostaticasDesktop() {
             impermeavel: false 
           },
           { 
-            id: crypto.randomUUID(), 
+            id: generateId(), 
             nome: "Areia Média", 
             espessura: "5.0", 
             profundidadeNA: "", 
@@ -294,14 +297,14 @@ function TensoesGeostaticasDesktop() {
   }, [fields.length]);
 
   const addCamada = () => {
-    append({ id: crypto.randomUUID(), nome: `Camada ${fields.length + 1}`, espessura: "", profundidadeNA: "", capilaridade: "", gamaNat: "", gamaSat: "", Ko: "0.5", impermeavel: false });
+    append({ id: generateId(), nome: `Camada ${fields.length + 1}`, espessura: "", profundidadeNA: "", capilaridade: "", gamaNat: "", gamaSat: "", Ko: "0.5", impermeavel: false });
     setCurrentCamadaIndex(fields.length);
   };
 
   // Handlers para o diagrama interativo
   const handleAddCamadaFromDiagram = (data: CamadaData) => {
     const novaCamada = { 
-      id: crypto.randomUUID(),
+      id: generateId(),
       nome: data.nome,
       espessura: data.espessura,
       profundidadeNA: data.profundidadeNA,
@@ -407,7 +410,7 @@ function TensoesGeostaticasDesktop() {
         alturaCapilar: "0.0",
         pesoEspecificoAgua: "10.0",
         camadas: [
-          { id: crypto.randomUUID(), nome: "Camada 1", espessura: "5.0", profundidadeNA: "", capilaridade: "", gamaNat: "18.0", gamaSat: "20.0", Ko: "0.5", impermeavel: false },
+          { id: generateId(), nome: "Camada 1", espessura: "5.0", profundidadeNA: "", capilaridade: "", gamaNat: "18.0", gamaSat: "20.0", Ko: "0.5", impermeavel: false },
         ],
       });
     setCurrentCamadaIndex(0);
@@ -426,7 +429,7 @@ function TensoesGeostaticasDesktop() {
 
     if (currentLength < targetLength) {
       for (let i = 0; i < targetLength - currentLength; i++) {
-        append({ id: crypto.randomUUID(), nome: "", espessura: "", profundidadeNA: "", capilaridade: "", gamaNat: "", gamaSat: "", Ko: "0.5" }, { shouldFocus: false });
+        append({ id: generateId(), nome: "", espessura: "", profundidadeNA: "", capilaridade: "", gamaNat: "", gamaSat: "", Ko: "0.5" }, { shouldFocus: false });
       }
     } else if (currentLength > targetLength) {
       for (let i = currentLength - 1; i >= targetLength; i--) {
@@ -439,7 +442,7 @@ function TensoesGeostaticasDesktop() {
         profundidadeNA: example.profundidadeNA,
         alturaCapilar: example.alturaCapilar,
         pesoEspecificoAgua: example.pesoEspecificoAgua,
-        camadas: example.camadas.map(c => ({ ...c, id: crypto.randomUUID() })),
+        camadas: example.camadas.map(c => ({ ...c, id: generateId() })),
       });
       setCurrentCamadaIndex(0);
       setResults(null);
@@ -486,7 +489,7 @@ function TensoesGeostaticasDesktop() {
       pesoEspecificoAgua: "10.0",
       camadas: [
         { 
-          id: crypto.randomUUID(), 
+          id: generateId(), 
           nome: "Areia Fina", 
           espessura: "3.0", 
           profundidadeNA: "2.0", 
@@ -497,7 +500,7 @@ function TensoesGeostaticasDesktop() {
           impermeavel: false 
         },
         { 
-          id: crypto.randomUUID(), 
+          id: generateId(), 
           nome: "Argila Mole", 
           espessura: "5.0", 
           profundidadeNA: "", 
@@ -508,7 +511,7 @@ function TensoesGeostaticasDesktop() {
           impermeavel: false 
         },
         { 
-          id: crypto.randomUUID(), 
+          id: generateId(), 
           nome: "Areia Média", 
           espessura: "5.0", 
           profundidadeNA: "", 
@@ -820,8 +823,8 @@ function TensoesGeostaticasDesktop() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
-            <Layers className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
+            <Mountain className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Tensões Geostáticas</h1>
@@ -868,7 +871,7 @@ function TensoesGeostaticasDesktop() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl">
-                <CalcIcon className="w-5 h-5" />
+                <Info className="w-5 h-5" />
                 Configuração do Perfil
                 <TooltipProvider>
                   <Tooltip>

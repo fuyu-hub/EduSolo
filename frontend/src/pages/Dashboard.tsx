@@ -1,4 +1,4 @@
-import { Calculator, Layers, FileText, BookOpen, TrendingUp, TrendingDown, Ruler, Droplets, BarChart3, Scale, Grip, ArrowDownToLine, Target, Activity, Pyramid, ArrowRight } from "lucide-react";
+import { Calculator, BookOpen, TrendingUp, Beaker, Droplet, Filter, Database, Mountain, Target, MoveDown, Scissors, ArrowRight } from "lucide-react";
 import { memo, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -8,7 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const modules = [
   {
-    icon: Scale,
+    icon: Beaker,
     title: "Índices Físicos",
     description: "Calcule índices físicos do solo: umidade, densidade, porosidade e mais",
     path: "/indices-fisicos",
@@ -17,7 +17,7 @@ const modules = [
     tourId: "module-indices",
   },
   {
-    icon: Droplets,
+    icon: Droplet,
     title: "Limites de Consistência",
     description: "Calcule LL, LP, IP, IL, IC e classifique a plasticidade do solo",
     path: "/limites-consistencia",
@@ -26,7 +26,7 @@ const modules = [
     tourId: "module-limites",
   },
   {
-    icon: Grip,
+    icon: Filter,
     title: "Granulometria e Classificação",
     description: "Análise granulométrica e classificação USCS/AASHTO",
     path: "/granulometria",
@@ -35,7 +35,7 @@ const modules = [
     tourId: "module-granulometria",
   },
   {
-    icon: Layers,
+    icon: Database,
     title: "Compactação",
     description: "Análise de curvas de compactação e energia Proctor",
     path: "/compactacao",
@@ -44,7 +44,7 @@ const modules = [
     tourId: "module-compactacao",
   },
   {
-    icon: Pyramid,
+    icon: Mountain,
     title: "Tensões Geostáticas",
     description: "Calcule tensões verticais, efetivas e neutras no solo",
     path: "/tensoes",
@@ -62,7 +62,7 @@ const modules = [
     tourId: "module-acrescimo",
   },
   {
-    icon: ArrowDownToLine,
+    icon: MoveDown,
     title: "Análise de Adensamento",
     description: "Teoria de Terzaghi e análise de recalques",
     path: "#",
@@ -71,7 +71,7 @@ const modules = [
     tourId: "module-adensamento",
   },
   {
-    icon: Activity,
+    icon: Scissors,
     title: "Resistência ao Cisalhamento",
     description: "Análise de ensaios triaxiais e cisalhamento direto",
     path: "#",

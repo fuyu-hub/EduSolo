@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { BarChart3, Info, Calculator as CalcIcon, Plus, Trash2, Table as TableIcon, TrendingUp, GraduationCap, Activity } from "lucide-react";
+import { Filter, Info, Calculator as CalcIcon, Plus, Trash2, Table as TableIcon, TrendingUp, GraduationCap, Activity, BarChart3 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -660,8 +660,8 @@ function GranulometriaDesktop() {
       
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-fuchsia-500 to-purple-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
-            <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
+            <Filter className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Granulometria e Classificação</h1>
@@ -705,7 +705,7 @@ function GranulometriaDesktop() {
       <Card className="glass p-4 sm:p-6 animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
         <CardHeader className="pb-3 px-0">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <CalcIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+            <Info className="w-4 h-4 sm:w-5 sm:h-5" />
             Dados do Ensaio
           </CardTitle>
         </CardHeader>

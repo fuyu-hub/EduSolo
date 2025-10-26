@@ -1,4 +1,4 @@
-import { Calculator, Layers, FileText, BookOpen, TrendingUp, TrendingDown, Ruler, Droplets, BarChart3 } from "lucide-react";
+import { Calculator, BookOpen, TrendingUp, Beaker, Droplet, Filter, Database, Mountain, Target, MoveDown, Scissors } from "lucide-react";
 import { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -6,7 +6,7 @@ import { PreloaderLink } from "@/components/RoutePreloader";
 
 const modules = [
   {
-    icon: Calculator,
+    icon: Beaker,
     title: "Índices Físicos",
     description: "Calcule índices físicos do solo: umidade, densidade, porosidade e mais",
     path: "/indices-fisicos",
@@ -14,7 +14,7 @@ const modules = [
     preload: () => import("./IndicesFisicos"),
   },
   {
-    icon: Droplets,
+    icon: Droplet,
     title: "Limites de Consistência",
     description: "Calcule LL, LP, IP, IL, IC e classifique a plasticidade do solo",
     path: "/limites-consistencia",
@@ -22,7 +22,7 @@ const modules = [
     preload: () => import("./LimitesConsistencia"),
   },
   {
-    icon: BarChart3,
+    icon: Filter,
     title: "Granulometria e Classificação",
     description: "Análise granulométrica e classificação USCS/AASHTO",
     path: "/granulometria",
@@ -30,7 +30,7 @@ const modules = [
     preload: () => import("./Granulometria"),
   },
   {
-    icon: Layers,
+    icon: Database,
     title: "Compactação",
     description: "Análise de curvas de compactação e energia Proctor",
     path: "/compactacao",
@@ -38,7 +38,7 @@ const modules = [
     preload: () => import("./Compactacao"),
   },
   {
-    icon: FileText,
+    icon: Mountain,
     title: "Tensões Geostáticas",
     description: "Calcule tensões verticais, efetivas e neutras no solo",
     path: "/tensoes",
@@ -46,7 +46,7 @@ const modules = [
     preload: () => import("./TensoesGeostaticas"),
   },
   {
-    icon: TrendingDown,
+    icon: Target,
     title: "Acréscimo de Tensões",
     description: "Métodos de Boussinesq e análise de carregamentos",
     path: "/acrescimo-tensoes",
@@ -54,7 +54,7 @@ const modules = [
     preload: () => import("./AcrescimoTensoes"),
   },
   {
-    icon: TrendingUp,
+    icon: MoveDown,
     title: "Análise de Adensamento",
     description: "Teoria de Terzaghi e análise de recalques",
     path: "#",
@@ -62,7 +62,7 @@ const modules = [
     comingSoon: true,
   },
   {
-    icon: Ruler,
+    icon: Scissors,
     title: "Resistência ao Cisalhamento",
     description: "Análise de ensaios triaxiais e cisalhamento direto",
     path: "#",

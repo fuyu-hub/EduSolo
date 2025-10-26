@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import axios from "axios";
-import { Hammer, Calculator, Plus, Trash2, Info, Save, FolderOpen, Download, FileText, AlertCircle, ChevronLeft, ChevronRight, Lightbulb } from "lucide-react";
+import { Database, Calculator, Plus, Trash2, Info, Save, FolderOpen, Download, FileText, AlertCircle, ChevronLeft, ChevronRight, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
@@ -84,7 +84,7 @@ interface Results {
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
 export default function CompactacaoMobile() {
   const { toast } = useToast();
@@ -460,11 +460,11 @@ export default function CompactacaoMobile() {
   return (
     <div className="space-y-4 pb-4">
       {/* Header com Ações */}
-      <div className="bg-gradient-to-r from-orange-500/10 via-orange-600/5 to-transparent p-4 rounded-xl border border-orange-500/20">
+      <div className="bg-gradient-to-r from-violet-500/10 via-fuchsia-500/5 to-transparent p-4 rounded-xl border border-violet-500/20">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-md">
-              <Hammer className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-600 flex items-center justify-center shadow-md">
+              <Database className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-foreground">Compactação</h2>
@@ -539,7 +539,7 @@ export default function CompactacaoMobile() {
       {/* Pontos do Ensaio */}
       <MobileSection
         title="Pontos do Ensaio"
-        icon={<Hammer className="w-4 h-4" />}
+        icon={<Database className="w-4 h-4" />}
         defaultOpen={true}
       >
         <div className="space-y-4">
@@ -768,7 +768,7 @@ export default function CompactacaoMobile() {
             {
               id: "curva",
               label: "Curva",
-              icon: <Hammer className="w-4 h-4" />,
+              icon: <Database className="w-4 h-4" />,
               content: (
                 <div className="bg-card/50 rounded-xl border border-border/50 p-4">
                   <h4 className="font-semibold mb-4 text-center">Curva de Compactação</h4>

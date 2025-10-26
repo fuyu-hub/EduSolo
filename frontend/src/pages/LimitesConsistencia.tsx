@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Droplets, Info, Calculator as CalcIcon, Plus, Trash2, LineChart, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, FileText, GraduationCap } from "lucide-react";
+import { Droplet, Info, Calculator as CalcIcon, Plus, Trash2, LineChart, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, FileText, GraduationCap } from "lucide-react";
 import { useTour, TourStep } from "@/contexts/TourContext";
 import type { CarouselApi } from "@/components/ui/carousel";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
@@ -114,7 +114,7 @@ const tooltips = { numGolpes: "Número de golpes necessários para fechar a ranh
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Função para gerar IDs únicos
-const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
 // --- Interface ResultItemProps (mantida) ---
 interface ResultItemProps { label: string; value: number | string | null; unit: string; tooltip?: string; highlight?: boolean; precision?: number; }
@@ -527,7 +527,7 @@ function LimitesConsistenciaDesktop() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-3">
-           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3"> <Droplets className="w-5 h-5 sm:w-6 sm:h-6 text-white" /> </div>
+           <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 via-teal-500 to-emerald-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3"> <Droplet className="w-5 h-5 sm:w-6 sm:h-6 text-white" /> </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Limites de Consistência</h1>
             <p className="text-muted-foreground text-xs sm:text-sm">Determinação de LL, LP, IP, IC, Atividade e classificações</p>
@@ -569,7 +569,7 @@ function LimitesConsistenciaDesktop() {
         <Card className="glass flex flex-col p-4 sm:p-6 animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
            <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
             <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-xl"> <CalcIcon className="w-5 h-5" /> Dados dos Ensaios </CardTitle>
+                <CardTitle className="flex items-center gap-2 text-xl"> <Info className="w-5 h-5" /> Dados dos Ensaios </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 p-4 pt-0 flex-1">
               <TooltipProvider>
@@ -577,7 +577,7 @@ function LimitesConsistenciaDesktop() {
                    {/* Item Accordion: LL */}
                    <AccordionItem value="ll" className="border-0">
                       <AccordionTrigger className="text-sm font-semibold text-foreground bg-accent/5 hover:bg-accent/10 px-3 py-2 rounded-lg border border-accent/20 [&[data-state=open]]:rounded-b-none">
-                         <div className="flex items-center gap-1.5"> <Droplets className="w-4 h-4 text-indigo-500" /> Limite de Liquidez (LL) </div>
+                         <div className="flex items-center gap-1.5"> <Droplet className="w-4 h-4 text-indigo-500" /> Limite de Liquidez (LL) </div>
                       </AccordionTrigger>
                       <AccordionContent className="p-0 pt-2">
                         <div className="space-y-2 rounded-lg bg-background/30 border border-accent/20 border-t-0 rounded-t-none p-3" data-tour="pontos-ll">
@@ -676,7 +676,7 @@ function LimitesConsistenciaDesktop() {
                     {/* Item Accordion: LP */}
                     <AccordionItem value="lp" className="border-0">
                        <AccordionTrigger className="text-sm font-semibold text-foreground bg-accent/5 hover:bg-accent/10 px-3 py-2 rounded-lg border border-accent/20 [&[data-state=open]]:rounded-b-none">
-                          <div className="flex items-center gap-1.5"> <Droplets className="w-4 h-4 text-blue-500" /> Limite de Plasticidade (LP) </div>
+                          <div className="flex items-center gap-1.5"> <Droplet className="w-4 h-4 text-blue-500" /> Limite de Plasticidade (LP) </div>
                        </AccordionTrigger>
                        <AccordionContent className="p-3 bg-accent/5 rounded-b-lg border border-t-0 border-accent/20">
                           <div className="space-y-2" data-tour="ensaio-lp">
@@ -865,7 +865,7 @@ function LimitesConsistenciaDesktop() {
                </div>
             ) : ( /* Placeholder ou Erro */
                <div className="flex flex-col items-center justify-center h-56 text-center">
-                 <Droplets className="w-12 h-12 text-indigo-500/30 mb-3" />
+                 <Droplet className="w-12 h-12 text-indigo-500/30 mb-3" />
                  <p className="text-muted-foreground text-sm"> {apiError ? "Corrija os erros para calcular" : "Preencha os dados dos ensaios para calcular"} </p>
                </div>
             )}

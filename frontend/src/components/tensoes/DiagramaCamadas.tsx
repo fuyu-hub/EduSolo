@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Layers, Plus, Edit2 } from "lucide-react";
+import { Layers, Plus } from "lucide-react";
 import DialogCamada, { CamadaData } from "./DialogCamada";
 import { cn } from "@/lib/utils";
 
@@ -173,8 +173,8 @@ export default function DiagramaCamadas({
 
   return (
     <Card>
-      <CardContent className="pt-6">
-        <div className="flex gap-2">
+      <CardContent className="pt-6 pl-3">
+        <div className="flex gap-2 justify-start">
           {/* Escala de profundidade com cotas */}
           <div className="relative text-xs font-mono" style={{ width: '60px', height: alturaMaximaPixels + 'px' }}>
             {cotasOrdenadas.map((cota, index) => {
@@ -208,7 +208,7 @@ export default function DiagramaCamadas({
           </div>
 
           {/* Diagrama */}
-          <div className="flex-1 relative border-l-2 border-border">
+          <div className="flex-1 relative">
             <div style={{ height: alturaMaximaPixels + 'px' }}>
             {(() => {
               let corAnterior: number | undefined = undefined;
@@ -302,9 +302,6 @@ export default function DiagramaCamadas({
                             {isImpermeavel && (
                               <span className="text-xs bg-blue-900/60 text-white px-1.5 py-0.5 rounded shrink-0">Imp.</span>
                             )}
-                            {interactive && (
-                              <Edit2 className="w-3 h-3 opacity-60 shrink-0" />
-                            )}
                           </div>
                           <div className="text-xs font-medium mt-0.5" style={{ color: cores.texto, opacity: 0.9 }}>
                             {camada.espessura.toFixed(2)} m
@@ -325,9 +322,6 @@ export default function DiagramaCamadas({
                             {camada.nome || `Camada ${index + 1}`}
                             {isImpermeavel && (
                               <span className="text-xs bg-blue-900/60 text-white px-1.5 py-0.5 rounded">Imp.</span>
-                            )}
-                            {interactive && (
-                              <Edit2 className="w-3 h-3 opacity-60" />
                             )}
                           </div>
                           <div className="text-xs font-medium mt-0.5" style={{ color: cores.texto, opacity: 0.9 }}>
@@ -423,38 +417,6 @@ export default function DiagramaCamadas({
                   <Plus className="w-4 h-4" />
                   <span className="text-sm">Adicionar Camada</span>
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* Legenda */}
-          <div className="flex flex-col gap-2 text-xs">
-            <div className="font-semibold mb-1">Legenda:</div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-0.5 border-t-2 border-blue-500 border-dashed"></div>
-              <span>NA</span>
-            </div>
-            {alturaCapilar > 0 && (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 bg-blue-200/30 border border-blue-300 border-dashed"></div>
-                <span>Capilar</span>
-              </div>
-            )}
-            {camadas.some(c => c.impermeavel) && (
-              <div className="flex items-center gap-2">
-                <div 
-                  className="w-4 h-4 bg-amber-100 border border-amber-300"
-                  style={{
-                    backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0, 0, 0, 0.15) 2px, rgba(0, 0, 0, 0.15) 4px)'
-                  }}
-                ></div>
-                <span>Impermeável</span>
-              </div>
-            )}
-            {interactive && (
-              <div className="flex items-center gap-2 mt-2 text-muted-foreground">
-                <Edit2 className="w-3 h-3" />
-                <span className="text-xs">Clique para editar</span>
               </div>
             )}
           </div>

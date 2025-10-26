@@ -1,4 +1,4 @@
-import { Home, Settings, BookOpen, MoreHorizontal, Save, Calculator } from "lucide-react";
+import { Home, Settings, BookOpen, MoreHorizontal, Save, Beaker, Droplet, Filter, Database, Mountain, Target, Info, Rocket } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -10,24 +10,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useState } from "react";
-import {
-  BarChart3,
-  Droplets,
-  Layers,
-  FileText,
-  TrendingDown,
-  Info,
-  Rocket,
-  Scale,
-} from "lucide-react";
 
 const moreItems = [
-  { icon: Scale, label: "Índices Físicos", path: "/indices-fisicos" },
-  { icon: Droplets, label: "Limites de Consistência", path: "/limites-consistencia" },
-  { icon: BarChart3, label: "Granulometria", path: "/granulometria" },
-  { icon: Layers, label: "Compactação", path: "/compactacao" },
-  { icon: FileText, label: "Tensões Geostáticas", path: "/tensoes" },
-  { icon: TrendingDown, label: "Acréscimo de Tensões", path: "/acrescimo-tensoes" },
+  { icon: Beaker, label: "Índices Físicos", path: "/indices-fisicos" },
+  { icon: Droplet, label: "Limites de Consistência", path: "/limites-consistencia" },
+  { icon: Filter, label: "Granulometria", path: "/granulometria" },
+  { icon: Database, label: "Compactação", path: "/compactacao" },
+  { icon: Mountain, label: "Tensões Geostáticas", path: "/tensoes" },
+  { icon: Target, label: "Acréscimo de Tensões", path: "/acrescimo-tensoes" },
   { icon: Info, label: "Sobre", path: "/about" },
   { icon: Rocket, label: "Planos Futuros", path: "/planos-futuros" },
 ];

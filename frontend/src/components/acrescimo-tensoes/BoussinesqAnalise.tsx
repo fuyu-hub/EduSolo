@@ -23,6 +23,9 @@ interface BoussinesqAnaliseProps {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+// Função para gerar IDs únicos (alternativa ao crypto.randomUUID para compatibilidade)
+const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+
 /**
  * Calcula a tensão vertical (sigma_z) usando a fórmula de Boussinesq.
  * @param P - Carga pontual (kN)
@@ -187,7 +190,7 @@ export default function BoussinesqAnalise({ onVoltar, onStartTour, onLoadExample
     } else {
       // Criando novo ponto
       const novoPonto: PontoAnalise = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         nome,
         x,
         z,

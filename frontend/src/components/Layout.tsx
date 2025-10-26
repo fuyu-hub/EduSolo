@@ -1,6 +1,6 @@
 // Adiciona React à importação
 import React, { useState, useEffect } from "react";
-import { Menu, Calculator, FileText, BookOpen, Layers, Droplets, BarChart3, TrendingDown, ArrowLeft, Settings, Sun, Moon, Info, Rocket } from "lucide-react";
+import { Menu, Beaker, Droplet, Filter, Database, Mountain, Target, BookOpen, ArrowLeft, Settings, Sun, Moon, Info, Rocket } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
@@ -19,12 +19,12 @@ const menuItems = [
   {
     title: "Análise Geotécnica",
     items: [
-      { icon: Calculator, label: "Índices Físicos", path: "/indices-fisicos", tourId: "" },
-      { icon: Droplets, label: "Limites de Consistência", path: "/limites-consistencia", tourId: "" },
-      { icon: BarChart3, label: "Granulometria", path: "/granulometria", tourId: "" },
-      { icon: Layers, label: "Compactação", path: "/compactacao", tourId: "" },
-      { icon: FileText, label: "Tensões Geostáticas", path: "/tensoes", tourId: "" },
-      { icon: TrendingDown, label: "Acréscimo de Tensões", path: "/acrescimo-tensoes", tourId: "" },
+      { icon: Beaker, label: "Índices Físicos", path: "/indices-fisicos", tourId: "" },
+      { icon: Droplet, label: "Limites de Consistência", path: "/limites-consistencia", tourId: "" },
+      { icon: Filter, label: "Granulometria", path: "/granulometria", tourId: "" },
+      { icon: Database, label: "Compactação", path: "/compactacao", tourId: "" },
+      { icon: Mountain, label: "Tensões Geostáticas", path: "/tensoes", tourId: "" },
+      { icon: Target, label: "Acréscimo de Tensões", path: "/acrescimo-tensoes", tourId: "" },
     ],
   },
   {

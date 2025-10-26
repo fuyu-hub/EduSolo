@@ -32,7 +32,11 @@ export function MobileTabs({ tabs, defaultTab, className }: MobileTabsProps) {
         <div className={cn("px-4", !useGrid && "overflow-x-auto scrollbar-hide")}>
           <div className={cn(
             "gap-2",
-            useGrid ? "grid grid-cols-3" : "flex min-w-max"
+            useGrid 
+              ? tabs.length === 1 ? "grid grid-cols-1"
+                : tabs.length === 2 ? "grid grid-cols-2"
+                : "grid grid-cols-3"
+              : "flex min-w-max"
           )}>
             {tabs.map((tab) => (
               <button

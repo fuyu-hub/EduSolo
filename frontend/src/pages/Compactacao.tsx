@@ -4,7 +4,7 @@ import axios from "axios";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Hammer, Info, Calculator as CalcIcon, Plus, Trash2, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, GraduationCap } from "lucide-react";
+import { Database, Info, Calculator as CalcIcon, Plus, Trash2, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, GraduationCap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -107,6 +107,9 @@ const tooltips = {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+// Função para gerar IDs únicos (alternativa ao crypto.randomUUID para compatibilidade)
+const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+
 function CompactacaoDesktop() {
   const { toast: toastFn } = { toast };
   const { startTour } = useTour();
@@ -120,9 +123,9 @@ function CompactacaoDesktop() {
       Gs: "",
       pesoEspecificoAgua: "10.0",
       pontos: [
-        { id: crypto.randomUUID(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
-        { id: crypto.randomUUID(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
-        { id: crypto.randomUUID(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
+        { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
+        { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
+        { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
       ],
     },
     mode: "onBlur",
@@ -230,11 +233,11 @@ function CompactacaoDesktop() {
         pesoCilindro: "4100",
         Gs: "2.68",
         pontos: [
-          { id: crypto.randomUUID(), pesoAmostaCilindro: "6012.5", pesoBrutoUmido: "106.56", pesoBrutoSeco: "93.69", tara: "24.72" },
-          { id: crypto.randomUUID(), pesoAmostaCilindro: "6102.0", pesoBrutoUmido: "115.23", pesoBrutoSeco: "100.14", tara: "28.65" },
-          { id: crypto.randomUUID(), pesoAmostaCilindro: "6150.0", pesoBrutoUmido: "122.78", pesoBrutoSeco: "104.82", tara: "26.13" },
-          { id: crypto.randomUUID(), pesoAmostaCilindro: "6138.0", pesoBrutoUmido: "118.44", pesoBrutoSeco: "99.28", tara: "25.87" },
-          { id: crypto.randomUUID(), pesoAmostaCilindro: "6095.0", pesoBrutoUmido: "114.92", pesoBrutoSeco: "94.63", tara: "27.41" },
+          { id: generateId(), pesoAmostaCilindro: "6012.5", pesoBrutoUmido: "106.56", pesoBrutoSeco: "93.69", tara: "24.72" },
+          { id: generateId(), pesoAmostaCilindro: "6102.0", pesoBrutoUmido: "115.23", pesoBrutoSeco: "100.14", tara: "28.65" },
+          { id: generateId(), pesoAmostaCilindro: "6150.0", pesoBrutoUmido: "122.78", pesoBrutoSeco: "104.82", tara: "26.13" },
+          { id: generateId(), pesoAmostaCilindro: "6138.0", pesoBrutoUmido: "118.44", pesoBrutoSeco: "99.28", tara: "25.87" },
+          { id: generateId(), pesoAmostaCilindro: "6095.0", pesoBrutoUmido: "114.92", pesoBrutoSeco: "94.63", tara: "27.41" },
         ],
       };
       
@@ -263,7 +266,7 @@ function CompactacaoDesktop() {
   }, [fields.length]);
 
   const addPonto = () => {
-    append({ id: crypto.randomUUID(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" });
+    append({ id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" });
     setCurrentPointIndex(fields.length);
   };
 
@@ -285,9 +288,9 @@ function CompactacaoDesktop() {
       Gs: "",
       pesoEspecificoAgua: "10.0",
       pontos: [
-        { id: crypto.randomUUID(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
-        { id: crypto.randomUUID(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
-        { id: crypto.randomUUID(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
+        { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
+        { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
+        { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
       ],
     });
     setCurrentPointIndex(0);
@@ -301,7 +304,7 @@ function CompactacaoDesktop() {
 
     if (currentLength < targetLength) {
       for (let i = 0; i < targetLength - currentLength; i++) {
-        append({ id: crypto.randomUUID(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" }, { shouldFocus: false });
+        append({ id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" }, { shouldFocus: false });
       }
     } else if (currentLength > targetLength) {
       for (let i = currentLength - 1; i >= targetLength; i--) {
@@ -315,7 +318,7 @@ function CompactacaoDesktop() {
         pesoCilindro: example.pesoCilindro,
         Gs: example.Gs || "",
         pesoEspecificoAgua: "10.0",
-        pontos: example.pontos.map(p => ({ ...p, id: crypto.randomUUID() })),
+        pontos: example.pontos.map(p => ({ ...p, id: generateId() })),
       });
       setCurrentPointIndex(0);
       setResults(null);
@@ -360,11 +363,11 @@ function CompactacaoDesktop() {
       pesoCilindro: "4100",
       Gs: "2.68",
       pontos: [
-        { id: crypto.randomUUID(), pesoAmostaCilindro: "6012.5", pesoBrutoUmido: "106.56", pesoBrutoSeco: "93.69", tara: "24.72" },
-        { id: crypto.randomUUID(), pesoAmostaCilindro: "6102.0", pesoBrutoUmido: "115.23", pesoBrutoSeco: "100.14", tara: "28.65" },
-        { id: crypto.randomUUID(), pesoAmostaCilindro: "6150.0", pesoBrutoUmido: "122.78", pesoBrutoSeco: "104.82", tara: "26.13" },
-        { id: crypto.randomUUID(), pesoAmostaCilindro: "6138.0", pesoBrutoUmido: "118.44", pesoBrutoSeco: "99.28", tara: "25.87" },
-        { id: crypto.randomUUID(), pesoAmostaCilindro: "6095.0", pesoBrutoUmido: "114.92", pesoBrutoSeco: "94.63", tara: "27.41" },
+        { id: generateId(), pesoAmostaCilindro: "6012.5", pesoBrutoUmido: "106.56", pesoBrutoSeco: "93.69", tara: "24.72" },
+        { id: generateId(), pesoAmostaCilindro: "6102.0", pesoBrutoUmido: "115.23", pesoBrutoSeco: "100.14", tara: "28.65" },
+        { id: generateId(), pesoAmostaCilindro: "6150.0", pesoBrutoUmido: "122.78", pesoBrutoSeco: "104.82", tara: "26.13" },
+        { id: generateId(), pesoAmostaCilindro: "6138.0", pesoBrutoUmido: "118.44", pesoBrutoSeco: "99.28", tara: "25.87" },
+        { id: generateId(), pesoAmostaCilindro: "6095.0", pesoBrutoUmido: "114.92", pesoBrutoSeco: "94.63", tara: "27.41" },
       ],
     };
     
@@ -566,8 +569,8 @@ function CompactacaoDesktop() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
-            <Hammer className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
+            <Database className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Ensaio de Compactação</h1>
@@ -611,7 +614,7 @@ function CompactacaoDesktop() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-xl">
-                <CalcIcon className="w-5 h-5" />
+                <Info className="w-5 h-5" />
                 Dados do Ensaio
               </CardTitle>
             </CardHeader>
@@ -742,7 +745,7 @@ function CompactacaoDesktop() {
                   <AccordionItem value="pontos" className="border-0">
                     <AccordionTrigger className="text-sm font-semibold text-foreground bg-accent/5 hover:bg-accent/10 px-3 py-2 rounded-lg border border-accent/20 [&[data-state=open]]:rounded-b-none">
                       <div className="flex items-center gap-1.5">
-                        <Hammer className="w-4 h-4 text-orange-500" />
+                        <Database className="w-4 h-4 text-violet-500" />
                         Pontos de Compactação
                       </div>
                     </AccordionTrigger>
@@ -1002,7 +1005,7 @@ function CompactacaoDesktop() {
               </Carousel>
             ) : (
               <div className="flex flex-col items-center justify-center h-56 text-center">
-                <Hammer className="w-12 h-12 text-orange-500/30 mb-3" />
+                <Database className="w-12 h-12 text-violet-500/30 mb-3" />
                 <p className="text-muted-foreground text-sm">
                   {apiError ? "Corrija os erros para calcular" : "Preencha os dados do ensaio para calcular"}
                 </p>

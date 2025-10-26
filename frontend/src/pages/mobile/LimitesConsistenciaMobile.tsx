@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Droplets, Calculator, Plus, Trash2, BarChart3, Info, Save, Download, FileText, FolderOpen, Lightbulb, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Droplet, Calculator, Plus, Trash2, BarChart3, Info, Save, Download, FileText, FolderOpen, Lightbulb, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -79,7 +79,7 @@ interface Results {
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // Função para gerar IDs únicos
-const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
 export default function LimitesConsistenciaMobile() {
   const { settings } = useSettings();
@@ -471,8 +471,8 @@ export default function LimitesConsistenciaMobile() {
       <div className="bg-gradient-to-r from-cyan-500/10 via-teal-500/5 to-transparent p-4 rounded-xl border border-cyan-500/20">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
-              <Droplets className="w-5 h-5 text-cyan-500" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 via-teal-500 to-emerald-600 flex items-center justify-center">
+              <Droplet className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-foreground">Limites de Consistência</h2>
@@ -512,7 +512,7 @@ export default function LimitesConsistenciaMobile() {
       {/* Pontos de Limite de Liquidez */}
       <MobileSection
         title="Ensaio de Limite de Liquidez (LL)"
-        icon={<Droplets className="w-4 h-4" />}
+        icon={<Droplet className="w-4 h-4" />}
         defaultOpen={true}
       >
         <div className="space-y-4">
@@ -631,7 +631,7 @@ export default function LimitesConsistenciaMobile() {
       {/* Limite de Plasticidade */}
       <MobileSection
         title="Ensaio de Limite de Plasticidade (LP)"
-        icon={<Calculator className="w-4 h-4" />}
+        icon={<Info className="w-4 h-4" />}
         defaultOpen={true}
       >
         <MobileInputGroup
@@ -759,7 +759,7 @@ export default function LimitesConsistenciaMobile() {
                   {/* Limites */}
                   <div className="bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 p-4 space-y-3">
                     <h3 className="font-semibold text-sm flex items-center gap-2">
-                      <Droplets className="w-4 h-4 text-cyan-500" />
+                      <Droplet className="w-4 h-4 text-cyan-500" />
                       Limites de Atterberg
                     </h3>
                     <ResultItem label="LL" value={results.ll} unit="%" />

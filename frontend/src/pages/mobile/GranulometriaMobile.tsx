@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BarChart3, Calculator, Plus, Trash2, Info, Save, Download, FileText, FolderOpen, Lightbulb, AlertCircle, ChevronLeft, ChevronRight, Table as TableIcon } from "lucide-react";
+import { Filter, Calculator, Plus, Trash2, Info, Save, Download, FileText, FolderOpen, Lightbulb, AlertCircle, ChevronLeft, ChevronRight, Table as TableIcon, BarChart3 } from "lucide-react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -90,7 +90,7 @@ interface Results {
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // Função para gerar IDs únicos
-const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
 export default function GranulometriaMobile() {
   const { settings } = useSettings();
@@ -538,7 +538,7 @@ export default function GranulometriaMobile() {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 flex items-center justify-center shadow-md">
-              <BarChart3 className="w-5 h-5 text-white" />
+              <Filter className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-foreground">Granulometria</h2>
@@ -578,7 +578,7 @@ export default function GranulometriaMobile() {
       {/* Massa Total */}
       <MobileSection
         title="Dados da Amostra"
-        icon={<Calculator className="w-4 h-4" />}
+        icon={<Info className="w-4 h-4" />}
         defaultOpen={true}
       >
         <MobileInputGroup
@@ -910,7 +910,7 @@ export default function GranulometriaMobile() {
                   {(results.coef_uniformidade !== null || results.coef_curvatura !== null) && (
                     <div className="bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 p-4 space-y-3">
                       <h3 className="font-semibold text-sm flex items-center gap-2">
-                        <Calculator className="w-4 h-4 text-purple-500" />
+                        <Filter className="w-4 h-4 text-purple-500" />
                         Coeficientes de Graduação
                       </h3>
                       <div className="grid grid-cols-2 gap-2">

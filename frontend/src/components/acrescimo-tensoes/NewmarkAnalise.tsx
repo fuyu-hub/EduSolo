@@ -25,6 +25,9 @@ interface NewmarkAnaliseProps {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+// Função para gerar IDs únicos (alternativa ao crypto.randomUUID para compatibilidade)
+const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+
 export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef }: NewmarkAnaliseProps) {
   // Configurações
   const { settings } = useSettings();
@@ -170,7 +173,7 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
       setCalculoFeito(false);
     } else {
       const novoPonto: PontoAnalise = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         nome,
         x,
         y,

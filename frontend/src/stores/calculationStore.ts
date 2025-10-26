@@ -48,7 +48,7 @@ export const useCalculationStore = create<CalculationState>()(
         set((state) => {
           const newCalculation: CalculationResult = {
             ...calculation,
-            id: `calc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            id: `calc_${Date.now()}_${Math.floor(Math.random() * 1000000)}`,
             timestamp: Date.now(),
           };
 

@@ -50,7 +50,7 @@ export const useAppStore = create<AppState>()(
       set((state) => {
         const newNotification: Notification = {
           ...notification,
-          id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: `notif_${Date.now()}_${Math.floor(Math.random() * 1000000)}`,
           timestamp: Date.now(),
         };
 

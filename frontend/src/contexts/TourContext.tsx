@@ -23,6 +23,8 @@ interface TourContextType {
 
 const TourContext = createContext<TourContextType | undefined>(undefined);
 
+const MOBILE_BREAKPOINT = 768;
+
 export function TourProvider({ children }: { children: React.ReactNode }) {
   const [isActive, setIsActive] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -30,6 +32,11 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
   const [tourId, setTourId] = useState<string | null>(null);
 
   const startTour = useCallback((newSteps: TourStep[], id: string, force: boolean = false) => {
+    // Não iniciar tour em dispositivos móveis
+    if (window.innerWidth < MOBILE_BREAKPOINT) {
+      return;
+    }
+
     // Verificar se o usuário já viu este tour (ignorar se force=true)
     if (!force) {
       const hasSeenTour = localStorage.getItem(`tour-seen-${id}`);

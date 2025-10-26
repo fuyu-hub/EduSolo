@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calculator, BarChart3, Info, Save, Download, FolderOpen, FileText, AlertCircle, Lightbulb } from "lucide-react";
+import { Beaker, Calculator, BarChart3, Info, Save, Download, FolderOpen, FileText, AlertCircle, Lightbulb } from "lucide-react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -417,8 +417,8 @@ export default function IndicesFisicosMobile() {
       <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 rounded-xl border border-primary/20">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-              <Calculator className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 flex items-center justify-center">
+              <Beaker className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-foreground">Índices Físicos</h2>
@@ -662,7 +662,7 @@ export default function IndicesFisicosMobile() {
                   {/* Índices */}
                   <div className="bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 p-4 space-y-3">
                     <h3 className="font-semibold text-sm flex items-center gap-2">
-                      <Info className="w-4 h-4 text-primary" />
+                      <Info className="w-4 h-4" />
                       Índices e Relações
                     </h3>
                     <ResultItem label="Densidade Gs" value={results.Gs} unit="" infoKey="Gs" settings={settings} />

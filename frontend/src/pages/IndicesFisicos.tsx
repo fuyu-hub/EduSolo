@@ -1,6 +1,6 @@
 // frontend/src/pages/IndicesFisicos.tsx
 import { useState, useMemo, useEffect } from "react";
-import { Calculator, Info, BarChart3, ArrowLeft, ArrowRight, Save, FolderOpen, Download, Printer, FileText, AlertCircle, GraduationCap } from "lucide-react";
+import { Beaker, Calculator, Info, BarChart3, ArrowLeft, ArrowRight, Save, FolderOpen, Download, Printer, FileText, AlertCircle, GraduationCap } from "lucide-react";
 import axios from 'axios';
 import { Card } from "@/components/ui/card";
 import { MobileModuleWrapper } from "@/components/mobile";
@@ -587,8 +587,8 @@ function IndicesFisicosDesktop() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
-              <Calculator className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
+              <Beaker className="w-6 h-6 text-white" />
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Índices Físicos</h1>
@@ -632,7 +632,7 @@ function IndicesFisicosDesktop() {
           {/* Input Panel - Ajustes de espaçamento aqui */}
           <Card className="glass p-4 sm:p-6 md:col-span-1 flex flex-col animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
              <h2 className="text-xl font-semibold text-foreground mb-6 flex items-center gap-2"> {/* Aumentado mb-4 para mb-6 */}
-              <Info className="w-5 h-5 text-primary" />
+              <Info className="w-5 h-5" />
               Dados de Entrada
             </h2>
              {/* Aumentado gap e mb */}
@@ -884,7 +884,7 @@ function IndicesFisicosDesktop() {
                   </Carousel>
                 ) : (
                    <div className="flex flex-col items-center justify-center min-h-[150px] text-center">
-                    <Calculator className="w-16 h-16 text-muted-foreground/30 mb-4" />
+                    <Beaker className="w-16 h-16 text-muted-foreground/30 mb-4" />
                     <p className="text-muted-foreground">
                       {error ? "Corrija o erro para ver os resultados" : "Os resultados serão exibidos aqui"}
                     </p>

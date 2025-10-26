@@ -1,7 +1,6 @@
 import { useEffect } from "react";
-import { TrendingDown, Layers, Circle, Square, MapPin, GraduationCap } from "lucide-react";
+import { Target, Layers, Circle, Square, MapPin, GraduationCap, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PrintHeader from "@/components/PrintHeader";
@@ -138,8 +137,8 @@ export default function AcrescimoTensoes() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="header">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-lg">
-            <TrendingDown className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-orange-500 via-red-500 to-rose-600 flex items-center justify-center shadow-lg">
+            <Target className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Acréscimo de Tensões</h1>

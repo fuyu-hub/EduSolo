@@ -45,7 +45,7 @@ export function useSavedCalculations(moduleName: string) {
       }
 
       const newCalculation: SavedCalculation = {
-        id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `${Date.now()}_${Math.floor(Math.random() * 1000000)}`,
         moduleName,
         name,
         timestamp: new Date().toISOString(),
