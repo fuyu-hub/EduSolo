@@ -37,28 +37,16 @@ interface ThemeOption {
 
 const themeColors: ThemeOption[] = [
   {
-    value: "soil",
-    label: "Terra Natural",
-    description: "Tema oficial EduSolo",
-    colors: ["25 65% 58%", "25 65% 48%", "25 65% 38%", "99 78% 36%", "25 50% 33%"],
-  },
-  {
     value: "indigo",
     label: "Índigo Profundo",
     description: "Sofisticado e intenso",
     colors: ["238 84% 62%", "238 84% 52%", "238 84% 42%", "241 86% 36%", "244 88% 30%"],
   },
   {
-    value: "blue",
-    label: "Azul Céu",
-    description: "Profissional e sereno",
-    colors: ["200 98% 60%", "200 98% 50%", "200 98% 40%", "210 100% 35%", "215 100% 30%"],
-  },
-  {
-    value: "cyan",
-    label: "Ciano Água",
-    description: "Fresco e luminoso",
-    colors: ["189 94% 55%", "189 94% 45%", "189 94% 35%", "192 96% 30%", "195 98% 25%"],
+    value: "soil",
+    label: "Terra Natural",
+    description: "Tema oficial EduSolo",
+    colors: ["25 65% 58%", "25 65% 48%", "25 65% 38%", "99 78% 36%", "25 50% 33%"],
   },
   {
     value: "green",
@@ -73,28 +61,10 @@ const themeColors: ThemeOption[] = [
     colors: ["38 92% 58%", "38 92% 48%", "38 92% 38%", "35 92% 33%", "32 92% 28%"],
   },
   {
-    value: "orange",
-    label: "Laranja Energia",
-    description: "Vibrante e dinâmico",
-    colors: ["24 95% 60%", "24 95% 50%", "24 95% 40%", "20 95% 35%", "16 95% 30%"],
-  },
-  {
     value: "red",
-    label: "Vermelho Paixão",
+    label: "Vermelho Coral",
     description: "Forte e determinado",
     colors: ["358 75% 59%", "358 75% 49%", "358 75% 39%", "0 78% 34%", "2 80% 29%"],
-  },
-  {
-    value: "pink",
-    label: "Rosa Coral",
-    description: "Elegante e caloroso",
-    colors: ["346 77% 60%", "346 77% 50%", "346 77% 40%", "350 80% 35%", "354 82% 30%"],
-  },
-  {
-    value: "purple",
-    label: "Roxo Vibrante",
-    description: "Criativo e moderno",
-    colors: ["262 83% 58%", "262 83% 48%", "262 83% 38%", "265 85% 32%", "268 88% 28%"],
   },
 ];
 
