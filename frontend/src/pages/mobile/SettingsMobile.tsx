@@ -74,6 +74,12 @@ const themeColors: ThemeOption[] = [
     description: "Forte e determinado",
     colors: ["358 75% 59%", "358 75% 49%", "358 75% 39%", "0 78% 34%", "2 80% 29%"],
   },
+  {
+    value: "slate",
+    label: "Minimalista",
+    description: "Clean e com bordas definidas",
+    colors: ["0 0% 85%", "0 0% 70%", "0 0% 50%", "0 0% 30%", "0 0% 15%"],
+  },
 ];
 
 export default function SettingsMobile() {
@@ -484,9 +490,35 @@ export default function SettingsMobile() {
           <SheetHeader>
             <SheetTitle>Escolha sua Cor</SheetTitle>
           </SheetHeader>
-          <div className="mt-6 space-y-3 overflow-y-auto max-h-[calc(70vh-100px)]">
+          <div className="mt-6 grid grid-cols-1 gap-4 overflow-y-auto max-h-[calc(70vh-100px)] pb-4 scrollbar-hide">
             {themeColors.map((themeOption) => {
               const isSelected = theme.color === themeOption.value;
+              
+              // Função para converter HSL para HEX
+              const hslToHex = (hsl: string) => {
+                const [h, s, l] = hsl.split(' ').map(v => parseFloat(v));
+                const sDecimal = s / 100;
+                const lDecimal = l / 100;
+                
+                const c = (1 - Math.abs(2 * lDecimal - 1)) * sDecimal;
+                const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+                const m = lDecimal - c / 2;
+                
+                let r = 0, g = 0, b = 0;
+                if (h < 60) { r = c; g = x; b = 0; }
+                else if (h < 120) { r = x; g = c; b = 0; }
+                else if (h < 180) { r = 0; g = c; b = x; }
+                else if (h < 240) { r = 0; g = x; b = c; }
+                else if (h < 300) { r = x; g = 0; b = c; }
+                else { r = c; g = 0; b = x; }
+                
+                const toHex = (n: number) => {
+                  const hex = Math.round((n + m) * 255).toString(16);
+                  return hex.length === 1 ? '0' + hex : hex;
+                };
+                
+                return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+              };
               
               return (
                 <button
@@ -500,35 +532,38 @@ export default function SettingsMobile() {
                     });
                   }}
                   className={cn(
-                    "w-full p-4 rounded-xl bg-secondary/50 hover:bg-secondary border-2 transition-all active:scale-95 text-left focus-visible:outline-none [-webkit-tap-highlight-color:transparent]",
-                    isSelected ? "border-primary/50" : "border-transparent"
+                    "h-[100px] rounded-xl overflow-hidden transition-all duration-300 active:scale-95 focus-visible:outline-none [-webkit-tap-highlight-color:transparent]",
+                    isSelected && "ring-4 ring-primary ring-offset-2 scale-[1.02]"
                   )}
+                  style={{
+                    boxShadow: isSelected 
+                      ? "0 10px 40px rgba(0,0,0,0.15)" 
+                      : "0 10px 20px rgba(0,0,0,0.08)"
+                  }}
                 >
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-14 h-14 rounded-xl shadow-md flex-shrink-0"
-                      style={{
-                        background: `linear-gradient(135deg, hsl(${themeOption.colors[0]}) 0%, hsl(${themeOption.colors[2]}) 100%)`,
-                      }}
-                    />
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-foreground flex items-center gap-2">
-                        {themeOption.label}
-                        {isSelected && <Check className="w-4 h-4 text-primary" />}
-                      </h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">{themeOption.description}</p>
-                      
-                      {/* Mini paleta */}
-                      <div className="flex gap-1 mt-2">
-                        {themeOption.colors.slice(0, 5).map((color, index) => (
-                          <div
-                            key={index}
-                            className="w-5 h-5 rounded border border-background/50"
-                            style={{ backgroundColor: `hsl(${color})` }}
-                          />
-                        ))}
+                  {/* Palette Section - 86% height */}
+                  <div className="flex h-[86%] w-full">
+                    {themeOption.colors.slice(0, 5).map((color, index) => (
+                      <div
+                        key={index}
+                        className="palette-color h-full flex-1 flex items-center justify-center text-white text-[9px] font-medium tracking-tight"
+                        style={{ 
+                          backgroundColor: `hsl(${color})`,
+                        }}
+                      >
+                        <span className="rotate-180 [writing-mode:vertical-lr]">
+                          {hslToHex(color)}
+                        </span>
                       </div>
-                    </div>
+                    ))}
+                  </div>
+                  
+                  {/* Stats Section - 14% height */}
+                  <div className="h-[14%] w-full bg-card flex items-center justify-between px-3 text-[10px]">
+                    <span className="font-medium text-foreground">{themeOption.label}</span>
+                    {isSelected && (
+                      <Check className="w-3 h-3 text-primary" strokeWidth={3} />
+                    )}
                   </div>
                 </button>
               );

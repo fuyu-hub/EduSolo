@@ -66,6 +66,12 @@ const themeColors: ThemeOption[] = [
     description: "Forte e determinado",
     colors: ["358 75% 59%", "358 75% 49%", "358 75% 39%", "0 78% 34%", "2 80% 29%"],
   },
+  {
+    value: "slate",
+    label: "Minimalista",
+    description: "Clean e com bordas definidas",
+    colors: ["0 0% 85%", "0 0% 70%", "0 0% 50%", "0 0% 30%", "0 0% 15%"],
+  },
 ];
 
 function SettingsDesktop() {
@@ -159,78 +165,80 @@ function SettingsDesktop() {
             <p className="text-sm text-muted-foreground">Defina a personalidade do design com acentos perfeitos</p>
           </div>
           
-          {/* Seletor de Cores em Círculos */}
-          <div className="flex flex-wrap items-center gap-4 p-6 rounded-xl bg-gradient-to-br from-background/50 to-muted/20 border border-border/50">
+          {/* Cards de Paleta de Cores */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {themeColors.map((themeOption) => {
               const isSelected = theme.color === themeOption.value;
-              const primaryColor = themeOption.colors[0];
+              
+              // Função para converter HSL para HEX
+              const hslToHex = (hsl: string) => {
+                const [h, s, l] = hsl.split(' ').map(v => parseFloat(v));
+                const sDecimal = s / 100;
+                const lDecimal = l / 100;
+                
+                const c = (1 - Math.abs(2 * lDecimal - 1)) * sDecimal;
+                const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+                const m = lDecimal - c / 2;
+                
+                let r = 0, g = 0, b = 0;
+                if (h < 60) { r = c; g = x; b = 0; }
+                else if (h < 120) { r = x; g = c; b = 0; }
+                else if (h < 180) { r = 0; g = c; b = x; }
+                else if (h < 240) { r = 0; g = x; b = c; }
+                else if (h < 300) { r = x; g = 0; b = c; }
+                else { r = c; g = 0; b = x; }
+                
+                const toHex = (n: number) => {
+                  const hex = Math.round((n + m) * 255).toString(16);
+                  return hex.length === 1 ? '0' + hex : hex;
+                };
+                
+                return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
+              };
               
               return (
-                <Tooltip key={themeOption.value}>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => setThemeColor(themeOption.value)}
-                      className={cn(
-                        "relative w-14 h-14 rounded-full transition-all duration-300 hover:scale-110",
-                        "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
-                        isSelected && "scale-110"
-                      )}
-                      style={{
-                        backgroundColor: `hsl(${primaryColor})`,
-                        boxShadow: isSelected 
-                          ? `0 0 0 3px hsl(var(--background)), 0 0 0 5px hsl(${primaryColor}), 0 8px 24px -4px hsl(${primaryColor} / 0.5)`
-                          : `0 4px 12px -2px hsl(${primaryColor} / 0.3)`,
-                      }}
-                      aria-label={`Selecionar tema ${themeOption.label}`}
-                    >
-                      {isSelected && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Check className="w-6 h-6 text-white drop-shadow-lg" strokeWidth={3} />
-                        </div>
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <div className="text-center">
-                      <p className="font-semibold">{themeOption.label}</p>
-                      <p className="text-xs text-muted-foreground">{themeOption.description}</p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
+                <button
+                  key={themeOption.value}
+                  onClick={() => setThemeColor(themeOption.value)}
+                  className={cn(
+                    "h-[100px] rounded-xl overflow-hidden transition-all duration-300",
+                    "hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
+                    isSelected && "ring-4 ring-primary ring-offset-2 scale-[1.02]"
+                  )}
+                  style={{
+                    boxShadow: isSelected 
+                      ? "0 10px 40px rgba(0,0,0,0.15)" 
+                      : "0 10px 20px rgba(0,0,0,0.08)"
+                  }}
+                >
+                  {/* Palette Section - 86% height */}
+                  <div className="flex h-[86%] w-full">
+                    {themeOption.colors.slice(0, 5).map((color, index) => (
+                      <div
+                        key={index}
+                        className="palette-color h-full flex-1 flex items-center justify-center text-white text-[9px] font-medium tracking-tight"
+                        style={{ 
+                          backgroundColor: `hsl(${color})`,
+                        }}
+                      >
+                        <span className="rotate-180 [writing-mode:vertical-lr]">
+                          {hslToHex(color)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Stats Section - 14% height */}
+                  <div className="h-[14%] w-full bg-card flex items-center justify-between px-3 text-[10px]">
+                    <span className="font-medium text-foreground">{themeOption.label}</span>
+                    {isSelected && (
+                      <Check className="w-3 h-3 text-primary" strokeWidth={3} />
+                    )}
+                  </div>
+                </button>
               );
             })}
           </div>
-
-          {/* Preview do Tema Selecionado */}
-          <Card className="glass p-5 border-l-4 border-l-primary">
-            <div className="flex items-start gap-4">
-              <div 
-                className="w-16 h-16 rounded-xl shadow-lg flex-shrink-0"
-                style={{
-                  background: `linear-gradient(135deg, hsl(${themeColors.find(t => t.value === theme.color)?.colors[0]}) 0%, hsl(${themeColors.find(t => t.value === theme.color)?.colors[2]}) 100%)`,
-                }}
-              />
-              <div className="flex-1">
-                <h4 className="text-base font-semibold text-foreground mb-1">
-                  {themeColors.find(t => t.value === theme.color)?.label}
-                </h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  {themeColors.find(t => t.value === theme.color)?.description}
-                </p>
-                {/* Mini paleta */}
-                <div className="flex gap-1.5">
-                  {themeColors.find(t => t.value === theme.color)?.colors.map((color, index) => (
-                    <div
-                      key={index}
-                      className="w-8 h-8 rounded-md border-2 border-background shadow-sm"
-                      style={{ backgroundColor: `hsl(${color})` }}
-                      title={`Cor ${index + 1}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </Card>
         </div>
       </section>
 
