@@ -2,8 +2,10 @@ import { useEffect, useRef } from "react";
 import BoussinesqAnalise from "@/components/acrescimo-tensoes/BoussinesqAnalise";
 import { useNavigate } from "react-router-dom";
 import { useTour, TourStep } from "@/contexts/TourContext";
+import { MobileModuleWrapper } from "@/components/mobile";
+import BoussinesqMobile from "../mobile/BoussinesqMobile";
 
-export default function BoussinesqPage() {
+function BoussinesqPageDesktop() {
   const navigate = useNavigate();
   const { startTour } = useTour();
   const loadExampleRef = useRef<(() => void) | null>(null);
@@ -84,5 +86,14 @@ export default function BoussinesqPage() {
   };
   
   return <BoussinesqAnalise onVoltar={handleVoltar} onStartTour={handleStartTour} onLoadExampleRef={loadExampleRef} />;
+}
+
+// Wrapper principal que escolhe versão mobile ou desktop
+export default function BoussinesqPage() {
+  return (
+    <MobileModuleWrapper mobileVersion={<BoussinesqMobile />}>
+      <BoussinesqPageDesktop />
+    </MobileModuleWrapper>
+  );
 }
 

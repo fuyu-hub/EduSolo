@@ -6,6 +6,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import PrintHeader from "@/components/PrintHeader";
 import { useNavigate } from "react-router-dom";
 import { useTour, TourStep } from "@/contexts/TourContext";
+import { MobileModuleWrapper } from "@/components/mobile";
+import AcrescimoTensoesMobile from "./mobile/AcrescimoTensoesMobile";
 
 const metodos = [
   {
@@ -54,7 +56,7 @@ const metodos = [
   },
 ];
 
-export default function AcrescimoTensoes() {
+function AcrescimoTensoesDesktop() {
   const navigate = useNavigate();
   const { startTour } = useTour();
 
@@ -258,5 +260,14 @@ export default function AcrescimoTensoes() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+// Wrapper principal que escolhe versão mobile ou desktop
+export default function AcrescimoTensoes() {
+  return (
+    <MobileModuleWrapper mobileVersion={<AcrescimoTensoesMobile />}>
+      <AcrescimoTensoesDesktop />
+    </MobileModuleWrapper>
   );
 }
