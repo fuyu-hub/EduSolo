@@ -126,7 +126,7 @@ export default function LimitesConsistenciaMobile() {
   // Estados para exemplos
   const [examplesSheetOpen, setExamplesSheetOpen] = useState(false);
 
-  // Sincronizar carousel com índice atual
+  // Sincronizar carousel LL com índice atual
   useEffect(() => {
     if (!carouselApi) return;
     
@@ -134,6 +134,15 @@ export default function LimitesConsistenciaMobile() {
       setCurrentPointIndex(carouselApi.selectedScrollSnap());
     });
   }, [carouselApi]);
+
+  // Sincronizar carousel LP com índice atual
+  useEffect(() => {
+    if (!carouselApiLP) return;
+    
+    carouselApiLP.on("select", () => {
+      setCurrentLPIndex(carouselApiLP.selectedScrollSnap());
+    });
+  }, [carouselApiLP]);
 
   const handleInputChangeLL = (index: number, field: keyof PontoLL, value: string) => {
     const newPontos = [...formData.pontosLL];
@@ -219,12 +228,14 @@ export default function LimitesConsistenciaMobile() {
   const goToNextLP = () => {
     if (currentLPIndex < formData.pontosLP.length - 1) {
       setCurrentLPIndex(currentLPIndex + 1);
+      carouselApiLP?.scrollTo(currentLPIndex + 1);
     }
   };
 
   const goToPreviousLP = () => {
     if (currentLPIndex > 0) {
       setCurrentLPIndex(currentLPIndex - 1);
+      carouselApiLP?.scrollTo(currentLPIndex - 1);
     }
   };
 
@@ -773,47 +784,46 @@ export default function LimitesConsistenciaMobile() {
             </Button>
           </div>
 
-          {/* Cards de Ensaios LP */}
-          <div className="space-y-3">
-            {formData.pontosLP.map((ponto, index) => (
-              <div 
-                key={ponto.id}
-                style={{ display: index === currentLPIndex ? 'block' : 'none' }}
-              >
-                <div className="p-3 rounded-lg bg-card/50 backdrop-blur-sm border border-border/50 space-y-3">
-                  <MobileInputGroup
-                    label="Massa Úmida + Recipiente"
-                    value={ponto.massaUmidaRecipiente}
-                    onChange={(v) => handleInputChangeLP(index, "massaUmidaRecipiente", v)}
-                    placeholder="Ex: 32.4"
-                    unit="g"
-                    required
-                    tooltip="Massa do recipiente + solo úmido"
-                  />
+          {/* Carousel de Ensaios LP */}
+          <Carousel setApi={setCarouselApiLP} className="w-full">
+            <CarouselContent>
+              {formData.pontosLP.map((ponto, index) => (
+                <CarouselItem key={ponto.id}>
+                  <div className="p-3 rounded-lg bg-card/50 backdrop-blur-sm border border-border/50 space-y-3">
+                    <MobileInputGroup
+                      label="Massa Úmida + Recipiente"
+                      value={ponto.massaUmidaRecipiente}
+                      onChange={(v) => handleInputChangeLP(index, "massaUmidaRecipiente", v)}
+                      placeholder="Ex: 32.4"
+                      unit="g"
+                      required
+                      tooltip="Massa do recipiente + solo úmido"
+                    />
 
-                  <MobileInputGroup
-                    label="Massa Seca + Recipiente"
-                    value={ponto.massaSecaRecipiente}
-                    onChange={(v) => handleInputChangeLP(index, "massaSecaRecipiente", v)}
-                    placeholder="Ex: 30.1"
-                    unit="g"
-                    required
-                    tooltip="Massa do recipiente + solo seco"
-                  />
+                    <MobileInputGroup
+                      label="Massa Seca + Recipiente"
+                      value={ponto.massaSecaRecipiente}
+                      onChange={(v) => handleInputChangeLP(index, "massaSecaRecipiente", v)}
+                      placeholder="Ex: 30.1"
+                      unit="g"
+                      required
+                      tooltip="Massa do recipiente + solo seco"
+                    />
 
-                  <MobileInputGroup
-                    label="Massa do Recipiente"
-                    value={ponto.massaRecipiente}
-                    onChange={(v) => handleInputChangeLP(index, "massaRecipiente", v)}
-                    placeholder="Ex: 15.0"
-                    unit="g"
-                    required
-                    tooltip="Massa do recipiente vazio (tara)"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+                    <MobileInputGroup
+                      label="Massa do Recipiente"
+                      value={ponto.massaRecipiente}
+                      onChange={(v) => handleInputChangeLP(index, "massaRecipiente", v)}
+                      placeholder="Ex: 15.0"
+                      unit="g"
+                      required
+                      tooltip="Massa do recipiente vazio (tara)"
+                    />
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
 
           {/* Botões de Ação */}
           <div className="flex gap-2">
