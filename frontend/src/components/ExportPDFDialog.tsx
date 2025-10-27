@@ -16,6 +16,9 @@ interface ExportPDFDialogProps {
   onOpenChange: (open: boolean) => void;
   fileName: string;
   onFileNameChange: (name: string) => void;
+  customTitle?: string;
+  onCustomTitleChange?: (title: string) => void;
+  showCustomTitle?: boolean;
   onConfirm: () => void;
   isExporting?: boolean;
 }
@@ -25,6 +28,9 @@ export default function ExportPDFDialog({
   onOpenChange,
   fileName,
   onFileNameChange,
+  customTitle = "",
+  onCustomTitleChange,
+  showCustomTitle = false,
   onConfirm,
   isExporting = false,
 }: ExportPDFDialogProps) {
@@ -50,6 +56,24 @@ export default function ExportPDFDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
+          {/* Título Personalizado do Relatório */}
+          {showCustomTitle && (
+            <div className="space-y-2">
+              <Label htmlFor="custom-title">Título do Relatório (Opcional)</Label>
+              <Input
+                id="custom-title"
+                value={customTitle}
+                onChange={(e) => onCustomTitleChange?.(e.target.value)}
+                placeholder="Ex: Relatório Geotécnico - Obra ABC"
+                disabled={isExporting}
+              />
+              <p className="text-xs text-muted-foreground">
+                Este título aparecerá no cabeçalho do PDF
+              </p>
+            </div>
+          )}
+
+          {/* Nome do Arquivo */}
           <div className="space-y-2">
             <Label htmlFor="file-name">Nome do Arquivo</Label>
             <Input

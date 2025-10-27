@@ -89,33 +89,47 @@ export function calcularLimitesConsistencia(
     let ll_calculado = slope * LOG10_25 + intercept;
     if (ll_calculado < 0) ll_calculado = 0;
 
-    // Calcular LP
-    if (dados.massa_umida_recipiente_lp < dados.massa_seca_recipiente_lp) {
-      throw new Error(
-        `Ensaio LP: Massa úmida (${dados.massa_umida_recipiente_lp}g) menor que massa seca (${dados.massa_seca_recipiente_lp}g).`
-      );
-    }
-    if (dados.massa_seca_recipiente_lp < dados.massa_recipiente_lp) {
-      throw new Error(
-        `Ensaio LP: Massa seca (${dados.massa_seca_recipiente_lp}g) menor que massa do recipiente (${dados.massa_recipiente_lp}g).`
-      );
+    // Calcular LP (média de múltiplos ensaios)
+    if (!dados.pontos_lp || dados.pontos_lp.length === 0) {
+      throw new Error('É necessário pelo menos 1 ensaio de LP.');
     }
 
-    const massa_agua_lp = dados.massa_umida_recipiente_lp - dados.massa_seca_recipiente_lp;
-    const massa_seca_lp = dados.massa_seca_recipiente_lp - dados.massa_recipiente_lp;
+    const lps_calculados: number[] = [];
+    
+    for (let i = 0; i < dados.pontos_lp.length; i++) {
+      const ponto_lp = dados.pontos_lp[i];
+      
+      if (ponto_lp.massa_umida_recipiente < ponto_lp.massa_seca_recipiente) {
+        throw new Error(
+          `Ensaio LP ${i + 1}: Massa úmida (${ponto_lp.massa_umida_recipiente}g) menor que massa seca (${ponto_lp.massa_seca_recipiente}g).`
+        );
+      }
+      if (ponto_lp.massa_seca_recipiente < ponto_lp.massa_recipiente) {
+        throw new Error(
+          `Ensaio LP ${i + 1}: Massa seca (${ponto_lp.massa_seca_recipiente}g) menor que massa do recipiente (${ponto_lp.massa_recipiente}g).`
+        );
+      }
 
-    if (massa_seca_lp <= EPSILON) {
-      throw new Error(
-        `Ensaio LP: Massa seca calculada é zero ou negativa (${massa_seca_lp.toFixed(2)}g).`
-      );
-    }
-    if (massa_agua_lp < 0) {
-      throw new Error(
-        `Ensaio LP: Massa de água calculada é negativa (${massa_agua_lp.toFixed(2)}g).`
-      );
+      const massa_agua_lp = ponto_lp.massa_umida_recipiente - ponto_lp.massa_seca_recipiente;
+      const massa_seca_lp = ponto_lp.massa_seca_recipiente - ponto_lp.massa_recipiente;
+
+      if (massa_seca_lp <= EPSILON) {
+        throw new Error(
+          `Ensaio LP ${i + 1}: Massa seca calculada é zero ou negativa (${massa_seca_lp.toFixed(2)}g).`
+        );
+      }
+      if (massa_agua_lp < 0) {
+        throw new Error(
+          `Ensaio LP ${i + 1}: Massa de água calculada é negativa (${massa_agua_lp.toFixed(2)}g).`
+        );
+      }
+
+      const lp_ensaio = (massa_agua_lp / massa_seca_lp) * 100;
+      lps_calculados.push(lp_ensaio);
     }
 
-    let lp_calculado = (massa_agua_lp / massa_seca_lp) * 100;
+    // Calcular média do LP
+    let lp_calculado = lps_calculados.reduce((a, b) => a + b, 0) / lps_calculados.length;
     if (lp_calculado < 0) lp_calculado = 0;
 
     // Calcular IP

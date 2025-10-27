@@ -54,8 +54,8 @@ const themeColors: ThemeOption[] = [
   {
     value: "soil",
     label: "Terra Natural",
-    description: "Tema oficial EduSolo",
-    colors: ["25 65% 58%", "25 65% 48%", "25 65% 38%", "99 78% 36%", "25 50% 33%"],
+    description: "Tema oficial EduSolo - tons terrosos vibrantes",
+    colors: ["28 72% 65%", "28 70% 55%", "28 68% 45%", "28 66% 38%", "28 60% 30%"],
   },
   {
     value: "green",
@@ -779,21 +779,15 @@ export default function SettingsMobile() {
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-foreground">Elementos do Documento</h4>
               
-              {/* Incluir Logo */}
-              <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50">
-                <div className="flex-1 pr-3">
-                  <Label className="text-sm font-medium">Incluir Logo EduSolo</Label>
-                  <p className="text-xs text-muted-foreground mt-0.5">Logo no cabeçalho do PDF</p>
+              {/* Logo sempre incluído - informativo */}
+              <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-primary" />
+                  <div className="flex-1">
+                    <Label className="text-sm font-medium text-foreground">Logo EduSolo</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">O logo será sempre incluído no cabeçalho do PDF</p>
+                  </div>
                 </div>
-                <Switch
-                  variant="ios"
-                  checked={settings.printSettings.includeLogo}
-                  onCheckedChange={(checked) => 
-                    updateSettings({ 
-                      printSettings: { ...settings.printSettings, includeLogo: checked } 
-                    })
-                  }
-                />
               </div>
 
               {/* Incluir Data */}
@@ -808,6 +802,23 @@ export default function SettingsMobile() {
                   onCheckedChange={(checked) => 
                     updateSettings({ 
                       printSettings: { ...settings.printSettings, includeDate: checked } 
+                    })
+                  }
+                />
+              </div>
+
+              {/* Título Personalizado */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50">
+                <div className="flex-1 pr-3">
+                  <Label className="text-sm font-medium">Título Personalizado</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">Adicionar título ao exportar</p>
+                </div>
+                <Switch
+                  variant="ios"
+                  checked={settings.printSettings.includeCustomTitle}
+                  onCheckedChange={(checked) => 
+                    updateSettings({ 
+                      printSettings: { ...settings.printSettings, includeCustomTitle: checked } 
                     })
                   }
                 />
@@ -877,6 +888,7 @@ export default function SettingsMobile() {
                     paperSize: "A4",
                     useDynamicTheme: true,
                     fixedTheme: "indigo",
+                    includeCustomTitle: false,
                   }
                 });
                 toast({

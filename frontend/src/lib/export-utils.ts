@@ -54,6 +54,7 @@ export interface PrintSettings {
   paperSize?: PaperSize;
   useDynamicTheme?: boolean; // Se true, usa o tema atual; se false, usa tema fixo
   fixedTheme?: string; // Tema fixo quando useDynamicTheme é false
+  includeCustomTitle?: boolean; // Se true, permite adicionar título personalizado no PDF
 }
 
 export interface ExportData {
@@ -66,6 +67,7 @@ export interface ExportData {
   tables?: { title: string; headers: string[]; rows: (string | number)[][] }[];
   chartImage?: string; // Base64 image de gráficos
   customFileName?: string; // Nome customizado para o arquivo
+  customTitle?: string; // Título personalizado do relatório (aparece no cabeçalho do PDF)
   theme?: { color: ThemeColor; mode: ThemeMode }; // Tema atual do app (pode ser dinâmico)
   printSettings?: PrintSettings; // Configurações de impressão
 }
@@ -504,19 +506,19 @@ function obterPaletaCores(theme?: { color: ThemeColor; mode: ThemeMode }) {
   // Forçar sempre tema claro para PDFs
   const themeMode = 'light';
   
-  // Cores primárias por tema
+  // Cores primárias por tema (usando as cores mais escuras da paleta)
   const colorMap: Record<ThemeColor, { r: number; g: number; b: number }> = {
-    soil: { r: 138, g: 99, b: 69 },       // Terra Natural (tema oficial)
-    blue: { r: 59, g: 130, b: 246 },      // blue-500
-    green: { r: 34, g: 197, b: 94 },      // green-500
-    purple: { r: 168, g: 85, b: 247 },    // purple-500
-    pink: { r: 236, g: 72, b: 153 },      // pink-500
-    orange: { r: 249, g: 115, b: 22 },    // orange-500
-    cyan: { r: 6, g: 182, b: 212 },       // cyan-500
-    amber: { r: 245, g: 158, b: 11 },     // amber-500
-    indigo: { r: 99, g: 102, b: 241 },    // indigo-500
-    red: { r: 239, g: 68, b: 68 },        // red-500
-    slate: { r: 100, g: 116, b: 139 },    // slate-500
+    soil: { r: 72, g: 48, b: 30 },        // Terra Natural - cor mais escura (28 60% 30%)
+    blue: { r: 30, g: 58, b: 138 },       // Blue - tom mais escuro
+    green: { r: 20, g: 108, b: 64 },      // Green - tom mais escuro (148 85% 25%)
+    purple: { r: 91, g: 33, b: 182 },     // Purple - tom mais escuro
+    pink: { r: 157, g: 23, b: 77 },       // Pink - tom mais escuro
+    orange: { r: 154, g: 52, b: 18 },     // Orange - tom mais escuro
+    cyan: { r: 8, g: 145, b: 178 },       // Cyan - tom mais escuro
+    amber: { r: 146, g: 64, b: 14 },      // Amber - tom mais escuro (32 92% 28%)
+    indigo: { r: 55, g: 48, b: 163 },     // Indigo - tom mais escuro (244 88% 30%)
+    red: { r: 153, g: 27, b: 27 },        // Red - tom mais escuro (2 80% 29%)
+    slate: { r: 30, g: 41, b: 59 },       // Slate - tom mais escuro (0 0% 15%)
   };
   
   const primaryColor = colorMap[themeColor];
@@ -526,12 +528,8 @@ function obterPaletaCores(theme?: { color: ThemeColor; mode: ThemeMode }) {
     // Cor primária do tema
     primary: primaryColor,
     
-    // Cor mais escura para cabeçalhos
-    primaryDark: {
-      r: Math.max(0, primaryColor.r - 40),
-      g: Math.max(0, primaryColor.g - 40),
-      b: Math.max(0, primaryColor.b - 40),
-    },
+    // Cor mais escura para cabeçalhos (já estamos usando a cor mais escura, então mantém igual)
+    primaryDark: primaryColor,
     
     // Fundo do cabeçalho principal
     headerBg: primaryColor,
@@ -653,6 +651,15 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
     doc.text(data.moduleTitle, margin + 5, yPosition + 3);
     doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
     yPosition += 16;
+
+    // Título personalizado do relatório (se fornecido)
+    if (data.customTitle && data.customTitle.trim() !== '') {
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(colors.primary.r, colors.primary.g, colors.primary.b);
+      doc.text(data.customTitle, margin + 5, yPosition);
+      yPosition += 10;
+    }
 
     // Seção de Dados de Entrada
     if (data.inputs.length > 0) {

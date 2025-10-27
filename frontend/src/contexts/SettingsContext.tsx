@@ -15,6 +15,7 @@ export interface PrintSettings {
   paperSize: PaperSize;
   useDynamicTheme: boolean; // Se true, usa o tema atual; se false, usa tema fixo
   fixedTheme?: string; // Tema fixo quando useDynamicTheme é false
+  includeCustomTitle: boolean; // Se true, permite adicionar título personalizado no PDF
 }
 
 export interface AppSettings {
@@ -61,6 +62,7 @@ const defaultSettings: AppSettings = {
     paperSize: "A4",
     useDynamicTheme: true,
     fixedTheme: "indigo",
+    includeCustomTitle: false,
   },
 };
 

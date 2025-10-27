@@ -65,31 +65,36 @@ const pontoLLSchema = z.object({
   path: ["massaSecaRecipiente"],
 });
 
+const pontoLPSchema = z.object({
+  id: z.string(),
+  massaUmidaRecipiente: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser maior que 0" }),
+  massaSecaRecipiente: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser maior que 0" }),
+  massaRecipiente: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, { message: "Deve ser maior ou igual a 0" }),
+}).refine(data => {
+    const mu = parseFloat(data.massaUmidaRecipiente);
+    const ms = parseFloat(data.massaSecaRecipiente);
+    return isNaN(mu) || isNaN(ms) || mu >= ms;
+}, {
+  message: "Massa úmida deve ser maior ou igual à massa seca",
+  path: ["massaUmidaRecipiente"],
+}).refine(data => {
+    const msr = parseFloat(data.massaSecaRecipiente);
+    const mr = parseFloat(data.massaRecipiente);
+    return isNaN(msr) || isNaN(mr) || msr >= mr;
+}, {
+  message: "Massa seca+recipiente deve ser maior ou igual à massa do recipiente",
+  path: ["massaSecaRecipiente"],
+});
+
 const formSchema = z.object({
   pontosLL: z.array(pontoLLSchema).min(2, { message: "São necessários pelo menos 2 pontos de ensaio válidos" }),
-  massaUmidaRecipienteLP: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser maior que 0" }),
-  massaSecaRecipienteLP: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser maior que 0" }),
-  massaRecipienteLP: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, { message: "Deve ser maior ou igual a 0" }),
+  pontosLP: z.array(pontoLPSchema).min(1, { message: "É necessário pelo menos 1 ensaio de LP" }),
   umidadeNatural: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0), {
       message: "Deve ser maior ou igual a 0 (ou deixe vazio)",
   }),
   percentualArgila: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0 && parseFloat(val) <= 100), {
       message: "Deve estar entre 0 e 100% (ou deixe vazio)",
   }),
-}).refine(data => {
-    const mu = parseFloat(data.massaUmidaRecipienteLP);
-    const ms = parseFloat(data.massaSecaRecipienteLP);
-    return isNaN(mu) || isNaN(ms) || mu >= ms;
-},{
-  message: "LP: Massa úmida deve ser maior ou igual à massa seca",
-  path: ["massaUmidaRecipienteLP"],
-}).refine(data => {
-     const msr = parseFloat(data.massaSecaRecipienteLP);
-     const mr = parseFloat(data.massaRecipienteLP);
-     return isNaN(msr) || isNaN(mr) || msr >= mr;
-},{
-  message: "LP: Massa seca+recipiente deve ser maior ou igual à massa do recipiente",
-  path: ["massaSecaRecipienteLP"],
 });
 
 // Tipagem do formulário
@@ -98,7 +103,7 @@ type FormInputValues = z.infer<typeof formSchema>;
 // Tipagem para a API
 type ApiInputData = {
     pontos_ll: { num_golpes: number; massa_umida_recipiente: number; massa_seca_recipiente: number; massa_recipiente: number; }[];
-    massa_umida_recipiente_lp: number; massa_seca_recipiente_lp: number; massa_recipiente_lp: number;
+    pontos_lp: { massa_umida_recipiente: number; massa_seca_recipiente: number; massa_recipiente: number; }[];
     umidade_natural?: number; percentual_argila?: number;
 };
 
@@ -129,15 +134,27 @@ function LimitesConsistenciaDesktop() {
   const { startTour, currentStep, isActive: isTourActive } = useTour();
   const toursEnabled = useToursEnabled();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
+  const [currentLPIndex, setCurrentLPIndex] = useState(0);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
 
   const form = useForm<FormInputValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { pontosLL: [{ id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },{ id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }], massaUmidaRecipienteLP: "", massaSecaRecipienteLP: "", massaRecipienteLP: "", umidadeNatural: "", percentualArgila: "" },
+    defaultValues: { 
+      pontosLL: [
+        { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
+        { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }
+      ], 
+      pontosLP: [
+        { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }
+      ],
+      umidadeNatural: "", 
+      percentualArgila: "" 
+    },
     mode: "onBlur",
   });
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "pontosLL", keyName: "fieldId" });
+  const { fields: fieldsLP, append: appendLP, remove: removeLP } = useFieldArray({ control: form.control, name: "pontosLP", keyName: "fieldIdLP" });
 
   const [results, setResults] = useState<Results | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -274,33 +291,50 @@ function LimitesConsistenciaDesktop() {
   const goToNextPoint = () => { setCurrentPointIndex(prev => Math.min(prev + 1, fields.length - 1)); };
   const goToPreviousPoint = () => { setCurrentPointIndex(prev => Math.max(prev - 1, 0)); };
 
-  const handleClear = () => { form.reset({ pontosLL: [{ id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },{ id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }], massaUmidaRecipienteLP: "", massaSecaRecipienteLP: "", massaRecipienteLP: "", umidadeNatural: "", percentualArgila: "" }); setCurrentPointIndex(0); setResults(null); setApiError(null); };
+  const addPontoLP = () => { appendLP({ id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }); setCurrentLPIndex(fieldsLP.length); };
+  const removePontoLP = () => { if (fieldsLP.length > 1) { removeLP(currentLPIndex); setCurrentLPIndex(prev => Math.max(0, prev - 1)); } else { toast({ title: "Atenção", description: "É necessário pelo menos 1 ensaio LP.", variant: "default" }); } };
+  const goToNextLP = () => { setCurrentLPIndex(prev => Math.min(prev + 1, fieldsLP.length - 1)); };
+  const goToPreviousLP = () => { setCurrentLPIndex(prev => Math.max(prev - 1, 0)); };
+
+  const handleClear = () => { form.reset({ pontosLL: [{ id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },{ id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }], pontosLP: [{ id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }], umidadeNatural: "", percentualArgila: "" }); setCurrentPointIndex(0); setCurrentLPIndex(0); setResults(null); setApiError(null); };
   
   const handleSelectExample = (exemplo: ExemploLimites) => {
-    const currentLength = fields.length;
-    const targetLength = exemplo.pontosLL.length;
+    const currentLengthLL = fields.length;
+    const targetLengthLL = exemplo.pontosLL.length;
+    const currentLengthLP = fieldsLP.length;
+    const targetLengthLP = exemplo.pontosLP.length;
     
-    // Ajusta a quantidade de pontos
-    if (currentLength < targetLength) {
-      for (let i = 0; i < targetLength - currentLength; i++) {
+    // Ajusta a quantidade de pontos LL
+    if (currentLengthLL < targetLengthLL) {
+      for (let i = 0; i < targetLengthLL - currentLengthLL; i++) {
         append({ id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }, { shouldFocus: false });
       }
-    } else if (currentLength > targetLength) {
-      for (let i = currentLength - 1; i >= targetLength; i--) {
+    } else if (currentLengthLL > targetLengthLL) {
+      for (let i = currentLengthLL - 1; i >= targetLengthLL; i--) {
         remove(i);
+      }
+    }
+    
+    // Ajusta a quantidade de pontos LP
+    if (currentLengthLP < targetLengthLP) {
+      for (let i = 0; i < targetLengthLP - currentLengthLP; i++) {
+        appendLP({ id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }, { shouldFocus: false });
+      }
+    } else if (currentLengthLP > targetLengthLP) {
+      for (let i = currentLengthLP - 1; i >= targetLengthLP; i--) {
+        removeLP(i);
       }
     }
     
     setTimeout(() => {
       form.reset({
         pontosLL: exemplo.pontosLL.map(p => ({ ...p, id: generateId() })),
-        massaUmidaRecipienteLP: exemplo.massaUmidaRecipienteLP,
-        massaSecaRecipienteLP: exemplo.massaSecaRecipienteLP,
-        massaRecipienteLP: exemplo.massaRecipienteLP,
+        pontosLP: exemplo.pontosLP.map(p => ({ ...p, id: generateId() })),
         umidadeNatural: exemplo.umidadeNatural || "",
         percentualArgila: exemplo.percentualArgila || ""
       });
       setCurrentPointIndex(0);
+      setCurrentLPIndex(0);
       setResults(null);
       setApiError(null);
       toast({ 
@@ -412,12 +446,13 @@ function LimitesConsistenciaDesktop() {
         rows: llRows
       });
 
-      const lpHeaders = ["Parâmetro", "Valor (g)"];
-      const lpRows = [
-        ["Massa Úmida + Recipiente", formData.massaUmidaRecipienteLP],
-        ["Massa Seca + Recipiente", formData.massaSecaRecipienteLP],
-        ["Massa do Recipiente", formData.massaRecipienteLP]
-      ];
+      const lpHeaders = ["Ensaio", "Massa Úmida+Rec (g)", "Massa Seca+Rec (g)", "Massa Recipiente (g)"];
+      const lpRows = formData.pontosLP.map((p, i) => [
+        `${i + 1}`,
+        p.massaUmidaRecipiente,
+        p.massaSecaRecipiente,
+        p.massaRecipiente
+      ]);
 
       tables.push({
         title: "Ensaio de Limite de Plasticidade (LP)",
@@ -511,14 +546,18 @@ function LimitesConsistenciaDesktop() {
       entradaLLData.push({ label: `Ponto LL ${i + 1} - Massa Recipiente (g)`, value: p.massaRecipiente });
     });
 
-    // Sheet de Entrada - LP e Adicionais
-    const entradaLPData: { label: string; value: string | number }[] = [
-      { label: "LP - Massa Úmida+Rec (g)", value: formData.massaUmidaRecipienteLP },
-      { label: "LP - Massa Seca+Rec (g)", value: formData.massaSecaRecipienteLP },
-      { label: "LP - Massa Recipiente (g)", value: formData.massaRecipienteLP },
-    ];
-    if (formData.umidadeNatural) entradaLPData.push({ label: "Umidade Natural (%)", value: formData.umidadeNatural });
-    if (formData.percentualArgila) entradaLPData.push({ label: "Percentual de Argila (%)", value: formData.percentualArgila });
+    // Sheet de Entrada - LP
+    const entradaLPData: { label: string; value: string | number }[] = [];
+    formData.pontosLP.forEach((p, i) => {
+      entradaLPData.push({ label: `Ensaio LP ${i + 1} - Massa Úmida+Rec (g)`, value: p.massaUmidaRecipiente });
+      entradaLPData.push({ label: `Ensaio LP ${i + 1} - Massa Seca+Rec (g)`, value: p.massaSecaRecipiente });
+      entradaLPData.push({ label: `Ensaio LP ${i + 1} - Massa Recipiente (g)`, value: p.massaRecipiente });
+    });
+    
+    // Sheet de Entrada - Adicionais
+    const entradaAdicionaisData: { label: string; value: string | number }[] = [];
+    if (formData.umidadeNatural) entradaAdicionaisData.push({ label: "Umidade Natural (%)", value: formData.umidadeNatural });
+    if (formData.percentualArgila) entradaAdicionaisData.push({ label: "Percentual de Argila (%)", value: formData.percentualArgila });
 
     // Sheet de Resultados
     const resultadosData: { label: string; value: string | number }[] = [];
@@ -531,14 +570,20 @@ function LimitesConsistenciaDesktop() {
     if (results.atividade_argila !== null) resultadosData.push({ label: "Atividade Argila (Ia)", value: results.atividade_argila.toFixed(2) });
     if (results.classificacao_atividade) resultadosData.push({ label: "Classificação Atividade", value: results.classificacao_atividade });
 
+    const sheets = [
+      { name: "Dados LL", data: entradaLLData },
+      { name: "Dados LP", data: entradaLPData },
+      { name: "Resultados", data: resultadosData }
+    ];
+    
+    if (entradaAdicionaisData.length > 0) {
+      sheets.splice(2, 0, { name: "Dados Adicionais", data: entradaAdicionaisData });
+    }
+
     const excelData: ExcelExportData = {
       moduleName: "limites-consistencia",
       moduleTitle: "Limites de Consistência",
-      sheets: [
-        { name: "Dados LL", data: entradaLLData },
-        { name: "Dados LP e Adicionais", data: entradaLPData },
-        { name: "Resultados", data: resultadosData }
-      ],
+      sheets,
     };
 
     const success = await exportToExcel(excelData);
@@ -555,7 +600,7 @@ function LimitesConsistenciaDesktop() {
     try {
         apiInput = {
             pontos_ll: data.pontosLL.map(p => ({ num_golpes: parseInt(p.numGolpes, 10), massa_umida_recipiente: parseFloat(p.massaUmidaRecipiente), massa_seca_recipiente: parseFloat(p.massaSecaRecipiente), massa_recipiente: parseFloat(p.massaRecipiente) })),
-            massa_umida_recipiente_lp: parseFloat(data.massaUmidaRecipienteLP), massa_seca_recipiente_lp: parseFloat(data.massaSecaRecipienteLP), massa_recipiente_lp: parseFloat(data.massaRecipienteLP),
+            pontos_lp: data.pontosLP.map(p => ({ massa_umida_recipiente: parseFloat(p.massaUmidaRecipiente), massa_seca_recipiente: parseFloat(p.massaSecaRecipiente), massa_recipiente: parseFloat(p.massaRecipiente) })),
             umidade_natural: (data.umidadeNatural && data.umidadeNatural !== "") ? parseFloat(data.umidadeNatural) : undefined, percentual_argila: (data.percentualArgila && data.percentualArgila !== "") ? parseFloat(data.percentualArgila) : undefined,
         };
         if (apiInput.umidade_natural === undefined) delete apiInput.umidade_natural; if (apiInput.percentual_argila === undefined) delete apiInput.percentual_argila;
@@ -736,61 +781,86 @@ function LimitesConsistenciaDesktop() {
                        </AccordionTrigger>
                        <AccordionContent className="p-3 bg-accent/5 rounded-b-lg border border-t-0 border-accent/20">
                           <div className="space-y-2" data-tour="ensaio-lp">
-                             <div className="grid grid-cols-3 gap-2">
-                                {/* Inputs com Controller (compactados) */}
-                                <div className="space-y-0.5">
-                                   <div className="flex items-center gap-2">
-                                     <Label htmlFor="massaUmidaRecipienteLP" className={cn("text-xs", errors.massaUmidaRecipienteLP && "text-destructive")}>M. Úmida + Recip. (g)</Label>
-                                     <Popover>
-                                       <PopoverTrigger asChild>
-                                         <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
-                                           <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
-                                         </Button>
-                                       </PopoverTrigger>
-                                       <PopoverContent className="max-w-xs" align="start">
-                                         <p className="text-sm">{tooltips.massaUmidaRecipienteLP}</p>
-                                       </PopoverContent>
-                                     </Popover>
-                                   </div>
-                                   <Controller name="massaUmidaRecipienteLP" control={form.control} render={({ field }) => <Input id="massaUmidaRecipienteLP" type="number" step="0.01" placeholder="Ex: 32.80" {...field} className={cn("bg-background/50 h-9", errors.massaUmidaRecipienteLP && "border-destructive")} />} />
-                                   {errors.massaUmidaRecipienteLP && <p className="text-xs text-destructive mt-0.5">{errors.massaUmidaRecipienteLP.message}</p>}
-                               </div>
-                                <div className="space-y-0.5">
-                                   <div className="flex items-center gap-2">
-                                     <Label htmlFor="massaSecaRecipienteLP" className={cn("text-xs", errors.massaSecaRecipienteLP && "text-destructive")}>M. Seca + Recip. (g)</Label>
-                                     <Popover>
-                                       <PopoverTrigger asChild>
-                                         <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
-                                           <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
-                                         </Button>
-                                       </PopoverTrigger>
-                                       <PopoverContent className="max-w-xs" align="start">
-                                         <p className="text-sm">{tooltips.massaSecaRecipienteLP}</p>
-                                       </PopoverContent>
-                                     </Popover>
-                                   </div>
-                                   <Controller name="massaSecaRecipienteLP" control={form.control} render={({ field }) => <Input id="massaSecaRecipienteLP" type="number" step="0.01" placeholder="Ex: 29.50" {...field} className={cn("bg-background/50 h-9", errors.massaSecaRecipienteLP && "border-destructive")} />} />
-                                   {errors.massaSecaRecipienteLP && <p className="text-xs text-destructive mt-0.5">{errors.massaSecaRecipienteLP.message}</p>}
-                               </div>
-                               <div className="space-y-0.5">
-                                   <div className="flex items-center gap-2">
-                                     <Label htmlFor="massaRecipienteLP" className={cn("text-xs", errors.massaRecipienteLP && "text-destructive")}>M. Recipiente (g)</Label>
-                                     <Popover>
-                                       <PopoverTrigger asChild>
-                                         <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
-                                           <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
-                                         </Button>
-                                       </PopoverTrigger>
-                                       <PopoverContent className="max-w-xs" align="start">
-                                         <p className="text-sm">{tooltips.massaRecipienteLP}</p>
-                                       </PopoverContent>
-                                     </Popover>
-                                   </div>
-                                   <Controller name="massaRecipienteLP" control={form.control} render={({ field }) => <Input id="massaRecipienteLP" type="number" step="0.01" placeholder="Ex: 14.20" {...field} className={cn("bg-background/50 h-9", errors.massaRecipienteLP && "border-destructive")} />} />
-                                   {errors.massaRecipienteLP && <p className="text-xs text-destructive mt-0.5">{errors.massaRecipienteLP.message}</p>}
-                               </div>
+                             {/* Navegação entre ensaios LP */}
+                             <div className="flex items-center justify-between gap-2 mb-2">
+                                <div className="flex items-center gap-2">
+                                  <Button type="button" variant="outline" size="icon" className="h-7 w-7 rounded-full" onClick={goToPreviousLP} disabled={currentLPIndex === 0}>
+                                    <ChevronLeft className="w-4 h-4" />
+                                  </Button>
+                                  <span className="text-xs font-medium text-muted-foreground">Ensaio LP {currentLPIndex + 1} de {fieldsLP.length}</span>
+                                  <Button type="button" variant="outline" size="icon" className="h-7 w-7 rounded-full" onClick={goToNextLP} disabled={currentLPIndex === fieldsLP.length - 1}>
+                                    <ChevronRight className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                                <div className="flex gap-1.5">
+                                  <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={addPontoLP}>
+                                    <Plus className="w-3 h-3" />
+                                  </Button>
+                                  {fieldsLP.length > 1 && (
+                                    <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs text-destructive hover:text-destructive" onClick={removePontoLP}>
+                                      <Trash2 className="w-3 h-3" />
+                                    </Button>
+                                  )}
+                                </div>
                              </div>
-                             {errors.root?.message?.startsWith("LP:") && <p className="text-xs text-destructive mt-1">{errors.root.message}</p>}
+
+                             {fieldsLP.map((field, index) => (
+                               <div key={field.id} style={{ display: index === currentLPIndex ? 'block' : 'none' }}>
+                                 <div className="grid grid-cols-3 gap-2">
+                                   <div className="space-y-0.5">
+                                      <div className="flex items-center gap-2">
+                                        <Label htmlFor={`pontosLP.${index}.massaUmidaRecipiente`} className={cn("text-xs", errors.pontosLP?.[index]?.massaUmidaRecipiente && "text-destructive")}>M. Úmida + Recip. (g)</Label>
+                                        <Popover>
+                                          <PopoverTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                                              <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                                            </Button>
+                                          </PopoverTrigger>
+                                          <PopoverContent className="max-w-xs" align="start">
+                                            <p className="text-sm">{tooltips.massaUmidaRecipienteLP}</p>
+                                          </PopoverContent>
+                                        </Popover>
+                                      </div>
+                                      <Controller name={`pontosLP.${index}.massaUmidaRecipiente`} control={form.control} render={({ field }) => <Input {...field} type="number" step="0.01" placeholder="Ex: 32.80" className={cn("bg-background/50 h-9", errors.pontosLP?.[index]?.massaUmidaRecipiente && "border-destructive")} />} />
+                                      {errors.pontosLP?.[index]?.massaUmidaRecipiente && <p className="text-xs text-destructive mt-0.5">{errors.pontosLP[index].massaUmidaRecipiente.message}</p>}
+                                  </div>
+                                   <div className="space-y-0.5">
+                                      <div className="flex items-center gap-2">
+                                        <Label htmlFor={`pontosLP.${index}.massaSecaRecipiente`} className={cn("text-xs", errors.pontosLP?.[index]?.massaSecaRecipiente && "text-destructive")}>M. Seca + Recip. (g)</Label>
+                                        <Popover>
+                                          <PopoverTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                                              <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                                            </Button>
+                                          </PopoverTrigger>
+                                          <PopoverContent className="max-w-xs" align="start">
+                                            <p className="text-sm">{tooltips.massaSecaRecipienteLP}</p>
+                                          </PopoverContent>
+                                        </Popover>
+                                      </div>
+                                      <Controller name={`pontosLP.${index}.massaSecaRecipiente`} control={form.control} render={({ field }) => <Input {...field} type="number" step="0.01" placeholder="Ex: 29.50" className={cn("bg-background/50 h-9", errors.pontosLP?.[index]?.massaSecaRecipiente && "border-destructive")} />} />
+                                      {errors.pontosLP?.[index]?.massaSecaRecipiente && <p className="text-xs text-destructive mt-0.5">{errors.pontosLP[index].massaSecaRecipiente.message}</p>}
+                                  </div>
+                                  <div className="space-y-0.5">
+                                      <div className="flex items-center gap-2">
+                                        <Label htmlFor={`pontosLP.${index}.massaRecipiente`} className={cn("text-xs", errors.pontosLP?.[index]?.massaRecipiente && "text-destructive")}>M. Recipiente (g)</Label>
+                                        <Popover>
+                                          <PopoverTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                                              <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                                            </Button>
+                                          </PopoverTrigger>
+                                          <PopoverContent className="max-w-xs" align="start">
+                                            <p className="text-sm">{tooltips.massaRecipienteLP}</p>
+                                          </PopoverContent>
+                                        </Popover>
+                                      </div>
+                                      <Controller name={`pontosLP.${index}.massaRecipiente`} control={form.control} render={({ field }) => <Input {...field} type="number" step="0.01" placeholder="Ex: 14.20" className={cn("bg-background/50 h-9", errors.pontosLP?.[index]?.massaRecipiente && "border-destructive")} />} />
+                                      {errors.pontosLP?.[index]?.massaRecipiente && <p className="text-xs text-destructive mt-0.5">{errors.pontosLP[index].massaRecipiente.message}</p>}
+                                  </div>
+                                 </div>
+                               </div>
+                             ))}
                           </div>
                        </AccordionContent>
                     </AccordionItem>

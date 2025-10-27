@@ -49,11 +49,16 @@ interface PontoLL {
   massaRecipiente: string;
 }
 
+interface PontoLP {
+  id: string;
+  massaUmidaRecipiente: string;
+  massaSecaRecipiente: string;
+  massaRecipiente: string;
+}
+
 interface FormData {
   pontosLL: PontoLL[];
-  massaUmidaRecipienteLP: string;
-  massaSecaRecipienteLP: string;
-  massaRecipienteLP: string;
+  pontosLP: PontoLP[];
   umidadeNatural: string;
   percentualArgila: string;
 }
@@ -90,9 +95,9 @@ export default function LimitesConsistenciaMobile() {
       { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
       { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
     ],
-    massaUmidaRecipienteLP: "",
-    massaSecaRecipienteLP: "",
-    massaRecipienteLP: "",
+    pontosLP: [
+      { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
+    ],
     umidadeNatural: "",
     percentualArgila: "",
   });
@@ -103,7 +108,9 @@ export default function LimitesConsistenciaMobile() {
 
   // Estados para navegação de pontos
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
+  const [currentLPIndex, setCurrentLPIndex] = useState(0);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [carouselApiLP, setCarouselApiLP] = useState<CarouselApi>();
 
   // Estados para salvamento
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -132,6 +139,13 @@ export default function LimitesConsistenciaMobile() {
     const newPontos = [...formData.pontosLL];
     newPontos[index] = { ...newPontos[index], [field]: value };
     setFormData({ ...formData, pontosLL: newPontos });
+    setError(null);
+  };
+
+  const handleInputChangeLP = (index: number, field: keyof PontoLP, value: string) => {
+    const newPontos = [...formData.pontosLP];
+    newPontos[index] = { ...newPontos[index], [field]: value };
+    setFormData({ ...formData, pontosLP: newPontos });
     setError(null);
   };
 
@@ -178,13 +192,49 @@ export default function LimitesConsistenciaMobile() {
     }
   };
 
+  const addPontoLP = () => {
+    setFormData({
+      ...formData,
+      pontosLP: [...formData.pontosLP, { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }],
+    });
+    setCurrentLPIndex(formData.pontosLP.length);
+  };
+
+  const removePontoLP = () => {
+    if (formData.pontosLP.length <= 1) {
+      toast({
+        title: "Mínimo de ensaios",
+        description: "É necessário pelo menos 1 ensaio de LP",
+        variant: "destructive",
+      });
+      return;
+    }
+    const newPontos = formData.pontosLP.filter((_, i) => i !== currentLPIndex);
+    setFormData({ ...formData, pontosLP: newPontos });
+    if (currentLPIndex >= newPontos.length) {
+      setCurrentLPIndex(Math.max(0, newPontos.length - 1));
+    }
+  };
+
+  const goToNextLP = () => {
+    if (currentLPIndex < formData.pontosLP.length - 1) {
+      setCurrentLPIndex(currentLPIndex + 1);
+    }
+  };
+
+  const goToPreviousLP = () => {
+    if (currentLPIndex > 0) {
+      setCurrentLPIndex(currentLPIndex - 1);
+    }
+  };
+
   const handleCalculate = async () => {
     // Validação
-    const pontosValidos = formData.pontosLL.filter(p => 
+    const pontosValidosLL = formData.pontosLL.filter(p => 
       p.numGolpes && p.massaUmidaRecipiente && p.massaSecaRecipiente && p.massaRecipiente
     );
 
-    if (pontosValidos.length < 2) {
+    if (pontosValidosLL.length < 2) {
       setError("São necessários pelo menos 2 pontos completos para LL");
       toast({
         title: "Dados incompletos",
@@ -194,11 +244,15 @@ export default function LimitesConsistenciaMobile() {
       return;
     }
 
-    if (!formData.massaUmidaRecipienteLP || !formData.massaSecaRecipienteLP || !formData.massaRecipienteLP) {
-      setError("Preencha todos os campos de LP");
+    const pontosValidosLP = formData.pontosLP.filter(p => 
+      p.massaUmidaRecipiente && p.massaSecaRecipiente && p.massaRecipiente
+    );
+
+    if (pontosValidosLP.length < 1) {
+      setError("É necessário pelo menos 1 ensaio completo de LP");
       toast({
         title: "Dados incompletos",
-        description: "Preencha todos os campos de LP",
+        description: "Preencha pelo menos 1 ensaio de LP",
         variant: "destructive",
       });
       return;
@@ -209,15 +263,17 @@ export default function LimitesConsistenciaMobile() {
 
     try {
       const payload = {
-        pontos_ll: pontosValidos.map(p => ({
+        pontos_ll: pontosValidosLL.map(p => ({
           num_golpes: parseFloat(p.numGolpes),
           massa_umida_recipiente: parseFloat(p.massaUmidaRecipiente),
           massa_seca_recipiente: parseFloat(p.massaSecaRecipiente),
           massa_recipiente: parseFloat(p.massaRecipiente),
         })),
-        massa_umida_recipiente_lp: parseFloat(formData.massaUmidaRecipienteLP),
-        massa_seca_recipiente_lp: parseFloat(formData.massaSecaRecipienteLP),
-        massa_recipiente_lp: parseFloat(formData.massaRecipienteLP),
+        pontos_lp: pontosValidosLP.map(p => ({
+          massa_umida_recipiente: parseFloat(p.massaUmidaRecipiente),
+          massa_seca_recipiente: parseFloat(p.massaSecaRecipiente),
+          massa_recipiente: parseFloat(p.massaRecipiente),
+        })),
         umidade_natural: formData.umidadeNatural ? parseFloat(formData.umidadeNatural) : undefined,
         percentual_argila: formData.percentualArgila ? parseFloat(formData.percentualArgila) : undefined,
       };
@@ -259,15 +315,16 @@ export default function LimitesConsistenciaMobile() {
         { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
         { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
       ],
-      massaUmidaRecipienteLP: "",
-      massaSecaRecipienteLP: "",
-      massaRecipienteLP: "",
+      pontosLP: [
+        { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
+      ],
       umidadeNatural: "",
       percentualArgila: "",
     });
     setResults(null);
     setError(null);
     setCurrentPointIndex(0);
+    setCurrentLPIndex(0);
   };
 
   const handleLoadExample = (example: ExemploLimites) => {
@@ -276,15 +333,17 @@ export default function LimitesConsistenciaMobile() {
         ...p,
         id: generateId()
       })),
-      massaUmidaRecipienteLP: example.massaUmidaRecipienteLP,
-      massaSecaRecipienteLP: example.massaSecaRecipienteLP,
-      massaRecipienteLP: example.massaRecipienteLP,
+      pontosLP: example.pontosLP.map(p => ({
+        ...p,
+        id: generateId()
+      })),
       umidadeNatural: example.umidadeNatural || "",
       percentualArgila: example.percentualArgila || "",
     });
     setResults(null);
     setError(null);
     setCurrentPointIndex(0);
+    setCurrentLPIndex(0);
     setExamplesSheetOpen(false);
     toast({
       title: `${example.icon} ${example.nome}`,
@@ -375,12 +434,13 @@ export default function LimitesConsistenciaMobile() {
       });
 
       // TABELA 2: Ensaio de Limite de Plasticidade
-      const lpHeaders = ["Parâmetro", "Valor (g)"];
-      const lpRows = [
-        ["Massa Úmida + Recipiente", formData.massaUmidaRecipienteLP],
-        ["Massa Seca + Recipiente", formData.massaSecaRecipienteLP],
-        ["Massa do Recipiente", formData.massaRecipienteLP]
-      ];
+      const lpHeaders = ["Ensaio", "Massa Úmida+Rec (g)", "Massa Seca+Rec (g)", "Massa Recipiente (g)"];
+      const lpRows = formData.pontosLP.map((p, i) => [
+        `${i + 1}`,
+        p.massaUmidaRecipiente,
+        p.massaSecaRecipiente,
+        p.massaRecipiente
+      ]);
 
       tables.push({
         title: "Ensaio de Limite de Plasticidade (LP)",
@@ -428,25 +488,53 @@ export default function LimitesConsistenciaMobile() {
   const handleExportExcel = async () => {
     if (!results) return;
 
-    const pontosData: { label: string; value: string | number }[] = formData.pontosLL.map((p, i) => ({
-      label: `Ponto ${i + 1}`,
-      value: `${p.numGolpes} golpes`
-    }));
+    // Sheet de Entrada - Pontos LL
+    const entradaLLData: { label: string; value: string | number }[] = [];
+    formData.pontosLL.forEach((p, i) => {
+      entradaLLData.push({ label: `Ponto LL ${i + 1} - Golpes`, value: p.numGolpes });
+      entradaLLData.push({ label: `Ponto LL ${i + 1} - Massa Úmida+Rec (g)`, value: p.massaUmidaRecipiente });
+      entradaLLData.push({ label: `Ponto LL ${i + 1} - Massa Seca+Rec (g)`, value: p.massaSecaRecipiente });
+      entradaLLData.push({ label: `Ponto LL ${i + 1} - Massa Recipiente (g)`, value: p.massaRecipiente });
+    });
 
+    // Sheet de Entrada - LP
+    const entradaLPData: { label: string; value: string | number }[] = [];
+    formData.pontosLP.forEach((p, i) => {
+      entradaLPData.push({ label: `Ensaio LP ${i + 1} - Massa Úmida+Rec (g)`, value: p.massaUmidaRecipiente });
+      entradaLPData.push({ label: `Ensaio LP ${i + 1} - Massa Seca+Rec (g)`, value: p.massaSecaRecipiente });
+      entradaLPData.push({ label: `Ensaio LP ${i + 1} - Massa Recipiente (g)`, value: p.massaRecipiente });
+    });
+    
+    // Sheet de Entrada - Adicionais
+    const entradaAdicionaisData: { label: string; value: string | number }[] = [];
+    if (formData.umidadeNatural) entradaAdicionaisData.push({ label: "Umidade Natural (%)", value: formData.umidadeNatural });
+    if (formData.percentualArgila) entradaAdicionaisData.push({ label: "Percentual de Argila (%)", value: formData.percentualArgila });
+
+    // Sheet de Resultados
     const resultadosData: { label: string; value: string | number }[] = [];
-    if (results.ll !== null) resultadosData.push({ label: "LL (%)", value: results.ll.toFixed(2) });
-    if (results.lp !== null) resultadosData.push({ label: "LP (%)", value: results.lp.toFixed(2) });
-    if (results.ip !== null) resultadosData.push({ label: "IP (%)", value: results.ip.toFixed(2) });
-    if (results.ic !== null) resultadosData.push({ label: "IC", value: results.ic.toFixed(2) });
-    if (results.classificacao_plasticidade) resultadosData.push({ label: "Plasticidade", value: results.classificacao_plasticidade });
+    if (results.ll !== null) resultadosData.push({ label: "Limite de Liquidez (LL) %", value: results.ll.toFixed(1) });
+    if (results.lp !== null) resultadosData.push({ label: "Limite de Plasticidade (LP) %", value: results.lp.toFixed(1) });
+    if (results.ip !== null) resultadosData.push({ label: "Índice de Plasticidade (IP) %", value: results.ip.toFixed(1) });
+    if (results.ic !== null) resultadosData.push({ label: "Índice de Consistência (IC)", value: results.ic.toFixed(2) });
+    if (results.classificacao_plasticidade) resultadosData.push({ label: "Classificação Plasticidade", value: results.classificacao_plasticidade });
+    if (results.classificacao_consistencia) resultadosData.push({ label: "Classificação Consistência", value: results.classificacao_consistencia });
+    if (results.atividade_argila !== null) resultadosData.push({ label: "Atividade Argila (Ia)", value: results.atividade_argila.toFixed(2) });
+    if (results.classificacao_atividade) resultadosData.push({ label: "Classificação Atividade", value: results.classificacao_atividade });
+
+    const sheets = [
+      { name: "Dados LL", data: entradaLLData },
+      { name: "Dados LP", data: entradaLPData },
+      { name: "Resultados", data: resultadosData }
+    ];
+    
+    if (entradaAdicionaisData.length > 0) {
+      sheets.splice(2, 0, { name: "Dados Adicionais", data: entradaAdicionaisData });
+    }
 
     const excelData: ExcelExportData = {
       moduleName: "limites-consistencia",
       moduleTitle: "Limites de Consistência",
-      sheets: [
-        { name: "Pontos", data: pontosData },
-        { name: "Resultados", data: resultadosData }
-      ],
+      sheets,
     };
 
     const success = await exportToExcel(excelData);
@@ -471,9 +559,7 @@ export default function LimitesConsistenciaMobile() {
 
   const isFormValid = 
     formData.pontosLL.filter(p => p.numGolpes && p.massaUmidaRecipiente && p.massaSecaRecipiente && p.massaRecipiente).length >= 2 &&
-    formData.massaUmidaRecipienteLP &&
-    formData.massaSecaRecipienteLP &&
-    formData.massaRecipienteLP;
+    formData.pontosLP.filter(p => p.massaUmidaRecipiente && p.massaSecaRecipiente && p.massaRecipiente).length >= 1;
 
   return (
     <div className="space-y-4 pb-4">
@@ -646,35 +732,111 @@ export default function LimitesConsistenciaMobile() {
         icon={<Info className="w-4 h-4" />}
         defaultOpen={true}
       >
-        <MobileInputGroup
-          label="Massa Úmida + Recipiente"
-          value={formData.massaUmidaRecipienteLP}
-          onChange={(v) => handleInputChange("massaUmidaRecipienteLP", v)}
-          placeholder="Ex: 32.4"
-          unit="g"
-          required
-          tooltip="Massa do recipiente + solo úmido"
-        />
+        <div className="space-y-3">
+          {/* Navegação e Indicadores */}
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToPreviousLP}
+              disabled={currentLPIndex === 0}
+              className="h-9 w-9 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
 
-        <MobileInputGroup
-          label="Massa Seca + Recipiente"
-          value={formData.massaSecaRecipienteLP}
-          onChange={(v) => handleInputChange("massaSecaRecipienteLP", v)}
-          placeholder="Ex: 30.1"
-          unit="g"
-          required
-          tooltip="Massa do recipiente + solo seco"
-        />
+            <div className="flex-1 text-center">
+              <p className="text-sm font-semibold">
+                Ensaio {currentLPIndex + 1} de {formData.pontosLP.length}
+              </p>
+              <div className="flex gap-1 mt-1 justify-center">
+                {formData.pontosLP.map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={cn(
+                      "h-1.5 rounded-full transition-all",
+                      idx === currentLPIndex ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30"
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
 
-        <MobileInputGroup
-          label="Massa do Recipiente"
-          value={formData.massaRecipienteLP}
-          onChange={(v) => handleInputChange("massaRecipienteLP", v)}
-          placeholder="Ex: 15.0"
-          unit="g"
-          required
-          tooltip="Massa do recipiente vazio (tara)"
-        />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={goToNextLP}
+              disabled={currentLPIndex === formData.pontosLP.length - 1}
+              className="h-9 w-9 p-0"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Cards de Ensaios LP */}
+          <div className="space-y-3">
+            {formData.pontosLP.map((ponto, index) => (
+              <div 
+                key={ponto.id}
+                style={{ display: index === currentLPIndex ? 'block' : 'none' }}
+              >
+                <div className="p-3 rounded-lg bg-card/50 backdrop-blur-sm border border-border/50 space-y-3">
+                  <MobileInputGroup
+                    label="Massa Úmida + Recipiente"
+                    value={ponto.massaUmidaRecipiente}
+                    onChange={(v) => handleInputChangeLP(index, "massaUmidaRecipiente", v)}
+                    placeholder="Ex: 32.4"
+                    unit="g"
+                    required
+                    tooltip="Massa do recipiente + solo úmido"
+                  />
+
+                  <MobileInputGroup
+                    label="Massa Seca + Recipiente"
+                    value={ponto.massaSecaRecipiente}
+                    onChange={(v) => handleInputChangeLP(index, "massaSecaRecipiente", v)}
+                    placeholder="Ex: 30.1"
+                    unit="g"
+                    required
+                    tooltip="Massa do recipiente + solo seco"
+                  />
+
+                  <MobileInputGroup
+                    label="Massa do Recipiente"
+                    value={ponto.massaRecipiente}
+                    onChange={(v) => handleInputChangeLP(index, "massaRecipiente", v)}
+                    placeholder="Ex: 15.0"
+                    unit="g"
+                    required
+                    tooltip="Massa do recipiente vazio (tara)"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Botões de Ação */}
+          <div className="flex gap-2">
+            <Button
+              onClick={addPontoLP}
+              variant="outline"
+              className="flex-1 h-10 focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-tap-highlight-color:transparent] active:scale-95 transition-transform"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar
+            </Button>
+            {formData.pontosLP.length > 1 && (
+              <Button
+                onClick={removePontoLP}
+                variant="outline"
+                className="flex-1 h-10 text-destructive hover:text-destructive hover:bg-destructive/10 focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-tap-highlight-color:transparent] active:scale-95 transition-transform"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Remover
+              </Button>
+            )}
+          </div>
+        </div>
       </MobileSection>
 
       {/* Dados Opcionais */}

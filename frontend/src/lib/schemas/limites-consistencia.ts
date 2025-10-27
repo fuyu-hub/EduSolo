@@ -12,11 +12,15 @@ export const PontoEnsaioLLSchema = z.object({
   massa_recipiente: z.number(),
 });
 
+export const PontoEnsaioLPSchema = z.object({
+  massa_umida_recipiente: z.number(),
+  massa_seca_recipiente: z.number(),
+  massa_recipiente: z.number(),
+});
+
 export const LimitesConsistenciaInputSchema = z.object({
   pontos_ll: z.array(PontoEnsaioLLSchema).min(2),
-  massa_umida_recipiente_lp: z.number(),
-  massa_seca_recipiente_lp: z.number(),
-  massa_recipiente_lp: z.number(),
+  pontos_lp: z.array(PontoEnsaioLPSchema).min(1),
   umidade_natural: z.number().optional(),
   percentual_argila: z.number().min(0).max(100).optional(),
 });
@@ -35,6 +39,7 @@ export const LimitesConsistenciaOutputSchema = z.object({
 });
 
 export type PontoEnsaioLL = z.infer<typeof PontoEnsaioLLSchema>;
+export type PontoEnsaioLP = z.infer<typeof PontoEnsaioLPSchema>;
 export type LimitesConsistenciaInput = z.infer<typeof LimitesConsistenciaInputSchema>;
 export type LimitesConsistenciaOutput = z.infer<typeof LimitesConsistenciaOutputSchema>;
 

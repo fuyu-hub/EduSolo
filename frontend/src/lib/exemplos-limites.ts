@@ -12,9 +12,11 @@ export interface ExemploLimites {
     massaSecaRecipiente: string;
     massaRecipiente: string;
   }>;
-  massaUmidaRecipienteLP: string;
-  massaSecaRecipienteLP: string;
-  massaRecipienteLP: string;
+  pontosLP: Array<{
+    massaUmidaRecipiente: string;
+    massaSecaRecipiente: string;
+    massaRecipiente: string;
+  }>;
   umidadeNatural?: string;
   percentualArgila?: string;
 }
@@ -33,9 +35,10 @@ export const exemplosLimites: ExemploLimites[] = [
       { numGolpes: "20", massaUmidaRecipiente: "52.80", massaSecaRecipiente: "41.60", massaRecipiente: "15.00" },
       { numGolpes: "15", massaUmidaRecipiente: "55.40", massaSecaRecipiente: "42.30", massaRecipiente: "14.50" }
     ],
-    massaUmidaRecipienteLP: "38.60",
-    massaSecaRecipienteLP: "34.20",
-    massaRecipienteLP: "16.80",
+    pontosLP: [
+      { massaUmidaRecipiente: "38.60", massaSecaRecipiente: "34.20", massaRecipiente: "16.80" },
+      { massaUmidaRecipiente: "39.10", massaSecaRecipiente: "34.60", massaRecipiente: "16.90" }
+    ],
     umidadeNatural: "35.0",
     percentualArgila: "65.0"
   },
@@ -52,9 +55,10 @@ export const exemplosLimites: ExemploLimites[] = [
       { numGolpes: "20", massaUmidaRecipiente: "48.10", massaSecaRecipiente: "40.00", massaRecipiente: "16.40" },
       { numGolpes: "16", massaUmidaRecipiente: "50.20", massaSecaRecipiente: "41.10", massaRecipiente: "15.20" }
     ],
-    massaUmidaRecipienteLP: "32.80",
-    massaSecaRecipienteLP: "29.50",
-    massaRecipienteLP: "14.20",
+    pontosLP: [
+      { massaUmidaRecipiente: "32.80", massaSecaRecipiente: "29.50", massaRecipiente: "14.20" },
+      { massaUmidaRecipiente: "33.20", massaSecaRecipiente: "29.80", massaRecipiente: "14.30" }
+    ],
     umidadeNatural: "25.0",
     percentualArgila: "30.0"
   },
@@ -71,9 +75,10 @@ export const exemplosLimites: ExemploLimites[] = [
       { numGolpes: "21", massaUmidaRecipiente: "43.80", massaSecaRecipiente: "37.50", massaRecipiente: "17.00" },
       { numGolpes: "17", massaUmidaRecipiente: "45.50", massaSecaRecipiente: "38.20", massaRecipiente: "16.00" }
     ],
-    massaUmidaRecipienteLP: "30.40",
-    massaSecaRecipienteLP: "28.60",
-    massaRecipienteLP: "15.20",
+    pontosLP: [
+      { massaUmidaRecipiente: "30.40", massaSecaRecipiente: "28.60", massaRecipiente: "15.20" },
+      { massaUmidaRecipiente: "30.80", massaSecaRecipiente: "28.90", massaRecipiente: "15.30" }
+    ],
     umidadeNatural: "22.0",
     percentualArgila: "15.0"
   },
@@ -90,9 +95,10 @@ export const exemplosLimites: ExemploLimites[] = [
       { numGolpes: "22", massaUmidaRecipiente: "59.80", massaSecaRecipiente: "46.50", massaRecipiente: "18.30" },
       { numGolpes: "18", massaUmidaRecipiente: "62.40", massaSecaRecipiente: "47.80", massaRecipiente: "17.50" }
     ],
-    massaUmidaRecipienteLP: "36.80",
-    massaSecaRecipienteLP: "33.20",
-    massaRecipienteLP: "16.50",
+    pontosLP: [
+      { massaUmidaRecipiente: "36.80", massaSecaRecipiente: "33.20", massaRecipiente: "16.50" },
+      { massaUmidaRecipiente: "37.30", massaSecaRecipiente: "33.60", massaRecipiente: "16.60" }
+    ],
     umidadeNatural: "42.0",
     percentualArgila: "18.0"
   },
@@ -109,9 +115,10 @@ export const exemplosLimites: ExemploLimites[] = [
       { numGolpes: "21", massaUmidaRecipiente: "78.50", massaSecaRecipiente: "53.20", massaRecipiente: "21.00" },
       { numGolpes: "17", massaUmidaRecipiente: "82.30", massaSecaRecipiente: "54.80", massaRecipiente: "20.20" }
     ],
-    massaUmidaRecipienteLP: "44.60",
-    massaSecaRecipienteLP: "38.50",
-    massaRecipienteLP: "18.20",
+    pontosLP: [
+      { massaUmidaRecipiente: "44.60", massaSecaRecipiente: "38.50", massaRecipiente: "18.20" },
+      { massaUmidaRecipiente: "45.20", massaSecaRecipiente: "39.00", massaRecipiente: "18.40" }
+    ],
     umidadeNatural: "58.0",
     percentualArgila: "42.0"
   },
@@ -128,9 +135,10 @@ export const exemplosLimites: ExemploLimites[] = [
       { numGolpes: "22", massaUmidaRecipiente: "52.10", massaSecaRecipiente: "43.90", massaRecipiente: "17.50" },
       { numGolpes: "18", massaUmidaRecipiente: "54.80", massaSecaRecipiente: "45.20", massaRecipiente: "16.90" }
     ],
-    massaUmidaRecipienteLP: "35.40",
-    massaSecaRecipienteLP: "32.10",
-    massaRecipienteLP: "15.80",
+    pontosLP: [
+      { massaUmidaRecipiente: "35.40", massaSecaRecipiente: "32.10", massaRecipiente: "15.80" },
+      { massaUmidaRecipiente: "35.90", massaSecaRecipiente: "32.50", massaRecipiente: "15.90" }
+    ],
     umidadeNatural: "28.0",
     percentualArgila: "38.0"
   },
@@ -147,9 +155,10 @@ export const exemplosLimites: ExemploLimites[] = [
       { numGolpes: "21", massaUmidaRecipiente: "73.20", massaSecaRecipiente: "53.10", massaRecipiente: "18.50" },
       { numGolpes: "16", massaUmidaRecipiente: "77.80", massaSecaRecipiente: "55.20", massaRecipiente: "18.10" }
     ],
-    massaUmidaRecipienteLP: "42.80",
-    massaSecaRecipienteLP: "37.20",
-    massaRecipienteLP: "17.50",
+    pontosLP: [
+      { massaUmidaRecipiente: "42.80", massaSecaRecipiente: "37.20", massaRecipiente: "17.50" },
+      { massaUmidaRecipiente: "43.40", massaSecaRecipiente: "37.70", massaRecipiente: "17.60" }
+    ],
     umidadeNatural: "48.0",
     percentualArgila: "72.0"
   }

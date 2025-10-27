@@ -448,7 +448,6 @@ function SettingsDesktop() {
                 <span>• {settings.printSettings.pageOrientation === "portrait" ? "Retrato" : "Paisagem"}</span>
                 <span>• Margens {settings.printSettings.pageMargins === "narrow" ? "estreitas" : settings.printSettings.pageMargins === "normal" ? "normais" : "amplas"}</span>
                 <span>• Papel {settings.printSettings.paperSize}</span>
-                {settings.printSettings.includeLogo && <span>• Logo</span>}
                 {settings.printSettings.includeDate && <span>• Data</span>}
                 {settings.printSettings.includeFormulas && <span>• Fórmulas</span>}
               </div>
@@ -805,25 +804,19 @@ function SettingsDesktop() {
               <h4 className="text-sm font-semibold text-foreground">Elementos do Documento</h4>
               
               <div className="space-y-3">
-                {/* Incluir Logo */}
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="dialog-logo" className="text-sm font-medium">
-                      Incluir Logo EduSolo
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      Adiciona o logo no cabeçalho do PDF
-                    </p>
+                {/* Logo sempre incluído - informativo */}
+                <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    <div className="space-y-0.5">
+                      <Label className="text-sm font-medium text-foreground">
+                        Logo EduSolo
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        O logo será sempre incluído no cabeçalho do PDF
+                      </p>
+                    </div>
                   </div>
-                  <Switch
-                    id="dialog-logo"
-                    checked={settings.printSettings.includeLogo}
-                    onCheckedChange={(checked) => 
-                      updateSettings({ 
-                        printSettings: { ...settings.printSettings, includeLogo: checked } 
-                      })
-                    }
-                  />
                 </div>
 
                 {/* Incluir Data */}
@@ -842,6 +835,27 @@ function SettingsDesktop() {
                     onCheckedChange={(checked) => 
                       updateSettings({ 
                         printSettings: { ...settings.printSettings, includeDate: checked } 
+                      })
+                    }
+                  />
+                </div>
+
+                {/* Título Personalizado */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="dialog-custom-title" className="text-sm font-medium">
+                      Título Personalizado do Relatório
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Permite adicionar um título personalizado ao exportar
+                    </p>
+                  </div>
+                  <Switch
+                    id="dialog-custom-title"
+                    checked={settings.printSettings.includeCustomTitle}
+                    onCheckedChange={(checked) => 
+                      updateSettings({ 
+                        printSettings: { ...settings.printSettings, includeCustomTitle: checked } 
                       })
                     }
                   />
@@ -921,6 +935,7 @@ function SettingsDesktop() {
                     paperSize: "A4",
                     useDynamicTheme: true,
                     fixedTheme: "indigo",
+                    includeCustomTitle: false,
                   }
                 });
                 toast.success("Configurações de PDF restauradas para os valores padrão");
