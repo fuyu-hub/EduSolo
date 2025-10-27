@@ -1,8 +1,9 @@
 // frontend/src/pages/IndicesFisicos.tsx
 import { useState, useMemo, useEffect } from "react";
-import { Beaker, Calculator, Info, BarChart3, ArrowLeft, ArrowRight, Save, FolderOpen, Download, Printer, FileText, AlertCircle, GraduationCap } from "lucide-react";
+import { Beaker, Calculator, Info, BarChart3, ArrowLeft, ArrowRight, Save, FolderOpen, Download, Printer, FileText, AlertCircle, GraduationCap, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { calcularIndicesFisicos } from "@/lib/calculations/indices-fisicos";
+import { Separator } from "@/components/ui/separator";
+import { calcularIndicesFisicosMultiplasAmostras, type IndicesFisicosOutputComEstatisticas, type EstatisticaParametro } from "@/lib/calculations/indices-fisicos";
 import { MobileModuleWrapper } from "@/components/mobile";
 import IndicesFisicosMobile from "./mobile/IndicesFisicosMobile";
 import { Button } from "@/components/ui/button";
@@ -60,55 +61,23 @@ import GsSuggestions from "@/components/soil/GsSuggestions";
 import { useToursEnabled } from "@/components/WelcomeDialog";
 import ResultInterpretation from "@/components/soil/ResultInterpretation";
 import InputWithValidation from "@/components/soil/InputWithValidation";
-import { SoilExample, soilExamples } from "@/lib/soil-constants";
+import { SoilExample, soilExamples, type AmostraIndicesFisicos } from "@/lib/soil-constants";
 import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/use-settings";
 import { formatNumber } from "@/lib/format-number";
 import { AppSettings } from "@/contexts/SettingsContext";
 import { useTour, TourStep } from "@/contexts/TourContext";
 
-// Interface local que reflete a API Output
-interface IndicesFisicosOutput {
-  peso_especifico_natural: number | null;
-  peso_especifico_seco: number | null;
-  peso_especifico_saturado: number | null;
-  peso_especifico_submerso: number | null;
-  peso_especifico_solidos: number | null;
-  Gs: number | null;
-  indice_vazios: number | null;
-  porosidade: number | null;
-  grau_saturacao: number | null;
-  umidade: number | null;
-  volume_solidos_norm: number | null;
-  volume_agua_norm: number | null;
-  volume_ar_norm: number | null;
-  peso_solidos_norm?: number | null;
-  peso_agua_norm?: number | null;
-  compacidade_relativa: number | null;
-  classificacao_compacidade: string | null;
-  volume_total_calc: number | null;
-  volume_solidos_calc: number | null;
-  volume_agua_calc: number | null;
-  volume_ar_calc: number | null;
-  massa_total_calc: number | null;
-  massa_solidos_calc: number | null;
-  massa_agua_calc: number | null;
-  aviso?: string | null;
-  erro?: string | null;
-}
-
 // Interface para o estado do formulário
 interface FormData {
-  massaUmida: string;
-  massaSeca: string;
-  volume: string;
-  Gs?: string;
-  pesoEspecificoAgua?: string;
-  indice_vazios_max?: string;
-  indice_vazios_min?: string;
+  amostras: AmostraIndicesFisicos[];
+  Gs: string;
+  pesoEspecificoAgua: string;
+  indice_vazios_max: string;
+  indice_vazios_min: string;
 }
 
-type Results = IndicesFisicosOutput;
+type Results = IndicesFisicosOutputComEstatisticas;
 
 // Tooltips para entradas
 const tooltips = {
@@ -121,6 +90,9 @@ const tooltips = {
   indice_vazios_min: "Índice de vazios mínimo do solo (emin). Necessário para calcular Dr.",
 };
 
+// Função para gerar IDs únicos
+const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+
 // Cálculos agora são feitos localmente no frontend
 
 function IndicesFisicosDesktop() {
@@ -132,14 +104,18 @@ function IndicesFisicosDesktop() {
   
   // Estados
   const [formData, setFormData] = useState<FormData>({
-    massaUmida: "",
-    massaSeca: "",
-    volume: "",
+    amostras: [{
+      id: generateId(),
+      massaUmida: "",
+      massaSeca: "",
+      volume: ""
+    }],
     Gs: "",
     pesoEspecificoAgua: "10.0",
     indice_vazios_max: "",
     indice_vazios_min: "",
   });
+  const [currentAmostraIndex, setCurrentAmostraIndex] = useState(0);
   const [results, setResults] = useState<Results | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -261,9 +237,69 @@ function IndicesFisicosDesktop() {
   });
   const [resultsB, setResultsB] = useState<Results | null>(null);
 
-  const handleChange = (field: keyof FormData, value: string) => {
+  const handleChange = (field: keyof Omit<FormData, 'amostras'>, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setError(null); // Limpa erro ao digitar
+    setError(null);
+  };
+
+  const handleAmostraChange = (field: keyof AmostraIndicesFisicos, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      amostras: prev.amostras.map((amostra, idx) =>
+        idx === currentAmostraIndex
+          ? { ...amostra, [field]: value }
+          : amostra
+      )
+    }));
+    setError(null);
+  };
+
+  const addAmostra = () => {
+    setFormData(prev => ({
+      ...prev,
+      amostras: [
+        ...prev.amostras,
+        {
+          id: generateId(),
+          massaUmida: "",
+          massaSeca: "",
+          volume: ""
+        }
+      ]
+    }));
+    setCurrentAmostraIndex(formData.amostras.length);
+    toast({
+      title: "Amostra adicionada",
+      description: `Amostra ${formData.amostras.length + 1} criada`,
+    });
+  };
+
+  const removeAmostra = () => {
+    if (formData.amostras.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        amostras: prev.amostras.filter((_, idx) => idx !== currentAmostraIndex)
+      }));
+      setCurrentAmostraIndex(prev => Math.max(0, prev - 1));
+      toast({
+        title: "Amostra removida",
+        description: "Amostra excluída com sucesso",
+      });
+    } else {
+      toast({
+        title: "Atenção",
+        description: "É necessário pelo menos 1 amostra",
+        variant: "default",
+      });
+    }
+  };
+
+  const goToNextAmostra = () => {
+    setCurrentAmostraIndex(prev => Math.min(prev + 1, formData.amostras.length - 1));
+  };
+
+  const goToPreviousAmostra = () => {
+    setCurrentAmostraIndex(prev => Math.max(prev - 1, 0));
   };
 
   const handleCalculate = async () => {
@@ -271,35 +307,46 @@ function IndicesFisicosDesktop() {
     setError(null);
     setResults(null);
 
-    // Mapeamento e conversão para a API
-    const apiInput: { [key: string]: number | undefined } = {
-      peso_total: formData.massaUmida ? parseFloat(formData.massaUmida) : undefined,
-      peso_solido: formData.massaSeca ? parseFloat(formData.massaSeca) : undefined,
-      volume_total: formData.volume ? parseFloat(formData.volume) : undefined,
+    // Mapear amostras para formato da API
+    const amostrasAPI = formData.amostras.map(amostra => ({
+      peso_total: amostra.massaUmida ? parseFloat(amostra.massaUmida) : undefined,
+      peso_solido: amostra.massaSeca ? parseFloat(amostra.massaSeca) : undefined,
+      volume_total: amostra.volume ? parseFloat(amostra.volume) : undefined,
       Gs: formData.Gs ? parseFloat(formData.Gs) : undefined,
       peso_especifico_agua: formData.pesoEspecificoAgua ? parseFloat(formData.pesoEspecificoAgua) : 10.0,
       indice_vazios_max: formData.indice_vazios_max ? parseFloat(formData.indice_vazios_max) : undefined,
       indice_vazios_min: formData.indice_vazios_min ? parseFloat(formData.indice_vazios_min) : undefined,
-    };
+    }));
 
-    // Remove chaves com valores NaN ou undefined
-    Object.keys(apiInput).forEach(key => (apiInput[key] === undefined || isNaN(apiInput[key] as number)) && delete apiInput[key]);
+    // Remove valores NaN/undefined
+    const amostrasLimpas = amostrasAPI.map(amostra => {
+      const limpa: any = {};
+      Object.keys(amostra).forEach(key => {
+        const valor = (amostra as any)[key];
+        if (valor !== undefined && !isNaN(valor as number)) {
+          limpa[key] = valor;
+        }
+      });
+      return limpa;
+    });
 
-    // Validação local emin < emax
-    if (apiInput.indice_vazios_min !== undefined && apiInput.indice_vazios_max !== undefined && apiInput.indice_vazios_min >= apiInput.indice_vazios_max) {
-        setError("Índice de vazios mínimo (emin) deve ser menor que o máximo (emax).");
-        toast({
-          title: "Erro de Entrada",
-          description: "Índice de vazios mínimo (emin) deve ser menor que o máximo (emax).",
-          variant: "destructive",
-        });
-        setIsCalculating(false);
-        return;
+    // Validação emin < emax
+    if (amostrasLimpas[0].indice_vazios_min !== undefined && 
+        amostrasLimpas[0].indice_vazios_max !== undefined && 
+        amostrasLimpas[0].indice_vazios_min >= amostrasLimpas[0].indice_vazios_max) {
+      setError("Índice de vazios mínimo (emin) deve ser menor que o máximo (emax).");
+      toast({
+        title: "Erro de Entrada",
+        description: "emin deve ser < emax",
+        variant: "destructive",
+      });
+      setIsCalculating(false);
+      return;
     }
 
     try {
-      // Calcula localmente no frontend
-      const resultado = calcularIndicesFisicos(apiInput);
+      // Usar função de múltiplas amostras
+      const resultado = calcularIndicesFisicosMultiplasAmostras(amostrasLimpas);
 
       if (resultado.erro) {
         setError(resultado.erro);
@@ -310,6 +357,14 @@ function IndicesFisicosDesktop() {
         });
       } else {
         setResults(resultado);
+        
+        // Toast especial se houver múltiplas amostras
+        if (resultado.num_amostras && resultado.num_amostras > 1) {
+          toast({
+            title: `✅ ${resultado.num_amostras} amostras calculadas!`,
+            description: "Estatísticas calculadas com sucesso",
+          });
+        }
       }
     } catch (err) {
       let errorMessage = "Erro ao calcular os índices físicos.";
@@ -318,7 +373,7 @@ function IndicesFisicosDesktop() {
       }
       setError(errorMessage);
       toast({
-        title: "Erro de Comunicação/Validação",
+        title: "Erro",
         description: errorMessage,
         variant: "destructive",
       });
@@ -329,20 +384,31 @@ function IndicesFisicosDesktop() {
 
   const handleClear = () => {
     setFormData({
-      massaUmida: "",
-      massaSeca: "",
-      volume: "",
+      amostras: [{
+        id: generateId(),
+        massaUmida: "",
+        massaSeca: "",
+        volume: ""
+      }],
       Gs: "",
       pesoEspecificoAgua: "10.0",
       indice_vazios_max: "",
       indice_vazios_min: "",
     });
+    setCurrentAmostraIndex(0);
     setResults(null);
     setError(null);
   };
 
   const handleLoadExample = (example: SoilExample) => {
-    setFormData(example.data);
+    setFormData({
+      amostras: example.amostras.map(a => ({ ...a, id: generateId() })),
+      Gs: example.Gs,
+      pesoEspecificoAgua: example.pesoEspecificoAgua,
+      indice_vazios_max: example.indice_vazios_max || "",
+      indice_vazios_min: example.indice_vazios_min || "",
+    });
+    setCurrentAmostraIndex(0);
     setResults(null);
     setError(null);
     toast({
@@ -432,15 +498,24 @@ function IndicesFisicosDesktop() {
     
     setIsExportingPDF(true);
 
-    const inputs: { label: string; value: string }[] = [
-      { label: "Massa Úmida", value: `${formData.massaUmida} g` },
-      { label: "Massa Seca", value: `${formData.massaSeca} g` },
-      { label: "Volume Total", value: `${formData.volume} cm³` },
-    ];
-    
+    // Criar tabela de amostras
+    const tabelaAmostras = {
+      title: `Dados de Entrada (${formData.amostras.length} amostra${formData.amostras.length > 1 ? 's' : ''})`,
+      headers: ["Amostra", "Massa Úmida (g)", "Massa Seca (g)", "Volume (cm³)"],
+      rows: formData.amostras.map((amostra, idx) => [
+        `${idx + 1}`,
+        amostra.massaUmida || "—",
+        amostra.massaSeca || "—",
+        amostra.volume || "—"
+      ])
+    };
+
+    // Parâmetros comuns
+    const inputs: { label: string; value: string }[] = [];
     if (formData.Gs) inputs.push({ label: "Densidade dos Grãos (Gs)", value: formData.Gs });
-    if (formData.indice_vazios_max) inputs.push({ label: "Índice Vazios Máx", value: formData.indice_vazios_max });
-    if (formData.indice_vazios_min) inputs.push({ label: "Índice Vazios Mín", value: formData.indice_vazios_min });
+    if (formData.pesoEspecificoAgua) inputs.push({ label: "Peso Específico Água", value: `${formData.pesoEspecificoAgua} kN/m³` });
+    if (formData.indice_vazios_max) inputs.push({ label: "Índice Vazios Máx (emax)", value: formData.indice_vazios_max });
+    if (formData.indice_vazios_min) inputs.push({ label: "Índice Vazios Mín (emin)", value: formData.indice_vazios_min });
 
     const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
     if (results.peso_especifico_natural !== null) resultsList.push({ label: "Peso Específico Natural", value: `${formatNumberForExport(results.peso_especifico_natural)} kN/m³`, highlight: true });
@@ -516,12 +591,98 @@ function IndicesFisicosDesktop() {
       });
     }
 
+    // Criar tabela de estatísticas (se houver múltiplas amostras)
+    const tabelas: { title: string; headers: string[]; rows: (string | number)[][] }[] = [tabelaAmostras];
+    
+    if (results.num_amostras && results.num_amostras > 1 && results.estatisticas) {
+      const tabelaEstatisticas = {
+        title: `Estatísticas (${results.num_amostras} amostras)`,
+        headers: ["Parâmetro", "Média", "DP", "CV (%)", "Mín", "Máx"],
+        rows: []
+      };
+
+      if (results.estatisticas.peso_especifico_natural) {
+        const e = results.estatisticas.peso_especifico_natural;
+        tabelaEstatisticas.rows.push([
+          "γn (kN/m³)",
+          formatNumberForExport(e.media),
+          formatNumberForExport(e.desvio_padrao, 3),
+          formatNumberForExport(e.coeficiente_variacao, 1),
+          formatNumberForExport(e.minimo),
+          formatNumberForExport(e.maximo)
+        ]);
+      }
+
+      if (results.estatisticas.peso_especifico_seco) {
+        const e = results.estatisticas.peso_especifico_seco;
+        tabelaEstatisticas.rows.push([
+          "γd (kN/m³)",
+          formatNumberForExport(e.media),
+          formatNumberForExport(e.desvio_padrao, 3),
+          formatNumberForExport(e.coeficiente_variacao, 1),
+          formatNumberForExport(e.minimo),
+          formatNumberForExport(e.maximo)
+        ]);
+      }
+
+      if (results.estatisticas.umidade) {
+        const e = results.estatisticas.umidade;
+        tabelaEstatisticas.rows.push([
+          "Umidade (%)",
+          formatNumberForExport(e.media),
+          formatNumberForExport(e.desvio_padrao, 3),
+          formatNumberForExport(e.coeficiente_variacao, 1),
+          formatNumberForExport(e.minimo),
+          formatNumberForExport(e.maximo)
+        ]);
+      }
+
+      if (results.estatisticas.indice_vazios) {
+        const e = results.estatisticas.indice_vazios;
+        tabelaEstatisticas.rows.push([
+          "Índice de Vazios",
+          formatNumberForExport(e.media, 3),
+          formatNumberForExport(e.desvio_padrao, 3),
+          formatNumberForExport(e.coeficiente_variacao, 1),
+          formatNumberForExport(e.minimo, 3),
+          formatNumberForExport(e.maximo, 3)
+        ]);
+      }
+
+      if (results.estatisticas.porosidade) {
+        const e = results.estatisticas.porosidade;
+        tabelaEstatisticas.rows.push([
+          "Porosidade (%)",
+          formatNumberForExport(e.media),
+          formatNumberForExport(e.desvio_padrao, 3),
+          formatNumberForExport(e.coeficiente_variacao, 1),
+          formatNumberForExport(e.minimo),
+          formatNumberForExport(e.maximo)
+        ]);
+      }
+
+      if (results.estatisticas.grau_saturacao) {
+        const e = results.estatisticas.grau_saturacao;
+        tabelaEstatisticas.rows.push([
+          "Saturação (%)",
+          formatNumberForExport(e.media),
+          formatNumberForExport(e.desvio_padrao, 3),
+          formatNumberForExport(e.coeficiente_variacao, 1),
+          formatNumberForExport(e.minimo),
+          formatNumberForExport(e.maximo)
+        ]);
+      }
+
+      tabelas.push(tabelaEstatisticas);
+    }
+
     const exportData: ExportData = {
       moduleName: "indices-fisicos",
       moduleTitle: "Índices Físicos",
       inputs,
       results: resultsList,
       formulas,
+      tables: tabelas,
       customFileName: pdfFileName,
       theme,
       printSettings: settings.printSettings
@@ -549,16 +710,24 @@ function IndicesFisicosDesktop() {
   const handleExportExcel = async () => {
     if (!results) return;
 
-    // Sheet de Entrada
-    const entradaData: { label: string; value: string | number }[] = [
-      { label: "Massa Úmida (g)", value: formData.massaUmida },
-      { label: "Massa Seca (g)", value: formData.massaSeca },
-      { label: "Volume Total (cm³)", value: formData.volume },
+    // Sheet de Amostras (tabela)
+    const amostrasData: { label: string; value: string | number }[] = [
+      { label: "=== AMOSTRAS ===", value: "" },
     ];
-    if (formData.Gs) entradaData.push({ label: "Densidade dos Grãos (Gs)", value: formData.Gs });
-    if (formData.pesoEspecificoAgua) entradaData.push({ label: "Peso Específico Água (kN/m³)", value: formData.pesoEspecificoAgua });
-    if (formData.indice_vazios_max) entradaData.push({ label: "Índice Vazios Máx", value: formData.indice_vazios_max });
-    if (formData.indice_vazios_min) entradaData.push({ label: "Índice Vazios Mín", value: formData.indice_vazios_min });
+    formData.amostras.forEach((amostra, idx) => {
+      amostrasData.push({ label: `-- Amostra ${idx + 1} --`, value: "" });
+      amostrasData.push({ label: "Massa Úmida (g)", value: amostra.massaUmida || "—" });
+      amostrasData.push({ label: "Massa Seca (g)", value: amostra.massaSeca || "—" });
+      amostrasData.push({ label: "Volume (cm³)", value: amostra.volume || "—" });
+    });
+    
+    // Parâmetros comuns
+    amostrasData.push({ label: "", value: "" });
+    amostrasData.push({ label: "=== PARÂMETROS COMUNS ===", value: "" });
+    if (formData.Gs) amostrasData.push({ label: "Densidade dos Grãos (Gs)", value: formData.Gs });
+    if (formData.pesoEspecificoAgua) amostrasData.push({ label: "Peso Específico Água (kN/m³)", value: formData.pesoEspecificoAgua });
+    if (formData.indice_vazios_max) amostrasData.push({ label: "Índice Vazios Máx (emax)", value: formData.indice_vazios_max });
+    if (formData.indice_vazios_min) amostrasData.push({ label: "Índice Vazios Mín (emin)", value: formData.indice_vazios_min });
 
     // Sheet de Resultados
     const resultadosData: { label: string; value: string | number }[] = [];
@@ -575,13 +744,58 @@ function IndicesFisicosDesktop() {
     if (results.compacidade_relativa !== null) resultadosData.push({ label: "Compacidade Relativa (%)", value: results.compacidade_relativa.toFixed(2) });
     if (results.classificacao_compacidade) resultadosData.push({ label: "Classificação", value: results.classificacao_compacidade });
 
+    // Sheet de Estatísticas (se houver múltiplas amostras)
+    const sheets: { name: string; data: { label: string; value: string | number }[] }[] = [
+      { name: "Amostras", data: amostrasData },
+      { name: "Resultados", data: resultadosData }
+    ];
+
+    if (results.num_amostras && results.num_amostras > 1 && results.estatisticas) {
+      const estatisticasData: { label: string; value: string | number }[] = [
+        { label: `=== ESTATÍSTICAS (${results.num_amostras} amostras) ===`, value: "" },
+        { label: "", value: "" },
+      ];
+
+      if (results.estatisticas.peso_especifico_natural) {
+        const e = results.estatisticas.peso_especifico_natural;
+        estatisticasData.push({ label: "-- γn (kN/m³) --", value: "" });
+        estatisticasData.push({ label: "Média", value: e.media.toFixed(2) });
+        estatisticasData.push({ label: "Desvio Padrão", value: e.desvio_padrao.toFixed(3) });
+        estatisticasData.push({ label: "CV (%)", value: e.coeficiente_variacao.toFixed(1) });
+        estatisticasData.push({ label: "Mínimo", value: e.minimo.toFixed(2) });
+        estatisticasData.push({ label: "Máximo", value: e.maximo.toFixed(2) });
+        estatisticasData.push({ label: "", value: "" });
+      }
+
+      if (results.estatisticas.peso_especifico_seco) {
+        const e = results.estatisticas.peso_especifico_seco;
+        estatisticasData.push({ label: "-- γd (kN/m³) --", value: "" });
+        estatisticasData.push({ label: "Média", value: e.media.toFixed(2) });
+        estatisticasData.push({ label: "Desvio Padrão", value: e.desvio_padrao.toFixed(3) });
+        estatisticasData.push({ label: "CV (%)", value: e.coeficiente_variacao.toFixed(1) });
+        estatisticasData.push({ label: "Mínimo", value: e.minimo.toFixed(2) });
+        estatisticasData.push({ label: "Máximo", value: e.maximo.toFixed(2) });
+        estatisticasData.push({ label: "", value: "" });
+      }
+
+      if (results.estatisticas.umidade) {
+        const e = results.estatisticas.umidade;
+        estatisticasData.push({ label: "-- Umidade (%) --", value: "" });
+        estatisticasData.push({ label: "Média", value: e.media.toFixed(2) });
+        estatisticasData.push({ label: "Desvio Padrão", value: e.desvio_padrao.toFixed(3) });
+        estatisticasData.push({ label: "CV (%)", value: e.coeficiente_variacao.toFixed(1) });
+        estatisticasData.push({ label: "Mínimo", value: e.minimo.toFixed(2) });
+        estatisticasData.push({ label: "Máximo", value: e.maximo.toFixed(2) });
+        estatisticasData.push({ label: "", value: "" });
+      }
+
+      sheets.push({ name: "Estatísticas", data: estatisticasData });
+    }
+
     const excelData: ExcelExportData = {
       moduleName: "indices-fisicos",
       moduleTitle: "Índices Físicos",
-      sheets: [
-        { name: "Dados de Entrada", data: entradaData },
-        { name: "Resultados", data: resultadosData }
-      ],
+      sheets,
     };
 
     const success = await exportToExcel(excelData);
@@ -599,16 +813,26 @@ function IndicesFisicosDesktop() {
     }
   };
 
-  // Validação: precisa dos 3 dados básicos (massa úmida, massa seca, volume) E do Gs (OBRIGATÓRIO)
-  const isFormValid =
-    formData.massaUmida && 
-    formData.massaSeca && 
-    formData.volume && 
+  // Validação: precisa dos dados da amostra atual E do Gs (OBRIGATÓRIO)
+  const currentAmostra = formData.amostras[currentAmostraIndex];
+  const isCurrentAmostraValid = 
+    currentAmostra?.massaUmida && 
+    currentAmostra?.massaSeca && 
+    currentAmostra?.volume &&
+    !isNaN(parseFloat(currentAmostra.massaUmida)) &&
+    !isNaN(parseFloat(currentAmostra.massaSeca)) &&
+    !isNaN(parseFloat(currentAmostra.volume));
+
+  const isFormValid = 
+    isCurrentAmostraValid &&
     formData.Gs &&
-    !isNaN(parseFloat(formData.massaUmida)) &&
-    !isNaN(parseFloat(formData.massaSeca)) &&
-    !isNaN(parseFloat(formData.volume)) &&
-    !isNaN(parseFloat(formData.Gs));
+    !isNaN(parseFloat(formData.Gs)) &&
+    formData.amostras.every(a => 
+      a.massaUmida && a.massaSeca && a.volume &&
+      !isNaN(parseFloat(a.massaUmida)) &&
+      !isNaN(parseFloat(a.massaSeca)) &&
+      !isNaN(parseFloat(a.volume))
+    );
 
   // Agrupamento dos Resultados para o Carrossel
   const resultItems = useMemo(() => {
@@ -691,135 +915,204 @@ function IndicesFisicosDesktop() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 items-start">
           {/* Input Panel - Ajustes de espaçamento aqui */}
           <Card className="glass p-4 sm:p-6 md:col-span-1 flex flex-col animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
-             <h2 className="text-xl font-semibold text-foreground mb-6 flex items-center gap-2"> {/* Aumentado mb-4 para mb-6 */}
-              <Info className="w-5 h-5" />
-              Dados de Entrada
-            </h2>
-             {/* Aumentado gap e mb */}
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5 mb-8" role="group" aria-labelledby="input-section-title">
-              {/* Coluna 1 Inputs */}
-              <div className="space-y-5" data-tour="input-basicos">
-                <InputWithValidation
-                  id="massaUmida"
-                  label="Massa Úmida (g)"
-                  value={formData.massaUmida}
-                  onChange={(value) => handleChange("massaUmida", value)}
-                  tooltip={tooltips.massaUmida}
-                  placeholder="Ex: 150.5"
-                  validationRules={[
-                    {
-                      validate: (v) => parseFloat(v) > 0,
-                      message: "Deve ser maior que 0",
-                    },
-                    {
-                      validate: (v) => {
-                        if (!formData.massaSeca) return true;
-                        return parseFloat(v) >= parseFloat(formData.massaSeca);
-                      },
-                      message: "Massa úmida deve ser ≥ massa seca",
-                    },
-                  ]}
-                />
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+                <Info className="w-5 h-5" />
+                Amostra {currentAmostraIndex + 1} de {formData.amostras.length}
+              </h2>
+              
+              {/* Navegação entre amostras */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={goToPreviousAmostra}
+                  disabled={currentAmostraIndex === 0 || isCalculating}
+                  className="h-8 w-8"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
                 
-                <InputWithValidation
-                  id="massaSeca"
-                  label="Massa Seca (g)"
-                  value={formData.massaSeca}
-                  onChange={(value) => handleChange("massaSeca", value)}
-                  tooltip={tooltips.massaSeca}
-                  placeholder="Ex: 130.2"
-                  validationRules={[
-                    {
-                      validate: (v) => parseFloat(v) > 0,
-                      message: "Deve ser maior que 0",
-                    },
-                    {
-                      validate: (v) => {
-                        if (!formData.massaUmida) return true;
-                        return parseFloat(v) <= parseFloat(formData.massaUmida);
-                      },
-                      message: "Massa seca deve ser ≤ massa úmida",
-                    },
-                  ]}
-                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={goToNextAmostra}
+                  disabled={currentAmostraIndex === formData.amostras.length - 1 || isCalculating}
+                  className="h-8 w-8"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
                 
-                <InputWithValidation
-                  id="volume"
-                  label="Volume Total (cm³)"
-                  value={formData.volume}
-                  onChange={(value) => handleChange("volume", value)}
-                  tooltip={tooltips.volume}
-                  placeholder="Ex: 100.0"
-                  validationRules={[
-                    {
-                      validate: (v) => parseFloat(v) > 0,
-                      message: "Deve ser maior que 0",
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={addAmostra}
+                  disabled={isCalculating}
+                  className="h-8 w-8"
+                  data-tour="add-amostra"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+                
+                {formData.amostras.length > 1 && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={removeAmostra}
+                    disabled={isCalculating}
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Inputs da amostra atual em 2 colunas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6" data-tour="input-basicos">
+              <InputWithValidation
+                id="massaUmida"
+                label="Massa Úmida (g)"
+                value={currentAmostra?.massaUmida || ""}
+                onChange={(value) => handleAmostraChange("massaUmida", value)}
+                tooltip={tooltips.massaUmida}
+                placeholder="Ex: 150.5"
+                validationRules={[
+                  {
+                    validate: (v) => parseFloat(v) > 0,
+                    message: "Deve ser maior que 0",
+                  },
+                  {
+                    validate: (v) => {
+                      if (!currentAmostra?.massaSeca) return true;
+                      return parseFloat(v) >= parseFloat(currentAmostra.massaSeca);
                     },
-                  ]}
+                    message: "Massa úmida deve ser ≥ massa seca",
+                  },
+                ]}
+              />
+              
+              <InputWithValidation
+                id="massaSeca"
+                label="Massa Seca (g)"
+                value={currentAmostra?.massaSeca || ""}
+                onChange={(value) => handleAmostraChange("massaSeca", value)}
+                tooltip={tooltips.massaSeca}
+                placeholder="Ex: 130.2"
+                validationRules={[
+                  {
+                    validate: (v) => parseFloat(v) > 0,
+                    message: "Deve ser maior que 0",
+                  },
+                  {
+                    validate: (v) => {
+                      if (!currentAmostra?.massaUmida) return true;
+                      return parseFloat(v) <= parseFloat(currentAmostra.massaUmida);
+                    },
+                    message: "Massa seca deve ser ≤ massa úmida",
+                  },
+                ]}
+              />
+              
+              <InputWithValidation
+                id="volume"
+                label="Volume Total (cm³)"
+                value={currentAmostra?.volume || ""}
+                onChange={(value) => handleAmostraChange("volume", value)}
+                tooltip={tooltips.volume}
+                placeholder="Ex: 100.0"
+                validationRules={[
+                  {
+                    validate: (v) => parseFloat(v) > 0,
+                    message: "Deve ser maior que 0",
+                  },
+                ]}
+              />
+            </div>
+            
+            <Separator className="my-4" />
+            
+            {/* Parâmetros comuns (Gs, emax, emin) em 2 colunas */}
+            <h3 className="text-md font-semibold mb-4">Parâmetros Comuns (Todas as Amostras)</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="Gs">Densidade dos Grãos (Gs) *</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <PopoverButton variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                        <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                      </PopoverButton>
+                    </PopoverTrigger>
+                    <PopoverContent className="max-w-xs" align="start">
+                      <p className="text-sm">{tooltips.Gs}</p>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    id="Gs" 
+                    type="number" 
+                    step="0.01" 
+                    value={formData.Gs} 
+                    onChange={(e) => handleChange("Gs", e.target.value)} 
+                    className="bg-background/50 flex-1" 
+                    placeholder="Ex: 2.65" 
+                    required
+                  />
+                  <GsSuggestions onSelect={handleSelectGs} />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="indice_vazios_max">Índice de Vazios Máximo (emax)</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <PopoverButton variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                        <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                      </PopoverButton>
+                    </PopoverTrigger>
+                    <PopoverContent className="max-w-xs" align="start">
+                      <p className="text-sm">{tooltips.indice_vazios_max}</p>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <Input 
+                  id="indice_vazios_max" 
+                  type="number" 
+                  step="0.01" 
+                  value={formData.indice_vazios_max} 
+                  onChange={(e) => handleChange("indice_vazios_max", e.target.value)} 
+                  className="bg-background/50" 
+                  placeholder="Opcional (ex: 0.85)" 
                 />
               </div>
-              {/* Coluna 2 Inputs */}
-              <div className="space-y-5"> {/* Aumentado space-y-4 para space-y-5 */}
-                 <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor="Gs">Densidade dos Grãos (Gs) *</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <PopoverButton variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
-                            <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
-                          </PopoverButton>
-                        </PopoverTrigger>
-                        <PopoverContent className="max-w-xs" align="start">
-                          <p className="text-sm">{tooltips.Gs}</p>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Input 
-                        id="Gs" 
-                        type="number" 
-                        step="0.01" 
-                        value={formData.Gs} 
-                        onChange={(e) => handleChange("Gs", e.target.value)} 
-                        className="bg-background/50 flex-1" 
-                        placeholder="Ex: 2.65" 
-                        required
-                      />
-                      <GsSuggestions onSelect={handleSelectGs} />
-                    </div>
-                  </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="indice_vazios_max">Índice de Vazios Máximo (emax)</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <PopoverButton variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
-                          <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
-                        </PopoverButton>
-                      </PopoverTrigger>
-                      <PopoverContent className="max-w-xs" align="start">
-                        <p className="text-sm">{tooltips.indice_vazios_max}</p>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <Input id="indice_vazios_max" type="number" step="0.01" value={formData.indice_vazios_max} onChange={(e) => handleChange("indice_vazios_max", e.target.value)} className="bg-background/50" placeholder="Opcional (ex: 0.85)" />
+              
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="indice_vazios_min">Índice de Vazios Mínimo (emin)</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <PopoverButton variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                        <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                      </PopoverButton>
+                    </PopoverTrigger>
+                    <PopoverContent className="max-w-xs" align="start">
+                      <p className="text-sm">{tooltips.indice_vazios_min}</p>
+                    </PopoverContent>
+                  </Popover>
                 </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="indice_vazios_min">Índice de Vazios Mínimo (emin)</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <PopoverButton variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
-                          <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
-                        </PopoverButton>
-                      </PopoverTrigger>
-                      <PopoverContent className="max-w-xs" align="start">
-                        <p className="text-sm">{tooltips.indice_vazios_min}</p>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <Input id="indice_vazios_min" type="number" step="0.01" value={formData.indice_vazios_min} onChange={(e) => handleChange("indice_vazios_min", e.target.value)} className="bg-background/50" placeholder="Opcional (ex: 0.45)" />
-                </div>
+                <Input 
+                  id="indice_vazios_min" 
+                  type="number" 
+                  step="0.01" 
+                  value={formData.indice_vazios_min} 
+                  onChange={(e) => handleChange("indice_vazios_min", e.target.value)} 
+                  className="bg-background/50" 
+                  placeholder="Opcional (ex: 0.45)" 
+                />
               </div>
             </div>
               {/* Select - Peso Específico Água */}
@@ -969,6 +1262,180 @@ function IndicesFisicosDesktop() {
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ animationDelay: '300ms' }}>
             <ResultInterpretation results={results} />
           </div>
+        )}
+
+        {/* Card de Estatísticas (múltiplas amostras) */}
+        {results && results.num_amostras && results.num_amostras > 1 && results.estatisticas && !isCalculating && (
+          <Card className="glass p-4 sm:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500" 
+                style={{ animationDelay: '350ms', animationFillMode: 'backwards' }}>
+            <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-primary" />
+              Estatísticas ({results.num_amostras} amostras)
+            </h2>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 px-2">Parâmetro</th>
+                    <th className="text-right py-2 px-2">Média</th>
+                    <th className="text-right py-2 px-2">DP</th>
+                    <th className="text-right py-2 px-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger className="cursor-help">CV (%)</TooltipTrigger>
+                          <TooltipContent>
+                            <p className="font-semibold">Coeficiente de Variação</p>
+                            <p className="text-xs">CV {'<'} 5%: Excelente</p>
+                            <p className="text-xs">CV {'<'} 10%: Bom</p>
+                            <p className="text-xs">CV {'<'} 15%: Aceitável</p>
+                            <p className="text-xs">CV ≥ 15%: Questionável</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </th>
+                    <th className="text-right py-2 px-2">Min</th>
+                    <th className="text-right py-2 px-2">Max</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {results.estatisticas.peso_especifico_natural && (
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="py-2 px-2 font-medium">γn (kN/m³)</td>
+                      <td className="text-right py-2 px-2">{formatNumber(results.estatisticas.peso_especifico_natural.media, settings)}</td>
+                      <td className="text-right py-2 px-2">{results.estatisticas.peso_especifico_natural.desvio_padrao.toFixed(3)}</td>
+                      <td className={cn(
+                        "text-right py-2 px-2 font-semibold",
+                        results.estatisticas.peso_especifico_natural.coeficiente_variacao < 5 ? "text-green-600" :
+                        results.estatisticas.peso_especifico_natural.coeficiente_variacao < 10 ? "text-blue-600" :
+                        results.estatisticas.peso_especifico_natural.coeficiente_variacao < 15 ? "text-yellow-600" :
+                        "text-red-600"
+                      )}>
+                        {results.estatisticas.peso_especifico_natural.coeficiente_variacao.toFixed(1)}%
+                      </td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.peso_especifico_natural.minimo.toFixed(2)}</td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.peso_especifico_natural.maximo.toFixed(2)}</td>
+                    </tr>
+                  )}
+                  
+                  {results.estatisticas.peso_especifico_seco && (
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="py-2 px-2 font-medium">γd (kN/m³)</td>
+                      <td className="text-right py-2 px-2">{formatNumber(results.estatisticas.peso_especifico_seco.media, settings)}</td>
+                      <td className="text-right py-2 px-2">{results.estatisticas.peso_especifico_seco.desvio_padrao.toFixed(3)}</td>
+                      <td className={cn(
+                        "text-right py-2 px-2 font-semibold",
+                        results.estatisticas.peso_especifico_seco.coeficiente_variacao < 5 ? "text-green-600" :
+                        results.estatisticas.peso_especifico_seco.coeficiente_variacao < 10 ? "text-blue-600" :
+                        results.estatisticas.peso_especifico_seco.coeficiente_variacao < 15 ? "text-yellow-600" :
+                        "text-red-600"
+                      )}>
+                        {results.estatisticas.peso_especifico_seco.coeficiente_variacao.toFixed(1)}%
+                      </td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.peso_especifico_seco.minimo.toFixed(2)}</td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.peso_especifico_seco.maximo.toFixed(2)}</td>
+                    </tr>
+                  )}
+                  
+                  {results.estatisticas.umidade && (
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="py-2 px-2 font-medium">Umidade (%)</td>
+                      <td className="text-right py-2 px-2">{formatNumber(results.estatisticas.umidade.media, settings)}</td>
+                      <td className="text-right py-2 px-2">{results.estatisticas.umidade.desvio_padrao.toFixed(3)}</td>
+                      <td className={cn(
+                        "text-right py-2 px-2 font-semibold",
+                        results.estatisticas.umidade.coeficiente_variacao < 5 ? "text-green-600" :
+                        results.estatisticas.umidade.coeficiente_variacao < 10 ? "text-blue-600" :
+                        results.estatisticas.umidade.coeficiente_variacao < 15 ? "text-yellow-600" :
+                        "text-red-600"
+                      )}>
+                        {results.estatisticas.umidade.coeficiente_variacao.toFixed(1)}%
+                      </td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.umidade.minimo.toFixed(2)}</td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.umidade.maximo.toFixed(2)}</td>
+                    </tr>
+                  )}
+                  
+                  {results.estatisticas.indice_vazios && (
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="py-2 px-2 font-medium">Índice de Vazios</td>
+                      <td className="text-right py-2 px-2">{formatNumber(results.estatisticas.indice_vazios.media, settings)}</td>
+                      <td className="text-right py-2 px-2">{results.estatisticas.indice_vazios.desvio_padrao.toFixed(3)}</td>
+                      <td className={cn(
+                        "text-right py-2 px-2 font-semibold",
+                        results.estatisticas.indice_vazios.coeficiente_variacao < 5 ? "text-green-600" :
+                        results.estatisticas.indice_vazios.coeficiente_variacao < 10 ? "text-blue-600" :
+                        results.estatisticas.indice_vazios.coeficiente_variacao < 15 ? "text-yellow-600" :
+                        "text-red-600"
+                      )}>
+                        {results.estatisticas.indice_vazios.coeficiente_variacao.toFixed(1)}%
+                      </td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.indice_vazios.minimo.toFixed(3)}</td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.indice_vazios.maximo.toFixed(3)}</td>
+                    </tr>
+                  )}
+                  
+                  {results.estatisticas.porosidade && (
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="py-2 px-2 font-medium">Porosidade (%)</td>
+                      <td className="text-right py-2 px-2">{formatNumber(results.estatisticas.porosidade.media, settings)}</td>
+                      <td className="text-right py-2 px-2">{results.estatisticas.porosidade.desvio_padrao.toFixed(3)}</td>
+                      <td className={cn(
+                        "text-right py-2 px-2 font-semibold",
+                        results.estatisticas.porosidade.coeficiente_variacao < 5 ? "text-green-600" :
+                        results.estatisticas.porosidade.coeficiente_variacao < 10 ? "text-blue-600" :
+                        results.estatisticas.porosidade.coeficiente_variacao < 15 ? "text-yellow-600" :
+                        "text-red-600"
+                      )}>
+                        {results.estatisticas.porosidade.coeficiente_variacao.toFixed(1)}%
+                      </td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.porosidade.minimo.toFixed(2)}</td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.porosidade.maximo.toFixed(2)}</td>
+                    </tr>
+                  )}
+                  
+                  {results.estatisticas.grau_saturacao && (
+                    <tr className="border-b hover:bg-muted/50">
+                      <td className="py-2 px-2 font-medium">Saturação (%)</td>
+                      <td className="text-right py-2 px-2">{formatNumber(results.estatisticas.grau_saturacao.media, settings)}</td>
+                      <td className="text-right py-2 px-2">{results.estatisticas.grau_saturacao.desvio_padrao.toFixed(3)}</td>
+                      <td className={cn(
+                        "text-right py-2 px-2 font-semibold",
+                        results.estatisticas.grau_saturacao.coeficiente_variacao < 5 ? "text-green-600" :
+                        results.estatisticas.grau_saturacao.coeficiente_variacao < 10 ? "text-blue-600" :
+                        results.estatisticas.grau_saturacao.coeficiente_variacao < 15 ? "text-yellow-600" :
+                        "text-red-600"
+                      )}>
+                        {results.estatisticas.grau_saturacao.coeficiente_variacao.toFixed(1)}%
+                      </td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.grau_saturacao.minimo.toFixed(2)}</td>
+                      <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.grau_saturacao.maximo.toFixed(2)}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+            
+            {/* Legenda CV */}
+            <div className="mt-4 flex flex-wrap gap-3 text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-green-600"></div>
+                <span>CV {'<'} 5% (Excelente)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-blue-600"></div>
+                <span>CV {'<'} 10% (Bom)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-yellow-600"></div>
+                <span>CV {'<'} 15% (Aceitável)</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-3 h-3 rounded bg-red-600"></div>
+                <span>CV ≥ 15% (Questionável)</span>
+              </div>
+            </div>
+          </Card>
         )}
 
         {/* Dialog para salvar cálculo */}

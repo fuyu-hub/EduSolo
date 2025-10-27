@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Beaker, Calculator, BarChart3, Info, Save, Download, FolderOpen, FileText, AlertCircle, Lightbulb } from "lucide-react";
+import { Beaker, Calculator, BarChart3, Info, Save, Download, FolderOpen, FileText, AlertCircle, Lightbulb, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { calcularIndicesFisicos } from "@/lib/calculations/indices-fisicos";
+import { Separator } from "@/components/ui/separator";
+import { calcularIndicesFisicosMultiplasAmostras, type IndicesFisicosOutputComEstatisticas, type EstatisticaParametro } from "@/lib/calculations/indices-fisicos";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
@@ -38,7 +39,7 @@ import DiagramaFases from "@/components/visualizations/DiagramaFases";
 import { formatNumber } from "@/lib/format-number";
 import { useSettings } from "@/hooks/use-settings";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
-import { SoilExample, soilExamples } from "@/lib/soil-constants";
+import { SoilExample, soilExamples, type AmostraIndicesFisicos } from "@/lib/soil-constants";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
 import ExportPDFDialog from "@/components/ExportPDFDialog";
 import { useTheme } from "@/hooks/use-theme";
@@ -51,45 +52,17 @@ import {
 import { cn } from "@/lib/utils";
 
 interface FormData {
-  massaUmida: string;
-  massaSeca: string;
-  volume: string;
+  amostras: AmostraIndicesFisicos[];
   Gs: string;
   pesoEspecificoAgua: string;
   indice_vazios_max: string;
   indice_vazios_min: string;
 }
 
-interface IndicesFisicosOutput {
-  peso_especifico_natural: number | null;
-  peso_especifico_seco: number | null;
-  peso_especifico_saturado: number | null;
-  peso_especifico_submerso: number | null;
-  peso_especifico_solidos: number | null;
-  Gs: number | null;
-  indice_vazios: number | null;
-  porosidade: number | null;
-  grau_saturacao: number | null;
-  umidade: number | null;
-  volume_solidos_norm: number | null;
-  volume_agua_norm: number | null;
-  volume_ar_norm: number | null;
-  peso_solidos_norm?: number | null;
-  peso_agua_norm?: number | null;
-  compacidade_relativa: number | null;
-  classificacao_compacidade: string | null;
-  volume_total_calc: number | null;
-  volume_solidos_calc: number | null;
-  volume_agua_calc: number | null;
-  volume_ar_calc: number | null;
-  massa_total_calc: number | null;
-  massa_solidos_calc: number | null;
-  massa_agua_calc: number | null;
-  aviso?: string | null;
-  erro?: string | null;
-}
+type Results = IndicesFisicosOutputComEstatisticas;
 
-type Results = IndicesFisicosOutput;
+// Função para gerar IDs únicos
+const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
 // Cálculos agora são feitos localmente no frontend
 
@@ -107,15 +80,18 @@ export default function IndicesFisicosMobile() {
   const { toast } = useToast();
   
   const [formData, setFormData] = useState<FormData>({
-    massaUmida: "",
-    massaSeca: "",
-    volume: "",
+    amostras: [{
+      id: generateId(),
+      massaUmida: "",
+      massaSeca: "",
+      volume: ""
+    }],
     Gs: "",
     pesoEspecificoAgua: "10.0",
     indice_vazios_max: "",
     indice_vazios_min: "",
   });
-  
+  const [currentAmostraIndex, setCurrentAmostraIndex] = useState(0);
   const [results, setResults] = useState<Results | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,41 +111,104 @@ export default function IndicesFisicosMobile() {
   const [examplesSheetOpen, setExamplesSheetOpen] = useState(false);
   const [gsSheetOpen, setGsSheetOpen] = useState(false);
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
+  const currentAmostra = formData.amostras[currentAmostraIndex];
+
+  const handleInputChange = (field: keyof Omit<FormData, 'amostras'>, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError(null);
   };
 
-  const handleCalculate = async () => {
-    // Validação dos campos obrigatórios
-    if (!formData.massaUmida || !formData.massaSeca || !formData.volume || !formData.Gs) {
-      setError("Preencha todos os campos obrigatórios: Massa Úmida, Massa Seca, Volume e Gs");
-      toast({
-        title: "Campos obrigatórios",
-        description: "Preencha massa úmida, massa seca, volume e Gs",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleAmostraChange = (field: keyof AmostraIndicesFisicos, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      amostras: prev.amostras.map((amostra, idx) =>
+        idx === currentAmostraIndex
+          ? { ...amostra, [field]: value }
+          : amostra
+      )
+    }));
+    setError(null);
+  };
 
+  const addAmostra = () => {
+    setFormData(prev => ({
+      ...prev,
+      amostras: [
+        ...prev.amostras,
+        {
+          id: generateId(),
+          massaUmida: "",
+          massaSeca: "",
+          volume: ""
+        }
+      ]
+    }));
+    setCurrentAmostraIndex(formData.amostras.length);
+    toast({
+      title: "Amostra adicionada",
+      description: `Amostra ${formData.amostras.length + 1} criada`,
+    });
+  };
+
+  const removeAmostra = () => {
+    if (formData.amostras.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        amostras: prev.amostras.filter((_, idx) => idx !== currentAmostraIndex)
+      }));
+      setCurrentAmostraIndex(prev => Math.max(0, prev - 1));
+      toast({
+        title: "Amostra removida",
+        description: "Amostra excluída com sucesso",
+      });
+    } else {
+      toast({
+        title: "Atenção",
+        description: "É necessário pelo menos 1 amostra",
+      });
+    }
+  };
+
+  const goToNextAmostra = () => {
+    setCurrentAmostraIndex(prev => Math.min(prev + 1, formData.amostras.length - 1));
+  };
+
+  const goToPreviousAmostra = () => {
+    setCurrentAmostraIndex(prev => Math.max(prev - 1, 0));
+  };
+
+  const handleCalculate = async () => {
     setIsCalculating(true);
     setError(null);
     setResults(null);
 
-    const apiInput: { [key: string]: number | undefined } = {
-      peso_total: formData.massaUmida ? parseFloat(formData.massaUmida) : undefined,
-      peso_solido: formData.massaSeca ? parseFloat(formData.massaSeca) : undefined,
-      volume_total: formData.volume ? parseFloat(formData.volume) : undefined,
+    // Mapear amostras para formato da API
+    const amostrasAPI = formData.amostras.map(amostra => ({
+      peso_total: amostra.massaUmida ? parseFloat(amostra.massaUmida) : undefined,
+      peso_solido: amostra.massaSeca ? parseFloat(amostra.massaSeca) : undefined,
+      volume_total: amostra.volume ? parseFloat(amostra.volume) : undefined,
       Gs: formData.Gs ? parseFloat(formData.Gs) : undefined,
       peso_especifico_agua: formData.pesoEspecificoAgua ? parseFloat(formData.pesoEspecificoAgua) : 10.0,
       indice_vazios_max: formData.indice_vazios_max ? parseFloat(formData.indice_vazios_max) : undefined,
       indice_vazios_min: formData.indice_vazios_min ? parseFloat(formData.indice_vazios_min) : undefined,
-    };
+    }));
 
-    Object.keys(apiInput).forEach(key => (apiInput[key] === undefined || isNaN(apiInput[key] as number)) && delete apiInput[key]);
+    // Remove valores NaN/undefined
+    const amostrasLimpas = amostrasAPI.map(amostra => {
+      const limpa: any = {};
+      Object.keys(amostra).forEach(key => {
+        const valor = (amostra as any)[key];
+        if (valor !== undefined && !isNaN(valor as number)) {
+          limpa[key] = valor;
+        }
+      });
+      return limpa;
+    });
 
     // Validação emin < emax
-    if (apiInput.indice_vazios_min !== undefined && apiInput.indice_vazios_max !== undefined && apiInput.indice_vazios_min >= apiInput.indice_vazios_max) {
+    if (amostrasLimpas[0].indice_vazios_min !== undefined && 
+        amostrasLimpas[0].indice_vazios_max !== undefined && 
+        amostrasLimpas[0].indice_vazios_min >= amostrasLimpas[0].indice_vazios_max) {
       setError("Índice de vazios mínimo (emin) deve ser menor que o máximo (emax).");
       toast({
         title: "Erro de Entrada",
@@ -181,8 +220,8 @@ export default function IndicesFisicosMobile() {
     }
 
     try {
-      // Calcula localmente no frontend
-      const resultado = calcularIndicesFisicos(apiInput);
+      // Usar função de múltiplas amostras
+      const resultado = calcularIndicesFisicosMultiplasAmostras(amostrasLimpas);
 
       if (resultado.erro) {
         setError(resultado.erro);
@@ -193,19 +232,28 @@ export default function IndicesFisicosMobile() {
         });
       } else {
         setResults(resultado);
-        toast({
-          title: "✅ Sucesso!",
-          description: "Índices calculados com sucesso",
-        });
+        
+        // Toast especial se houver múltiplas amostras
+        if (resultado.num_amostras && resultado.num_amostras > 1) {
+          toast({
+            title: `✅ ${resultado.num_amostras} amostras calculadas!`,
+            description: "Estatísticas calculadas com sucesso",
+          });
+        } else {
+          toast({
+            title: "✅ Sucesso!",
+            description: "Índices calculados com sucesso",
+          });
+        }
       }
     } catch (err) {
-      let errorMessage = "Erro ao calcular índices físicos";
+      let errorMessage = "Erro ao calcular os índices físicos.";
       if (err instanceof Error) {
         errorMessage = err.message;
       }
       setError(errorMessage);
       toast({
-        title: "❌ Erro",
+        title: "Erro",
         description: errorMessage,
         variant: "destructive",
       });
@@ -216,20 +264,31 @@ export default function IndicesFisicosMobile() {
 
   const handleClear = () => {
     setFormData({
-      massaUmida: "",
-      massaSeca: "",
-      volume: "",
+      amostras: [{
+        id: generateId(),
+        massaUmida: "",
+        massaSeca: "",
+        volume: ""
+      }],
       Gs: "",
       pesoEspecificoAgua: "10.0",
       indice_vazios_max: "",
       indice_vazios_min: "",
     });
+    setCurrentAmostraIndex(0);
     setResults(null);
     setError(null);
   };
 
   const handleLoadExample = (example: SoilExample) => {
-    setFormData(example.data as FormData);
+    setFormData({
+      amostras: example.amostras.map(a => ({ ...a, id: generateId() })),
+      Gs: example.Gs,
+      pesoEspecificoAgua: example.pesoEspecificoAgua,
+      indice_vazios_max: example.indice_vazios_max || "",
+      indice_vazios_min: example.indice_vazios_min || "",
+    });
+    setCurrentAmostraIndex(0);
     setResults(null);
     setError(null);
     setExamplesSheetOpen(false);
@@ -296,15 +355,24 @@ export default function IndicesFisicosMobile() {
     if (!results) return;
     setIsExportingPDF(true);
 
-    const inputs: { label: string; value: string }[] = [
-      { label: "Massa Úmida", value: `${formData.massaUmida} g` },
-      { label: "Massa Seca", value: `${formData.massaSeca} g` },
-      { label: "Volume Total", value: `${formData.volume} cm³` },
-    ];
-    
+    // Criar tabela de amostras
+    const tabelaAmostras = {
+      title: `Dados de Entrada (${formData.amostras.length} amostra${formData.amostras.length > 1 ? 's' : ''})`,
+      headers: ["Amostra", "Massa Úmida (g)", "Massa Seca (g)", "Volume (cm³)"],
+      rows: formData.amostras.map((amostra, idx) => [
+        `${idx + 1}`,
+        amostra.massaUmida || "—",
+        amostra.massaSeca || "—",
+        amostra.volume || "—"
+      ])
+    };
+
+    // Parâmetros comuns
+    const inputs: { label: string; value: string }[] = [];
     if (formData.Gs) inputs.push({ label: "Densidade dos Grãos (Gs)", value: formData.Gs });
-    if (formData.indice_vazios_max) inputs.push({ label: "Índice Vazios Máx", value: formData.indice_vazios_max });
-    if (formData.indice_vazios_min) inputs.push({ label: "Índice Vazios Mín", value: formData.indice_vazios_min });
+    if (formData.pesoEspecificoAgua) inputs.push({ label: "Peso Específico Água", value: `${formData.pesoEspecificoAgua} kN/m³` });
+    if (formData.indice_vazios_max) inputs.push({ label: "Índice Vazios Máx (emax)", value: formData.indice_vazios_max });
+    if (formData.indice_vazios_min) inputs.push({ label: "Índice Vazios Mín (emin)", value: formData.indice_vazios_min });
 
     const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
     if (results.peso_especifico_natural !== null) resultsList.push({ label: "Peso Específico Natural", value: `${formatNumberForExport(results.peso_especifico_natural)} kN/m³`, highlight: true });
@@ -380,12 +448,98 @@ export default function IndicesFisicosMobile() {
       });
     }
 
+    // Criar tabela de estatísticas (se houver múltiplas amostras)
+    const tabelas: { title: string; headers: string[]; rows: (string | number)[][] }[] = [tabelaAmostras];
+    
+    if (results.num_amostras && results.num_amostras > 1 && results.estatisticas) {
+      const tabelaEstatisticas = {
+        title: `Estatísticas (${results.num_amostras} amostras)`,
+        headers: ["Parâmetro", "Média", "DP", "CV (%)", "Mín", "Máx"],
+        rows: []
+      };
+
+      if (results.estatisticas.peso_especifico_natural) {
+        const e = results.estatisticas.peso_especifico_natural;
+        tabelaEstatisticas.rows.push([
+          "γn (kN/m³)",
+          formatNumberForExport(e.media),
+          formatNumberForExport(e.desvio_padrao, 3),
+          formatNumberForExport(e.coeficiente_variacao, 1),
+          formatNumberForExport(e.minimo),
+          formatNumberForExport(e.maximo)
+        ]);
+      }
+
+      if (results.estatisticas.peso_especifico_seco) {
+        const e = results.estatisticas.peso_especifico_seco;
+        tabelaEstatisticas.rows.push([
+          "γd (kN/m³)",
+          formatNumberForExport(e.media),
+          formatNumberForExport(e.desvio_padrao, 3),
+          formatNumberForExport(e.coeficiente_variacao, 1),
+          formatNumberForExport(e.minimo),
+          formatNumberForExport(e.maximo)
+        ]);
+      }
+
+      if (results.estatisticas.umidade) {
+        const e = results.estatisticas.umidade;
+        tabelaEstatisticas.rows.push([
+          "Umidade (%)",
+          formatNumberForExport(e.media),
+          formatNumberForExport(e.desvio_padrao, 3),
+          formatNumberForExport(e.coeficiente_variacao, 1),
+          formatNumberForExport(e.minimo),
+          formatNumberForExport(e.maximo)
+        ]);
+      }
+
+      if (results.estatisticas.indice_vazios) {
+        const e = results.estatisticas.indice_vazios;
+        tabelaEstatisticas.rows.push([
+          "Índice de Vazios",
+          formatNumberForExport(e.media, 3),
+          formatNumberForExport(e.desvio_padrao, 3),
+          formatNumberForExport(e.coeficiente_variacao, 1),
+          formatNumberForExport(e.minimo, 3),
+          formatNumberForExport(e.maximo, 3)
+        ]);
+      }
+
+      if (results.estatisticas.porosidade) {
+        const e = results.estatisticas.porosidade;
+        tabelaEstatisticas.rows.push([
+          "Porosidade (%)",
+          formatNumberForExport(e.media),
+          formatNumberForExport(e.desvio_padrao, 3),
+          formatNumberForExport(e.coeficiente_variacao, 1),
+          formatNumberForExport(e.minimo),
+          formatNumberForExport(e.maximo)
+        ]);
+      }
+
+      if (results.estatisticas.grau_saturacao) {
+        const e = results.estatisticas.grau_saturacao;
+        tabelaEstatisticas.rows.push([
+          "Saturação (%)",
+          formatNumberForExport(e.media),
+          formatNumberForExport(e.desvio_padrao, 3),
+          formatNumberForExport(e.coeficiente_variacao, 1),
+          formatNumberForExport(e.minimo),
+          formatNumberForExport(e.maximo)
+        ]);
+      }
+
+      tabelas.push(tabelaEstatisticas);
+    }
+
     const exportData: ExportData = {
       moduleName: "indices-fisicos",
       moduleTitle: "Índices Físicos",
       inputs,
       results: resultsList,
       formulas,
+      tables: tabelas,
       customFileName: pdfFileName,
       theme,
       printSettings: settings.printSettings
@@ -413,15 +567,24 @@ export default function IndicesFisicosMobile() {
   const handleExportExcel = async () => {
     if (!results) return;
 
-    const entradaData: { label: string; value: string | number }[] = [
-      { label: "Massa Úmida (g)", value: formData.massaUmida },
-      { label: "Massa Seca (g)", value: formData.massaSeca },
-      { label: "Volume Total (cm³)", value: formData.volume },
+    // Sheet de Amostras (tabela)
+    const amostrasData: { label: string; value: string | number }[] = [
+      { label: "=== AMOSTRAS ===", value: "" },
     ];
-    if (formData.Gs) entradaData.push({ label: "Gs", value: formData.Gs });
-    if (formData.pesoEspecificoAgua) entradaData.push({ label: "Peso Específico da Água (kN/m³)", value: formData.pesoEspecificoAgua });
-    if (formData.indice_vazios_max) entradaData.push({ label: "Índice de Vazios Máximo", value: formData.indice_vazios_max });
-    if (formData.indice_vazios_min) entradaData.push({ label: "Índice de Vazios Mínimo", value: formData.indice_vazios_min });
+    formData.amostras.forEach((amostra, idx) => {
+      amostrasData.push({ label: `-- Amostra ${idx + 1} --`, value: "" });
+      amostrasData.push({ label: "Massa Úmida (g)", value: amostra.massaUmida || "—" });
+      amostrasData.push({ label: "Massa Seca (g)", value: amostra.massaSeca || "—" });
+      amostrasData.push({ label: "Volume (cm³)", value: amostra.volume || "—" });
+    });
+    
+    // Parâmetros comuns
+    amostrasData.push({ label: "", value: "" });
+    amostrasData.push({ label: "=== PARÂMETROS COMUNS ===", value: "" });
+    if (formData.Gs) amostrasData.push({ label: "Densidade dos Grãos (Gs)", value: formData.Gs });
+    if (formData.pesoEspecificoAgua) amostrasData.push({ label: "Peso Específico Água (kN/m³)", value: formData.pesoEspecificoAgua });
+    if (formData.indice_vazios_max) amostrasData.push({ label: "Índice Vazios Máx (emax)", value: formData.indice_vazios_max });
+    if (formData.indice_vazios_min) amostrasData.push({ label: "Índice Vazios Mín (emin)", value: formData.indice_vazios_min });
 
     const resultadosData: { label: string; value: string | number }[] = [];
     if (results.peso_especifico_natural !== null) resultadosData.push({ label: "Peso Específico Natural (kN/m³)", value: results.peso_especifico_natural.toFixed(2) });
@@ -437,13 +600,58 @@ export default function IndicesFisicosMobile() {
     if (results.compacidade_relativa !== null) resultadosData.push({ label: "Dr (%)", value: results.compacidade_relativa.toFixed(2) });
     if (results.classificacao_compacidade) resultadosData.push({ label: "Classificação", value: results.classificacao_compacidade });
 
+    // Sheet de Estatísticas (se houver múltiplas amostras)
+    const sheets: { name: string; data: { label: string; value: string | number }[] }[] = [
+      { name: "Amostras", data: amostrasData },
+      { name: "Resultados", data: resultadosData }
+    ];
+
+    if (results.num_amostras && results.num_amostras > 1 && results.estatisticas) {
+      const estatisticasData: { label: string; value: string | number }[] = [
+        { label: `=== ESTATÍSTICAS (${results.num_amostras} amostras) ===`, value: "" },
+        { label: "", value: "" },
+      ];
+
+      if (results.estatisticas.peso_especifico_natural) {
+        const e = results.estatisticas.peso_especifico_natural;
+        estatisticasData.push({ label: "-- γn (kN/m³) --", value: "" });
+        estatisticasData.push({ label: "Média", value: e.media.toFixed(2) });
+        estatisticasData.push({ label: "Desvio Padrão", value: e.desvio_padrao.toFixed(3) });
+        estatisticasData.push({ label: "CV (%)", value: e.coeficiente_variacao.toFixed(1) });
+        estatisticasData.push({ label: "Mínimo", value: e.minimo.toFixed(2) });
+        estatisticasData.push({ label: "Máximo", value: e.maximo.toFixed(2) });
+        estatisticasData.push({ label: "", value: "" });
+      }
+
+      if (results.estatisticas.peso_especifico_seco) {
+        const e = results.estatisticas.peso_especifico_seco;
+        estatisticasData.push({ label: "-- γd (kN/m³) --", value: "" });
+        estatisticasData.push({ label: "Média", value: e.media.toFixed(2) });
+        estatisticasData.push({ label: "Desvio Padrão", value: e.desvio_padrao.toFixed(3) });
+        estatisticasData.push({ label: "CV (%)", value: e.coeficiente_variacao.toFixed(1) });
+        estatisticasData.push({ label: "Mínimo", value: e.minimo.toFixed(2) });
+        estatisticasData.push({ label: "Máximo", value: e.maximo.toFixed(2) });
+        estatisticasData.push({ label: "", value: "" });
+      }
+
+      if (results.estatisticas.umidade) {
+        const e = results.estatisticas.umidade;
+        estatisticasData.push({ label: "-- Umidade (%) --", value: "" });
+        estatisticasData.push({ label: "Média", value: e.media.toFixed(2) });
+        estatisticasData.push({ label: "Desvio Padrão", value: e.desvio_padrao.toFixed(3) });
+        estatisticasData.push({ label: "CV (%)", value: e.coeficiente_variacao.toFixed(1) });
+        estatisticasData.push({ label: "Mínimo", value: e.minimo.toFixed(2) });
+        estatisticasData.push({ label: "Máximo", value: e.maximo.toFixed(2) });
+        estatisticasData.push({ label: "", value: "" });
+      }
+
+      sheets.push({ name: "Estatísticas", data: estatisticasData });
+    }
+
     const excelData: ExcelExportData = {
       moduleName: "indices-fisicos",
       moduleTitle: "Índices Físicos",
-      sheets: [
-        { name: "Entrada", data: entradaData },
-        { name: "Resultados", data: resultadosData }
-      ],
+      sheets,
     };
 
     const success = await exportToExcel(excelData);
@@ -466,12 +674,25 @@ export default function IndicesFisicosMobile() {
     return formatNumber(value, settings);
   };
 
-  const isFormValid =
-    formData.massaUmida && 
-    formData.massaSeca && 
-    formData.volume && 
-    formData.Gs && 
-    !isNaN(parseFloat(formData.Gs));
+  // Validação simples no mobile
+  const isCurrentAmostraValid = 
+    currentAmostra?.massaUmida && 
+    currentAmostra?.massaSeca && 
+    currentAmostra?.volume &&
+    !isNaN(parseFloat(currentAmostra.massaUmida)) &&
+    !isNaN(parseFloat(currentAmostra.massaSeca)) &&
+    !isNaN(parseFloat(currentAmostra.volume));
+
+  const isFormValid = 
+    isCurrentAmostraValid &&
+    formData.Gs &&
+    !isNaN(parseFloat(formData.Gs)) &&
+    formData.amostras.every(a => 
+      a.massaUmida && a.massaSeca && a.volume &&
+      !isNaN(parseFloat(a.massaUmida)) &&
+      !isNaN(parseFloat(a.massaSeca)) &&
+      !isNaN(parseFloat(a.volume))
+    );
 
   return (
     <div className="space-y-4 pb-4">
@@ -530,36 +751,91 @@ export default function IndicesFisicosMobile() {
         </Alert>
       )}
 
-      {/* Dados Básicos */}
+      {/* Navegação de Amostras */}
+      <div className="bg-gradient-to-br from-primary/5 to-secondary/5 p-3 rounded-xl border">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm font-semibold">
+            Amostra {currentAmostraIndex + 1} de {formData.amostras.length}
+          </span>
+          
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={goToPreviousAmostra}
+              disabled={currentAmostraIndex === 0 || isCalculating}
+              className="h-8 w-8"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={goToNextAmostra}
+              disabled={currentAmostraIndex === formData.amostras.length - 1 || isCalculating}
+              className="h-8 w-8"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={addAmostra}
+              disabled={isCalculating}
+              className="h-8 w-8"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            
+            {formData.amostras.length > 1 && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={removeAmostra}
+                disabled={isCalculating}
+                className="h-8 w-8 text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Dados Básicos da Amostra Atual em 2 colunas */}
       <MobileSection
-        title="Dados Básicos da Amostra"
+        title={`Dados da Amostra ${currentAmostraIndex + 1}`}
         icon={<Info className="w-4 h-4" />}
         defaultOpen={true}
       >
-        <MobileInputGroup
-          label="Massa Úmida"
-          value={formData.massaUmida}
-          onChange={(v) => handleInputChange("massaUmida", v)}
-          placeholder="Ex: 150.5"
-          unit="g"
-          required
-          tooltip="Massa total da amostra incluindo água"
-        />
+        <div className="grid grid-cols-2 gap-3">
+          <MobileInputGroup
+            label="Massa Úmida"
+            value={currentAmostra?.massaUmida || ""}
+            onChange={(v) => handleAmostraChange("massaUmida", v)}
+            placeholder="Ex: 150.5"
+            unit="g"
+            required
+            tooltip="Massa total da amostra incluindo água"
+          />
 
-        <MobileInputGroup
-          label="Massa Seca"
-          value={formData.massaSeca}
-          onChange={(v) => handleInputChange("massaSeca", v)}
-          placeholder="Ex: 130.2"
-          unit="g"
-          required
-          tooltip="Massa após secagem em estufa"
-        />
+          <MobileInputGroup
+            label="Massa Seca"
+            value={currentAmostra?.massaSeca || ""}
+            onChange={(v) => handleAmostraChange("massaSeca", v)}
+            placeholder="Ex: 130.2"
+            unit="g"
+            required
+            tooltip="Massa após secagem em estufa"
+          />
+        </div>
 
         <MobileInputGroup
           label="Volume Total"
-          value={formData.volume}
-          onChange={(v) => handleInputChange("volume", v)}
+          value={currentAmostra?.volume || ""}
+          onChange={(v) => handleAmostraChange("volume", v)}
           placeholder="Ex: 100.0"
           unit="cm³"
           required
@@ -627,21 +903,23 @@ export default function IndicesFisicosMobile() {
             </Select>
           </div>
 
-          <MobileInputGroup
-            label="emax (Índice de Vazios Máximo)"
-            value={formData.indice_vazios_max}
-            onChange={(v) => handleInputChange("indice_vazios_max", v)}
-            placeholder="Ex: 0.85"
-            tooltip="Opcional. Para calcular Dr em solos granulares"
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <MobileInputGroup
+              label="emax (Vazios Máx.)"
+              value={formData.indice_vazios_max}
+              onChange={(v) => handleInputChange("indice_vazios_max", v)}
+              placeholder="Ex: 0.85"
+              tooltip="Opcional. Para calcular Dr em solos granulares"
+            />
 
-          <MobileInputGroup
-            label="emin (Índice de Vazios Mínimo)"
-            value={formData.indice_vazios_min}
-            onChange={(v) => handleInputChange("indice_vazios_min", v)}
-            placeholder="Ex: 0.45"
-            tooltip="Opcional. Para calcular Dr em solos granulares"
-          />
+            <MobileInputGroup
+              label="emin (Vazios Mín.)"
+              value={formData.indice_vazios_min}
+              onChange={(v) => handleInputChange("indice_vazios_min", v)}
+              placeholder="Ex: 0.45"
+              tooltip="Opcional. Para calcular Dr em solos granulares"
+            />
+          </div>
         </div>
       </MobileSection>
 

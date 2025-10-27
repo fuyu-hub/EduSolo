@@ -1,104 +1,111 @@
 // Constantes e valores típicos para solos
 
+export interface AmostraIndicesFisicos {
+  id: string;
+  massaUmida: string;
+  massaSeca: string;
+  volume: string;
+}
+
 export interface SoilExample {
   name: string;
   description: string;
   icon: string;
-  data: {
-    massaUmida: string;
-    massaSeca: string;
-    volume: string;
-    Gs: string;
-    pesoEspecificoAgua: string;
-    indice_vazios_max?: string;
-    indice_vazios_min?: string;
-  };
+  amostras: AmostraIndicesFisicos[];
+  Gs: string;
+  pesoEspecificoAgua: string;
+  indice_vazios_max?: string;
+  indice_vazios_min?: string;
 }
+
+// Helper para gerar ID único
+const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
 export const soilExamples: SoilExample[] = [
   {
     name: "Areia Fofa",
-    description: "Areia com grau de compacidade baixo",
+    description: "Areia com grau de compacidade baixo - 3 amostras",
     icon: "🏖️",
-    data: {
-      massaUmida: "183.5",
-      massaSeca: "164.6",
-      volume: "100.0",
-      Gs: "2.65",
-      pesoEspecificoAgua: "10.0",
-      indice_vazios_max: "0.85",
-      indice_vazios_min: "0.45",
-    },
+    amostras: [
+      { id: generateId(), massaUmida: "183.5", massaSeca: "164.6", volume: "100.0" },
+      { id: generateId(), massaUmida: "184.2", massaSeca: "165.1", volume: "100.0" },
+      { id: generateId(), massaUmida: "182.8", massaSeca: "164.0", volume: "100.0" },
+    ],
+    Gs: "2.65",
+    pesoEspecificoAgua: "10.0",
+    indice_vazios_max: "0.85",
+    indice_vazios_min: "0.45",
   },
   {
     name: "Areia Compacta",
-    description: "Areia bem compactada, alta densidade relativa",
+    description: "Areia bem compactada, alta densidade relativa - 3 amostras",
     icon: "🏗️",
-    data: {
-      massaUmida: "195.0",
-      massaSeca: "180.0",
-      volume: "100.0",
-      Gs: "2.66",
-      pesoEspecificoAgua: "10.0",
-      indice_vazios_max: "0.80",
-      indice_vazios_min: "0.40",
-    },
+    amostras: [
+      { id: generateId(), massaUmida: "195.0", massaSeca: "180.0", volume: "100.0" },
+      { id: generateId(), massaUmida: "196.5", massaSeca: "181.5", volume: "100.0" },
+      { id: generateId(), massaUmida: "194.2", massaSeca: "179.2", volume: "100.0" },
+    ],
+    Gs: "2.66",
+    pesoEspecificoAgua: "10.0",
+    indice_vazios_max: "0.80",
+    indice_vazios_min: "0.40",
   },
   {
     name: "Argila Mole",
-    description: "Argila com alto índice de vazios",
+    description: "Argila com alto índice de vazios - 4 amostras",
     icon: "🧱",
-    data: {
-      massaUmida: "168.0",
-      massaSeca: "130.0",
-      volume: "100.0",
-      Gs: "2.72",
-      pesoEspecificoAgua: "10.0",
-      indice_vazios_max: "1.20",
-      indice_vazios_min: "0.60",
-    },
+    amostras: [
+      { id: generateId(), massaUmida: "168.0", massaSeca: "130.0", volume: "100.0" },
+      { id: generateId(), massaUmida: "169.5", massaSeca: "131.2", volume: "100.0" },
+      { id: generateId(), massaUmida: "167.2", massaSeca: "129.5", volume: "100.0" },
+      { id: generateId(), massaUmida: "168.8", massaSeca: "130.6", volume: "100.0" },
+    ],
+    Gs: "2.72",
+    pesoEspecificoAgua: "10.0",
+    indice_vazios_max: "1.20",
+    indice_vazios_min: "0.60",
   },
   {
     name: "Argila Rija",
-    description: "Argila com baixo índice de vazios",
+    description: "Argila com baixo índice de vazios - 3 amostras",
     icon: "🔨",
-    data: {
-      massaUmida: "192.0",
-      massaSeca: "165.0",
-      volume: "100.0",
-      Gs: "2.70",
-      pesoEspecificoAgua: "10.0",
-      indice_vazios_max: "0.95",
-      indice_vazios_min: "0.50",
-    },
+    amostras: [
+      { id: generateId(), massaUmida: "192.0", massaSeca: "165.0", volume: "100.0" },
+      { id: generateId(), massaUmida: "191.5", massaSeca: "164.5", volume: "100.0" },
+      { id: generateId(), massaUmida: "192.8", massaSeca: "165.8", volume: "100.0" },
+    ],
+    Gs: "2.70",
+    pesoEspecificoAgua: "10.0",
+    indice_vazios_max: "0.95",
+    indice_vazios_min: "0.50",
   },
   {
     name: "Silte",
-    description: "Solo com características intermediárias",
+    description: "Solo com características intermediárias - 3 amostras",
     icon: "🌾",
-    data: {
-      massaUmida: "185.0",
-      massaSeca: "160.0",
-      volume: "100.0",
-      Gs: "2.68",
-      pesoEspecificoAgua: "10.0",
-      indice_vazios_max: "0.90",
-      indice_vazios_min: "0.48",
-    },
+    amostras: [
+      { id: generateId(), massaUmida: "185.0", massaSeca: "160.0", volume: "100.0" },
+      { id: generateId(), massaUmida: "186.2", massaSeca: "161.0", volume: "100.0" },
+      { id: generateId(), massaUmida: "184.5", massaSeca: "159.5", volume: "100.0" },
+    ],
+    Gs: "2.68",
+    pesoEspecificoAgua: "10.0",
+    indice_vazios_max: "0.90",
+    indice_vazios_min: "0.48",
   },
   {
     name: "Solo Saturado",
-    description: "Solo com todos os vazios preenchidos por água",
+    description: "Solo com todos os vazios preenchidos por água - 3 amostras",
     icon: "💧",
-    data: {
-      massaUmida: "200.0",
-      massaSeca: "160.0",
-      volume: "100.0",
-      Gs: "2.65",
-      pesoEspecificoAgua: "10.0",
-      indice_vazios_max: "0.85",
-      indice_vazios_min: "0.45",
-    },
+    amostras: [
+      { id: generateId(), massaUmida: "200.0", massaSeca: "160.0", volume: "100.0" },
+      { id: generateId(), massaUmida: "199.5", massaSeca: "159.6", volume: "100.0" },
+      { id: generateId(), massaUmida: "200.8", massaSeca: "160.5", volume: "100.0" },
+    ],
+    Gs: "2.65",
+    pesoEspecificoAgua: "10.0",
+    indice_vazios_max: "0.85",
+    indice_vazios_min: "0.45",
   },
 ];
 
