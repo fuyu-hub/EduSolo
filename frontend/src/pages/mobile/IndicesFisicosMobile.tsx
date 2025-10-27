@@ -326,7 +326,8 @@ export default function IndicesFisicosMobile() {
       inputs,
       results: resultsList,
       customFileName: pdfFileName,
-      theme
+      theme,
+      printSettings: settings.printSettings
     };
 
     const success = await exportToPDF(exportData);

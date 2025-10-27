@@ -34,6 +34,7 @@ import {
 } from "@/components/mobile";
 import { formatNumber } from "@/lib/format-number";
 import { useSettings } from "@/hooks/use-settings";
+import { useTheme } from "@/hooks/use-theme";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
 import ExportPDFDialog from "@/components/ExportPDFDialog";

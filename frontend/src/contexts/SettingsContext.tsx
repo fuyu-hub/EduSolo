@@ -13,6 +13,8 @@ export interface PrintSettings {
   includeDate: boolean;
   includeFormulas: boolean;
   paperSize: PaperSize;
+  useDynamicTheme: boolean; // Se true, usa o tema atual; se false, usa tema fixo
+  fixedTheme?: string; // Tema fixo quando useDynamicTheme é false
 }
 
 export interface AppSettings {
@@ -55,8 +57,10 @@ const defaultSettings: AppSettings = {
     pageMargins: "normal",
     includeLogo: true,
     includeDate: true,
-    includeFormulas: true,
+    includeFormulas: false,
     paperSize: "A4",
+    useDynamicTheme: true,
+    fixedTheme: "indigo",
   },
 };
 

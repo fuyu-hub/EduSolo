@@ -45,7 +45,12 @@ export function MobileLayout({ children, title, showBackButton }: MobileLayoutPr
       
       {/* Conteúdo Principal */}
       <main className="flex-1 overflow-y-auto">
-        <div className="p-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div 
+          className="p-4"
+          style={{
+            animation: 'slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+          }}
+        >
           {children}
         </div>
       </main>

@@ -616,7 +616,10 @@ function SettingsDesktop() {
 
       {/* Dialog de Configurações de PDF */}
       <AlertDialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
-        <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <AlertDialogContent 
+          className="max-w-2xl max-h-[90vh] overflow-y-auto"
+          onInteractOutside={() => setShowPrintDialog(false)}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <Printer className="w-5 h-5 text-primary" />
@@ -702,6 +705,63 @@ function SettingsDesktop() {
                     <SelectItem value="wide">Ampla (3.81 cm)</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            {/* Tema do PDF */}
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-foreground">Tema do PDF</h4>
+              
+              <div className="space-y-3">
+                {/* Usar Tema Dinâmico */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="dialog-dynamic-theme" className="text-sm font-medium">
+                      Usar Tema Atual
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      PDFs usarão o tema de cor atual do aplicativo
+                    </p>
+                  </div>
+                  <Switch
+                    id="dialog-dynamic-theme"
+                    checked={settings.printSettings.useDynamicTheme}
+                    onCheckedChange={(checked) => 
+                      updateSettings({ 
+                        printSettings: { ...settings.printSettings, useDynamicTheme: checked } 
+                      })
+                    }
+                  />
+                </div>
+
+                {/* Tema Fixo (quando não usar dinâmico) */}
+                {!settings.printSettings.useDynamicTheme && (
+                  <div className="space-y-2">
+                    <Label htmlFor="dialog-fixed-theme" className="text-sm font-medium">
+                      Tema Fixo para PDFs
+                    </Label>
+                    <Select
+                      value={settings.printSettings.fixedTheme || "indigo"}
+                      onValueChange={(value) => 
+                        updateSettings({ 
+                          printSettings: { ...settings.printSettings, fixedTheme: value } 
+                        })
+                      }
+                    >
+                      <SelectTrigger id="dialog-fixed-theme">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="indigo">Índigo Profundo</SelectItem>
+                        <SelectItem value="soil">Terra Natural (Oficial)</SelectItem>
+                        <SelectItem value="green">Verde Esmeralda</SelectItem>
+                        <SelectItem value="amber">Âmbar Dourado</SelectItem>
+                        <SelectItem value="red">Vermelho Coral</SelectItem>
+                        <SelectItem value="slate">Minimalista</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -809,6 +869,27 @@ function SettingsDesktop() {
           </div>
 
           <AlertDialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                updateSettings({
+                  printSettings: {
+                    pageOrientation: "portrait",
+                    pageMargins: "normal",
+                    includeLogo: true,
+                    includeDate: true,
+                    includeFormulas: false,
+                    paperSize: "A4",
+                    useDynamicTheme: true,
+                    fixedTheme: "indigo",
+                  }
+                });
+                toast.success("Configurações de PDF restauradas para os valores padrão");
+              }}
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Restaurar Padrão
+            </Button>
             <AlertDialogCancel>Fechar</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>

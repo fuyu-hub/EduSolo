@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { useSettings } from "@/hooks/use-settings";
+import { useTheme } from "@/hooks/use-theme";
 import { useTour, TourStep } from "@/contexts/TourContext";
 import SavedCalculations from "@/components/SavedCalculations";
 import SaveDialog from "@/components/SaveDialog";
@@ -101,6 +102,7 @@ const peneirasComuns = [
 
 function GranulometriaDesktop() {
   const { settings } = useSettings();
+  const { theme } = useTheme();
   const { startTour } = useTour();
   const [formData, setFormData] = useState<FormData>({
     massaTotal: "",
@@ -560,14 +562,59 @@ function GranulometriaDesktop() {
       rows: tableRows
     });
 
+    // Fórmulas utilizadas
+    const formulas = [
+      {
+        label: "Percentual Retido",
+        formula: "% Retida = (Massa Retida / Massa Total) × 100",
+        description: "Percentual da massa retida em cada peneira em relação à massa total"
+      },
+      {
+        label: "Percentual Retido Acumulado",
+        formula: "% Retida Acumulada = Σ (% Retida até a peneira)",
+        description: "Soma acumulada dos percentuais retidos até cada peneira"
+      },
+      {
+        label: "Percentual Passante",
+        formula: "% Passante = 100 - % Retida Acumulada",
+        description: "Percentual que passa por cada peneira"
+      },
+      {
+        label: "Diâmetro Efetivo (D10, D30, D60)",
+        formula: "Dn = diâmetro correspondente a n% passante na curva granulométrica",
+        description: "Diâmetros característicos obtidos da curva granulométrica"
+      },
+      {
+        label: "Coeficiente de Uniformidade (Cu)",
+        formula: "Cu = D60 / D10",
+        description: "Indica a uniformidade da distribuição granulométrica. Cu > 4 indica graduação bem distribuída"
+      },
+      {
+        label: "Coeficiente de Curvatura (Cc)",
+        formula: "Cc = (D30)² / (D10 × D60)",
+        description: "Indica a forma da curva granulométrica. 1 < Cc < 3 indica boa graduação"
+      },
+    ];
+
+    if (formData.limitePercent && formData.limitePlasticidade) {
+      formulas.push({
+        label: "Índice de Plasticidade (IP)",
+        formula: "IP = LL - LP",
+        description: "Diferença entre o Limite de Liquidez e o Limite de Plasticidade"
+      });
+    }
+
     const exportData: ExportData = {
       moduleName: "granulometria",
       moduleTitle: "Granulometria e Classificação",
       inputs,
       results: resultsList,
+      formulas,
       tables,
       chartImage: chartImage || undefined,
-      customFileName: pdfFileName
+      customFileName: pdfFileName,
+      theme,
+      printSettings: settings.printSettings
     };
 
     console.log("Dados para exportação:", {

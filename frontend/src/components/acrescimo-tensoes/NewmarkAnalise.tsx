@@ -238,12 +238,39 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
       }
     ] : undefined;
 
+    // Fórmulas utilizadas
+    const formulas = [
+      {
+        label: "Método de Newmark - Integração",
+        formula: "Δσz = p × I",
+        description: "Acréscimo de tensão vertical devido a carga uniformemente distribuída em área retangular"
+      },
+      {
+        label: "Fator de Influência (I)",
+        formula: "I = (1/2π) × [arctan(m×n / √(1+m²+n²)) + (m×n×√(1+m²+n²)) / (1+m²)(1+n²)]",
+        description: "Onde m = B/z e n = L/z. Válido para um quadrante; usa-se superposição para áreas completas"
+      },
+      {
+        label: "Método do Ábaco de Newmark",
+        formula: "Δσz = p × (N × ΔI)",
+        description: "Onde N é o número de elementos do ábaco cobertos pela área carregada projetada, e ΔI é o fator de influência por elemento"
+      },
+      {
+        label: "Princípio da Superposição",
+        formula: "Para pontos fora da área retangular, divide-se em sub-retângulos e soma-se as contribuições",
+        description: "Permite calcular tensões em qualquer ponto (x,y,z) dividindo o retângulo em até 4 sub-retângulos com vértice no ponto"
+      },
+    ];
+
     const exportData: ExportData = {
       moduleName: "newmark",
       moduleTitle: `Newmark - Acréscimo de Tensões (Carga Retangular - ${metodo})`,
       inputs,
       results: resultsList,
-      summary
+      summary,
+      formulas,
+      theme,
+      printSettings: settings.printSettings
     };
 
     toast("Gerando PDF...");

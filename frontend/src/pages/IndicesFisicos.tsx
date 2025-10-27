@@ -458,13 +458,67 @@ function IndicesFisicosDesktop() {
     if (results.compacidade_relativa !== null) resultsList.push({ label: "Compacidade Relativa", value: `${formatNumberForExport(results.compacidade_relativa)}%` });
     if (results.classificacao_compacidade) resultsList.push({ label: "Classificação", value: results.classificacao_compacidade });
 
+    // Fórmulas utilizadas
+    const formulas = [
+      { 
+        label: "Peso Específico Natural (γnat)", 
+        formula: "γnat = (Massa Total / Volume Total) × 10",
+        description: "Relação entre a massa total do solo (úmido) e seu volume total"
+      },
+      { 
+        label: "Umidade (w)", 
+        formula: "w = ((Massa Úmida - Massa Seca) / Massa Seca) × 100",
+        description: "Percentual de água em relação à massa seca dos sólidos"
+      },
+      { 
+        label: "Peso Específico Seco (γd)", 
+        formula: "γd = γnat / (1 + w/100)",
+        description: "Peso específico do solo sem considerar a massa de água"
+      },
+      { 
+        label: "Índice de Vazios (e)", 
+        formula: "e = (Gs × γw / γd) - 1",
+        description: "Relação entre o volume de vazios e o volume de sólidos"
+      },
+      { 
+        label: "Porosidade (n)", 
+        formula: "n = (e / (1 + e)) × 100",
+        description: "Percentual de vazios em relação ao volume total"
+      },
+      { 
+        label: "Grau de Saturação (Sr)", 
+        formula: "Sr = (w × Gs / e) × 100",
+        description: "Percentual dos vazios ocupados por água"
+      },
+      { 
+        label: "Peso Específico Saturado (γsat)", 
+        formula: "γsat = ((Gs + e) / (1 + e)) × γw",
+        description: "Peso específico quando todos os vazios estão preenchidos com água"
+      },
+      { 
+        label: "Peso Específico Submerso (γsub)", 
+        formula: "γsub = γsat - γw",
+        description: "Peso específico efetivo do solo quando submerso"
+      },
+    ];
+
+    if (results.compacidade_relativa !== null) {
+      formulas.push({
+        label: "Compacidade Relativa (Dr)",
+        formula: "Dr = ((emax - e) / (emax - emin)) × 100",
+        description: "Indica o estado de compactação de solos granulares"
+      });
+    }
+
     const exportData: ExportData = {
       moduleName: "indices-fisicos",
       moduleTitle: "Índices Físicos",
       inputs,
       results: resultsList,
+      formulas,
       customFileName: pdfFileName,
-      theme
+      theme,
+      printSettings: settings.printSettings
     };
 
     const success = await exportToPDF(exportData);

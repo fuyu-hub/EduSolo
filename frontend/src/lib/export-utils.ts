@@ -38,8 +38,22 @@ import autoTable from 'jspdf-autotable';
  * - Títulos de tabelas (tables)
  */
 
-export type ThemeColor = "soil" | "blue" | "green" | "purple" | "pink" | "orange" | "cyan" | "amber" | "indigo" | "red";
+export type ThemeColor = "soil" | "blue" | "green" | "purple" | "pink" | "orange" | "cyan" | "amber" | "indigo" | "red" | "slate";
 export type ThemeMode = "light" | "dark";
+export type PageOrientation = "portrait" | "landscape";
+export type PaperSize = "A4" | "Letter";
+export type PageMargins = "normal" | "narrow" | "wide";
+
+export interface PrintSettings {
+  pageOrientation?: PageOrientation;
+  pageMargins?: PageMargins;
+  includeLogo?: boolean;
+  includeDate?: boolean;
+  includeFormulas?: boolean;
+  paperSize?: PaperSize;
+  useDynamicTheme?: boolean; // Se true, usa o tema atual; se false, usa tema fixo
+  fixedTheme?: string; // Tema fixo quando useDynamicTheme é false
+}
 
 export interface ExportData {
   moduleName: string;
@@ -47,10 +61,33 @@ export interface ExportData {
   inputs: { label: string; value: string }[];
   results: { label: string; value: string; highlight?: boolean }[];
   summary?: { label: string; value: string }[]; // Resumo da análise
+  formulas?: { label: string; formula: string; description?: string }[]; // Fórmulas utilizadas
   tables?: { title: string; headers: string[]; rows: (string | number)[][] }[];
   chartImage?: string; // Base64 image de gráficos
   customFileName?: string; // Nome customizado para o arquivo
-  theme?: { color: ThemeColor; mode: ThemeMode }; // Tema para cores do PDF
+  theme?: { color: ThemeColor; mode: ThemeMode }; // Tema atual do app (pode ser dinâmico)
+  printSettings?: PrintSettings; // Configurações de impressão
+}
+
+/**
+ * Obtém o tema correto para usar no PDF baseado nas configurações
+ * Se useDynamicTheme = true, usa o tema atual passado
+ * Se useDynamicTheme = false, usa o tema fixo configurado
+ */
+export function getPDFTheme(
+  currentTheme: { color: ThemeColor; mode: ThemeMode } | undefined,
+  printSettings: PrintSettings | undefined
+): { color: ThemeColor; mode: ThemeMode } {
+  // Se não há printSettings ou deve usar tema dinâmico, usa o tema atual
+  if (!printSettings || printSettings.useDynamicTheme) {
+    return currentTheme || { color: 'indigo', mode: 'light' };
+  }
+  
+  // Usa tema fixo configurado
+  return {
+    color: (printSettings.fixedTheme as ThemeColor) || 'indigo',
+    mode: 'light' // PDFs sempre em modo claro
+  };
 }
 
 export interface ExcelExportData {
@@ -304,6 +341,7 @@ function obterPaletaCores(theme?: { color: ThemeColor; mode: ThemeMode }) {
     amber: { r: 245, g: 158, b: 11 },     // amber-500
     indigo: { r: 99, g: 102, b: 241 },    // indigo-500
     red: { r: 239, g: 68, b: 68 },        // red-500
+    slate: { r: 100, g: 116, b: 139 },    // slate-500
   };
   
   const primaryColor = colorMap[themeColor];
@@ -357,7 +395,27 @@ function obterPaletaCores(theme?: { color: ThemeColor; mode: ThemeMode }) {
 
 export async function exportToPDF(data: ExportData): Promise<boolean> {
   try {
+    // Configurações de impressão com valores padrão
+    const printSettings = data.printSettings || {};
+    const orientation = printSettings.pageOrientation || 'portrait';
+    const format = printSettings.paperSize || 'A4';
+    const includeLogo = printSettings.includeLogo !== false; // padrão true
+    const includeDate = printSettings.includeDate !== false; // padrão true
+    const marginsType = printSettings.pageMargins || 'normal';
+    
+    // Definir margens baseado na configuração
+    // narrow = 1.27cm = 12.7mm, normal = 2.0cm = 20mm, wide = 2.54cm = 25.4mm
+    const marginValues = {
+      narrow: 12.7,
+      normal: 20,
+      wide: 25.4
+    };
+    const margin = marginValues[marginsType];
+    
     const doc = new jsPDF({
+      orientation: orientation === 'landscape' ? 'landscape' : 'portrait',
+      unit: 'mm',
+      format: format === 'Letter' ? 'letter' : 'a4',
       compress: true,
       putOnlyUsedFonts: true,
     });
@@ -367,37 +425,45 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
     
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
-    const margin = 20;
     let yPosition = margin;
 
+    // Obter tema correto (dinâmico ou fixo) baseado nas configurações
+    const themeToUse = getPDFTheme(data.theme, data.printSettings);
+    
     // Obter paleta de cores baseada no tema
-    const colors = obterPaletaCores(data.theme);
+    const colors = obterPaletaCores(themeToUse);
 
-    // Cabeçalho com fundo colorido (tema)
+    // Cabeçalho com fundo colorido (tema) - sempre incluir
     doc.setFillColor(colors.headerBg.r, colors.headerBg.g, colors.headerBg.b);
     doc.rect(0, 0, pageWidth, 35, 'F');
     
-    // Logo/Nome EduSolo
-    doc.setFontSize(24);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(colors.headerText.r, colors.headerText.g, colors.headerText.b);
-    doc.text('EduSolo', margin, yPosition + 5);
+    // Logo/Nome EduSolo - condicional
+    if (includeLogo) {
+      doc.setFontSize(24);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(colors.headerText.r, colors.headerText.g, colors.headerText.b);
+      doc.text('EduSolo', margin, yPosition + 5);
+      
+      // Subtítulo
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Sistema de Análise Geotécnica', margin, yPosition + 12);
+    }
     
-    // Subtítulo
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Sistema de Análise Geotécnica', margin, yPosition + 12);
-    
-    // Data
-    const currentDate = new Date().toLocaleString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-    doc.setFontSize(9);
-    doc.text(currentDate, pageWidth - margin, yPosition + 8, { align: 'right' });
+    // Data - condicional
+    if (includeDate) {
+      const currentDate = new Date().toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(colors.headerText.r, colors.headerText.g, colors.headerText.b);
+      doc.text(currentDate, pageWidth - margin, yPosition + 8, { align: 'right' });
+    }
     
     // Resetar cor do texto
     doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
@@ -587,6 +653,86 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
         }
         
         yPosition += totalHeight;
+      }
+      yPosition += 3;
+    }
+
+    // Seção de Fórmulas (se includeFormulas estiver ativo)
+    if (printSettings.includeFormulas && data.formulas && data.formulas.length > 0) {
+      yPosition += 5;
+      
+      if (yPosition > pageHeight - 40) {
+        doc.addPage();
+        yPosition = margin;
+      }
+
+      // Cabeçalho da seção
+      doc.setFillColor(colors.sectionHeaderBg.r, colors.sectionHeaderBg.g, colors.sectionHeaderBg.b);
+      doc.rect(margin, yPosition, pageWidth - 2 * margin, 8, 'F');
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(colors.headerText.r, colors.headerText.g, colors.headerText.b);
+      doc.text('FÓRMULAS UTILIZADAS', margin + 3, yPosition + 5.5);
+      doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
+      yPosition += 12;
+
+      doc.setFontSize(10);
+      
+      for (const item of data.formulas) {
+        if (yPosition > pageHeight - 30) {
+          doc.addPage();
+          yPosition = margin;
+        }
+
+        // Calcular altura necessária (label + fórmula + descrição opcional)
+        const maxWidth = pageWidth - 2 * margin - 10;
+        const formulaLines = doc.splitTextToSize(item.formula, maxWidth);
+        const descLines = item.description ? doc.splitTextToSize(item.description, maxWidth) : [];
+        const lineHeight = 6;
+        const totalHeight = lineHeight + (formulaLines.length * lineHeight) + (descLines.length > 0 ? (descLines.length * lineHeight) + 2 : 0) + 4;
+
+        // Verificar se precisa de nova página
+        if (yPosition + totalHeight > pageHeight - 30) {
+          doc.addPage();
+          yPosition = margin;
+        }
+
+        // Fundo alternado com cor diferenciada
+        doc.setFillColor(colors.highlightBg.r, colors.highlightBg.g, colors.highlightBg.b);
+        doc.rect(margin, yPosition - 4, pageWidth - 2 * margin, totalHeight, 'F');
+
+        // Label da fórmula
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(colors.primaryDark.r, colors.primaryDark.g, colors.primaryDark.b);
+        renderizarTextoMatematico(doc, item.label, margin + 5, yPosition, 10);
+        yPosition += lineHeight;
+
+        // Fórmula com fonte mono (courier) para melhor visualização
+        doc.setFont('courier', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
+        let currentY = yPosition;
+        for (const linha of formulaLines) {
+          renderizarTextoMatematico(doc, linha, margin + 10, currentY, 9);
+          currentY += lineHeight;
+        }
+        yPosition = currentY;
+
+        // Descrição (se houver)
+        if (descLines.length > 0) {
+          yPosition += 2;
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(8);
+          doc.setTextColor(colors.textSecondary.r, colors.textSecondary.g, colors.textSecondary.b);
+          currentY = yPosition;
+          for (const linha of descLines) {
+            doc.text(linha, margin + 10, currentY);
+            currentY += lineHeight;
+          }
+          yPosition = currentY;
+        }
+
+        yPosition += 4;
       }
       yPosition += 3;
     }

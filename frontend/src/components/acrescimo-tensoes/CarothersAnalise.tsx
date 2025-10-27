@@ -14,6 +14,7 @@ import SavedCalculations from "@/components/SavedCalculations";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport } from "@/lib/export-utils";
 import { useSettings } from "@/hooks/use-settings";
+import { useTheme } from "@/hooks/use-theme";
 
 interface CarothersAnaliseProps {
   onVoltar: () => void;
@@ -30,6 +31,7 @@ const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 export default function CarothersAnalise({ onVoltar, onStartTour, onLoadExampleRef }: CarothersAnaliseProps) {
   // Configurações
   const { settings } = useSettings();
+  const { theme } = useTheme();
   
   // Estado principal
   const [pontos, setPontos] = useState<PontoAnalise[]>([]);
@@ -199,11 +201,33 @@ export default function CarothersAnalise({ onVoltar, onStartTour, onLoadExampleR
       highlight: i === 0
     }));
 
+    // Fórmulas utilizadas
+    const formulas = [
+      {
+        label: "Equação de Carothers (Carga em Faixa Infinita)",
+        formula: "Δσz = (q/π) × [α + sen(α)×cos(α+2β)]",
+        description: "Acréscimo de tensão vertical devido a carga uniformemente distribuída em faixa infinita"
+      },
+      {
+        label: "Ângulos α e β",
+        formula: "α = arctan((x+B/2)/z) - arctan((x-B/2)/z); β = arctan(x/z)",
+        description: "Onde B é a largura da faixa, x é a distância horizontal do centro da faixa e z é a profundidade"
+      },
+      {
+        label: "Aplicabilidade",
+        formula: "Válida para cargas em faixa de comprimento infinito perpendicular ao plano x-z",
+        description: "Usada para fundações corridas, muros de arrimo, aterros lineares e outras estruturas longas"
+      },
+    ];
+
     const exportData: ExportData = {
       moduleName: "carothers",
       moduleTitle: "Carothers - Acréscimo de Tensões (Carga em Faixa)",
       inputs,
-      results: resultsList
+      results: resultsList,
+      formulas,
+      theme,
+      printSettings: settings.printSettings
     };
 
     toast("Gerando PDF...");

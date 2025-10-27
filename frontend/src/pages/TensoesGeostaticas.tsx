@@ -17,6 +17,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
+import { useSettings } from "@/hooks/use-settings";
+import { useTheme } from "@/hooks/use-theme";
 import { useTour, TourStep } from "@/contexts/TourContext";
 import SavedCalculations from "@/components/SavedCalculations";
 import SaveDialog from "@/components/SaveDialog";
@@ -114,6 +116,8 @@ const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
 function TensoesGeostaticasDesktop() {
   const { toast: toastFn } = { toast };
+  const { settings } = useSettings();
+  const { theme } = useTheme();
   const { startTour } = useTour();
   const [currentCamadaIndex, setCurrentCamadaIndex] = useState(0);
   const [config, setConfig] = useState<ConfigData>({
@@ -623,14 +627,50 @@ function TensoesGeostaticasDesktop() {
       rows: tensoesRows
     });
 
+    // Fórmulas utilizadas
+    const formulas = [
+      {
+        label: "Tensão Total Vertical (σv)",
+        formula: "σv = Σ(γi × hi)",
+        description: "Soma dos produtos do peso específico pela espessura de cada camada acima do ponto"
+      },
+      {
+        label: "Pressão Neutra (u)",
+        formula: "u = γw × hw",
+        description: "Onde hw é a altura da coluna d'água acima do ponto (hw = 0 acima do NA). γw = 10 kN/m³"
+      },
+      {
+        label: "Tensão Efetiva Vertical (σ'v)",
+        formula: "σ'v = σv - u",
+        description: "Princípio das tensões efetivas de Terzaghi. Representa a tensão transmitida pelo esqueleto sólido"
+      },
+    ];
+
+    if (temTensaoHorizontal) {
+      formulas.push({
+        label: "Tensão Efetiva Horizontal (σ'h)",
+        formula: "σ'h = Ko × σ'v",
+        description: "Onde Ko é o coeficiente de empuxo em repouso. Para solos normalmente adensados: Ko ≈ 1 - sen(φ')"
+      });
+    }
+
+    formulas.push({
+      label: "Franja Capilar",
+      formula: "Na franja capilar: σv calculada com γsat, mas u = 0 (pressão negativa)",
+      description: "A franja capilar eleva a água por capilaridade acima do NA, saturando o solo mas mantendo u ≤ 0"
+    });
+
     const exportData: ExportData = {
       moduleName: "tensoes-geostaticas",
       moduleTitle: "Tensões Geostáticas",
       inputs,
       results: resultsList,
+      formulas,
       tables,
       chartImage: perfilImage || diagramaImage || undefined,
-      customFileName: pdfFileName
+      customFileName: pdfFileName,
+      theme,
+      printSettings: settings.printSettings
     };
 
     toast("Gerando PDF...");

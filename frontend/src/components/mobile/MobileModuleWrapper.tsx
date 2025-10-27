@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MobileModuleWrapperProps {
@@ -9,6 +9,7 @@ interface MobileModuleWrapperProps {
 /**
  * Wrapper que renderiza versão mobile ou desktop do módulo
  * Use este componente para facilitar a transição entre layouts
+ * Otimizado para evitar flash de conteúdo durante detecção de dispositivo
  * 
  * @example
  * ```tsx
@@ -25,6 +26,12 @@ export function MobileModuleWrapper({
 }: MobileModuleWrapperProps) {
   const isMobile = useIsMobile();
 
-  return <>{isMobile ? mobileVersion : children}</>;
+  // Usa useMemo para evitar renderizações desnecessárias durante a troca
+  // A detecção inicial no hook garante que isMobile já tenha o valor correto
+  const content = useMemo(() => {
+    return isMobile ? mobileVersion : children;
+  }, [isMobile, mobileVersion, children]);
+
+  return <>{content}</>;
 }
 

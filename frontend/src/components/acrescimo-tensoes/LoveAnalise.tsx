@@ -199,11 +199,33 @@ export default function LoveAnalise({ onVoltar, onStartTour, onLoadExampleRef }:
       highlight: i === 0
     }));
 
+    // Fórmulas utilizadas
+    const formulas = [
+      {
+        label: "Equação de Love (Ábaco de Foster e Ahlvin)",
+        formula: "Δσz = q × I",
+        description: "Acréscimo de tensão vertical devido a carga uniformemente distribuída em área circular"
+      },
+      {
+        label: "Fator de Influência (I)",
+        formula: "I = f(r/R, z/R)",
+        description: "Obtido de ábacos ou expressões analíticas. Depende da posição relativa do ponto em relação à área carregada"
+      },
+      {
+        label: "Parâmetros",
+        formula: "q = carga distribuída (kPa), R = raio da área circular (m), r = distância radial do centro, z = profundidade",
+        description: "Para pontos no eixo de simetria (r=0), I é máximo e decresce com a profundidade"
+      },
+    ];
+
     const exportData: ExportData = {
       moduleName: "love",
       moduleTitle: "Love - Acréscimo de Tensões (Carga Circular)",
       inputs,
-      results: resultsList
+      results: resultsList,
+      formulas,
+      theme,
+      printSettings: settings.printSettings
     };
 
     toast("Gerando PDF...");

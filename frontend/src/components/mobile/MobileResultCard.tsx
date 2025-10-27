@@ -34,7 +34,7 @@ export function MobileResultItem({
   return (
     <div
       className={cn(
-        "flex items-center justify-between py-3 border-b border-border/50 last:border-0",
+        "flex items-center justify-between py-3 border-b border-border/50 last:border-0 transition-all duration-300",
         highlight && "bg-primary/5 -mx-3 px-3 rounded-lg",
         className
       )}
@@ -42,7 +42,7 @@ export function MobileResultItem({
       {/* Label */}
       <div className="flex items-center gap-2 flex-1">
         <span className={cn(
-          "text-sm font-medium",
+          "text-sm font-medium transition-colors duration-300",
           highlight ? "text-primary" : "text-muted-foreground"
         )}>
           {label}
@@ -54,7 +54,7 @@ export function MobileResultItem({
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  className="w-5 h-5 rounded-full bg-muted/30 flex items-center justify-center text-muted-foreground"
+                  className="w-5 h-5 rounded-full bg-muted/30 flex items-center justify-center text-muted-foreground transition-all duration-300 hover:bg-primary/20 hover:text-primary active:scale-90"
                 >
                   <Info className="w-3 h-3" />
                 </button>
@@ -103,12 +103,17 @@ export function MobileResultCard({
   className,
 }: MobileResultCardProps) {
   return (
-    <Card className={cn("overflow-hidden border border-primary/20", className)}>
+    <Card 
+      className={cn("overflow-hidden border border-primary/20", className)}
+      style={{
+        animation: 'scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'
+      }}
+    >
       {/* Header */}
       <div className="bg-primary/5 p-4 border-b border-primary/20">
         <div className="flex items-center gap-3">
           {icon && (
-            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary transition-transform duration-300 hover:scale-110">
               {icon}
             </div>
           )}

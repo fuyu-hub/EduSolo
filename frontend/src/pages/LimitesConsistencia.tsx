@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/carousel";
 import LimiteLiquidezChart from "@/components/limites/LimiteLiquidezChart";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
+import { useSettings } from "@/hooks/use-settings";
+import { useTheme } from "@/hooks/use-theme";
 import SavedCalculations from "@/components/SavedCalculations";
 import SaveDialog from "@/components/SaveDialog";
 import PrintHeader from "@/components/PrintHeader";
@@ -121,6 +123,8 @@ interface ResultItemProps { label: string; value: number | string | null; unit: 
 
 function LimitesConsistenciaDesktop() {
   const { toast } = useToast();
+  const { settings } = useSettings();
+  const { theme } = useTheme();
   const { startTour, currentStep, isActive: isTourActive } = useTour();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
@@ -416,13 +420,56 @@ function LimitesConsistenciaDesktop() {
         rows: lpRows
       });
 
+      // Fórmulas utilizadas
+      const formulas = [
+        {
+          label: "Teor de Umidade em Cada Ponto",
+          formula: "w = ((Massa Úmida - Massa Seca) / (Massa Seca - Massa Recipiente)) × 100",
+          description: "Teor de umidade calculado para cada ponto do ensaio"
+        },
+        {
+          label: "Limite de Liquidez (LL)",
+          formula: "LL = umidade correspondente a 25 golpes (regressão log-linear)",
+          description: "Obtido através do gráfico de umidade vs. log(N° golpes), interpolado para 25 golpes"
+        },
+        {
+          label: "Limite de Plasticidade (LP)",
+          formula: "LP = umidade do ensaio quando o cilindro atinge 3mm de diâmetro",
+          description: "Teor de umidade na transição entre estado plástico e semi-sólido"
+        },
+        {
+          label: "Índice de Plasticidade (IP)",
+          formula: "IP = LL - LP",
+          description: "Faixa de umidade em que o solo se comporta plasticamente"
+        },
+      ];
+
+      if (results.ic !== null) {
+        formulas.push({
+          label: "Índice de Consistência (IC)",
+          formula: "IC = (LL - w) / IP",
+          description: "Indica o estado de consistência do solo in situ. IC < 0: líquido, 0-1: plástico, > 1: semi-sólido/sólido"
+        });
+      }
+
+      if (results.atividade_argila !== null) {
+        formulas.push({
+          label: "Atividade da Argila (Ia)",
+          formula: "Ia = IP / % Argila",
+          description: "Relaciona a plasticidade com o teor de argila. Ia < 0.75: inativa, 0.75-1.25: normal, > 1.25: ativa"
+        });
+      }
+
       const exportData: ExportData = {
         moduleName: "limites-consistencia",
         moduleTitle: "Limites de Consistência",
         inputs,
         results: resultsList,
+        formulas,
         tables,
-        customFileName: pdfFileName
+        customFileName: pdfFileName,
+        theme,
+        printSettings: settings.printSettings
       };
 
       const success = await exportToPDF(exportData);

@@ -230,11 +230,33 @@ export default function BoussinesqAnalise({ onVoltar, onStartTour, onLoadExample
       highlight: i === 0
     }));
 
+    // Fórmulas utilizadas
+    const formulas = [
+      {
+        label: "Equação de Boussinesq",
+        formula: "Δσz = (3P / 2π) × (z³ / R⁵)",
+        description: "Acréscimo de tensão vertical em um ponto devido a uma carga pontual vertical P"
+      },
+      {
+        label: "Distância Radial (R)",
+        formula: "R = √(x² + z²)",
+        description: "Distância do ponto de aplicação da carga até o ponto de análise"
+      },
+      {
+        label: "Aplicabilidade",
+        formula: "Válida para meio semi-infinito, homogêneo, isotrópico e elástico linear",
+        description: "Solução fundamental da elasticidade para carga pontual na superfície"
+      },
+    ];
+
     const exportData: ExportData = {
       moduleName: "boussinesq",
       moduleTitle: "Boussinesq - Acréscimo de Tensões",
       inputs,
-      results: resultsList
+      results: resultsList,
+      formulas,
+      theme,
+      printSettings: settings.printSettings
     };
 
     toast("Gerando PDF...");

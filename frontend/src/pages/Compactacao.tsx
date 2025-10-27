@@ -17,6 +17,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
+import { useSettings } from "@/hooks/use-settings";
+import { useTheme } from "@/hooks/use-theme";
 import { useTour, TourStep } from "@/contexts/TourContext";
 import SavedCalculations from "@/components/SavedCalculations";
 import SaveDialog from "@/components/SaveDialog";
@@ -112,6 +114,8 @@ const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
 function CompactacaoDesktop() {
   const { toast: toastFn } = { toast };
+  const { settings } = useSettings();
+  const { theme } = useTheme();
   const { startTour } = useTour();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
@@ -432,14 +436,59 @@ function CompactacaoDesktop() {
       rows: ensaioRows
     });
 
+    // Fórmulas utilizadas
+    const formulas = [
+      {
+        label: "Peso da Amostra Úmida",
+        formula: "Peso Amostra = (Peso Amostra+Cilindro) - (Peso Cilindro)",
+        description: "Peso da amostra compactada dentro do cilindro"
+      },
+      {
+        label: "Peso Específico Natural (γnat)",
+        formula: "γnat = (Peso Amostra / Volume Cilindro) × 10",
+        description: "Peso específico da amostra úmida compactada em kN/m³"
+      },
+      {
+        label: "Teor de Umidade (w)",
+        formula: "w = ((Peso Bruto Úmido - Peso Bruto Seco) / (Peso Bruto Seco - Tara)) × 100",
+        description: "Teor de umidade de moldagem do corpo de prova"
+      },
+      {
+        label: "Peso Específico Seco (γd)",
+        formula: "γd = γnat / (1 + w/100)",
+        description: "Peso específico da amostra sem considerar a água"
+      },
+      {
+        label: "Curva de Saturação Teórica",
+        formula: "γd_sat = (Gs × γw × 100) / (Gs × w + 100)",
+        description: "Representa o estado de saturação completa (Sr = 100%) para cada umidade"
+      },
+      {
+        label: "Parâmetros Ótimos",
+        formula: "Obtidos do ponto máximo da curva de compactação (parábola ajustada aos pontos experimentais)",
+        description: "Umidade ótima (wot) e Peso específico seco máximo (γd_max) definem as condições ideais de compactação"
+      },
+    ];
+
+    if (formData.Gs) {
+      formulas.push({
+        label: "Grau de Compactação (GC)",
+        formula: "GC = (γd_campo / γd_max) × 100",
+        description: "Compara a densidade obtida em campo com a densidade máxima de laboratório. Valores típicos de projeto: GC ≥ 95% (aterros), GC ≥ 100% (bases e sub-bases)"
+      });
+    }
+
     const exportData: ExportData = {
       moduleName: "compactacao",
       moduleTitle: "Compactação (Proctor)",
       inputs,
       results: resultsList,
+      formulas,
       tables,
       chartImage: chartImage || undefined,
-      customFileName: pdfFileName
+      customFileName: pdfFileName,
+      theme,
+      printSettings: settings.printSettings
     };
 
     toast("Gerando PDF...");

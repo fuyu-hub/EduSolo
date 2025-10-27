@@ -134,13 +134,18 @@ const ConditionalSheetClose = ({ shouldWrap, children, ...props }: { shouldWrap:
 export function Layout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   
-  // Se for mobile, usa o MobileLayout
-  if (isMobile) {
-    return <MobileLayout>{children}</MobileLayout>;
-  }
+  // Usa React.useMemo para garantir renderização consistente e evitar flash
+  const layout = React.useMemo(() => {
+    // Se for mobile, usa o MobileLayout
+    if (isMobile) {
+      return <MobileLayout>{children}</MobileLayout>;
+    }
+    
+    // Caso contrário, usa o layout desktop normal
+    return <DesktopLayout>{children}</DesktopLayout>;
+  }, [isMobile, children]);
   
-  // Caso contrário, usa o layout desktop normal
-  return <DesktopLayout>{children}</DesktopLayout>;
+  return layout;
 }
 
 // Desktop Layout Component

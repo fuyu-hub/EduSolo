@@ -27,9 +27,9 @@ export function MobileFeatureCard({
     <Card
       onClick={onClick}
       className={cn(
-        "p-4 transition-all duration-200 active:scale-95",
+        "p-4 transition-all duration-300 ease-out active:scale-[0.97]",
         "bg-card/50 backdrop-blur-sm border border-border/50",
-        "hover:bg-card/80 hover:border-primary/30 hover:shadow-lg",
+        "hover:bg-card/80 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10",
         onClick && "cursor-pointer",
         className
       )}
@@ -39,6 +39,8 @@ export function MobileFeatureCard({
         <div
           className={cn(
             "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center shrink-0 shadow-md",
+            "transition-transform duration-300 ease-out",
+            onClick && "group-hover:scale-110",
             color
           )}
         >
