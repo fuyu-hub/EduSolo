@@ -1,8 +1,8 @@
 // frontend/src/pages/IndicesFisicos.tsx
 import { useState, useMemo, useEffect } from "react";
 import { Beaker, Calculator, Info, BarChart3, ArrowLeft, ArrowRight, Save, FolderOpen, Download, Printer, FileText, AlertCircle, GraduationCap } from "lucide-react";
-import axios from 'axios';
 import { Card } from "@/components/ui/card";
+import { calcularIndicesFisicos } from "@/lib/calculations/indices-fisicos";
 import { MobileModuleWrapper } from "@/components/mobile";
 import IndicesFisicosMobile from "./mobile/IndicesFisicosMobile";
 import { Button } from "@/components/ui/button";
@@ -121,7 +121,7 @@ const tooltips = {
   indice_vazios_min: "Índice de vazios mínimo do solo (emin). Necessário para calcular Dr.",
 };
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'; // URL do backend
+// Cálculos agora são feitos localmente no frontend
 
 function IndicesFisicosDesktop() {
   // Configurações
@@ -298,31 +298,22 @@ function IndicesFisicosDesktop() {
     }
 
     try {
-      const response = await axios.post<IndicesFisicosOutput>(`${API_URL}/calcular/indices-fisicos`, apiInput);
+      // Calcula localmente no frontend
+      const resultado = calcularIndicesFisicos(apiInput);
 
-      if (response.data.erro) {
-        setError(response.data.erro);
+      if (resultado.erro) {
+        setError(resultado.erro);
         toast({
           title: "Erro no Cálculo",
-          description: response.data.erro,
+          description: resultado.erro,
           variant: "destructive",
         });
       } else {
-        setResults(response.data);
+        setResults(resultado);
       }
     } catch (err) {
-      let errorMessage = "Não foi possível conectar ao servidor de cálculo.";
-      if (axios.isAxiosError(err) && err.response?.data?.detail) {
-        if (Array.isArray(err.response.data.detail)) {
-          interface ValidationError {
-            loc: string[];
-            msg: string;
-          }
-          errorMessage = err.response.data.detail.map((d: ValidationError) => `${d.loc.join('.')} - ${d.msg}`).join("; ");
-        } else {
-          errorMessage = err.response.data.detail;
-        }
-      } else if (err instanceof Error) {
+      let errorMessage = "Erro ao calcular os índices físicos.";
+      if (err instanceof Error) {
         errorMessage = err.message;
       }
       setError(errorMessage);

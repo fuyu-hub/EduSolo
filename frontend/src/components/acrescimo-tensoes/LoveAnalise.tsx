@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Target, BookOpen, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import axios from "axios";
 import PrintHeader from "@/components/PrintHeader";
 import CanvasLove from "./CanvasLove";
 import PainelResultados, { PontoAnalise } from "./PainelResultados";
@@ -14,15 +13,13 @@ import SavedCalculations from "@/components/SavedCalculations";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport } from "@/lib/export-utils";
 import { useSettings } from "@/hooks/use-settings";
+import { calcularAcrescimoTensoes } from "@/lib/calculations/acrescimo-tensoes";
 
 interface LoveAnaliseProps {
   onVoltar: () => void;
   onStartTour?: () => void;
   onLoadExampleRef?: React.MutableRefObject<(() => void) | null>;
 }
-
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Função para gerar IDs únicos (alternativa ao crypto.randomUUID para compatibilidade)
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -76,7 +73,7 @@ export default function LoveAnalise({ onVoltar, onStartTour, onLoadExampleRef }:
 
       for (const ponto of pontosParaCalcular) {
         try {
-          const response = await axios.post(`${API_URL}/calcular/acrescimo-tensoes`, {
+          const resultado = calcularAcrescimoTensoes({
             tipo_carga: "circular",
             carga_circular: {
               raio: raio,
@@ -91,10 +88,10 @@ export default function LoveAnalise({ onVoltar, onStartTour, onLoadExampleRef }:
             }
           });
 
-          if (response.data.erro) {
+          if (resultado.erro) {
             resultadosMap.set(ponto.id, undefined);
           } else {
-            resultadosMap.set(ponto.id, response.data.delta_sigma_v);
+            resultadosMap.set(ponto.id, resultado.delta_sigma_v);
           }
         } catch (error) {
           console.error(`Erro ao calcular ponto ${ponto.nome}:`, error);

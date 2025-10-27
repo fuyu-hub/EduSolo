@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Square, BookOpen, Settings, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import axios from "axios";
 import PrintHeader from "@/components/PrintHeader";
 import CanvasNewmark from "./CanvasNewmark";
 import PainelResultados, { PontoAnalise } from "./PainelResultados";
@@ -16,14 +15,13 @@ import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberFo
 import { useSettings } from "@/hooks/use-settings";
 import DialogExemplosNewmark from "./DialogExemplosNewmark";
 import DialogConfiguracoesNewmark from "./DialogConfiguracoesNewmark";
+import { calcularAcrescimoTensoes } from "@/lib/calculations/acrescimo-tensoes";
 
 interface NewmarkAnaliseProps {
   onVoltar: () => void;
   onStartTour?: () => void;
   onLoadExampleRef?: React.MutableRefObject<(() => void) | null>;
 }
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Função para gerar IDs únicos (alternativa ao crypto.randomUUID para compatibilidade)
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -82,7 +80,7 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
 
       for (const ponto of pontosParaCalcular) {
         try {
-          const response = await axios.post(`${API_URL}/calcular/acrescimo-tensoes`, {
+          const resultado = calcularAcrescimoTensoes({
             tipo_carga: "retangular",
             carga_retangular: {
               largura: largura,
@@ -99,12 +97,12 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
             usar_abaco_newmark: usarAbaco
           });
 
-          if (response.data.erro) {
+          if (resultado.erro) {
             resultadosMap.set(ponto.id, { tensao: undefined });
           } else {
             resultadosMap.set(ponto.id, {
-              tensao: response.data.delta_sigma_v,
-              detalhes: response.data.detalhes
+              tensao: resultado.delta_sigma_v,
+              detalhes: resultado.detalhes
             });
           }
         } catch (error) {

@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { ArrowLeft, Target, BookOpen, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import axios from "axios";
 import PrintHeader from "@/components/PrintHeader";
 import CanvasBoussinesq from "./CanvasBoussinesq";
 import PainelResultados, { PontoAnalise } from "./PainelResultados";
@@ -14,6 +13,7 @@ import SavedCalculations from "@/components/SavedCalculations";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport } from "@/lib/export-utils";
 import { useSettings } from "@/hooks/use-settings";
+import { calcularAcrescimoTensoes } from "@/lib/calculations/acrescimo-tensoes";
 
 interface BoussinesqAnaliseProps {
   onVoltar: () => void;
@@ -21,37 +21,8 @@ interface BoussinesqAnaliseProps {
   onLoadExampleRef?: React.MutableRefObject<(() => void) | null>;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
 // Função para gerar IDs únicos (alternativa ao crypto.randomUUID para compatibilidade)
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
-
-/**
- * Calcula a tensão vertical (sigma_z) usando a fórmula de Boussinesq.
- * @param P - Carga pontual (kN)
- * @param x - Distância horizontal (m)
- * @param z - Profundidade (m)
- * @returns Tensão (kPa)
- */
-function calcularTensaoBoussinesqLocal(P: number, x: number, z: number): number {
-  if (z <= 0) return 0; // Não calcular na superfície ou acima
-  
-  // r² = x² + z²
-  const r2 = Math.pow(x, 2) + Math.pow(z, 2);
-  
-  // Evita divisão por zero se o ponto estiver exatamente em (0,0)
-  if (r2 === 0) return 0;
-  
-  // R⁵ = (r²)^2.5
-  const R5 = Math.pow(r2, 2.5);
-  // z³
-  const z3 = Math.pow(z, 3);
-  
-  // sigma_z = (3 * P * z³) / (2 * pi * R⁵)
-  const sigma_z = (3 * P * z3) / (2 * Math.PI * R5);
-  
-  return sigma_z; // Resultado em kPa (kN/m²)
-}
 
 export default function BoussinesqAnalise({ onVoltar, onStartTour, onLoadExampleRef }: BoussinesqAnaliseProps) {
   // Configurações
@@ -101,7 +72,7 @@ export default function BoussinesqAnalise({ onVoltar, onStartTour, onLoadExample
 
       for (const ponto of pontosParaCalcular) {
         try {
-          const response = await axios.post(`${API_URL}/calcular/acrescimo-tensoes`, {
+          const resultado = calcularAcrescimoTensoes({
             tipo_carga: "pontual",
             carga_pontual: {
               P: cargaP,
@@ -115,10 +86,10 @@ export default function BoussinesqAnalise({ onVoltar, onStartTour, onLoadExample
             }
           });
 
-          if (response.data.erro) {
+          if (resultado.erro) {
             resultadosMap.set(ponto.id, undefined);
           } else {
-            resultadosMap.set(ponto.id, response.data.delta_sigma_v);
+            resultadosMap.set(ponto.id, resultado.delta_sigma_v);
           }
         } catch (error) {
           console.error(`Erro ao calcular ponto ${ponto.nome}:`, error);

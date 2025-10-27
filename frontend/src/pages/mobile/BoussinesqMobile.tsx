@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Target, Calculator, Save, Download, FolderOpen, Lightbulb, AlertCircle, FileSpreadsheet, Trash2, Plus, Edit2, BarChart3, TableIcon, Layers, ArrowLeft } from "lucide-react";
-import axios from "axios";
+import { calcularAcrescimoTensoes } from "@/lib/calculations/acrescimo-tensoes";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
@@ -50,7 +50,7 @@ interface ExemploBoussinesq {
   pontos: { nome: string; x: number; z: number }[];
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Cálculos agora são feitos localmente no frontend
 
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
@@ -163,7 +163,8 @@ export default function BoussinesqMobile() {
 
       for (const ponto of pontosParaCalcular) {
         try {
-          const response = await axios.post(`${API_URL}/calcular/acrescimo-tensoes`, {
+          // Calcula localmente no frontend
+          const resultado = calcularAcrescimoTensoes({
             tipo_carga: "pontual",
             carga_pontual: {
               P: carga,
@@ -177,10 +178,10 @@ export default function BoussinesqMobile() {
             }
           });
 
-          if (response.data.erro) {
+          if (resultado.erro) {
             resultadosMap.set(ponto.id, undefined);
           } else {
-            resultadosMap.set(ponto.id, response.data.delta_sigma_v);
+            resultadosMap.set(ponto.id, resultado.delta_sigma_v);
           }
         } catch (error) {
           console.error(`Erro ao calcular ponto ${ponto.nome}:`, error);

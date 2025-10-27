@@ -1,8 +1,8 @@
 // frontend/src/pages/LimitesConsistencia.tsx
 import { useState, useEffect, useRef } from "react";
-import axios from 'axios';
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { calcularLimitesConsistencia } from "@/lib/calculations/limites-consistencia";
 import { z } from "zod";
 import { Droplet, Info, Calculator as CalcIcon, Plus, Trash2, LineChart, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, FileText, GraduationCap } from "lucide-react";
 import { useTour, TourStep } from "@/contexts/TourContext";
@@ -114,7 +114,7 @@ type Results = LimitesConsistenciaOutput;
 // --- Tooltips (mantidos) ---
 const tooltips = { numGolpes: "Número de golpes necessários para fechar a ranhura no ensaio LL (NBR 6459)", massaUmidaRecipienteLL: "Massa do recipiente (tara) + solo úmido (g) - Ensaio LL", massaSecaRecipienteLL: "Massa do recipiente (tara) + solo seco após estufa (g) - Ensaio LL", massaRecipienteLL: "Massa do recipiente (tara) utilizado no ensaio LL (g)", massaUmidaRecipienteLP: "Massa do recipiente (tara) + solo úmido (g) - Ensaio LP (NBR 7180)", massaSecaRecipienteLP: "Massa do recipiente (tara) + solo seco após estufa (g) - Ensaio LP", massaRecipienteLP: "Massa do recipiente (tara) utilizado no ensaio LP (g)", umidadeNatural: "Umidade natural do solo em campo (%) - Necessária para calcular IC", percentualArgila: "Percentual de partículas < 0.002mm (%) - Necessário para calcular Atividade (Ia)", LL: "Limite de Liquidez - teor de umidade na transição entre os estados líquido e plástico", LP: "Limite de Plasticidade - teor de umidade na transição entre os estados plástico e semissólido", IP: "Índice de Plasticidade = LL - LP (faixa de comportamento plástico)", IC: "Índice de Consistência = (LL - w_nat) / IP (estado de consistência do solo)", Atividade: "Atividade da Argila (Ia) = IP / (% argila)", CartaPlasticidade: "Carta de Plasticidade de Casagrande mostrando a classificação do solo (LL vs IP)" };
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Cálculos agora são feitos localmente no frontend
 
 // Função para gerar IDs únicos
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -561,13 +561,14 @@ function LimitesConsistenciaDesktop() {
         if (apiInput.umidade_natural === undefined) delete apiInput.umidade_natural; if (apiInput.percentual_argila === undefined) delete apiInput.percentual_argila;
     } catch (parseError) { setApiError("Erro interno ao processar os dados do formulário. Verifique se os números são válidos."); toast({ title: "Erro de Formulário", description: "Verifique se todos os campos numéricos contêm valores válidos.", variant: "destructive" }); setIsCalculating(false); return; }
     try {
-      const response = await axios.post<LimitesConsistenciaOutput>(`${API_URL}/calcular/limites-consistencia`, apiInput);
-      if (response.data.erro) { setApiError(response.data.erro); toast({ title: "Erro no Cálculo (API)", description: response.data.erro, variant: "destructive" }); }
+      // Calcula localmente no frontend
+      const resultado = calcularLimitesConsistencia(apiInput);
+      if (resultado.erro) { setApiError(resultado.erro); toast({ title: "Erro no Cálculo", description: resultado.erro, variant: "destructive" }); }
       else { 
-        setResults(response.data); 
+        setResults(resultado); 
         toast({ title: "Sucesso", description: "Cálculo dos limites de consistência realizado." }); 
       }
-    } catch (err) { let errorMessage = "Erro de comunicação com o servidor."; if (axios.isAxiosError(err) && err.response?.data?.detail) { if (Array.isArray(err.response.data.detail)) { errorMessage = err.response.data.detail.map((d: any) => `Campo '${d.loc.slice(1).join('.') || 'Geral'}': ${d.msg}`).join("; "); } else if (typeof err.response.data.detail === 'string') { errorMessage = err.response.data.detail; } } else if (err instanceof Error) { errorMessage = err.message; } setApiError(errorMessage); toast({ title: "Erro na Requisição", description: errorMessage, variant: "destructive" }); }
+    } catch (err) { let errorMessage = "Erro ao calcular limites de consistência."; if (err instanceof Error) { errorMessage = err.message; } setApiError(errorMessage); toast({ title: "Erro no Cálculo", description: errorMessage, variant: "destructive" }); }
     finally { setIsCalculating(false); }
   };
 

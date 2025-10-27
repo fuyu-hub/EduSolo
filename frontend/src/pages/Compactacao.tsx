@@ -1,7 +1,7 @@
 // frontend/src/pages/Compactacao.tsx
 import { useState, useEffect, useRef } from "react";
-import axios from "axios";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { calcularCompactacao } from "@/lib/calculations/compactacao";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Database, Info, Calculator as CalcIcon, Plus, Trash2, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, GraduationCap } from "lucide-react";
@@ -108,7 +108,7 @@ const tooltips = {
   tara: "Peso do recipiente vazio (g)",
 };
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Cálculos agora são feitos localmente no frontend
 
 // Função para gerar IDs únicos (alternativa ao crypto.randomUUID para compatibilidade)
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -581,23 +581,18 @@ function CompactacaoDesktop() {
     }
 
     try {
-      const response = await axios.post<Results>(`${API_URL}/calcular/compactacao`, apiInput);
-      if (response.data.erro) {
-        setApiError(response.data.erro);
-        toast("Erro no Cálculo (API)", { description: response.data.erro });
+      // Calcula localmente no frontend
+      const resultado = calcularCompactacao(apiInput);
+      if (resultado.erro) {
+        setApiError(resultado.erro);
+        toast("Erro no Cálculo", { description: resultado.erro });
       } else {
-        setResults(response.data);
+        setResults(resultado);
         toast("Sucesso", { description: "Ensaio de compactação calculado com sucesso." });
       }
     } catch (err) {
-      let errorMessage = "Erro de comunicação com o servidor.";
-      if (axios.isAxiosError(err) && err.response?.data?.detail) {
-        if (Array.isArray(err.response.data.detail)) {
-          errorMessage = err.response.data.detail.map((d: any) => `Campo '${d.loc.slice(1).join('.') || 'Geral'}': ${d.msg}`).join("; ");
-        } else if (typeof err.response.data.detail === 'string') {
-          errorMessage = err.response.data.detail;
-        }
-      } else if (err instanceof Error) {
+      let errorMessage = "Erro ao calcular compactação.";
+      if (err instanceof Error) {
         errorMessage = err.message;
       }
       setApiError(errorMessage);

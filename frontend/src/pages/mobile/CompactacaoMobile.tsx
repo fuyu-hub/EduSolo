@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import axios from "axios";
+import { calcularCompactacao } from "@/lib/calculations/compactacao";
 import { Database, Calculator, Plus, Trash2, Info, Save, FolderOpen, Download, FileText, AlertCircle, ChevronLeft, ChevronRight, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -82,7 +82,7 @@ interface Results {
   erro?: string | null;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Cálculos agora são feitos localmente no frontend
 
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
@@ -231,17 +231,18 @@ export default function CompactacaoMobile() {
 
       if (apiInput.Gs === undefined) delete apiInput.Gs;
 
-      const response = await axios.post(`${API_URL}/calcular/compactacao`, apiInput);
+      // Calcula localmente no frontend
+      const resultado = calcularCompactacao(apiInput);
       
-      if (response.data.erro) {
-        setError(response.data.erro);
+      if (resultado.erro) {
+        setError(resultado.erro);
         toast({
           title: "❌ Erro no cálculo",
-          description: response.data.erro,
+          description: resultado.erro,
           variant: "destructive",
         });
       } else {
-        setResults(response.data);
+        setResults(resultado);
         toast({
           title: "✅ Sucesso!",
           description: "Ensaio calculado com sucesso",

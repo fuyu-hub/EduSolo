@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { Filter, Info, Calculator as CalcIcon, Plus, Trash2, Table as TableIcon, TrendingUp, GraduationCap, Activity, BarChart3 } from "lucide-react";
+import { calcularGranulometria } from "@/lib/calculations/granulometria";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,8 +29,7 @@ import { ExemploGranulometria } from "@/lib/exemplos-granulometria";
 import { MobileModuleWrapper } from "@/components/mobile";
 import GranulometriaMobile from "./mobile/GranulometriaMobile";
 
-// Configuração da API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Cálculos agora são feitos localmente no frontend
 
 interface PeneiraDado {
   abertura: string;
@@ -314,18 +313,17 @@ function GranulometriaDesktop() {
         lp: formData.limitePlasticidade ? parseFloat(formData.limitePlasticidade) : null,
       };
 
-      // Fazer requisição para a API
-      const response = await axios.post<Results>(
-        `${API_BASE_URL}/analisar/granulometria`,
-        payload
-      );
+      // Calcular localmente no frontend
+      const resultado = calcularGranulometria(payload);
 
-      setResults(response.data);
-      toast.success("Análise concluída com sucesso!", { description: "A granulometria foi calculada e as classificações estão disponíveis." });
+      if (resultado.erro) {
+        toast.error("Erro no cálculo", { description: resultado.erro });
+      } else {
+        setResults(resultado);
+        toast.success("Análise concluída com sucesso!", { description: "A granulometria foi calculada e as classificações estão disponíveis." });
+      }
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.data?.detail) {
-        toast.error("Erro no cálculo", { description: error.response.data.detail });
-      } else if (error instanceof Error) {
+      if (error instanceof Error) {
         toast.error("Erro no cálculo", { description: error.message });
       } else {
         toast.error("Erro ao calcular", { description: "Verifique se todos os dados estão corretos e tente novamente." });

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Droplet, Calculator, Plus, Trash2, BarChart3, Info, Save, Download, FileText, FolderOpen, Lightbulb, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
-import axios from "axios";
+import { calcularLimitesConsistencia } from "@/lib/calculations/limites-consistencia";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
@@ -76,7 +76,7 @@ interface Results {
   erro?: string | null;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Cálculos agora são feitos localmente no frontend
 
 // Função para gerar IDs únicos
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -222,15 +222,25 @@ export default function LimitesConsistenciaMobile() {
         percentual_argila: formData.percentualArgila ? parseFloat(formData.percentualArgila) : undefined,
       };
 
-      const response = await axios.post(`${API_URL}/calcular/limites-consistencia`, payload);
-      setResults(response.data);
+      // Calcula localmente no frontend
+      const resultado = calcularLimitesConsistencia(payload);
+      setResults(resultado);
       
-      toast({
-        title: "✅ Sucesso!",
-        description: "Limites calculados com sucesso",
-      });
+      if (resultado.erro) {
+        setError(resultado.erro);
+        toast({
+          title: "❌ Erro",
+          description: resultado.erro,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "✅ Sucesso!",
+          description: "Limites calculados com sucesso",
+        });
+      }
     } catch (err: any) {
-      const errorMsg = err.response?.data?.detail || "Erro ao calcular";
+      const errorMsg = err.message || "Erro ao calcular";
       setError(errorMsg);
       
       toast({

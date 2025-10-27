@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Beaker, Calculator, BarChart3, Info, Save, Download, FolderOpen, FileText, AlertCircle, Lightbulb } from "lucide-react";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
+import { calcularIndicesFisicos } from "@/lib/calculations/indices-fisicos";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
@@ -91,7 +91,7 @@ interface IndicesFisicosOutput {
 
 type Results = IndicesFisicosOutput;
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Cálculos agora são feitos localmente no frontend
 
 // Sugestões de Gs por tipo de solo
 const gsSuggestions = [
@@ -181,28 +181,27 @@ export default function IndicesFisicosMobile() {
     }
 
     try {
-      const response = await axios.post<IndicesFisicosOutput>(`${API_URL}/calcular/indices-fisicos`, apiInput);
+      // Calcula localmente no frontend
+      const resultado = calcularIndicesFisicos(apiInput);
 
-      if (response.data.erro) {
-        setError(response.data.erro);
+      if (resultado.erro) {
+        setError(resultado.erro);
         toast({
           title: "Erro no Cálculo",
-          description: response.data.erro,
+          description: resultado.erro,
           variant: "destructive",
         });
       } else {
-        setResults(response.data);
+        setResults(resultado);
         toast({
           title: "✅ Sucesso!",
           description: "Índices calculados com sucesso",
         });
       }
     } catch (err) {
-      let errorMessage = "Erro ao conectar ao servidor";
-      if (axios.isAxiosError(err) && err.response?.data?.detail) {
-        errorMessage = Array.isArray(err.response.data.detail)
-          ? err.response.data.detail.map((d: any) => `${d.loc.join('.')}: ${d.msg}`).join("; ")
-          : err.response.data.detail;
+      let errorMessage = "Erro ao calcular índices físicos";
+      if (err instanceof Error) {
+        errorMessage = err.message;
       }
       setError(errorMessage);
       toast({

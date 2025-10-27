@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Mountain, Calculator, Settings, Save, Download, FolderOpen, Lightbulb, AlertCircle, FileSpreadsheet, FileText, BarChart3, Trash2, Layers, Info } from "lucide-react";
-import axios from "axios";
+import { calcularTensoesGeostaticas } from "@/lib/calculations/tensoes-geostaticas";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
@@ -83,7 +83,7 @@ interface TensoesGeostaticasInputAPI {
   peso_especifico_agua: number;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Cálculos agora são feitos localmente no frontend
 
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
@@ -383,17 +383,18 @@ export default function TensoesGeostaticasMobile() {
         peso_especifico_agua: parseFloat(formData.pesoEspecificoAgua),
       };
 
-      const response = await axios.post(`${API_URL}/calcular/tensoes-geostaticas`, apiInput);
+      // Calcula localmente no frontend
+      const resultado = calcularTensoesGeostaticas(apiInput);
 
-      if (response.data.erro) {
-        setError(response.data.erro);
+      if (resultado.erro) {
+        setError(resultado.erro);
         toast({
           title: "Erro no Cálculo",
-          description: response.data.erro,
+          description: resultado.erro,
           variant: "destructive",
         });
       } else {
-        setResults(response.data);
+        setResults(resultado);
         toast({
           title: "✅ Sucesso!",
           description: "Tensões calculadas com sucesso",

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Filter, Calculator, Plus, Trash2, Info, Save, Download, FileText, FolderOpen, Lightbulb, AlertCircle, ChevronLeft, ChevronRight, Table as TableIcon, BarChart3 } from "lucide-react";
-import axios from "axios";
+import { calcularGranulometria } from "@/lib/calculations/granulometria";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
@@ -88,7 +88,7 @@ interface Results {
   avaliacao_subleito_hrb: string | null;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Cálculos agora são feitos localmente no frontend
 
 // Função para gerar IDs únicos
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -233,15 +233,25 @@ export default function GranulometriaMobile() {
         lp: formData.limitePlasticidade ? parseFloat(formData.limitePlasticidade) : null,
       };
 
-      const response = await axios.post(`${API_URL}/analisar/granulometria`, payload);
-      setResults(response.data);
+      // Calcular localmente no frontend
+      const resultado = calcularGranulometria(payload);
       
-      toast({
-        title: "✅ Sucesso!",
-        description: "Análise granulométrica calculada",
-      });
+      if (resultado.erro) {
+        setError(resultado.erro);
+        toast({
+          title: "❌ Erro",
+          description: resultado.erro,
+          variant: "destructive",
+        });
+      } else {
+        setResults(resultado);
+        toast({
+          title: "✅ Sucesso!",
+          description: "Análise granulométrica calculada",
+        });
+      }
     } catch (err: any) {
-      const errorMsg = err.response?.data?.detail || err.response?.data?.message || "Erro ao calcular";
+      const errorMsg = err.message || "Erro ao calcular";
       setError(errorMsg);
       
       toast({
