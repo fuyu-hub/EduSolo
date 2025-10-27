@@ -7,6 +7,7 @@ import { z } from 'zod';
 export const PeneiraDadoSchema = z.object({
   abertura: z.number().positive(),
   massa_retida: z.number().nonnegative(),
+  peneira: z.string().optional(),
 });
 
 export const GranulometriaInputSchema = z.object({
@@ -17,6 +18,7 @@ export const GranulometriaInputSchema = z.object({
 });
 
 export const PontoGranulometricoSchema = z.object({
+  peneira: z.string().optional(),
   abertura: z.number(),
   massa_retida: z.number(),
   porc_retida: z.number(),

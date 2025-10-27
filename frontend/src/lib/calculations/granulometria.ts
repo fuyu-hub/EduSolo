@@ -45,6 +45,7 @@ export function calcularGranulometria(dados: GranulometriaInput): GranulometriaO
       const porc_passante = 100 - porc_retida_acum;
 
       dados_granulometricos.push({
+        peneira: peneira.peneira,
         abertura: peneira.abertura,
         massa_retida: peneira.massa_retida,
         porc_retida: Number(porc_retida.toFixed(2)),

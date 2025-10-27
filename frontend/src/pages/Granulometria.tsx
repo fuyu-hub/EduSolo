@@ -34,6 +34,7 @@ import GranulometriaMobile from "./mobile/GranulometriaMobile";
 interface PeneiraDado {
   abertura: string;
   massaRetida: string;
+  peneira?: string;
 }
 
 interface FormData {
@@ -308,6 +309,7 @@ function GranulometriaDesktop() {
         peneiras: peneirasValidas.map((p) => ({
           abertura: parseFloat(p.abertura),
           massa_retida: parseFloat(p.massaRetida),
+          peneira: p.peneira,
         })),
         ll: formData.limitePercent ? parseFloat(formData.limitePercent) : null,
         lp: formData.limitePlasticidade ? parseFloat(formData.limitePlasticidade) : null,

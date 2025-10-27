@@ -36,6 +36,7 @@ import {
 interface PeneiraDado {
   abertura: string;
   massaRetida: string;
+  peneira?: string;
 }
 
 interface SeletorPeneirasProps {
@@ -71,7 +72,8 @@ export default function SeletorPeneiras({ peneiras, onChange }: SeletorPeneirasP
 
     const novaPeneira: PeneiraDado = {
       abertura: peneiraInfo.aberturaMM.toString(),
-      massaRetida: ""
+      massaRetida: "",
+      peneira: peneiraInfo.nome
     };
 
     // Adicionar e ordenar por abertura decrescente
@@ -129,7 +131,8 @@ export default function SeletorPeneiras({ peneiras, onChange }: SeletorPeneirasP
         if (!info) return null;
         return {
           abertura: info.aberturaMM.toString(),
-          massaRetida: ""
+          massaRetida: "",
+          peneira: info.nome
         };
       })
       .filter(Boolean) as PeneiraDado[];

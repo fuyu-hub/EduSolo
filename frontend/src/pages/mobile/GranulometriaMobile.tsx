@@ -228,6 +228,7 @@ export default function GranulometriaMobile() {
         peneiras: peneirasValidas.map(p => ({
           abertura: parseFloat(p.abertura),
           massa_retida: parseFloat(p.massaRetida),
+          peneira: p.peneira,
         })),
         ll: formData.limitePercent ? parseFloat(formData.limitePercent) : null,
         lp: formData.limitePlasticidade ? parseFloat(formData.limitePlasticidade) : null,
