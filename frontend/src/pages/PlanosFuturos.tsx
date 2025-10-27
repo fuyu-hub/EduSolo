@@ -5,23 +5,23 @@ import { Progress } from "@/components/ui/progress";
 
 export default function PlanosFuturos() {
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
+    <div className="space-y-6 md:space-y-8 max-w-5xl mx-auto px-4 md:px-0">
       {/* Header */}
       <div className="space-y-2">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
-            <Rocket className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg">
+            <Rocket className="w-5 h-5 md:w-6 md:h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Planos Futuros</h1>
-            <p className="text-muted-foreground">Roadmap e funcionalidades planejadas</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Planos Futuros</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Roadmap e funcionalidades planejadas</p>
           </div>
         </div>
       </div>
 
       {/* Visão Geral */}
-      <Card className="glass p-6 border-l-4 border-l-violet-500">
-        <p className="text-sm text-foreground font-semibold leading-relaxed">
+      <Card className="glass p-4 md:p-6 border-l-4 border-l-violet-500">
+        <p className="text-xs md:text-sm text-foreground font-semibold leading-relaxed">
           O EduSolo está em constante evolução! Nosso objetivo é tornar a ferramenta cada vez mais completa, 
           abrangendo todos os principais tópicos da Mecânica dos Solos e oferecendo uma experiência educacional 
           excepcional para estudantes e profissionais.
@@ -29,44 +29,44 @@ export default function PlanosFuturos() {
       </Card>
 
       {/* Destaque Especial - Funcionalidades Prioritárias */}
-      <Card className="glass p-6 border-2 border-orange-500/50 bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent shadow-lg">
-        <div className="space-y-4">
+      <Card className="glass p-4 md:p-6 border-2 border-orange-500/50 bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent shadow-lg">
+        <div className="space-y-3 md:space-y-4">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-              <Zap className="w-5 h-5 text-orange-500" />
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+              <Zap className="w-4 h-4 md:w-5 md:h-5 text-orange-500" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-bold text-foreground mb-1">Foco Atual de Desenvolvimento</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <h3 className="text-base md:text-lg font-bold text-foreground mb-1">Foco Atual de Desenvolvimento</h3>
+              <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
                 Antes de adicionar novos módulos, estamos priorizando melhorar a experiência dos módulos existentes 
                 e adicionar funcionalidades que tornarão o EduSolo ainda mais prático e educacional:
               </p>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-            <div className="flex items-start gap-2 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 pt-2">
+            <div className="flex items-start gap-2 text-xs md:text-sm">
               <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 flex-shrink-0"></div>
               <div>
                 <strong className="text-foreground">Melhorias Contínuas:</strong>
                 <span className="text-muted-foreground"> Aprimorando UX/UI, validações e performance</span>
               </div>
             </div>
-            <div className="flex items-start gap-2 text-sm">
+            <div className="flex items-start gap-2 text-xs md:text-sm">
               <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 flex-shrink-0"></div>
               <div>
                 <strong className="text-foreground">Exportações Personalizadas:</strong>
                 <span className="text-muted-foreground"> Relatórios customizáveis e multi-cálculos</span>
               </div>
             </div>
-            <div className="flex items-start gap-2 text-sm">
+            <div className="flex items-start gap-2 text-xs md:text-sm">
               <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 flex-shrink-0"></div>
               <div>
                 <strong className="text-foreground">Modo Ensaio:</strong>
                 <span className="text-muted-foreground"> Simulação interativa de procedimentos laboratoriais</span>
               </div>
             </div>
-            <div className="flex items-start gap-2 text-sm">
+            <div className="flex items-start gap-2 text-xs md:text-sm">
               <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 flex-shrink-0"></div>
               <div>
                 <strong className="text-foreground">Integração Entre Módulos:</strong>
@@ -78,30 +78,30 @@ export default function PlanosFuturos() {
       </Card>
 
       {/* Progresso Geral */}
-      <Card className="glass p-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-              <GitBranch className="w-5 h-5 text-primary" />
-              Progresso Geral do Projeto
+      <Card className="glass p-4 md:p-6">
+        <div className="space-y-3 md:space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-base md:text-xl font-semibold text-foreground flex items-center gap-2">
+              <GitBranch className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+              <span className="truncate">Progresso Geral do Projeto</span>
             </h2>
-            <Badge variant="secondary" className="text-base">
+            <Badge variant="secondary" className="text-sm md:text-base flex-shrink-0">
               70%
             </Badge>
           </div>
-          <Progress value={70} className="h-3" />
-          <p className="text-sm text-muted-foreground">
+          <Progress value={70} className="h-2 md:h-3" />
+          <p className="text-xs md:text-sm text-muted-foreground">
             6 módulos frontend completos • 3 módulos backend prontos (aguardando interface)
           </p>
         </div>
       </Card>
 
       {/* Prioridades Imediatas */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Zap className="w-5 h-5 text-orange-500" />
-          <h2 className="text-2xl font-semibold text-foreground">Prioridades Imediatas</h2>
-          <Badge variant="destructive" className="ml-2">Alta Prioridade</Badge>
+      <section className="space-y-3 md:space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Zap className="w-4 h-4 md:w-5 md:h-5 text-orange-500" />
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground">Prioridades Imediatas</h2>
+          <Badge variant="destructive" className="text-xs md:text-sm">Alta Prioridade</Badge>
         </div>
 
         <div className="space-y-3">
@@ -148,15 +148,15 @@ export default function PlanosFuturos() {
       </section>
 
       {/* Backend Completo - Aguardando Interface */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-          <h2 className="text-2xl font-semibold text-foreground">Backend Completo - Aguardando Interface</h2>
-          <Badge className="ml-2 bg-emerald-500 hover:bg-emerald-600">Backend 100%</Badge>
+      <section className="space-y-3 md:space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-emerald-500" />
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground">Backend Completo - Aguardando Interface</h2>
+          <Badge className="bg-emerald-500 hover:bg-emerald-600 text-xs md:text-sm">Backend 100%</Badge>
         </div>
 
-        <Card className="glass p-4 border-l-4 border-l-emerald-500 bg-emerald-500/5">
-          <p className="text-sm text-muted-foreground">
+        <Card className="glass p-3 md:p-4 border-l-4 border-l-emerald-500 bg-emerald-500/5">
+          <p className="text-xs md:text-sm text-muted-foreground">
             <strong className="text-foreground">Estes módulos já possuem toda a lógica de cálculo implementada no backend.</strong> Falta apenas desenvolver a interface de usuário para torná-los acessíveis na aplicação.
           </p>
         </Card>
@@ -189,10 +189,10 @@ export default function PlanosFuturos() {
       </section>
 
       {/* Módulos Planejados */}
-      <section className="space-y-4">
+      <section className="space-y-3 md:space-y-4">
         <div className="flex items-center gap-2">
-          <Clock className="w-5 h-5 text-blue-500" />
-          <h2 className="text-2xl font-semibold text-foreground">Planejados</h2>
+          <Clock className="w-4 h-4 md:w-5 md:h-5 text-blue-500" />
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground">Planejados</h2>
         </div>
 
         <div className="space-y-3">
@@ -227,13 +227,13 @@ export default function PlanosFuturos() {
       </section>
 
       {/* Melhorias Futuras */}
-      <section className="space-y-4">
+      <section className="space-y-3 md:space-y-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-emerald-500" />
-          <h2 className="text-2xl font-semibold text-foreground">Funcionalidades Complementares</h2>
+          <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-emerald-500" />
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground">Funcionalidades Complementares</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
             title="Templates de Exportação"
@@ -293,60 +293,59 @@ export default function PlanosFuturos() {
       </section>
 
       {/* Convite para Feedback */}
-      <Card className="glass p-6 border border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
-            <Sparkles className="w-6 h-6 text-primary" />
+      <Card className="glass p-4 md:p-6 border border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
+        <div className="flex flex-col sm:flex-row items-start gap-3 md:gap-4">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-primary/20 flex items-center justify-center flex-shrink-0">
+            <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-primary" />
           </div>
-          <div className="space-y-3 flex-1">
-            <h3 className="text-lg font-semibold text-foreground">Contribua com Ideias!</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+          <div className="space-y-2 md:space-y-3 flex-1">
+            <h3 className="text-base md:text-lg font-semibold text-foreground">Contribua com Ideias!</h3>
+            <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
               Tem alguma sugestão de funcionalidade ou módulo que gostaria de ver no EduSolo? 
-              Entre em contato através do e-mail <a href="mailto:contactsamsantos@gmail.com" className="text-primary hover:underline font-medium">contactsamsantos@gmail.com</a> ou 
-              abra uma issue no <a href="https://github.com/fuyu-hub" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">GitHub</a>.
+              Entre em contato através do e-mail <a href="mailto:contactsamsantos@gmail.com" className="text-primary hover:underline font-medium">contactsamsantos@gmail.com</a>.
             </p>
           </div>
         </div>
       </Card>
 
       {/* Destaque Especial - Acréscimo de Tensões */}
-      <Card className="glass p-6 border-2 border-primary/50 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
-        <div className="space-y-4">
+      <Card className="glass p-4 md:p-6 border-2 border-primary/50 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+        <div className="space-y-3 md:space-y-4">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-              <Target className="w-5 h-5 text-primary" />
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
+              <Target className="w-4 h-4 md:w-5 md:h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-bold text-foreground mb-1">Módulo Acréscimo de Tensões - Completo!</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+              <h3 className="text-base md:text-lg font-bold text-foreground mb-1">Módulo Acréscimo de Tensões - Completo!</h3>
+              <p className="text-xs md:text-sm text-muted-foreground leading-relaxed mb-2 md:mb-3">
                 Um dos módulos mais completos do EduSolo, implementando 4 métodos diferentes de cálculo de acréscimo de tensões no solo:
               </p>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="flex items-start gap-2 text-sm bg-background/50 p-3 rounded-lg border border-border/50">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
+            <div className="flex items-start gap-2 text-xs md:text-sm bg-background/50 p-2 md:p-3 rounded-lg border border-border/50">
               <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
               <div>
                 <strong className="text-foreground">Boussinesq:</strong>
                 <span className="text-muted-foreground"> Carga pontual vertical na superfície</span>
               </div>
             </div>
-            <div className="flex items-start gap-2 text-sm bg-background/50 p-3 rounded-lg border border-border/50">
+            <div className="flex items-start gap-2 text-xs md:text-sm bg-background/50 p-2 md:p-3 rounded-lg border border-border/50">
               <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
               <div>
                 <strong className="text-foreground">Love:</strong>
                 <span className="text-muted-foreground"> Carga uniformemente distribuída em área circular</span>
               </div>
             </div>
-            <div className="flex items-start gap-2 text-sm bg-background/50 p-3 rounded-lg border border-border/50">
+            <div className="flex items-start gap-2 text-xs md:text-sm bg-background/50 p-2 md:p-3 rounded-lg border border-border/50">
               <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
               <div>
                 <strong className="text-foreground">Carothers:</strong>
                 <span className="text-muted-foreground"> Carga uniformemente distribuída em faixa infinita</span>
               </div>
             </div>
-            <div className="flex items-start gap-2 text-sm bg-background/50 p-3 rounded-lg border border-border/50">
+            <div className="flex items-start gap-2 text-xs md:text-sm bg-background/50 p-2 md:p-3 rounded-lg border border-border/50">
               <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
               <div>
                 <strong className="text-foreground">Newmark:</strong>
@@ -356,7 +355,7 @@ export default function PlanosFuturos() {
           </div>
 
           <div className="pt-2 border-t border-border/50">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               <strong className="text-foreground">✨ Diferencial:</strong> Todos os métodos incluem análise 2D interativa, permitindo adicionar múltiplos pontos de análise e visualizar o perfil do solo com representação gráfica das tensões.
             </p>
           </div>
@@ -364,7 +363,7 @@ export default function PlanosFuturos() {
       </Card>
 
       {/* Versão e Última Atualização */}
-      <div className="text-center text-sm text-muted-foreground pb-4 space-y-1">
+      <div className="text-center text-xs md:text-sm text-muted-foreground pb-4 space-y-1">
         <p>Roadmap atualizado em Janeiro/2026</p>
         <p className="text-xs">As datas e prioridades podem ser ajustadas conforme o desenvolvimento evolui</p>
       </div>
@@ -384,19 +383,19 @@ interface FeatureCardProps {
 function FeatureCard({ status, title, description, tags, progress }: FeatureCardProps) {
   const statusConfig = {
     "em-desenvolvimento": {
-      icon: <Clock className="w-5 h-5 text-amber-500" />,
+      icon: <Clock className="w-4 h-4 md:w-5 md:h-5 text-amber-500" />,
       badge: "Em Desenvolvimento",
       badgeVariant: "default" as const,
       borderColor: "border-l-amber-500",
     },
     planejado: {
-      icon: <Circle className="w-5 h-5 text-blue-500" />,
+      icon: <Circle className="w-4 h-4 md:w-5 md:h-5 text-blue-500" />,
       badge: "Planejado",
       badgeVariant: "secondary" as const,
       borderColor: "border-l-blue-500",
     },
     concluido: {
-      icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" />,
+      icon: <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-emerald-500" />,
       badge: "Concluído",
       badgeVariant: "default" as const,
       borderColor: "border-l-emerald-500",
@@ -406,32 +405,32 @@ function FeatureCard({ status, title, description, tags, progress }: FeatureCard
   const config = statusConfig[status];
 
   return (
-    <Card className={`glass p-5 border-l-4 ${config.borderColor} hover:shadow-md transition-all`}>
-      <div className="space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 flex-1">
+    <Card className={`glass p-4 md:p-5 border-l-4 ${config.borderColor} hover:shadow-md transition-all`}>
+      <div className="space-y-2 md:space-y-3">
+        <div className="flex items-start justify-between gap-2 md:gap-3">
+          <div className="flex items-start gap-2 md:gap-3 flex-1">
             {config.icon}
             <div className="space-y-1 flex-1">
-              <h3 className="text-lg font-semibold text-foreground">{title}</h3>
-              <p className="text-sm text-muted-foreground">{description}</p>
+              <h3 className="text-base md:text-lg font-semibold text-foreground">{title}</h3>
+              <p className="text-xs md:text-sm text-muted-foreground">{description}</p>
             </div>
           </div>
-          <Badge variant={config.badgeVariant} className="flex-shrink-0">
+          <Badge variant={config.badgeVariant} className="flex-shrink-0 text-xs">
             {config.badge}
           </Badge>
         </div>
 
         {progress !== undefined && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
+          <div className="space-y-1 md:space-y-2">
+            <div className="flex items-center justify-between text-xs md:text-sm">
               <span className="text-muted-foreground">Progresso</span>
               <span className="font-medium text-foreground">{progress}%</span>
             </div>
-            <Progress value={progress} className="h-2" />
+            <Progress value={progress} className="h-1.5 md:h-2" />
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2 pt-2">
+        <div className="flex flex-wrap gap-1.5 md:gap-2 pt-1 md:pt-2">
           {tags.map((tag) => (
             <Badge key={tag} variant="outline" className="text-xs">
               {tag}
@@ -453,15 +452,15 @@ interface ImprovementCardProps {
 
 function ImprovementCard({ icon, title, description, status }: ImprovementCardProps) {
   return (
-    <Card className="glass p-4 hover:shadow-md transition-all hover:border-primary/30">
-      <div className="flex items-start gap-3">
+    <Card className="glass p-3 md:p-4 hover:shadow-md transition-all hover:border-primary/30">
+      <div className="flex items-start gap-2 md:gap-3">
         <div className={`flex-shrink-0 ${status === "planejado" ? "text-blue-500" : "text-muted-foreground"}`}>
           {icon}
         </div>
         <div className="space-y-1 flex-1">
-          <h4 className="font-medium text-foreground text-sm">{title}</h4>
+          <h4 className="font-medium text-foreground text-xs md:text-sm">{title}</h4>
           <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
-          <Badge variant="outline" className="text-xs mt-2">
+          <Badge variant="outline" className="text-xs mt-1 md:mt-2">
             {status === "planejado" ? "Curto Prazo" : "Longo Prazo"}
           </Badge>
         </div>
