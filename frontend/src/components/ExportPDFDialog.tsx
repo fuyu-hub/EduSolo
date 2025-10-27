@@ -28,8 +28,17 @@ export default function ExportPDFDialog({
   onConfirm,
   isExporting = false,
 }: ExportPDFDialogProps) {
+  const handleOpenChange = (newOpen: boolean) => {
+    // Se está fechando o diálogo e há um nome de arquivo válido, confirma a exportação
+    if (!newOpen && fileName.trim() && !isExporting) {
+      onConfirm();
+    } else {
+      onOpenChange(newOpen);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -61,7 +70,10 @@ export default function ExportPDFDialog({
         <DialogFooter>
           <Button 
             variant="outline" 
-            onClick={() => onOpenChange(false)}
+            onClick={() => {
+              // Cancelar sem salvar - fecha diretamente
+              onOpenChange(false);
+            }}
             disabled={isExporting}
           >
             Cancelar

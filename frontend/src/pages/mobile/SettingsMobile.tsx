@@ -639,7 +639,16 @@ export default function SettingsMobile() {
       </Sheet>
 
       {/* Sheet de Configurações de PDF */}
-      <Sheet open={printSheetOpen} onOpenChange={setPrintSheetOpen}>
+      <Sheet open={printSheetOpen} onOpenChange={(open) => {
+        // Ao fechar o sheet (arrastando para baixo ou clicando fora), mantém as configurações
+        if (!open) {
+          toast({
+            title: "Configurações de PDF salvas!",
+            description: "As alterações foram aplicadas com sucesso",
+          });
+        }
+        setPrintSheetOpen(open);
+      }}>
         <SheetContent side="bottom" className="h-[80vh] rounded-t-2xl px-4 py-6">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">

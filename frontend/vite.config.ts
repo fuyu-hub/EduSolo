@@ -27,13 +27,12 @@ export default defineConfig(({ mode }) => ({
         name: 'EduSolo - Ferramentas de Mecânica dos Solos',
         short_name: 'EduSolo',
         description: 'Suíte completa de ferramentas educacionais para análise geotécnica: cálculo de índices físicos, granulometria, compactação, tensões geostáticas e muito mais. Perfeito para estudantes e engenheiros civis.',
-        theme_color: '#B97A4C',
         background_color: '#1A1F2E',
         display: 'standalone',
         display_override: ['standalone', 'minimal-ui', 'browser'],
         scope: '/',
         start_url: '/?source=pwa',
-        orientation: 'any',
+        orientation: 'portrait',
         icons: [
           {
             src: '/pwa-192x192.png',

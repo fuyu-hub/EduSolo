@@ -24,6 +24,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { MobileModuleWrapper } from "@/components/mobile";
 import SettingsMobile from "./mobile/SettingsMobile";
 
@@ -635,20 +643,27 @@ function SettingsDesktop() {
       </div>
 
       {/* Dialog de Configurações de PDF */}
-      <AlertDialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
-        <AlertDialogContent 
+      <Dialog open={showPrintDialog} onOpenChange={(open) => {
+        // Ao fechar o diálogo (clicando fora ou no X), mantém as configurações
+        if (!open) {
+          toast.success("Configurações de PDF salvas!", {
+            description: "As alterações foram aplicadas com sucesso",
+          });
+        }
+        setShowPrintDialog(open);
+      }}>
+        <DialogContent 
           className="max-w-2xl max-h-[90vh] overflow-y-auto"
-          onInteractOutside={() => setShowPrintDialog(false)}
         >
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
               <Printer className="w-5 h-5 text-primary" />
               Configurações de PDF
-            </AlertDialogTitle>
-            <AlertDialogDescription>
+            </DialogTitle>
+            <DialogDescription>
               Personalize como os documentos serão exportados em PDF
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+            </DialogDescription>
+          </DialogHeader>
 
           <div className="space-y-6 py-4">
             {/* Layout do Documento */}
@@ -892,7 +907,7 @@ function SettingsDesktop() {
             </div>
           </div>
 
-          <AlertDialogFooter>
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => {
@@ -914,10 +929,15 @@ function SettingsDesktop() {
               <RotateCcw className="w-4 h-4 mr-2" />
               Restaurar Padrão
             </Button>
-            <AlertDialogCancel>Fechar</AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            <Button
+              variant="outline"
+              onClick={() => setShowPrintDialog(false)}
+            >
+              Fechar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dialogs de Confirmação */}
       <AlertDialog open={showClearDialog} onOpenChange={setShowClearDialog}>
