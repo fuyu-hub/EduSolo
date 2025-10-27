@@ -12,6 +12,7 @@ import { SettingsProvider } from "@/contexts/SettingsContext";
 import { TourProvider } from "@/contexts/TourContext";
 import { Tour } from "@/components/Tour";
 import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
+import { ThemeColorUpdater } from "@/components/ThemeColorUpdater";
 import { useRoutePreload } from "@/hooks/use-route-preload";
 import { ToursProvider } from "@/components/WelcomeDialog";
 
@@ -257,6 +258,7 @@ const App = () => (
                 <Sonner />
                 <Tour />
                 <PWAUpdateNotification />
+                <ThemeColorUpdater />
                 <BrowserRouter>
                   <AppContent />
                 </BrowserRouter>
