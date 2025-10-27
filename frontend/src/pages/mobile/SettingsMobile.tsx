@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Settings as SettingsIcon, Palette, Check, Calculator, Monitor, Eye, Database, Download, Upload, Trash2, RotateCcw, Zap, Info, Printer } from "lucide-react";
+import { Settings as SettingsIcon, Palette, Check, Calculator, Monitor, Eye, Database, Download, Upload, Trash2, RotateCcw, Zap, Info, Printer, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { ThemeColor } from "@/contexts/ThemeContext";
 import { UnitSystem, InterfaceDensity, PageOrientation, PageMargins, PaperSize } from "@/contexts/SettingsContext";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/use-toast";
+import { useToursControl } from "@/components/WelcomeDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -86,6 +87,7 @@ export default function SettingsMobile() {
   const { theme, setThemeColor } = useTheme();
   const { settings, updateSettings, resetSettings, clearAllCalculations, exportSettings, importSettings } = useSettings();
   const { toast } = useToast();
+  const { toursEnabled, setToursEnabled } = useToursControl();
   
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
@@ -365,6 +367,70 @@ export default function SettingsMobile() {
             <Printer className="w-4 h-4" />
             <span className="text-sm font-medium">Configurar PDF</span>
           </Button>
+        </div>
+      </MobileSection>
+
+      {/* Ajuda e Tutoriais */}
+      <MobileSection
+        title="Ajuda e Tutoriais"
+        icon={<HelpCircle className="w-4 h-4" />}
+        defaultOpen={false}
+        collapsible
+      >
+        <div className="space-y-3">
+          {/* Card dos Tutoriais Interativos */}
+          <div className="p-4 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
+            <div className="flex items-start gap-3 mb-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+                <HelpCircle className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <Label className="text-base font-semibold">Tutoriais Interativos</Label>
+                  <Switch
+                    variant="ios"
+                    checked={toursEnabled}
+                    onCheckedChange={(checked) => {
+                      setToursEnabled(checked);
+                      if (checked) {
+                        // Habilitar tours e reiniciar automaticamente
+                        localStorage.removeItem("tours-globally-disabled");
+                        
+                        // Limpar todos os tours vistos
+                        const keys = Object.keys(localStorage).filter(key => key.startsWith("tour-seen-"));
+                        keys.forEach(key => localStorage.removeItem(key));
+                        
+                        toast({
+                          title: "🎉 Tours habilitados e reiniciados!",
+                          description: "Os tutoriais aparecerão novamente em todos os módulos",
+                        });
+                      } else {
+                        localStorage.setItem("tours-globally-disabled", "true");
+                        toast({
+                          title: "🔕 Tours desabilitados",
+                          description: "Os tutoriais não aparecerão mais",
+                        });
+                      }
+                    }}
+                  />
+                </div>
+                <Badge 
+                  variant={toursEnabled ? "default" : "outline"}
+                  className="text-xs mb-2"
+                >
+                  {toursEnabled ? "✓ Ativos" : "✗ Desativados"}
+                </Badge>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Guias interativos que explicam cada funcionalidade do sistema.
+            </p>
+            <div className="mt-2 p-2 rounded bg-background/50 border border-border/30">
+              <p className="text-xs text-muted-foreground">
+                💡 <strong>Dica:</strong> Ao ativar, todos os tours serão reiniciados automaticamente.
+              </p>
+            </div>
+          </div>
         </div>
       </MobileSection>
 
@@ -651,6 +717,55 @@ export default function SettingsMobile() {
               </div>
             </div>
 
+            {/* Tema do PDF */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold text-foreground">Tema do PDF</h4>
+              
+              {/* Usar Tema Dinâmico */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50">
+                <div className="flex-1 pr-3">
+                  <Label className="text-sm font-medium">Usar Tema Atual</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">PDFs usarão o tema de cor atual do aplicativo</p>
+                </div>
+                <Switch
+                  variant="ios"
+                  checked={settings.printSettings.useDynamicTheme}
+                  onCheckedChange={(checked) => 
+                    updateSettings({ 
+                      printSettings: { ...settings.printSettings, useDynamicTheme: checked } 
+                    })
+                  }
+                />
+              </div>
+
+              {/* Tema Fixo (quando não usar dinâmico) */}
+              {!settings.printSettings.useDynamicTheme && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Tema Fixo para PDFs</Label>
+                  <Select
+                    value={settings.printSettings.fixedTheme || "indigo"}
+                    onValueChange={(value) => 
+                      updateSettings({ 
+                        printSettings: { ...settings.printSettings, fixedTheme: value } 
+                      })
+                    }
+                  >
+                    <SelectTrigger className="h-12 text-base">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="indigo">Índigo Profundo</SelectItem>
+                      <SelectItem value="soil">Terra Natural (Oficial)</SelectItem>
+                      <SelectItem value="green">Verde Esmeralda</SelectItem>
+                      <SelectItem value="amber">Âmbar Dourado</SelectItem>
+                      <SelectItem value="red">Vermelho Coral</SelectItem>
+                      <SelectItem value="slate">Minimalista</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
             {/* Elementos do Documento */}
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-foreground">Elementos do Documento</h4>
@@ -689,10 +804,13 @@ export default function SettingsMobile() {
                 />
               </div>
 
-              {/* Incluir Fórmulas */}
-              <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50">
+              {/* Incluir Fórmulas - BLOQUEADO TEMPORARIAMENTE */}
+              <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50 opacity-60">
                 <div className="flex-1 pr-3">
-                  <Label className="text-sm font-medium">Incluir Fórmulas</Label>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium">Incluir Fórmulas</Label>
+                    <Badge variant="outline" className="text-xs">Em breve</Badge>
+                  </div>
                   <p className="text-xs text-muted-foreground mt-0.5">Fórmulas utilizadas nos cálculos</p>
                 </div>
                 <Switch
@@ -703,6 +821,7 @@ export default function SettingsMobile() {
                       printSettings: { ...settings.printSettings, includeFormulas: checked } 
                     })
                   }
+                  disabled
                 />
               </div>
             </div>
@@ -735,6 +854,33 @@ export default function SettingsMobile() {
                 </div>
               </div>
             </div>
+
+            {/* Botão Restaurar Padrão */}
+            <Button
+              onClick={() => {
+                updateSettings({
+                  printSettings: {
+                    pageOrientation: "portrait",
+                    pageMargins: "normal",
+                    includeLogo: true,
+                    includeDate: true,
+                    includeFormulas: false,
+                    paperSize: "A4",
+                    useDynamicTheme: true,
+                    fixedTheme: "indigo",
+                  }
+                });
+                toast({
+                  title: "🔄 Restaurado!",
+                  description: "Configurações de PDF restauradas ao padrão",
+                });
+              }}
+              variant="outline"
+              className="w-full h-12 gap-2 focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-tap-highlight-color:transparent] active:scale-95 transition-transform"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Restaurar Padrão
+            </Button>
           </div>
         </SheetContent>
       </Sheet>

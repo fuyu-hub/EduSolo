@@ -4,7 +4,6 @@ import { Menu, Beaker, Droplet, Filter, Database, Mountain, Target, BookOpen, Ar
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
-import { IsometricCube } from "@/components/ui/isometric-cube";
 import {
   Sheet,
   SheetContent,
@@ -50,18 +49,19 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
         <ConditionalSheetClose shouldWrap={!!onLinkClick} asChild>
           <Link to="/" className="flex items-center gap-2.5 group" onClick={onLinkClick}>
             {collapsed ? (
-              // Mostrar "ES" quando colapsado
-              <span className="text-xl font-bold text-primary group-hover:scale-105 transition-transform">ES</span>
+              // Mostrar logo pequena quando colapsado
+              <img 
+                src="/edusolo - logo.svg" 
+                alt="EduSolo" 
+                className="w-10 h-10 group-hover:scale-105 transition-transform"
+              />
             ) : (
-              // Mostrar logo completo quando expandido
-              <div className="flex items-center gap-2.5">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md group-hover:scale-105 group-hover:rotate-3 transition-all">
-                  <IsometricCube className="w-7 h-7 text-white" />
-                </div>
-                <span className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
-                  Edu<span className="text-primary">Solo</span>
-                </span>
-              </div>
+              // Mostrar logo com texto quando expandido
+              <img 
+                src="/edusolo-logo-texto.svg" 
+                alt="EduSolo - Ferramentas de Mecânica dos Solos" 
+                className="h-20 group-hover:scale-105 transition-transform"
+              />
             )}
           </Link>
         </ConditionalSheetClose>

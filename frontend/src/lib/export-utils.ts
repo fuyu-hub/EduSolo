@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import katex from 'katex';
 
 /**
  * SISTEMA DE RENDERIZAÇÃO DE SÍMBOLOS MATEMÁTICOS EM PDF
@@ -61,7 +62,7 @@ export interface ExportData {
   inputs: { label: string; value: string }[];
   results: { label: string; value: string; highlight?: boolean }[];
   summary?: { label: string; value: string }[]; // Resumo da análise
-  formulas?: { label: string; formula: string; description?: string }[]; // Fórmulas utilizadas
+  formulas?: { label: string; formula: string; description?: string; latex?: boolean }[]; // Fórmulas (suporta LaTeX)
   tables?: { title: string; headers: string[]; rows: (string | number)[][] }[];
   chartImage?: string; // Base64 image de gráficos
   customFileName?: string; // Nome customizado para o arquivo
@@ -319,6 +320,180 @@ function calcularLarguraTextoMatematico(
   }
   
   return larguraTotal;
+}
+
+/**
+ * Renderiza LaTeX para SVG usando KaTeX e retorna o HTML
+ * @param latex - String LaTeX para renderizar
+ * @param displayMode - Se true, renderiza em modo display (centralizado)
+ * @returns HTML string com o SVG renderizado
+ */
+function renderizarLatex(latex: string, displayMode: boolean = false): string {
+  try {
+    return katex.renderToString(latex, {
+      displayMode,
+      throwOnError: false,
+      output: 'html',
+      strict: false,
+      trust: false,
+      fleqn: false, // Não alinhar à esquerda
+    });
+  } catch (error) {
+    console.error('Erro ao renderizar LaTeX:', error);
+    return latex; // Fallback para texto simples
+  }
+}
+
+/**
+ * Renderiza fórmula LaTeX no PDF
+ * Esta função cria um elemento temporário, renderiza o LaTeX e adiciona ao PDF
+ */
+async function renderizarLatexNoPDF(
+  doc: jsPDF,
+  latex: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  fontSize: number = 9
+): Promise<number> {
+  console.log('    🔄 Renderizando LaTeX:', latex.substring(0, 40));
+  
+  try {
+    // Criar container para renderização
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-99999px';
+    container.style.top = '0';
+    container.style.visibility = 'hidden';
+    container.style.padding = '20px';
+    container.style.backgroundColor = '#ffffff';
+    document.body.appendChild(container);
+    
+    // Criar elemento para LaTeX com tamanho maior para melhor qualidade
+    const tempDiv = document.createElement('div');
+    tempDiv.style.fontSize = `${fontSize * 2.5}px`; // 2.5x para qualidade sem ser gigante
+    tempDiv.style.fontFamily = 'KaTeX_Main, Times New Roman, serif';
+    tempDiv.style.display = 'inline-block';
+    tempDiv.style.padding = '6px 8px';
+    tempDiv.style.lineHeight = '1.4';
+    tempDiv.style.color = '#000000'; // Preto puro
+    tempDiv.className = 'katex-black'; // Classe para garantir preto
+    container.appendChild(tempDiv);
+    
+    // Adicionar estilo inline para forçar cor preta em todos os elementos
+    const style = document.createElement('style');
+    style.textContent = `
+      .katex-black,
+      .katex-black * {
+        color: #000000 !important;
+        fill: #000000 !important;
+      }
+      .katex-black .katex-html {
+        color: #000000 !important;
+      }
+      .katex-black .mord,
+      .katex-black .mrel,
+      .katex-black .mop,
+      .katex-black .mbin,
+      .katex-black .mopen,
+      .katex-black .mclose,
+      .katex-black .mpunct {
+        color: #000000 !important;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Renderizar LaTeX
+    try {
+      const html = katex.renderToString(latex, {
+        displayMode: false,
+        throwOnError: true,
+        output: 'html',
+        strict: false,
+        trust: false,
+        minRuleThickness: 0.06, // Linha mais grossa para melhor visualização
+      });
+      tempDiv.innerHTML = html;
+      console.log('    ✓ LaTeX renderizado');
+    } catch (katexError) {
+      console.error('    ✗ Erro KaTeX:', katexError);
+      document.body.removeChild(container);
+      document.head.removeChild(style);
+      throw katexError;
+    }
+    
+    // Aguardar fontes e renderização
+    await document.fonts.ready;
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    // Capturar como imagem em alta qualidade
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(tempDiv, {
+        backgroundColor: '#ffffff',
+        scale: 3, // Boa qualidade sem exagero
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        width: tempDiv.scrollWidth,
+        height: tempDiv.scrollHeight,
+      });
+      
+      const imgData = canvas.toDataURL('image/png', 1.0); // Máxima qualidade PNG
+      
+      // Calcular dimensões finais mantendo tamanho natural da fórmula
+      // Scale ajustado para que fórmulas fiquem no tamanho correto (similar a texto 10-11pt)
+      const targetScale = 11; // Converte pixels para mm (aumentado para reduzir tamanho final)
+      let finalWidth = canvas.width / targetScale;
+      let finalHeight = canvas.height / targetScale;
+      
+      // Limitar a um tamanho máximo razoável (70% da largura disponível)
+      const maxFormWidth = maxWidth * 0.7;
+      if (finalWidth > maxFormWidth) {
+        const ratio = maxFormWidth / finalWidth;
+        finalWidth = maxFormWidth;
+        finalHeight = finalHeight * ratio;
+      }
+      
+      console.log('    📐 Canvas:', canvas.width, 'x', canvas.height, '→ PDF:', finalWidth.toFixed(1), 'x', finalHeight.toFixed(1), 'mm');
+      console.log('    📍 Posição no PDF: x=', x, 'y=', y);
+      console.log('    🖼️  Dados da imagem:', imgData.substring(0, 50) + '...');
+      
+      // Adicionar imagem ao PDF
+      doc.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight, undefined, 'FAST');
+      console.log('    ✅ Imagem adicionada ao PDF!');
+      
+      // Limpar
+      document.body.removeChild(container);
+      document.head.removeChild(style);
+      
+      console.log('    ✓ LaTeX inserido no PDF');
+      return finalHeight + 2;
+    } catch (canvasError) {
+      console.error('    ✗ Erro canvas:', canvasError);
+      if (document.body.contains(container)) {
+        document.body.removeChild(container);
+      }
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
+      throw canvasError;
+    }
+  } catch (error) {
+    console.error('    ✗ Erro LaTeX:', error);
+    // Fallback: texto simples formatado
+    doc.setFontSize(fontSize);
+    doc.setFont('courier', 'normal');
+    doc.setTextColor(0, 0, 0);
+    const lines = doc.splitTextToSize(latex, maxWidth);
+    let currentY = y;
+    lines.forEach((line: string) => {
+      doc.text(line, x, currentY);
+      currentY += 6;
+    });
+    console.log('    ⚠️ Fallback: texto simples');
+    return lines.length * 6;
+  }
 }
 
 /**
@@ -659,6 +834,7 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
 
     // Seção de Fórmulas (se includeFormulas estiver ativo)
     if (printSettings.includeFormulas && data.formulas && data.formulas.length > 0) {
+      console.log('📐 Renderizando fórmulas:', data.formulas.length, 'fórmulas');
       yPosition += 5;
       
       if (yPosition > pageHeight - 40) {
@@ -678,63 +854,83 @@ export async function exportToPDF(data: ExportData): Promise<boolean> {
 
       doc.setFontSize(10);
       
-      for (const item of data.formulas) {
+      // Processar cada fórmula sequencialmente
+      for (let i = 0; i < data.formulas.length; i++) {
+        const item = data.formulas[i];
+        console.log(`Processando fórmula ${i + 1}/${data.formulas.length}: ${item.label}, LaTeX: ${item.latex}`);
+        
         if (yPosition > pageHeight - 30) {
           doc.addPage();
           yPosition = margin;
         }
 
-        // Calcular altura necessária (label + fórmula + descrição opcional)
-        const maxWidth = pageWidth - 2 * margin - 10;
-        const formulaLines = doc.splitTextToSize(item.formula, maxWidth);
-        const descLines = item.description ? doc.splitTextToSize(item.description, maxWidth) : [];
-        const lineHeight = 6;
-        const totalHeight = lineHeight + (formulaLines.length * lineHeight) + (descLines.length > 0 ? (descLines.length * lineHeight) + 2 : 0) + 4;
-
-        // Verificar se precisa de nova página
-        if (yPosition + totalHeight > pageHeight - 30) {
-          doc.addPage();
-          yPosition = margin;
-        }
-
-        // Fundo alternado com cor diferenciada
-        doc.setFillColor(colors.highlightBg.r, colors.highlightBg.g, colors.highlightBg.b);
-        doc.rect(margin, yPosition - 4, pageWidth - 2 * margin, totalHeight, 'F');
-
-        // Label da fórmula
+        const maxWidth = pageWidth - 2 * margin - 20;
+        
+        // Renderizar label primeiro (sem fundo fixo)
         doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
         doc.setTextColor(colors.primaryDark.r, colors.primaryDark.g, colors.primaryDark.b);
         renderizarTextoMatematico(doc, item.label, margin + 5, yPosition, 10);
-        yPosition += lineHeight;
+        yPosition += 7;
 
-        // Fórmula com fonte mono (courier) para melhor visualização
-        doc.setFont('courier', 'normal');
-        doc.setFontSize(9);
-        doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
-        let currentY = yPosition;
-        for (const linha of formulaLines) {
-          renderizarTextoMatematico(doc, linha, margin + 10, currentY, 9);
-          currentY += lineHeight;
+        // Renderizar fórmula - LaTeX ou texto simples
+        if (item.latex) {
+          // Usar LaTeX para renderização profissional
+          console.log('  → Usando LaTeX:', item.formula.substring(0, 50) + '...');
+          try {
+            const alturaFormula = await renderizarLatexNoPDF(
+              doc,
+              item.formula,
+              margin + 10,
+              yPosition,
+              maxWidth - 10,
+              10
+            );
+            console.log('  ✓ LaTeX renderizado, altura:', alturaFormula);
+            yPosition += alturaFormula;
+          } catch (error) {
+            console.error('  ✗ Erro ao renderizar LaTeX:', error);
+            // Fallback para texto simples
+            doc.setFont('courier', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
+            const formulaLines = doc.splitTextToSize(item.formula, maxWidth);
+            for (const linha of formulaLines) {
+              renderizarTextoMatematico(doc, linha, margin + 10, yPosition, 9);
+              yPosition += 6;
+            }
+            console.log('  → Fallback: texto simples usado');
+          }
+        } else {
+          // Renderização tradicional com símbolos Unicode
+          console.log('  → Usando Unicode');
+          doc.setFont('courier', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
+          const formulaLines = doc.splitTextToSize(item.formula, maxWidth);
+          for (const linha of formulaLines) {
+            renderizarTextoMatematico(doc, linha, margin + 10, yPosition, 9);
+            yPosition += 6;
+          }
         }
-        yPosition = currentY;
 
         // Descrição (se houver)
-        if (descLines.length > 0) {
+        if (item.description) {
           yPosition += 2;
           doc.setFont('helvetica', 'italic');
           doc.setFontSize(8);
           doc.setTextColor(colors.textSecondary.r, colors.textSecondary.g, colors.textSecondary.b);
-          currentY = yPosition;
+          const descLines = doc.splitTextToSize(item.description, maxWidth);
           for (const linha of descLines) {
-            doc.text(linha, margin + 10, currentY);
-            currentY += lineHeight;
+            doc.text(linha, margin + 10, yPosition);
+            yPosition += 5;
           }
-          yPosition = currentY;
         }
 
-        yPosition += 4;
+        yPosition += 5;
       }
       yPosition += 3;
+      console.log('✓ Todas as fórmulas processadas');
     }
 
     // Adicionar tabelas se disponíveis (ANTES do gráfico)

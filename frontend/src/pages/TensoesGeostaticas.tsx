@@ -21,6 +21,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { useTheme } from "@/hooks/use-theme";
 import { useTour, TourStep } from "@/contexts/TourContext";
 import SavedCalculations from "@/components/SavedCalculations";
+import { useToursEnabled } from "@/components/WelcomeDialog";
 import SaveDialog from "@/components/SaveDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
@@ -119,6 +120,7 @@ function TensoesGeostaticasDesktop() {
   const { settings } = useSettings();
   const { theme } = useTheme();
   const { startTour } = useTour();
+  const toursEnabled = useToursEnabled();
   const [currentCamadaIndex, setCurrentCamadaIndex] = useState(0);
   const [config, setConfig] = useState<ConfigData>({
     pesoEspecificoAgua: "10.0",
@@ -223,6 +225,9 @@ function TensoesGeostaticasDesktop() {
 
   // Iniciar tour automaticamente na primeira visita
   useEffect(() => {
+    // Verificar se tours estão globalmente desabilitados
+    if (!toursEnabled) return;
+    
     const initTour = async () => {
       const hasSeenTour = localStorage.getItem('tour-seen-tensoes-geostaticas');
       if (hasSeenTour === 'true') return;
@@ -290,7 +295,7 @@ function TensoesGeostaticasDesktop() {
     
     const timer = setTimeout(initTour, 800);
     return () => clearTimeout(timer);
-  }, []);
+  }, [toursEnabled]);
 
   useEffect(() => {
     if (fields.length > 0) {

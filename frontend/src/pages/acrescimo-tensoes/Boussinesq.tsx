@@ -4,10 +4,12 @@ import { useNavigate } from "react-router-dom";
 import { useTour, TourStep } from "@/contexts/TourContext";
 import { MobileModuleWrapper } from "@/components/mobile";
 import BoussinesqMobile from "../mobile/BoussinesqMobile";
+import { useToursEnabled } from "@/components/WelcomeDialog";
 
 function BoussinesqPageDesktop() {
   const navigate = useNavigate();
   const { startTour } = useTour();
+  const toursEnabled = useToursEnabled();
   const loadExampleRef = useRef<(() => void) | null>(null);
   
   const tourSteps: TourStep[] = [
@@ -63,6 +65,9 @@ function BoussinesqPageDesktop() {
   ];
 
   useEffect(() => {
+    // Verificar se tours estão globalmente desabilitados
+    if (!toursEnabled) return;
+    
     const hasSeenTour = localStorage.getItem('tour-seen-boussinesq');
     if (hasSeenTour !== 'true') {
       setTimeout(() => {
@@ -72,7 +77,7 @@ function BoussinesqPageDesktop() {
         setTimeout(() => startTour(tourSteps, "boussinesq"), 300);
       }, 800);
     }
-  }, []);
+  }, [toursEnabled]);
   
   const handleVoltar = () => {
     navigate('/acrescimo-tensoes');

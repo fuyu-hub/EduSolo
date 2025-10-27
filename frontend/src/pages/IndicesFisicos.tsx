@@ -57,6 +57,7 @@ import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberFo
 import { useTheme } from "@/hooks/use-theme";
 import SoilExamples from "@/components/soil/SoilExamples";
 import GsSuggestions from "@/components/soil/GsSuggestions";
+import { useToursEnabled } from "@/components/WelcomeDialog";
 import ResultInterpretation from "@/components/soil/ResultInterpretation";
 import InputWithValidation from "@/components/soil/InputWithValidation";
 import { SoilExample, soilExamples } from "@/lib/soil-constants";
@@ -127,6 +128,7 @@ function IndicesFisicosDesktop() {
   const { settings } = useSettings();
   const { startTour } = useTour();
   const { theme } = useTheme();
+  const toursEnabled = useToursEnabled();
   
   // Estados
   const [formData, setFormData] = useState<FormData>({
@@ -205,6 +207,9 @@ function IndicesFisicosDesktop() {
 
   // Iniciar tour automaticamente na primeira visita
   useEffect(() => {
+    // Verificar se tours estão globalmente desabilitados
+    if (!toursEnabled) return;
+    
     const initTour = async () => {
       // Verificar se já viu o tour
       const hasSeenTour = localStorage.getItem('tour-seen-indices-fisicos');
@@ -229,7 +234,8 @@ function IndicesFisicosDesktop() {
     
     const timer = setTimeout(initTour, 800);
     return () => clearTimeout(timer);
-  }, []);
+  }, [toursEnabled]);
+
 
   // Estados para salvamento e exportação
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -458,55 +464,64 @@ function IndicesFisicosDesktop() {
     if (results.compacidade_relativa !== null) resultsList.push({ label: "Compacidade Relativa", value: `${formatNumberForExport(results.compacidade_relativa)}%` });
     if (results.classificacao_compacidade) resultsList.push({ label: "Classificação", value: results.classificacao_compacidade });
 
-    // Fórmulas utilizadas
+    // Fórmulas utilizadas com LaTeX
     const formulas = [
       { 
-        label: "Peso Específico Natural (γnat)", 
-        formula: "γnat = (Massa Total / Volume Total) × 10",
-        description: "Relação entre a massa total do solo (úmido) e seu volume total"
+        label: "Peso Específico Natural", 
+        formula: "\\gamma_{nat} = \\frac{M_{total}}{V_{total}} \\times 10",
+        latex: true,
+        description: "Relação entre a massa total do solo (úmido) e seu volume total em kN/m³"
       },
       { 
-        label: "Umidade (w)", 
-        formula: "w = ((Massa Úmida - Massa Seca) / Massa Seca) × 100",
+        label: "Umidade", 
+        formula: "w = \\frac{M_{\\acute{u}mida} - M_{seca}}{M_{seca}} \\times 100\\%",
+        latex: true,
         description: "Percentual de água em relação à massa seca dos sólidos"
       },
       { 
-        label: "Peso Específico Seco (γd)", 
-        formula: "γd = γnat / (1 + w/100)",
+        label: "Peso Específico Seco", 
+        formula: "\\gamma_d = \\frac{\\gamma_{nat}}{1 + \\frac{w}{100}}",
+        latex: true,
         description: "Peso específico do solo sem considerar a massa de água"
       },
       { 
-        label: "Índice de Vazios (e)", 
-        formula: "e = (Gs × γw / γd) - 1",
-        description: "Relação entre o volume de vazios e o volume de sólidos"
+        label: "Índice de Vazios", 
+        formula: "e = \\frac{G_s \\times \\gamma_w}{\\gamma_d} - 1",
+        latex: true,
+        description: "Relação entre o volume de vazios e o volume de sólidos (adimensional)"
       },
       { 
-        label: "Porosidade (n)", 
-        formula: "n = (e / (1 + e)) × 100",
+        label: "Porosidade", 
+        formula: "n = \\frac{e}{1 + e} \\times 100\\%",
+        latex: true,
         description: "Percentual de vazios em relação ao volume total"
       },
       { 
-        label: "Grau de Saturação (Sr)", 
-        formula: "Sr = (w × Gs / e) × 100",
+        label: "Grau de Saturação", 
+        formula: "S_r = \\frac{w \\times G_s}{e} \\times 100\\%",
+        latex: true,
         description: "Percentual dos vazios ocupados por água"
       },
       { 
-        label: "Peso Específico Saturado (γsat)", 
-        formula: "γsat = ((Gs + e) / (1 + e)) × γw",
+        label: "Peso Específico Saturado", 
+        formula: "\\gamma_{sat} = \\frac{G_s + e}{1 + e} \\times \\gamma_w",
+        latex: true,
         description: "Peso específico quando todos os vazios estão preenchidos com água"
       },
       { 
-        label: "Peso Específico Submerso (γsub)", 
-        formula: "γsub = γsat - γw",
-        description: "Peso específico efetivo do solo quando submerso"
+        label: "Peso Específico Submerso", 
+        formula: "\\gamma_{sub} = \\gamma_{sat} - \\gamma_w",
+        latex: true,
+        description: "Peso específico efetivo do solo quando submerso (Princípio de Arquimedes)"
       },
     ];
 
     if (results.compacidade_relativa !== null) {
       formulas.push({
-        label: "Compacidade Relativa (Dr)",
-        formula: "Dr = ((emax - e) / (emax - emin)) × 100",
-        description: "Indica o estado de compactação de solos granulares"
+        label: "Compacidade Relativa",
+        formula: "D_r = \\frac{e_{max} - e}{e_{max} - e_{min}} \\times 100\\%",
+        latex: true,
+        description: "Indica o estado de compactação de solos granulares (0% = fofo, 100% = denso)"
       });
     }
 
@@ -644,7 +659,7 @@ function IndicesFisicosDesktop() {
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
               <Beaker className="w-6 h-6 text-white" />
             </div>
-            <div>
+            <div className="flex-1">
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Índices Físicos</h1>
               <p className="text-sm sm:text-base text-muted-foreground">Análise das propriedades físicas do solo</p>
             </div>
@@ -907,7 +922,7 @@ function IndicesFisicosDesktop() {
               {/* Seção de Resultados Numéricos com Carrossel */}
               <div data-tour="resultados">
                 <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                   <BarChart3 className="w-5 h-10 text-primary" />
+                   <BarChart3 className="w-5 h-5 text-primary" />
                    Resultados Numéricos
                 </h2>
                 {isCalculating ? (

@@ -1,10 +1,12 @@
 import { Beaker, Droplet, Filter, Database, Mountain, Target, MoveDown, Scissors, ArrowRight, BookOpen } from "lucide-react";
-import { memo, useEffect } from "react";
+import { memo, useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { PreloaderLink } from "@/components/RoutePreloader";
 import { useTour } from "@/contexts/TourContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { WelcomeDialog, useToursEnabled, WELCOME_DIALOG_KEY } from "@/components/WelcomeDialog";
+import { useScrollToTop } from "@/hooks/use-scroll-to-top";
 
 const modules = [
   {
@@ -103,18 +105,19 @@ const ModuleCardMobile = memo<{
     <Card
       data-tour={tourId}
       className={cn(
-        "p-5 transition-all duration-200 group cursor-pointer relative overflow-hidden",
+        "p-4 transition-all duration-200 group relative overflow-hidden h-full",
         "border border-border/50 bg-card/50 backdrop-blur-sm",
-        !comingSoon && "hover:border-primary/30 hover:shadow-lg active:scale-[0.98]",
-        comingSoon && "opacity-60"
+        !comingSoon && "active:scale-[0.98] [-webkit-tap-highlight-color:transparent]",
+        comingSoon && "opacity-60 cursor-not-allowed"
       )}
     >
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-3 h-full">
         {/* Icon */}
         <div
           className={cn(
             "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center shrink-0 shadow-md",
-            "transition-transform duration-200 group-hover:scale-105",
+            "transition-transform duration-200",
+            !comingSoon && "group-active:scale-95",
             color
           )}
         >
@@ -122,15 +125,17 @@ const ModuleCardMobile = memo<{
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-foreground mb-1 flex items-center gap-2">
-            {title}
+        <div className="flex-1 min-w-0 flex flex-col">
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <h3 className="font-semibold text-foreground">
+              {title}
+            </h3>
             {comingSoon && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/20 text-primary font-medium shrink-0">
                 Em breve
               </span>
             )}
-          </h3>
+          </div>
           <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
             {description}
           </p>
@@ -155,7 +160,7 @@ const ModuleCardDesktop = memo<{
     <Card
       data-tour={tourId}
       className={cn(
-        "group relative overflow-hidden transition-all duration-300",
+        "group relative overflow-hidden transition-all duration-300 h-full flex flex-col",
         "border border-border/50 bg-gradient-to-br from-card/80 via-card/60 to-card/40 backdrop-blur-sm",
         !comingSoon && "hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer",
         comingSoon && "opacity-60"
@@ -172,7 +177,7 @@ const ModuleCardDesktop = memo<{
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
       </div>
 
-      <div className="relative p-6 space-y-4">
+      <div className="relative p-6 space-y-4 flex flex-col h-full">
         {/* Icon */}
         <div className="flex items-center justify-between">
           <div
@@ -197,7 +202,7 @@ const ModuleCardDesktop = memo<{
         </div>
 
         {/* Content */}
-        <div className="space-y-2">
+        <div className="space-y-2 flex-1">
           <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors duration-300">
             {title}
           </h3>
@@ -215,8 +220,40 @@ ModuleCardDesktop.displayName = "ModuleCardDesktop";
 export default function Dashboard() {
   const { startTour } = useTour();
   const isMobile = useIsMobile();
+  const toursEnabled = useToursEnabled();
+  const [shouldStartTour, setShouldStartTour] = useState(false);
+  
+  // Força scroll para o topo ao entrar na página
+  useScrollToTop();
+
+  // Marcar Acréscimo de Tensões como "Em breve" no mobile
+  const displayModules = modules.map(module => {
+    if (module.path === "/acrescimo-tensoes" && isMobile) {
+      return { ...module, comingSoon: true };
+    }
+    return module;
+  });
+
+  // Callback quando o WelcomeDialog é completado
+  const handleWelcomeComplete = (toursEnabled: boolean) => {
+    if (toursEnabled) {
+      // Usuário aceitou ver tours, iniciar após um delay
+      setTimeout(() => {
+        setShouldStartTour(true);
+      }, 500);
+    }
+  };
 
   useEffect(() => {
+    // Verificar se é primeira visita
+    const hasSeenWelcome = localStorage.getItem(WELCOME_DIALOG_KEY);
+    
+    // Se é primeira visita, não iniciar tour (esperar WelcomeDialog)
+    if (!hasSeenWelcome) return;
+    
+    // Só iniciar tour se estiver habilitado e não for primeira visita
+    if (!toursEnabled) return;
+    
     // Iniciar tour após um delay maior para garantir que todos os elementos estejam renderizados
     // Delay maior para navegadores como Brave que podem ter renderização mais lenta
     const timer = setTimeout(() => {
@@ -285,28 +322,103 @@ export default function Dashboard() {
     }, 1200);
 
     return () => clearTimeout(timer);
-  }, [startTour]);
+  }, [startTour, toursEnabled]);
+
+  // Effect separado para iniciar tour após WelcomeDialog
+  useEffect(() => {
+    if (!shouldStartTour) return;
+    
+    const timer = setTimeout(() => {
+      startTour([
+        {
+          target: "#dashboard-hero",
+          title: "Bem-vindo ao EduSolo",
+          content: "Este é seu painel principal. Aqui você encontra todos os módulos de cálculo geotécnico disponíveis. Vamos fazer um tour rápido!",
+          placement: "bottom",
+        },
+        {
+          target: "#modules-grid",
+          title: "Módulos de Cálculo",
+          content: "Aqui estão os módulos principais para análise geotécnica. Clique em qualquer card para começar seus cálculos. Os módulos com 'Em breve' estarão disponíveis em futuras atualizações.",
+          placement: "bottom",
+        },
+        {
+          target: "[data-tour='module-indices']",
+          title: "Índices Físicos",
+          content: "Calcule propriedades fundamentais do solo como umidade, densidade, porosidade e índice de vazios. Perfeito para caracterização inicial do solo.",
+          placement: "right",
+        },
+        {
+          target: "[data-tour='module-limites']",
+          title: "Limites de Consistência",
+          content: "Determine os limites de Atterberg (LL, LP, IP) e classifique a plasticidade do solo segundo critérios estabelecidos.",
+          placement: "right",
+        },
+        {
+          target: "[data-tour='module-granulometria']",
+          title: "Granulometria",
+          content: "Analise a distribuição granulométrica do solo e obtenha classificação automática pelos sistemas USCS e AASHTO.",
+          placement: "left",
+        },
+        {
+          target: "[data-tour='module-compactacao']",
+          title: "Compactação",
+          content: "Visualize curvas de compactação, calcule grau de compactação e analise energia Proctor.",
+          placement: "right",
+        },
+        {
+          target: "[data-tour='module-tensoes']",
+          title: "Tensões Geostáticas",
+          content: "Calcule tensões verticais totais, efetivas e neutras em camadas de solo. Essencial para análise de estabilidade.",
+          placement: "right",
+        },
+        {
+          target: "[data-tour='module-acrescimo']",
+          title: "Acréscimo de Tensões",
+          content: "Use métodos de Boussinesq, Love, Newmark e Carothers para calcular tensões induzidas por carregamentos. Inclui análise interativa 2D.",
+          placement: "left",
+        },
+        {
+          target: "[data-tour='theme-toggle']",
+          title: "Modo Claro/Escuro",
+          content: "Prefere trabalhar no escuro? Alterne entre os modos claro e escuro clicando neste botão no header.",
+          placement: "bottom",
+        },
+        {
+          target: "[data-tour='settings-menu']",
+          title: "Configurações",
+          content: "Acesse as configurações do sistema, ajuste preferências de cálculo e personalize sua experiência. Você também pode reiniciar este tour a qualquer momento.",
+          placement: "right",
+        },
+      ], "dashboard-main");
+    }, 1000);
+    
+    return () => clearTimeout(timer);
+  }, [shouldStartTour, startTour]);
 
   return (
-    <div className="space-y-6 sm:space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {/* Hero Section */}
-      <div id="dashboard-hero" className="glass-card p-4 sm:p-6 rounded-xl sm:rounded-2xl shadow-modern border border-primary/20">
+    <>
+      <WelcomeDialog onComplete={handleWelcomeComplete} />
+      
+      <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto">
+        {/* Hero Section */}
+      <div id="dashboard-hero" className="glass-card p-5 sm:p-6 rounded-xl sm:rounded-2xl shadow-modern border border-primary/20">
         <div className="space-y-2">
-          <h1 className="text-3xl md:text-4xl font-bold">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">
             <span className="text-foreground">Bem-vindo ao </span>
             <span className="bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">
               EduSolo
             </span>
           </h1>
-          <p className="text-base md:text-lg text-muted-foreground max-w-3xl leading-relaxed">
+          <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-3xl leading-relaxed">
             Sua suíte completa de ferramentas para análise e aprendizado em Mecânica dos Solos
           </p>
         </div>
       </div>
 
       {/* Modules Grid */}
-      <div id="modules-grid" className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4" role="list" aria-label="Módulos disponíveis">
-        {modules.map((module) => {
+      <div id="modules-grid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr" role="list" aria-label="Módulos disponíveis">
+        {displayModules.map((module) => {
           const ModuleCard = isMobile ? ModuleCardMobile : ModuleCardDesktop;
           
           const content = (
@@ -337,7 +449,7 @@ export default function Dashboard() {
           );
         })}
       </div>
-
-    </div>
+      </div>
+    </>
   );
 }

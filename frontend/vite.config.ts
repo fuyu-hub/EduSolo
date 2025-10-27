@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'placeholder.svg', 'robots.txt'],
+      includeAssets: ['favicon.ico', 'edusolo - logo.svg', 'edusolo - logo.png', 'robots.txt'],
       manifest: {
         name: 'EduSolo - Ferramentas de Mecânica dos Solos',
         short_name: 'EduSolo',
@@ -35,19 +35,19 @@ export default defineConfig(({ mode }) => ({
         orientation: 'any',
         icons: [
           {
-            src: '/pwa-192x192.png',
+            src: '/edusolo - logo.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/pwa-512x512.png',
+            src: '/edusolo - logo.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/pwa-512x512.png',
+            src: '/edusolo - logo.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'

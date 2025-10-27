@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
-import { Target, Calculator, Save, Download, FolderOpen, Lightbulb, AlertCircle, FileSpreadsheet, Trash2, Plus, Edit2, BarChart3, TableIcon, Layers } from "lucide-react";
+import { Target, Calculator, Save, Download, FolderOpen, Lightbulb, AlertCircle, FileSpreadsheet, Trash2, Plus, Edit2, BarChart3, TableIcon, Layers, ArrowLeft } from "lucide-react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -92,6 +93,7 @@ const exemplos: ExemploBoussinesq[] = [
 export default function BoussinesqMobile() {
   const { settings } = useSettings();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [cargaP, setCargaP] = useState<string>("100");
   const [pontos, setPontos] = useState<PontoAnalise[]>([]);
@@ -548,7 +550,15 @@ export default function BoussinesqMobile() {
       {/* Header com Ações */}
       <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 rounded-xl border border-primary/20">
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={() => navigate('/acrescimo-tensoes')}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
               <Target className="w-5 h-5 text-white" />
             </div>

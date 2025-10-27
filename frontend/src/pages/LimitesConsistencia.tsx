@@ -32,6 +32,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { useTheme } from "@/hooks/use-theme";
 import SavedCalculations from "@/components/SavedCalculations";
 import SaveDialog from "@/components/SaveDialog";
+import { useToursEnabled } from "@/components/WelcomeDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
@@ -126,6 +127,7 @@ function LimitesConsistenciaDesktop() {
   const { settings } = useSettings();
   const { theme } = useTheme();
   const { startTour, currentStep, isActive: isTourActive } = useTour();
+  const toursEnabled = useToursEnabled();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
 
@@ -222,6 +224,9 @@ function LimitesConsistenciaDesktop() {
 
   // Iniciar tour automaticamente na primeira visita
   useEffect(() => {
+    // Verificar se tours estão globalmente desabilitados
+    if (!toursEnabled) return;
+    
     const initTour = async () => {
       // Verificar se já viu o tour
       const hasSeenTour = localStorage.getItem('tour-seen-limites-consistencia');
@@ -246,7 +251,7 @@ function LimitesConsistenciaDesktop() {
     
     const timer = setTimeout(initTour, 800);
     return () => clearTimeout(timer);
-  }, []);
+  }, [toursEnabled]);
 
   useEffect(() => { if (fields.length > 0) { setCurrentPointIndex(prev => Math.min(prev, fields.length - 1)); } else { setCurrentPointIndex(0); } }, [fields.length]);
 
@@ -558,7 +563,10 @@ function LimitesConsistenciaDesktop() {
     try {
       const response = await axios.post<LimitesConsistenciaOutput>(`${API_URL}/calcular/limites-consistencia`, apiInput);
       if (response.data.erro) { setApiError(response.data.erro); toast({ title: "Erro no Cálculo (API)", description: response.data.erro, variant: "destructive" }); }
-      else { setResults(response.data); toast({ title: "Sucesso", description: "Cálculo dos limites de consistência realizado." }); }
+      else { 
+        setResults(response.data); 
+        toast({ title: "Sucesso", description: "Cálculo dos limites de consistência realizado." }); 
+      }
     } catch (err) { let errorMessage = "Erro de comunicação com o servidor."; if (axios.isAxiosError(err) && err.response?.data?.detail) { if (Array.isArray(err.response.data.detail)) { errorMessage = err.response.data.detail.map((d: any) => `Campo '${d.loc.slice(1).join('.') || 'Geral'}': ${d.msg}`).join("; "); } else if (typeof err.response.data.detail === 'string') { errorMessage = err.response.data.detail; } } else if (err instanceof Error) { errorMessage = err.message; } setApiError(errorMessage); toast({ title: "Erro na Requisição", description: errorMessage, variant: "destructive" }); }
     finally { setIsCalculating(false); }
   };
@@ -575,7 +583,7 @@ function LimitesConsistenciaDesktop() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-3">
            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-cyan-500 via-teal-500 to-emerald-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3"> <Droplet className="w-5 h-5 sm:w-6 sm:h-6 text-white" /> </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Limites de Consistência</h1>
             <p className="text-muted-foreground text-xs sm:text-sm">Determinação de LL, LP, IP, IC, Atividade e classificações</p>
           </div>

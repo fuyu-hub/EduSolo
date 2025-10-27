@@ -2,7 +2,6 @@ import { ArrowLeft, Sun, Moon, Menu } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
-import { IsometricCube } from "@/components/ui/isometric-cube";
 import { cn } from "@/lib/utils";
 
 interface MobileHeaderProps {
@@ -25,28 +24,32 @@ export function MobileHeader({ title, showBackButton = true }: MobileHeaderProps
             variant="ghost"
             size="icon"
             onClick={() => navigate("/")}
-            className="text-foreground hover:text-primary shrink-0"
+            className="text-foreground active:text-primary shrink-0 transition-transform active:scale-90 focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-tap-highlight-color:transparent]"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
         ) : (
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md">
-              <IsometricCube className="w-5 h-5 text-white" />
-            </div>
+            <img 
+              src="/edusolo - logo.svg" 
+              alt="EduSolo" 
+              className="w-8 h-8"
+            />
           </div>
         )}
 
-        {/* Título ou Logo */}
+        {/* Título ou Logo com Texto */}
         <div className="flex-1 min-w-0">
           {title ? (
             <h1 className="text-base font-semibold text-foreground truncate">
               {title}
             </h1>
           ) : (
-            <span className="text-lg font-bold text-foreground">
-              Edu<span className="text-primary">Solo</span>
-            </span>
+            <img 
+              src="/edusolo-logo-texto.svg" 
+              alt="EduSolo - Ferramentas de Mecânica dos Solos" 
+              className="h-7"
+            />
           )}
         </div>
 
@@ -55,7 +58,7 @@ export function MobileHeader({ title, showBackButton = true }: MobileHeaderProps
           variant="ghost"
           size="icon"
           onClick={toggleMode}
-          className="text-muted-foreground hover:text-primary shrink-0 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-tap-highlight-color:transparent]"
+          className="text-muted-foreground active:text-primary shrink-0 transition-transform active:scale-90 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-tap-highlight-color:transparent]"
           aria-label={theme.mode === "dark" ? "Ativar modo claro" : "Ativar modo escuro"}
         >
           {theme.mode === "dark" ? (

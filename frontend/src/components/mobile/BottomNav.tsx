@@ -10,7 +10,7 @@ const moreItems = [
   { icon: Database, label: "Compactação", path: "/compactacao", color: "from-violet-500 via-fuchsia-500 to-pink-600" },
   { icon: Home, label: "Início", path: "/", color: "from-primary via-primary to-primary" }, // Centro do grid
   { icon: Mountain, label: "Tensões", path: "/tensoes", color: "from-emerald-500 via-green-500 to-teal-600" },
-  { icon: Target, label: "Acréscimo", path: "/acrescimo-tensoes", color: "from-orange-500 via-red-500 to-rose-600" },
+  { icon: Target, label: "Acréscimo", path: "/acrescimo-tensoes", color: "from-orange-500 via-red-500 to-rose-600", disabled: true },
   { icon: Info, label: "Sobre", path: "/about", color: "from-slate-500 via-gray-500 to-zinc-600" },
   { icon: Rocket, label: "Planos", path: "/planos-futuros", color: "from-amber-500 via-yellow-500 to-orange-600" },
 ];
@@ -135,6 +135,7 @@ export function BottomNav() {
               {moreItems.map((item, index) => {
                 const Icon = item.icon;
                 const active = isActive(item.path);
+                const isDisabled = item.disabled;
                 
                 // Cálculo de distância do centro (índice 4) para animação
                 // Grid 3x3: [0,1,2,3,4,5,6,7,8]
@@ -146,17 +147,17 @@ export function BottomNav() {
                 const centerCol = centerIndex % 3;
                 const distanceFromCenter = Math.abs(row - centerRow) + Math.abs(col - centerCol);
                 
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setMoreOpen(false)}
+                const content = (
+                  <div
                     className={cn(
-                      "flex items-center justify-center w-[70px] h-[70px] rounded-xl",
-                      "backdrop-blur-md transition-all duration-300 active:scale-95",
+                      "flex items-center justify-center w-[70px] h-[70px] rounded-xl relative",
+                      "backdrop-blur-md transition-all duration-300",
+                      !isDisabled && "active:scale-95",
                       active 
                         ? "bg-gradient-to-br border-2 border-white/30 shadow-xl shadow-primary/30" + " " + item.color
-                        : "bg-background/70 border border-border/40 hover:bg-gradient-to-br hover:shadow-xl hover:shadow-primary/20 hover:border-transparent" + " " + item.color
+                        : "bg-background/70 border border-border/40" + " " + item.color,
+                      !isDisabled && !active && "hover:bg-gradient-to-br hover:shadow-xl hover:shadow-primary/20 hover:border-transparent",
+                      isDisabled && "opacity-60 cursor-not-allowed"
                     )}
                     style={{
                       animation: `expandFromCenter 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94) ${distanceFromCenter * 60}ms both`
@@ -170,7 +171,30 @@ export function BottomNav() {
                       <span className="text-[9px] font-medium text-center leading-tight">
                         {item.label}
                       </span>
+                      {isDisabled && (
+                        <span className="absolute -top-1 -right-1 text-[8px] px-1.5 py-0.5 rounded-full bg-primary text-white font-bold shadow-md">
+                          Breve
+                        </span>
+                      )}
                     </div>
+                  </div>
+                );
+
+                if (isDisabled) {
+                  return (
+                    <div key={item.path}>
+                      {content}
+                    </div>
+                  );
+                }
+                
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setMoreOpen(false)}
+                  >
+                    {content}
                   </Link>
                 );
               })}

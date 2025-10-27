@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Beaker, Calculator, BarChart3, Info, Save, Download, FolderOpen, FileText, AlertCircle, Lightbulb } from "lucide-react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -320,11 +320,73 @@ export default function IndicesFisicosMobile() {
     if (results.compacidade_relativa !== null) resultsList.push({ label: "Compacidade Relativa", value: `${formatNumberForExport(results.compacidade_relativa)}%` });
     if (results.classificacao_compacidade) resultsList.push({ label: "Classificação", value: results.classificacao_compacidade });
 
+    // Fórmulas utilizadas com LaTeX
+    const formulas = [
+      { 
+        label: "Peso Específico Natural", 
+        formula: "\\gamma_{nat} = \\frac{M_{total}}{V_{total}} \\times 10",
+        latex: true,
+        description: "Relação entre a massa total do solo (úmido) e seu volume total em kN/m³"
+      },
+      { 
+        label: "Umidade", 
+        formula: "w = \\frac{M_{\\acute{u}mida} - M_{seca}}{M_{seca}} \\times 100\\%",
+        latex: true,
+        description: "Percentual de água em relação à massa seca dos sólidos"
+      },
+      { 
+        label: "Peso Específico Seco", 
+        formula: "\\gamma_d = \\frac{\\gamma_{nat}}{1 + \\frac{w}{100}}",
+        latex: true,
+        description: "Peso específico do solo sem considerar a massa de água"
+      },
+      { 
+        label: "Índice de Vazios", 
+        formula: "e = \\frac{G_s \\times \\gamma_w}{\\gamma_d} - 1",
+        latex: true,
+        description: "Relação entre o volume de vazios e o volume de sólidos (adimensional)"
+      },
+      { 
+        label: "Porosidade", 
+        formula: "n = \\frac{e}{1 + e} \\times 100\\%",
+        latex: true,
+        description: "Percentual de vazios em relação ao volume total"
+      },
+      { 
+        label: "Grau de Saturação", 
+        formula: "S_r = \\frac{w \\times G_s}{e} \\times 100\\%",
+        latex: true,
+        description: "Percentual dos vazios ocupados por água"
+      },
+      { 
+        label: "Peso Específico Saturado", 
+        formula: "\\gamma_{sat} = \\frac{G_s + e}{1 + e} \\times \\gamma_w",
+        latex: true,
+        description: "Peso específico quando todos os vazios estão preenchidos com água"
+      },
+      { 
+        label: "Peso Específico Submerso", 
+        formula: "\\gamma_{sub} = \\gamma_{sat} - \\gamma_w",
+        latex: true,
+        description: "Peso específico efetivo do solo quando submerso (Princípio de Arquimedes)"
+      },
+    ];
+
+    if (results.compacidade_relativa !== null) {
+      formulas.push({
+        label: "Compacidade Relativa",
+        formula: "D_r = \\frac{e_{max} - e}{e_{max} - e_{min}} \\times 100\\%",
+        latex: true,
+        description: "Indica o estado de compactação de solos granulares (0% = fofo, 100% = denso)"
+      });
+    }
+
     const exportData: ExportData = {
       moduleName: "indices-fisicos",
       moduleTitle: "Índices Físicos",
       inputs,
       results: resultsList,
+      formulas,
       customFileName: pdfFileName,
       theme,
       printSettings: settings.printSettings
@@ -418,30 +480,32 @@ export default function IndicesFisicosMobile() {
       <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 rounded-xl border border-primary/20">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 flex items-center justify-center">
-              <Beaker className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Beaker className="w-5 h-5 text-primary" />
             </div>
-            <div>
+            <div className="flex-1">
               <h2 className="text-lg font-bold text-foreground">Índices Físicos</h2>
               <p className="text-xs text-muted-foreground">Propriedades físicas do solo</p>
             </div>
           </div>
           
           {/* Botões de Ação */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             <Button
               variant="outline"
               size="icon"
-              className="h-9 w-9"
+              className="h-9 w-9 active:scale-90 [-webkit-tap-highlight-color:transparent] transition-transform"
               onClick={() => setExamplesSheetOpen(true)}
+              aria-label="Ver exemplos de solos"
             >
               <Lightbulb className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               size="icon"
-              className="h-9 w-9"
+              className="h-9 w-9 active:scale-90 [-webkit-tap-highlight-color:transparent] transition-transform"
               onClick={() => setLoadSheetOpen(true)}
+              aria-label="Carregar cálculos salvos"
             >
               <FolderOpen className="h-4 w-4" />
             </Button>
@@ -583,12 +647,13 @@ export default function IndicesFisicosMobile() {
       </MobileSection>
 
       {/* Botões de Cálculo */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="flex gap-3">
         <Button
           onClick={handleCalculate}
           disabled={!isFormValid || isCalculating}
-          className="h-12 font-semibold focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-tap-highlight-color:transparent] active:scale-95 transition-transform"
+          className="h-12 font-semibold flex-[2] focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-tap-highlight-color:transparent] active:scale-95 transition-transform"
           size="lg"
+          aria-label={isCalculating ? "Calculando índices físicos" : "Calcular índices físicos"}
         >
           <Calculator className="w-4 h-4 mr-2" />
           {isCalculating ? "Calculando..." : "Calcular"}
@@ -597,8 +662,9 @@ export default function IndicesFisicosMobile() {
         <Button
           onClick={handleClear}
           variant="outline"
-          className="h-12 focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-tap-highlight-color:transparent] active:scale-95 transition-transform"
+          className="h-12 flex-1 focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-tap-highlight-color:transparent] active:scale-95 transition-transform"
           size="lg"
+          aria-label="Limpar todos os campos"
         >
           Limpar
         </Button>
@@ -612,6 +678,7 @@ export default function IndicesFisicosMobile() {
             variant="outline"
             size="sm"
             className="flex-1 h-10 focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-tap-highlight-color:transparent] active:scale-95 transition-transform"
+            aria-label="Salvar cálculo atual"
           >
             <Save className="w-4 h-4 mr-2" />
             Salvar
@@ -621,8 +688,9 @@ export default function IndicesFisicosMobile() {
             variant="outline"
             size="sm"
             className="flex-1 h-10 focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-tap-highlight-color:transparent] active:scale-95 transition-transform"
+            aria-label="Exportar resultados em PDF"
           >
-            <FileText className="w-4 w-4 mr-2" />
+            <FileText className="w-4 h-4 mr-2" />
             PDF
           </Button>
           <Button
@@ -630,6 +698,7 @@ export default function IndicesFisicosMobile() {
             variant="outline"
             size="sm"
             className="flex-1 h-10 focus-visible:ring-0 focus-visible:ring-offset-0 [-webkit-tap-highlight-color:transparent] active:scale-95 transition-transform"
+            aria-label="Exportar resultados em Excel"
           >
             <Download className="w-4 h-4 mr-2" />
             Excel

@@ -1,5 +1,6 @@
 import { ReactNode, useMemo } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useScrollToTop } from "@/hooks/use-scroll-to-top";
 
 interface MobileModuleWrapperProps {
   children: ReactNode;
@@ -25,6 +26,9 @@ export function MobileModuleWrapper({
   mobileVersion,
 }: MobileModuleWrapperProps) {
   const isMobile = useIsMobile();
+  
+  // Força scroll para o topo ao mudar de página
+  useScrollToTop();
 
   // Usa useMemo para evitar renderizações desnecessárias durante a troca
   // A detecção inicial no hook garante que isMobile já tenha o valor correto

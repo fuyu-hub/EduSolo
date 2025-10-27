@@ -14,6 +14,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { useTheme } from "@/hooks/use-theme";
 import { useTour, TourStep } from "@/contexts/TourContext";
 import SavedCalculations from "@/components/SavedCalculations";
+import { useToursEnabled } from "@/components/WelcomeDialog";
 import SaveDialog from "@/components/SaveDialog";
 import ExportPDFDialog from "@/components/ExportPDFDialog";
 import PrintHeader from "@/components/PrintHeader";
@@ -104,6 +105,7 @@ function GranulometriaDesktop() {
   const { settings } = useSettings();
   const { theme } = useTheme();
   const { startTour } = useTour();
+  const toursEnabled = useToursEnabled();
   const [formData, setFormData] = useState<FormData>({
     massaTotal: "",
     peneiras: [],
@@ -217,6 +219,9 @@ function GranulometriaDesktop() {
 
   // Iniciar tour automaticamente na primeira visita
   useEffect(() => {
+    // Verificar se tours estão globalmente desabilitados
+    if (!toursEnabled) return;
+    
     const hasSeenTour = localStorage.getItem('tour-seen-granulometria');
     if (hasSeenTour === 'true') return;
     
@@ -257,7 +262,7 @@ function GranulometriaDesktop() {
       clearTimeout(timerCalc);
       clearTimeout(timerTour);
     };
-  }, []);
+  }, [toursEnabled]);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

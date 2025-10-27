@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useTour, TourStep } from "@/contexts/TourContext";
 import { MobileModuleWrapper } from "@/components/mobile";
 import AcrescimoTensoesMobile from "./mobile/AcrescimoTensoesMobile";
+import { useToursEnabled } from "@/components/WelcomeDialog";
 
 const metodos = [
   {
@@ -59,6 +60,7 @@ const metodos = [
 function AcrescimoTensoesDesktop() {
   const navigate = useNavigate();
   const { startTour } = useTour();
+  const toursEnabled = useToursEnabled();
 
   const tourSteps: TourStep[] = [
     {
@@ -113,6 +115,9 @@ function AcrescimoTensoesDesktop() {
   ];
 
   useEffect(() => {
+    // Verificar se tours estão globalmente desabilitados
+    if (!toursEnabled) return;
+    
     const initTour = () => {
       const hasSeenTour = localStorage.getItem('tour-seen-acrescimo-tensoes');
       if (hasSeenTour !== 'true') {
@@ -120,7 +125,7 @@ function AcrescimoTensoesDesktop() {
       }
     };
     initTour();
-  }, []);
+  }, [toursEnabled]);
 
   const handleStartTour = () => {
     startTour(tourSteps, "acrescimo-tensoes", true);

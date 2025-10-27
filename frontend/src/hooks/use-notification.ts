@@ -22,7 +22,7 @@ export function useNotification() {
   const success = useCallback((options: NotificationOptions) => {
     toast.success(options.title || "Sucesso", {
       description: options.description,
-      duration: options.duration || 4000,
+      duration: options.duration || 500,
       icon: <CheckCircle2 className="h-5 w-5 text-green-500" />,
       action: options.action ? {
         label: options.action.label,
@@ -34,7 +34,7 @@ export function useNotification() {
   const error = useCallback((options: NotificationOptions) => {
     toast.error(options.title || "Erro", {
       description: options.description,
-      duration: options.duration || 6000,
+      duration: options.duration || 500,
       icon: <XCircle className="h-5 w-5 text-red-500" />,
       action: options.action ? {
         label: options.action.label,
@@ -46,7 +46,7 @@ export function useNotification() {
   const warning = useCallback((options: NotificationOptions) => {
     toast.warning(options.title || "Atenção", {
       description: options.description,
-      duration: options.duration || 5000,
+      duration: options.duration || 500,
       icon: <AlertCircle className="h-5 w-5 text-yellow-500" />,
       action: options.action ? {
         label: options.action.label,
@@ -58,7 +58,7 @@ export function useNotification() {
   const info = useCallback((options: NotificationOptions) => {
     toast.info(options.title || "Informação", {
       description: options.description,
-      duration: options.duration || 4000,
+      duration: options.duration || 500,
       icon: <Info className="h-5 w-5 text-blue-500" />,
       action: options.action ? {
         label: options.action.label,

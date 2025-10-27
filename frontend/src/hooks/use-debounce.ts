@@ -11,6 +11,7 @@ export function useDebounce<T>(value: T, delay: number = 500): T {
   useEffect(() => {
     // Criar timer para atualizar valor após delay
     const handler = setTimeout(() => {
+      console.log('[Debounce] Valor atualizado após', delay, 'ms'); // Debug
       setDebouncedValue(value);
     }, delay);
 

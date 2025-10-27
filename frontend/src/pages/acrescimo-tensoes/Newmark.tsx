@@ -2,10 +2,12 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import NewmarkAnalise from "@/components/acrescimo-tensoes/NewmarkAnalise";
 import { useTour, TourStep } from "@/contexts/TourContext";
+import { useToursEnabled } from "@/components/WelcomeDialog";
 
 export default function NewmarkPage() {
   const navigate = useNavigate();
   const { startTour } = useTour();
+  const toursEnabled = useToursEnabled();
   const loadExampleRef = useRef<(() => void) | null>(null);
   
   const tourSteps: TourStep[] = [
@@ -90,6 +92,9 @@ export default function NewmarkPage() {
   ];
 
   useEffect(() => {
+    // Verificar se tours estão globalmente desabilitados
+    if (!toursEnabled) return;
+    
     const hasSeenTour = localStorage.getItem('tour-seen-newmark');
     if (hasSeenTour !== 'true') {
       setTimeout(() => {
@@ -102,7 +107,7 @@ export default function NewmarkPage() {
         }, 300);
       }, 800);
     }
-  }, []);
+  }, [toursEnabled]);
 
   // Função para configurar ações automáticas durante o tour
   const setupTourAutoActions = () => {

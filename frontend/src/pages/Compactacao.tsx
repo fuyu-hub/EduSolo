@@ -21,6 +21,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { useTheme } from "@/hooks/use-theme";
 import { useTour, TourStep } from "@/contexts/TourContext";
 import SavedCalculations from "@/components/SavedCalculations";
+import { useToursEnabled } from "@/components/WelcomeDialog";
 import SaveDialog from "@/components/SaveDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
@@ -117,6 +118,7 @@ function CompactacaoDesktop() {
   const { settings } = useSettings();
   const { theme } = useTheme();
   const { startTour } = useTour();
+  const toursEnabled = useToursEnabled();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
   const form = useForm<FormInputValues>({
@@ -224,6 +226,9 @@ function CompactacaoDesktop() {
 
   // Iniciar tour automaticamente na primeira visita
   useEffect(() => {
+    // Verificar se tours estão globalmente desabilitados
+    if (!toursEnabled) return;
+    
     const initTour = async () => {
       const hasSeenTour = localStorage.getItem('tour-seen-compactacao');
       if (hasSeenTour === 'true') return;
@@ -259,7 +264,7 @@ function CompactacaoDesktop() {
     
     const timer = setTimeout(initTour, 800);
     return () => clearTimeout(timer);
-  }, []);
+  }, [toursEnabled]);
 
   useEffect(() => {
     if (fields.length > 0) {

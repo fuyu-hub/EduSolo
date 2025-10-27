@@ -8,13 +8,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useTheme } from "@/hooks/use-theme";
 import { useSettings } from "@/hooks/use-settings";
-import { useTour } from "@/contexts/TourContext";
 import { ThemeColor } from "@/contexts/ThemeContext";
 import { UnitSystem, InterfaceDensity, PageOrientation, PageMargins, PaperSize } from "@/contexts/SettingsContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useToursControl } from "@/components/WelcomeDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,8 +44,8 @@ const themeColors: ThemeOption[] = [
   {
     value: "soil",
     label: "Terra Natural",
-    description: "Tema oficial EduSolo",
-    colors: ["25 65% 58%", "25 65% 48%", "25 65% 38%", "99 78% 36%", "25 50% 33%"],
+    description: "Tema oficial EduSolo - tons terrosos vibrantes",
+    colors: ["28 72% 65%", "28 70% 55%", "28 68% 45%", "28 66% 38%", "28 60% 30%"],
   },
   {
     value: "green",
@@ -77,27 +76,11 @@ const themeColors: ThemeOption[] = [
 function SettingsDesktop() {
   const { theme, setThemeColor } = useTheme();
   const { settings, updateSettings, resetSettings, clearAllCalculations, exportSettings, importSettings } = useSettings();
-  const { startTour } = useTour();
-  const navigate = useNavigate();
+  const { toursEnabled, setToursEnabled } = useToursControl();
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleRestartTour = () => {
-    // Limpar todos os tours vistos
-    const keys = Object.keys(localStorage).filter(key => key.startsWith("tour-seen-"));
-    keys.forEach(key => localStorage.removeItem(key));
-    
-    toast.success("Tour reiniciado!", {
-      description: "Volte à página inicial para ver o tour novamente.",
-    });
-    
-    // Navegar para o Dashboard
-    setTimeout(() => {
-      navigate("/");
-    }, 1000);
-  };
 
   const handleImportSettings = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -481,24 +464,61 @@ function SettingsDesktop() {
           <h2 className="text-2xl font-semibold text-foreground">Ajuda e Tutoriais</h2>
         </div>
 
-        <Card className="glass p-5">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1 flex-1">
-              <Label className="text-base font-medium">
-                Tour Guiado
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Reinicie o tutorial interativo do aplicativo
-              </p>
+        <Card className="glass p-6">
+          <div className="space-y-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="space-y-2 flex-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <HelpCircle className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <Label htmlFor="enable-tours" className="text-lg font-semibold cursor-pointer">
+                      Tutoriais Interativos
+                    </Label>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <Badge 
+                        variant={toursEnabled ? "default" : "outline"}
+                        className="text-xs"
+                      >
+                        {toursEnabled ? "✓ Ativos" : "✗ Desativados"}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground pl-12">
+                  Guias interativos que explicam cada funcionalidade do sistema. 
+                  <span className="block mt-1 text-xs">
+                    💡 <strong>Dica:</strong> Ao ativar, todos os tours serão reiniciados automaticamente.
+                  </span>
+                </p>
+              </div>
+              <Switch
+                id="enable-tours"
+                checked={toursEnabled}
+                onCheckedChange={(checked) => {
+                  setToursEnabled(checked);
+                  if (checked) {
+                    // Habilitar tours e reiniciar automaticamente
+                    localStorage.removeItem("tours-globally-disabled");
+                    
+                    // Limpar todos os tours vistos
+                    const keys = Object.keys(localStorage).filter(key => key.startsWith("tour-seen-"));
+                    keys.forEach(key => localStorage.removeItem(key));
+                    
+                    toast.success("🎉 Tours habilitados e reiniciados!", {
+                      description: "Os tutoriais aparecerão novamente em todos os módulos",
+                    });
+                  } else {
+                    // Desabilitar tours
+                    localStorage.setItem("tours-globally-disabled", "true");
+                    toast.success("🔕 Tours desabilitados", {
+                      description: "Os tutoriais não aparecerão mais",
+                    });
+                  }
+                }}
+              />
             </div>
-            <Button
-              variant="outline"
-              onClick={handleRestartTour}
-              className="ml-4"
-            >
-              <RotateCcw className="w-4 h-4 mr-2" />
-              Reiniciar Tour
-            </Button>
           </div>
         </Card>
       </section>
@@ -812,12 +832,15 @@ function SettingsDesktop() {
                   />
                 </div>
 
-                {/* Incluir Fórmulas */}
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                {/* Incluir Fórmulas - BLOQUEADO TEMPORARIAMENTE */}
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 opacity-60">
                   <div className="space-y-0.5">
-                    <Label htmlFor="dialog-formulas" className="text-sm font-medium">
-                      Incluir Fórmulas
-                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="dialog-formulas" className="text-sm font-medium">
+                        Incluir Fórmulas
+                      </Label>
+                      <Badge variant="outline" className="text-xs">Em breve</Badge>
+                    </div>
                     <p className="text-xs text-muted-foreground">
                       Mostra as fórmulas utilizadas nos cálculos
                     </p>
@@ -830,6 +853,7 @@ function SettingsDesktop() {
                         printSettings: { ...settings.printSettings, includeFormulas: checked } 
                       })
                     }
+                    disabled
                   />
                 </div>
               </div>

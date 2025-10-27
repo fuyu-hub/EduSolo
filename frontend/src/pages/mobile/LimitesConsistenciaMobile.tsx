@@ -474,26 +474,28 @@ export default function LimitesConsistenciaMobile() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 via-teal-500 to-emerald-600 flex items-center justify-center">
               <Droplet className="w-5 h-5 text-white" />
             </div>
-            <div>
+            <div className="flex-1">
               <h2 className="text-lg font-bold text-foreground">Limites de Consistência</h2>
               <p className="text-xs text-muted-foreground">LL, LP, IP, IC e classificação</p>
             </div>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             <Button
               variant="outline"
               size="icon"
-              className="h-9 w-9"
+              className="h-9 w-9 active:scale-90 [-webkit-tap-highlight-color:transparent] transition-transform"
               onClick={() => setExamplesSheetOpen(true)}
+              aria-label="Ver exemplos"
             >
               <Lightbulb className="h-4 w-4" />
             </Button>
             <Button
               variant="outline"
               size="icon"
-              className="h-9 w-9"
+              className="h-9 w-9 active:scale-90 [-webkit-tap-highlight-color:transparent] transition-transform"
               onClick={() => setLoadSheetOpen(true)}
+              aria-label="Carregar cálculos salvos"
             >
               <FolderOpen className="h-4 w-4" />
             </Button>

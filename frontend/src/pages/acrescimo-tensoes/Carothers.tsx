@@ -2,10 +2,12 @@ import { useEffect, useRef } from "react";
 import CarothersAnalise from "@/components/acrescimo-tensoes/CarothersAnalise";
 import { useNavigate } from "react-router-dom";
 import { useTour, TourStep } from "@/contexts/TourContext";
+import { useToursEnabled } from "@/components/WelcomeDialog";
 
 export default function CarothersPage() {
   const navigate = useNavigate();
   const { startTour } = useTour();
+  const toursEnabled = useToursEnabled();
   const loadExampleRef = useRef<(() => void) | null>(null);
   
   const tourSteps: TourStep[] = [
@@ -61,6 +63,9 @@ export default function CarothersPage() {
   ];
 
   useEffect(() => {
+    // Verificar se tours estão globalmente desabilitados
+    if (!toursEnabled) return;
+    
     const hasSeenTour = localStorage.getItem('tour-seen-carothers');
     if (hasSeenTour !== 'true') {
       setTimeout(() => {
@@ -70,7 +75,7 @@ export default function CarothersPage() {
         setTimeout(() => startTour(tourSteps, "carothers"), 300);
       }, 800);
     }
-  }, []);
+  }, [toursEnabled]);
   
   const handleVoltar = () => {
     navigate('/acrescimo-tensoes');
