@@ -604,7 +604,7 @@ function IndicesFisicosDesktop() {
       if (results.estatisticas.peso_especifico_natural) {
         const e = results.estatisticas.peso_especifico_natural;
         tabelaEstatisticas.rows.push([
-          "γn (kN/m³)",
+          "Peso Específico Natural (kN/m³)",
           formatNumberForExport(e.media),
           formatNumberForExport(e.desvio_padrao, 3),
           formatNumberForExport(e.coeficiente_variacao, 1),
@@ -616,7 +616,7 @@ function IndicesFisicosDesktop() {
       if (results.estatisticas.peso_especifico_seco) {
         const e = results.estatisticas.peso_especifico_seco;
         tabelaEstatisticas.rows.push([
-          "γd (kN/m³)",
+          "Peso Específico Seco (kN/m³)",
           formatNumberForExport(e.media),
           formatNumberForExport(e.desvio_padrao, 3),
           formatNumberForExport(e.coeficiente_variacao, 1),
@@ -664,7 +664,7 @@ function IndicesFisicosDesktop() {
       if (results.estatisticas.grau_saturacao) {
         const e = results.estatisticas.grau_saturacao;
         tabelaEstatisticas.rows.push([
-          "Saturação (%)",
+          "Grau de Saturação (%)",
           formatNumberForExport(e.media),
           formatNumberForExport(e.desvio_padrao, 3),
           formatNumberForExport(e.coeficiente_variacao, 1),

@@ -36,7 +36,7 @@ import { formatNumber } from "@/lib/format-number";
 import { useSettings } from "@/hooks/use-settings";
 import { useTheme } from "@/hooks/use-theme";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
-import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
+import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, captureChartAsImage, generateDefaultPDFFileName } from "@/lib/export-utils";
 import ExportPDFDialog from "@/components/ExportPDFDialog";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -348,6 +348,24 @@ export default function GranulometriaMobile() {
     if (!results) return;
     setIsExportingPDF(true);
 
+    // Capturar imagem do gráfico em alta qualidade
+    toast({
+      title: "Capturando gráfico...",
+      description: "Aguarde enquanto geramos a imagem em alta qualidade",
+    });
+    const chartImage = await captureChartAsImage('curva-mobile-export');
+    
+    if (!chartImage) {
+      console.warn("Gráfico não foi capturado corretamente");
+      toast({
+        title: "Aviso",
+        description: "Gráfico não incluído no PDF",
+        variant: "default",
+      });
+    } else {
+      console.log("Gráfico capturado com sucesso");
+    }
+
     // Dados de entrada como valores simples
     const inputs: { label: string; value: string }[] = [
       { label: "Massa Total", value: `${formData.massaTotal} g` },
@@ -472,6 +490,7 @@ export default function GranulometriaMobile() {
       inputs,
       results: resultsList,
       tables,
+      chartImageUrl: chartImage || undefined,
       customFileName: pdfFileName
     };
 
