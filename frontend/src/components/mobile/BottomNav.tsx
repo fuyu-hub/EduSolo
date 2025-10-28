@@ -1,7 +1,7 @@
 import { Home, Settings, BookOpen, MoreHorizontal, Save, Beaker, Droplet, Filter, Database, Mountain, Target, Info, Rocket, HelpCircle } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const moreItems = [
   { icon: Beaker, label: "Índices Físicos", path: "/indices-fisicos", color: "from-blue-500 via-blue-600 to-indigo-600" },
@@ -33,7 +33,10 @@ const mainNavItems: NavItem[] = [
 
 export function BottomNav() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [moreOpen, setMoreOpen] = useState(false);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressRef = useRef(false);
 
   const isActive = (path: string | undefined) => {
     if (!path || path === "#") return false;
@@ -41,6 +44,37 @@ export function BottomNav() {
       return location.pathname === "/";
     }
     return location.pathname.startsWith(path);
+  };
+
+  // Handlers para long press no botão Início
+  const handleLongPressStart = () => {
+    isLongPressRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      setMoreOpen(!moreOpen);
+    }, 500); // 500ms para ativar o long press
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    
+    // Se não foi long press, navega para home
+    if (!isLongPressRef.current) {
+      navigate("/");
+    }
+    
+    isLongPressRef.current = false;
+  };
+
+  const handleLongPressCancel = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    isLongPressRef.current = false;
   };
 
   return (
@@ -57,12 +91,17 @@ export function BottomNav() {
             const isExpandButton = item.isExpandButton;
             const isPlaceholder = item.path === "#placeholder";
             
-            // Renderizar o botão "Início" como um button de expansão com função de Link
+            // Renderizar o botão "Início" com long press para menu e click para navegar
             if (isExpandButton) {
               return (
                 <button
                   key={item.label}
-                  onClick={() => setMoreOpen(!moreOpen)}
+                  onMouseDown={handleLongPressStart}
+                  onMouseUp={handleLongPressEnd}
+                  onMouseLeave={handleLongPressCancel}
+                  onTouchStart={handleLongPressStart}
+                  onTouchEnd={handleLongPressEnd}
+                  onTouchCancel={handleLongPressCancel}
                   className={cn(
                     "flex flex-col items-center justify-center h-full gap-1 transition-all duration-300 ease-out px-6",
                     "active:scale-[0.92]"

@@ -1,6 +1,6 @@
 // Adiciona React à importação
 import React, { useState, useEffect } from "react";
-import { Menu, Beaker, Droplet, Filter, Database, Mountain, Target, BookOpen, ArrowLeft, Settings, Sun, Moon, Info, Rocket } from "lucide-react";
+import { Menu, Beaker, Droplet, Filter, Database, Mountain, Target, BookOpen, ArrowLeft, Settings, Sun, Moon, Info, Rocket, FileText, LayoutGrid, ChevronDown } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
@@ -13,22 +13,19 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { MobileLayout } from "@/components/mobile/MobileLayout";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const menuItems = [
   {
     title: "Análise Geotécnica",
     items: [
-      { icon: Beaker, label: "Índices Físicos", path: "/indices-fisicos", tourId: "" },
-      { icon: Droplet, label: "Limites de Consistência", path: "/limites-consistencia", tourId: "" },
-      { icon: Filter, label: "Granulometria", path: "/granulometria", tourId: "" },
-      { icon: Database, label: "Compactação", path: "/compactacao", tourId: "" },
-      { icon: Mountain, label: "Tensões Geostáticas", path: "/tensoes", tourId: "" },
-      { icon: Target, label: "Acréscimo de Tensões", path: "/acrescimo-tensoes", tourId: "" },
+      { icon: LayoutGrid, label: "Módulos", path: "/", tourId: "" },
     ],
   },
   {
     title: "Ferramentas",
     items: [
+      { icon: FileText, label: "Relatórios", path: "/relatorios", tourId: "" },
       { icon: BookOpen, label: "Material Educacional", path: "/educacional", tourId: "" },
       { icon: Settings, label: "Configurações", path: "/settings", tourId: "settings-menu" },
       { icon: Info, label: "Sobre", path: "/about", tourId: "" },
@@ -40,6 +37,17 @@ const menuItems = [
 // Componente para o conteúdo da Sidebar (reutilizável)
 const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLinkClick?: () => void }) => {
   const location = useLocation();
+  // Lista resumida de módulos para o menu expansível
+  const modulesBrief = [
+    { icon: Beaker, label: "Índices Físicos", path: "/indices-fisicos" },
+    { icon: Droplet, label: "Limites de Consistência", path: "/limites-consistencia" },
+    { icon: Filter, label: "Granulometria", path: "/granulometria" },
+    { icon: Database, label: "Compactação", path: "/compactacao" },
+    { icon: Mountain, label: "Tensões Geostáticas", path: "/tensoes" },
+    { icon: Target, label: "Acréscimo de Tensões", path: "/acrescimo-tensoes" },
+  ];
+  const isModulePath = modulesBrief.some((m) => location.pathname.startsWith(m.path)) || location.pathname === "/";
+  const [modulesOpen, setModulesOpen] = React.useState<boolean>(isModulePath);
 
   return (
     <>
@@ -88,26 +96,74 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
                 );
 
                 // Use ConditionalSheetClose para envolver o Link apenas no mobile
+                if (item.label === "Módulos") {
+                  return (
+                    <Collapsible key="modules-collapsible" open={modulesOpen} onOpenChange={setModulesOpen}>
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className={cn(
+                            "w-full transition-all duration-300 h-10 rounded-lg",
+                            collapsed ? "justify-center px-2" : "justify-start px-3",
+                            modulesOpen ? "bg-gradient-to-r from-primary/20 to-primary/10 text-primary border border-primary/30" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 border border-transparent"
+                          )}
+                          aria-label="Módulos"
+                        >
+                          {buttonContent}
+                          {!collapsed && (
+                            <ChevronDown className={cn("ml-auto h-4 w-4 transition-transform duration-200", modulesOpen && "rotate-180")} />
+                          )}
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className={cn("mt-1 pl-0 collapsible-content", !collapsed && "pl-2")}> 
+                        <div className={cn("space-y-1", collapsed ? "px-1" : "")}> 
+                          {modulesBrief.map((m) => {
+                            const MIcon = m.icon;
+                            const active = location.pathname === m.path;
+                            return (
+                              <ConditionalSheetClose key={m.path} shouldWrap={!!onLinkClick} asChild>
+                                <Link to={m.path} onClick={onLinkClick} title={collapsed ? m.label : undefined}>
+                                  <Button
+                                    variant="ghost"
+                                    className={cn(
+                                      "w-full h-9 rounded-md",
+                                      collapsed ? "justify-center px-1" : "justify-start px-2",
+                                      active ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                                    )}
+                                  >
+                                    <MIcon className={cn("h-4 w-4", !collapsed && "mr-2")} />
+                                    {!collapsed && <span className="text-sm">{m.label}</span>}
+                                  </Button>
+                                </Link>
+                              </ConditionalSheetClose>
+                            );
+                          })}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  );
+                }
+
                 return (
-                   <ConditionalSheetClose key={item.path} shouldWrap={!!onLinkClick} asChild>
-                      <Link to={item.path} onClick={onLinkClick} title={collapsed ? item.label : undefined}>
-                <Button
-                  data-tour={item.tourId}
-                  variant="ghost"
-                  className={cn(
-                    "w-full transition-all duration-300 h-10 rounded-lg",
-                    collapsed ? "justify-center px-2" : "justify-start px-3",
-                    isActive
-                      ? "bg-gradient-to-r from-primary/20 to-primary/10 text-primary hover:from-primary/30 hover:to-primary/20 shadow-sm border border-primary/30"
-                      : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 hover:scale-[1.01] border border-transparent"
-                  )}
-                  aria-label={item.label}
-                  aria-current={isActive ? "page" : undefined}
-                >
-                  {buttonContent}
-                </Button>
-                      </Link>
-                   </ConditionalSheetClose>
+                  <ConditionalSheetClose key={item.path} shouldWrap={!!onLinkClick} asChild>
+                    <Link to={item.path} onClick={onLinkClick} title={collapsed ? item.label : undefined}>
+                      <Button
+                        data-tour={item.tourId}
+                        variant="ghost"
+                        className={cn(
+                          "w-full transition-all duration-300 h-10 rounded-lg",
+                          collapsed ? "justify-center px-2" : "justify-start px-3",
+                          isActive
+                            ? "bg-gradient-to-r from-primary/20 to-primary/10 text-primary hover:from-primary/30 hover:to-primary/20 shadow-sm border border-primary/30"
+                            : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 hover:scale-[1.01] border border-transparent"
+                        )}
+                        aria-label={item.label}
+                        aria-current={isActive ? "page" : undefined}
+                      >
+                        {buttonContent}
+                      </Button>
+                    </Link>
+                  </ConditionalSheetClose>
                 );
               })}
             </div>
@@ -217,6 +273,17 @@ function DesktopLayout({ children }: { children: React.ReactNode }) {
           
           <div className="flex-1"></div>
           
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/relatorios")}
+            className="mr-1 text-muted-foreground hover:text-foreground hidden md:inline-flex"
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Relatórios
+          </Button>
+
+
           {/* Botão de Toggle de Modo Claro/Escuro */}
           <Button
             data-tour="theme-toggle"

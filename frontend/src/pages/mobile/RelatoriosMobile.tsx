@@ -5,6 +5,12 @@ import { FileText, Download, Trash2, Calendar, Package, Eye, RotateCw } from 'lu
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { openPdfFromBase64 } from '@/lib/reportManager';
+import { downloadPdfFromBase64, downloadPdfFromUrl } from '@/lib/reportManager';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useMemo, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 
 // Mapeamento de módulos para suas rotas
 const moduleRoutes: { [key: string]: string } = {
@@ -16,9 +22,47 @@ const moduleRoutes: { [key: string]: string } = {
   'acrescimo': '/acrescimo-tensoes',
 };
 
+const moduleLabels: { [key: string]: string } = {
+  'granulometria': 'Granulometria',
+  'indices-fisicos': 'Índices Físicos',
+  'limites': 'Limites de Consistência',
+  'compactacao': 'Compactação',
+  'tensoes': 'Tensões Geostáticas',
+  'acrescimo': 'Acréscimo de Tensões',
+};
+
 export default function RelatoriosMobile() {
   const { reports, removeReport, clearAll } = useRecentReports();
   const navigate = useNavigate();
+  const [search, setSearch] = useState('');
+  const [moduleFilter, setModuleFilter] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+
+  const moduleOptions = useMemo(() => {
+    const set = new Set<string>();
+    reports.forEach(r => set.add(r.moduleType));
+    return Array.from(set);
+  }, [reports]);
+
+  const filteredReports = useMemo(() => {
+    let list = [...reports];
+    if (search.trim()) {
+      const term = search.toLowerCase();
+      list = list.filter(r =>
+        r.name.toLowerCase().includes(term) ||
+        r.moduleName.toLowerCase().includes(term)
+      );
+    }
+    if (moduleFilter !== 'all') {
+      list = list.filter(r => r.moduleType === moduleFilter);
+    }
+    list.sort((a, b) =>
+      sortOrder === 'desc'
+        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+    return list;
+  }, [reports, search, moduleFilter, sortOrder]);
 
   const handleRegenerate = (report: any) => {
     const moduleRoute = moduleRoutes[report.moduleType];
@@ -29,8 +73,23 @@ export default function RelatoriosMobile() {
     }
   };
 
+  const handleDownload = (report: any) => {
+    const filename = `${report.name || 'relatorio'}.pdf`;
+    if (report.pdfData) {
+      downloadPdfFromBase64(report.pdfData, filename);
+      return;
+    }
+    if (report.pdfUrl) {
+      downloadPdfFromUrl(report.pdfUrl, filename);
+    }
+  };
+
   const handleViewPDF = (report: any) => {
     // Tentar abrir o PDF em uma nova aba
+    if (report.pdfData) {
+      openPdfFromBase64(report.pdfData);
+      return;
+    }
     if (report.pdfUrl) {
       window.open(report.pdfUrl, '_blank');
     }
@@ -38,35 +97,50 @@ export default function RelatoriosMobile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/5 pb-24">
-      {/* Header */}
-      <div className="sticky top-0 bg-background/95 backdrop-blur-md border-b border-border/40 p-4 z-40">
-        <div className="flex items-center gap-3">
-          <FileText className="w-6 h-6 text-primary" />
-          <div>
-            <h1 className="text-lg font-bold">Relatórios</h1>
-            <p className="text-xs text-muted-foreground">
-              {reports.length} relatório{reports.length !== 1 ? 's' : ''}
-            </p>
-          </div>
+      {/* Filtros */}
+      <div className="p-4 space-y-2">
+        <Input
+          placeholder="Buscar por nome ou módulo"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-9"
+        />
+        <div className="grid grid-cols-2 gap-2">
+          <Select value={moduleFilter} onValueChange={(v) => setModuleFilter(v)}>
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder="Módulo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {moduleOptions.map((m) => (
+                <SelectItem key={m} value={m}>{moduleLabels[m] || m}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={sortOrder} onValueChange={(v: 'asc' | 'desc') => setSortOrder(v)}>
+            <SelectTrigger className="h-9">
+              <SelectValue placeholder="Ordenar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="desc">Mais recentes</SelectItem>
+              <SelectItem value="asc">Mais antigos</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
-      {reports.length === 0 ? (
+      {filteredReports.length === 0 ? (
         // Estado vazio
         <div className="flex flex-col items-center justify-center py-16 px-4">
           <FileText className="w-12 h-12 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground font-medium mb-1">
-            Nenhum relatório gerado
-          </p>
-          <p className="text-sm text-muted-foreground text-center">
-            Os relatórios que você gerar aparecerão aqui
-          </p>
+          <p className="text-muted-foreground font-medium mb-1">Nenhum relatório encontrado</p>
+          <p className="text-sm text-muted-foreground text-center">Ajuste os filtros ou gere um novo relatório</p>
         </div>
       ) : (
         <>
           {/* Lista de Relatórios */}
           <div className="p-4 space-y-3">
-            {reports.map((report) => (
+            {filteredReports.map((report) => (
               <Card
                 key={report.id}
                 className="flex flex-col p-3"
@@ -78,9 +152,11 @@ export default function RelatoriosMobile() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-sm truncate">{report.name}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {report.moduleName}
-                    </p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <Badge variant="secondary" className="text-[10px] py-0 px-1.5">
+                        {moduleLabels[report.moduleType] || report.moduleName}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
 
@@ -102,6 +178,15 @@ export default function RelatoriosMobile() {
                   >
                     <Eye className="w-3 h-3" />
                     Ver
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 gap-2 text-xs h-8"
+                    onClick={() => handleDownload(report)}
+                  >
+                    <Download className="w-3 h-3" />
+                    Baixar
                   </Button>
                   <Button
                     variant="outline"

@@ -27,6 +27,7 @@ const routeTitles: Record<string, string> = {
   "/about": "Sobre",
   "/planos-futuros": "Planos Futuros",
   "/salvos": "Cálculos Salvos",
+  "/relatorios": "Relatórios",
 };
 
 export function MobileLayout({ children, title, showBackButton }: MobileLayoutProps) {

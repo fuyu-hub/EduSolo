@@ -1,6 +1,7 @@
 import { Save, FolderOpen, FileDown, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 interface CalculationActionsProps {
@@ -57,43 +58,27 @@ export default function CalculationActions({
         <TooltipContent>Salvar Cálculo</TooltipContent>
       </Tooltip>
       
-      <Tooltip>
-        <TooltipTrigger asChild>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
             size="icon"
-            onClick={onExportPDF}
             disabled={!hasResults || isCalculating}
-            className={cn(
-              "transition-all",
-              hasResults && !isCalculating && "hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/50"
-            )}
-            aria-label="Exportar para PDF"
+            className="transition-all"
+            aria-label="Exportar"
           >
             <FileDown className="w-4 h-4" />
           </Button>
-        </TooltipTrigger>
-        <TooltipContent>Exportar PDF</TooltipContent>
-      </Tooltip>
-      
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onExportExcel}
-            disabled={!hasResults || isCalculating}
-            className={cn(
-              "transition-all",
-              hasResults && !isCalculating && "hover:bg-emerald-500/10 hover:text-emerald-500 hover:border-emerald-500/50"
-            )}
-            aria-label="Exportar para Excel"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Exportar Excel</TooltipContent>
-      </Tooltip>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onExportPDF} disabled={!hasResults || isCalculating}>
+            <FileDown className="w-4 h-4 mr-2" /> Exportar PDF
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onExportExcel} disabled={!hasResults || isCalculating}>
+            <FileSpreadsheet className="w-4 h-4 mr-2" /> Exportar Excel
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

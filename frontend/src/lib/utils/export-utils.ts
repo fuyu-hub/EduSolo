@@ -580,6 +580,7 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
     const includeLogo = printSettings.includeLogo !== false; // padrão true
     const includeDate = printSettings.includeDate !== false; // padrão true
     const marginsType = printSettings.pageMargins || 'normal';
+    const allowCustomTitle = printSettings.includeCustomTitle === true;
     
     // Definir margens baseado na configuração
     // narrow = 1.27cm = 12.7mm, normal = 2.0cm = 20mm, wide = 2.54cm = 25.4mm
@@ -626,6 +627,19 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.text('Sistema de Análise Geotécnica', margin, yPosition + 12);
+
+      // Título personalizado (abaixo da logo), se habilitado
+      let effectiveCustomTitle = '';
+      if (allowCustomTitle) {
+        // Preferir o customTitle recebido; caso contrário, usar o último salvo
+        effectiveCustomTitle = (data.customTitle || '').trim() || (localStorage.getItem('edusolo_last_custom_report_title') || '').trim();
+      }
+      if (effectiveCustomTitle) {
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(colors.headerText.r, colors.headerText.g, colors.headerText.b);
+        doc.text(effectiveCustomTitle, margin, yPosition + 20);
+      }
     }
     
     // Data - condicional
@@ -656,15 +670,6 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
     doc.text(data.moduleTitle, margin + 5, yPosition + 3);
     doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
     yPosition += 16;
-
-    // Título personalizado do relatório (se fornecido)
-    if (data.customTitle && data.customTitle.trim() !== '') {
-      doc.setFontSize(13);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(colors.primary.r, colors.primary.g, colors.primary.b);
-      doc.text(data.customTitle, margin + 5, yPosition);
-      yPosition += 10;
-    }
 
     // Seção de Dados de Entrada
     if (data.inputs.length > 0) {

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,9 @@ import { useToursEnabled } from "@/components/WelcomeDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
+import { useRecentReports } from "@/hooks/useRecentReports";
+import { prepareReportForStorage } from "@/lib/reportManager";
+import { useNavigate } from "react-router-dom";
 import ExportPDFDialog from "@/components/ExportPDFDialog";
 import DialogExemplos from "@/components/limites/DialogExemplos";
 import { ExemploLimites, exemplosLimites } from "@/lib/exemplos-limites";
@@ -131,11 +135,14 @@ function LimitesConsistenciaDesktop() {
   const { toast } = useToast();
   const { settings } = useSettings();
   const { theme } = useTheme();
+  const { addReport } = useRecentReports();
+  const navigate = useNavigate();
   const { startTour, currentStep, isActive: isTourActive } = useTour();
   const toursEnabled = useToursEnabled();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
   const [currentLPIndex, setCurrentLPIndex] = useState(0);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [pdfSavedDialogOpen, setPdfSavedDialogOpen] = useState(false);
 
   const form = useForm<FormInputValues>({
     resolver: zodResolver(formSchema),
@@ -512,15 +519,28 @@ function LimitesConsistenciaDesktop() {
         printSettings: settings.printSettings
       };
 
-      const success = await exportToPDF(exportData);
-      
+      // Gerar o PDF como Blob para salvar nos Relatórios
+      const pdfBlob = await exportToPDF(exportData, true) as Blob;
+
+      // Preparar e salvar nos Relatórios recentes
+      const report = await prepareReportForStorage({
+        name: pdfFileName || generateDefaultPDFFileName("Limites de Consistência"),
+        moduleType: "limites",
+        moduleName: "Limites de Consistência",
+        pdfBlob,
+        calculationData: { formData, results }
+      });
+      const saved = addReport(report);
+
       setIsExportingPDF(false);
-      
-      if (success) {
-        toast({ title: "PDF exportado!", description: "O arquivo foi baixado com sucesso." });
-        setExportPDFDialogOpen(false);
+      setExportPDFDialogOpen(false);
+
+      if (saved) {
+        toast({ title: "Relatório salvo", description: "PDF disponível em Relatórios" });
+        // No desktop, exibir diálogo com CTA para navegar
+        setPdfSavedDialogOpen(true);
       } else {
-        toast({ title: "Erro ao exportar", description: "Não foi possível gerar o PDF.", variant: "destructive" });
+        toast({ title: "Erro ao salvar relatório", description: "O PDF foi gerado, mas não pôde ser salvo em Relatórios.", variant: "destructive" });
       }
     } catch (error) {
       console.error("Erro ao exportar PDF:", error);
@@ -1016,6 +1036,31 @@ function LimitesConsistenciaDesktop() {
         onConfirm={handleConfirmExportPDF}
         isExporting={isExportingPDF}
       />
+
+      {/* Diálogo pós-exportação: PDF salvo */}
+      <Dialog open={pdfSavedDialogOpen} onOpenChange={setPdfSavedDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Relatório gerado</DialogTitle>
+            <DialogDescription>
+              O PDF foi salvo na seção Relatórios. Deseja ir para lá agora?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setPdfSavedDialogOpen(false)}>
+              Ficar aqui
+            </Button>
+            <Button
+              onClick={() => {
+                setPdfSavedDialogOpen(false);
+                navigate("/relatorios");
+              }}
+            >
+              Ir para Relatórios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <SavedCalculations
         open={loadDialogOpen}

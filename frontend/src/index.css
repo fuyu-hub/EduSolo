@@ -283,6 +283,92 @@ All colors MUST be HSL.
     --glass-border: hsl(240 32% 91% / 0.5);
   }
 
+  .dark.theme-blue {
+    --background: 220 25% 8%;
+    --foreground: 210 40% 98%;
+
+    --card: 220 20% 12%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 220 25% 10%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 221 83% 62%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 220 20% 15%;
+    --muted-foreground: 220 15% 60%;
+
+    --accent: 221 83% 62%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 20% 20%;
+    --input: 220 20% 18%;
+    --ring: 221 83% 62%;
+
+    --sidebar-background: 220 25% 10%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 221 83% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 20% 18%;
+    --sidebar-ring: 221 83% 62%;
+
+    --gradient-radial: radial-gradient(circle at 20% 50%, hsl(221 83% 62% / 0.15), transparent 50%);
+    --glass-bg: hsl(220 20% 12% / 0.7);
+    --glass-border: hsl(220 20% 25% / 0.3);
+  }
+
+  .light.theme-blue {
+    --background: 210 40% 98%;
+    --foreground: 220 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 15%;
+
+    --primary: 221 83% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 30% 94%;
+    --secondary-foreground: 220 25% 15%;
+
+    --muted: 210 30% 96%;
+    --muted-foreground: 220 15% 45%;
+
+    --accent: 221 83% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 32% 91%;
+    --input: 210 32% 91%;
+    --ring: 221 83% 55%;
+
+    --sidebar-background: 210 40% 98%;
+    --sidebar-foreground: 220 25% 15%;
+    --sidebar-primary: 221 83% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 30% 94%;
+    --sidebar-accent-foreground: 220 25% 15%;
+    --sidebar-border: 210 32% 91%;
+    --sidebar-ring: 221 83% 55%;
+
+    --gradient-radial: radial-gradient(circle at 20% 50%, hsl(221 83% 55% / 0.1), transparent 50%);
+    --glass-bg: hsl(0 0% 100% / 0.7);
+    --glass-border: hsl(210 32% 91% / 0.5);
+  }
+
   /* ========== TEMA VERMELHO ========== */
   /* Dark Mode - Vermelho */
   .dark.theme-red {
@@ -1027,5 +1113,36 @@ html {
   /* Remove o bounce do iOS quando não é necessário */
   body {
     overscroll-behavior-y: none;
+  }
+}
+
+/* ========== SMOOTH COLLAPSIBLE (SIDEBAR) ========== */
+.collapsible-content {
+  overflow: hidden;
+  will-change: height;
+}
+
+@keyframes collapsible-down {
+  from { height: 0; }
+  to { height: var(--radix-collapsible-content-height); }
+}
+
+@keyframes collapsible-up {
+  from { height: var(--radix-collapsible-content-height); }
+  to { height: 0; }
+}
+
+.collapsible-content[data-state="open"] {
+  animation: collapsible-down 160ms cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+.collapsible-content[data-state="closed"] {
+  animation: collapsible-up 140ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapsible-content {
+    animation: none !important;
+    transition: none !important;
   }
 }

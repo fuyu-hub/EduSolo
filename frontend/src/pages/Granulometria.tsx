@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Filter, Info, Calculator as CalcIcon, Plus, Trash2, Table as TableIcon, TrendingUp, GraduationCap, Activity, BarChart3 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { calcularGranulometria } from "@/lib/calculations/granulometria";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,8 @@ import SaveDialog from "@/components/SaveDialog";
 import ExportPDFDialog from "@/components/ExportPDFDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
-import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, captureChartAsImage, generateDefaultPDFFileName, createPDFBlobUrl } from "@/lib/export-utils";
+import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, captureChartAsImage, generateDefaultPDFFileName } from "@/lib/export-utils";
+import { prepareReportForStorage } from "@/lib/reportManager";
 import TabelaDadosGranulometricos from "@/components/granulometria/TabelaDadosGranulometricos";
 import CurvaGranulometrica from "@/components/granulometria/CurvaGranulometrica";
 import SeletorPeneiras from "@/components/granulometria/SeletorPeneiras";
@@ -108,6 +110,7 @@ function GranulometriaDesktop() {
   const { startTour } = useTour();
   const toursEnabled = useToursEnabled();
   const { addReport } = useRecentReports();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
     massaTotal: "",
     peneiras: [],
@@ -265,6 +268,22 @@ function GranulometriaDesktop() {
       clearTimeout(timerTour);
     };
   }, [toursEnabled]);
+
+  // Restaurar dados quando vier de "Gerar" em Relatórios
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('granulometria_lastData');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.formData) setFormData(parsed.formData);
+        if (parsed?.results) setResults(parsed.results);
+        sessionStorage.removeItem('granulometria_lastData');
+        toast.success("Dados do relatório carregados!");
+      }
+    } catch (error) {
+      console.error('Erro ao restaurar dados do relatório:', error);
+    }
+  }, []);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -638,26 +657,27 @@ function GranulometriaDesktop() {
     setIsExportingPDF(false);
     
     if (result instanceof Blob) {
-      // Criar URL do Blob para armazenar como referência
-      const pdfUrl = createPDFBlobUrl(result);
-      
-      // Salvar relatório com metadados
+      // Salvar relatório com metadados (inclui pdfData para mobile)
       try {
         const reportName = pdfFileName.replace('.pdf', '');
-        addReport({
+        const prepared = await prepareReportForStorage({
           name: reportName,
           moduleType: 'granulometria',
           moduleName: 'Granulometria e Classificação',
-          pdfUrl: pdfUrl,
+          pdfBlob: result,
           calculationData: {
             formData,
             results,
             exportDate: new Date().toISOString()
           }
         });
+        addReport(prepared);
         
         toast.success("PDF exportado com sucesso e salvo nos relatórios!");
         setExportPDFDialogOpen(false);
+        
+        // Navegar para a aba de relatórios
+        navigate('/relatorios');
       } catch (error) {
         console.error('Erro ao salvar relatório:', error);
         toast.error("PDF exportado mas não foi possível salvar nos relatórios.");

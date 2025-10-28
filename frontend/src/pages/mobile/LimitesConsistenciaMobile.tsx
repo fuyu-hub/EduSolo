@@ -35,6 +35,9 @@ import { formatNumber } from "@/lib/format-number";
 import { useSettings } from "@/hooks/use-settings";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
+import { useRecentReports } from "@/hooks/useRecentReports";
+import { prepareReportForStorage } from "@/lib/reportManager";
+import { useNavigate } from "react-router-dom";
 import ExportPDFDialog from "@/components/ExportPDFDialog";
 import LimiteLiquidezChart from "@/components/limites/LimiteLiquidezChart";
 import { ExemploLimites, exemplosLimites } from "@/lib/exemplos-limites";
@@ -89,6 +92,8 @@ const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 export default function LimitesConsistenciaMobile() {
   const { settings } = useSettings();
   const { toast } = useToast();
+  const { addReport } = useRecentReports();
+  const navigate = useNavigate();
   
   const [formData, setFormData] = useState<FormData>({
     pontosLL: [
@@ -122,6 +127,7 @@ export default function LimitesConsistenciaMobile() {
   const [exportPDFDialogOpen, setExportPDFDialogOpen] = useState(false);
   const [pdfFileName, setPdfFileName] = useState("");
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [pdfSavedDialogOpen, setPdfSavedDialogOpen] = useState(false);
 
   // Estados para exemplos
   const [examplesSheetOpen, setExamplesSheetOpen] = useState(false);
@@ -468,21 +474,28 @@ export default function LimitesConsistenciaMobile() {
         customFileName: pdfFileName
       };
 
-      const success = await exportToPDF(exportData);
+      // Gerar PDF como Blob para armazenar em Relatórios
+      const pdfBlob = await exportToPDF(exportData, true) as Blob;
+
+      // Preparar e salvar relatório
+      const report = await prepareReportForStorage({
+        name: pdfFileName || generateDefaultPDFFileName("Limites de Consistência"),
+        moduleType: "limites",
+        moduleName: "Limites de Consistência",
+        pdfBlob,
+        calculationData: { formData, results }
+      });
+      const saved = addReport(report);
+
       setIsExportingPDF(false);
-      
-      if (success) {
-        toast({
-          title: "📄 PDF exportado!",
-          description: "Arquivo baixado com sucesso",
-        });
-        setExportPDFDialogOpen(false);
+      setExportPDFDialogOpen(false);
+
+      if (saved) {
+        toast({ title: "Relatório salvo", description: "PDF disponível em Relatórios" });
+        // No mobile, mostrar diálogo com CTA para ir aos Relatórios
+        setPdfSavedDialogOpen(true);
       } else {
-        toast({
-          title: "Erro",
-          description: "Não foi possível gerar o PDF",
-          variant: "destructive",
-        });
+        toast({ title: "Erro", description: "PDF gerado, mas não salvo em Relatórios", variant: "destructive" });
       }
     } catch (error) {
       console.error("Erro ao exportar PDF:", error);
@@ -1130,14 +1143,38 @@ export default function LimitesConsistenciaMobile() {
         onOpenChange={setExportPDFDialogOpen}
         fileName={pdfFileName}
         onFileNameChange={setPdfFileName}
-        onConfirm={handleConfirmExportPDF}
         isExporting={isExportingPDF}
+        onConfirm={handleConfirmExportPDF}
       />
+
+      {/* Diálogo pós-exportação: PDF salvo */}
+      <Dialog open={pdfSavedDialogOpen} onOpenChange={setPdfSavedDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Relatório gerado</DialogTitle>
+            <DialogDescription>
+              O PDF foi salvo na seção Relatórios. Deseja ir para lá agora?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setPdfSavedDialogOpen(false)}>
+              Ficar aqui
+            </Button>
+            <Button
+              onClick={() => {
+                setPdfSavedDialogOpen(false);
+                navigate("/relatorios");
+              }}
+            >
+              Ir para Relatórios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-// Componente de Item de Resultado
 interface ResultItemProps {
   label: string;
   value: number | null;
@@ -1146,7 +1183,6 @@ interface ResultItemProps {
 
 function ResultItem({ label, value, unit }: ResultItemProps) {
   const displayValue = value !== null && value !== undefined ? value.toFixed(2) : "—";
-
   return (
     <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50">
       <span className="text-sm font-medium text-muted-foreground">{label}</span>
@@ -1154,4 +1190,3 @@ function ResultItem({ label, value, unit }: ResultItemProps) {
     </div>
   );
 }
-

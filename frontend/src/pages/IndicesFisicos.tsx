@@ -1,9 +1,10 @@
 // frontend/src/pages/IndicesFisicos.tsx
 import { useState, useMemo, useEffect } from "react";
 import { Beaker, Calculator, Info, BarChart3, ArrowLeft, ArrowRight, Save, FolderOpen, Download, Printer, FileText, AlertCircle, GraduationCap, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { calcularIndicesFisicosMultiplasAmostras, type IndicesFisicosOutputComEstatisticas, type EstatisticaParametro } from "@/lib/calculations/indices-fisicos";
+import { calcularIndicesFisicosMultiplasAmostras, type IndicesFisicosOutputComEstatisticas } from "@/lib/calculations/indices-fisicos";
 import { MobileModuleWrapper } from "@/components/mobile";
 import IndicesFisicosMobile from "./mobile/IndicesFisicosMobile";
 import { Button } from "@/components/ui/button";
@@ -46,8 +47,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import DiagramaFases from "@/components/visualizations/DiagramaFases";
-import { conteudoIndicesFisicos, ConteudoIndice } from "@/lib/geotecnia/indicesFisicosConteudo";
+import { conteudoIndicesFisicos } from "@/lib/geotecnia/indicesFisicosConteudo";
 import { cn } from "@/lib/utils";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import SavedCalculations from "@/components/SavedCalculations";
@@ -55,6 +57,8 @@ import ExportPDFDialog from "@/components/ExportPDFDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
+import { useRecentReports } from "@/hooks/useRecentReports";
+import { prepareReportForStorage } from "@/lib/reportManager";
 import { useTheme } from "@/hooks/use-theme";
 import SoilExamples from "@/components/soil/SoilExamples";
 import GsSuggestions from "@/components/soil/GsSuggestions";
@@ -77,7 +81,35 @@ interface FormData {
   indice_vazios_min: string;
 }
 
-type Results = IndicesFisicosOutputComEstatisticas;
+// Type alias para results com todas as propriedades
+type Results = IndicesFisicosOutputComEstatisticas & {
+  peso_especifico_natural?: number;
+  peso_especifico_seco?: number;
+  peso_especifico_saturado?: number;
+  peso_especifico_submerso?: number;
+  peso_especifico_solidos?: number;
+  Gs?: number;
+  indice_vazios?: number;
+  porosidade?: number;
+  grau_saturacao?: number;
+  umidade?: number;
+  volume_solidos_norm?: number;
+  volume_agua_norm?: number;
+  volume_ar_norm?: number;
+  peso_solidos_norm?: number;
+  peso_agua_norm?: number;
+  compacidade_relativa?: number;
+  classificacao_compacidade?: string;
+  volume_total_calc?: number;
+  volume_solidos_calc?: number;
+  volume_agua_calc?: number;
+  volume_ar_calc?: number;
+  massa_total_calc?: number;
+  massa_solidos_calc?: number;
+  massa_agua_calc?: number;
+  aviso?: string;
+  erro?: string;
+};
 
 // Tooltips para entradas
 const tooltips = {
@@ -101,6 +133,8 @@ function IndicesFisicosDesktop() {
   const { startTour } = useTour();
   const { theme } = useTheme();
   const toursEnabled = useToursEnabled();
+  const { addReport } = useRecentReports();
+  const navigate = useNavigate();
   
   // Estados
   const [formData, setFormData] = useState<FormData>({
@@ -115,6 +149,7 @@ function IndicesFisicosDesktop() {
     indice_vazios_max: "",
     indice_vazios_min: "",
   });
+  const [pdfSavedDialogOpen, setPdfSavedDialogOpen] = useState(false);
   const [currentAmostraIndex, setCurrentAmostraIndex] = useState(0);
   const [results, setResults] = useState<Results | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -212,30 +247,40 @@ function IndicesFisicosDesktop() {
     return () => clearTimeout(timer);
   }, [toursEnabled]);
 
+  // Restaurar dados ao abrir via "Gerar" em Relatórios
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('indices-fisicos_lastData');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.formData) setFormData(parsed.formData);
+        if (parsed?.results) setResults(parsed.results);
+        sessionStorage.removeItem('indices-fisicos_lastData');
+        toast({ title: "Dados do relatório carregados!" });
+      }
+    } catch (e) {
+      console.error('Erro ao restaurar dados (indices-fisicos):', e);
+    }
+  }, []);
+
 
   // Estados para salvamento e exportação
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
-  const { calculations, saveCalculation, deleteCalculation, renameCalculation, getCalculation } = useSavedCalculations("indices-fisicos");
+  const { calculations, saveCalculation, deleteCalculation, renameCalculation } = useSavedCalculations("indices-fisicos");
 
   // Estados para exportação PDF
   const [exportPDFDialogOpen, setExportPDFDialogOpen] = useState(false);
   const [pdfFileName, setPdfFileName] = useState("");
   const [isExportingPDF, setIsExportingPDF] = useState(false);
-
-  // Estados para modo comparação
-  const [compareMode, setCompareMode] = useState(false);
-  const [formDataB, setFormDataB] = useState<FormData>({
-    massaUmida: "",
-    massaSeca: "",
-    volume: "",
-    Gs: "",
-    pesoEspecificoAgua: "10.0",
-    indice_vazios_max: "",
-    indice_vazios_min: "",
+  const [customReportTitle, setCustomReportTitle] = useState<string>(() => {
+    try {
+      return localStorage.getItem('edusolo_last_custom_report_title') || '';
+    } catch {
+      return '';
+    }
   });
-  const [resultsB, setResultsB] = useState<Results | null>(null);
 
   const handleChange = (field: keyof Omit<FormData, 'amostras'>, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -346,7 +391,7 @@ function IndicesFisicosDesktop() {
 
     try {
       // Usar função de múltiplas amostras
-      const resultado = calcularIndicesFisicosMultiplasAmostras(amostrasLimpas);
+      const resultado = calcularIndicesFisicosMultiplasAmostras(amostrasLimpas) as Results;
 
       if (resultado.erro) {
         setError(resultado.erro);
@@ -518,16 +563,16 @@ function IndicesFisicosDesktop() {
     if (formData.indice_vazios_min) inputs.push({ label: "Índice Vazios Mín (emin)", value: formData.indice_vazios_min });
 
     const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
-    if (results.peso_especifico_natural !== null) resultsList.push({ label: "Peso Específico Natural", value: `${formatNumberForExport(results.peso_especifico_natural)} kN/m³`, highlight: true });
-    if (results.peso_especifico_seco !== null) resultsList.push({ label: "Peso Específico Seco", value: `${formatNumberForExport(results.peso_especifico_seco)} kN/m³` });
-    if (results.peso_especifico_saturado !== null) resultsList.push({ label: "Peso Específico Saturado", value: `${formatNumberForExport(results.peso_especifico_saturado)} kN/m³` });
-    if (results.peso_especifico_submerso !== null) resultsList.push({ label: "Peso Específico Submerso", value: `${formatNumberForExport(results.peso_especifico_submerso)} kN/m³` });
-    if (results.Gs !== null) resultsList.push({ label: "Densidade dos Grãos (Gs)", value: formatNumberForExport(results.Gs, 3) });
-    if (results.indice_vazios !== null) resultsList.push({ label: "Índice de Vazios", value: formatNumberForExport(results.indice_vazios, 3) });
-    if (results.porosidade !== null) resultsList.push({ label: "Porosidade", value: `${formatNumberForExport(results.porosidade)}%` });
-    if (results.grau_saturacao !== null) resultsList.push({ label: "Grau de Saturação", value: `${formatNumberForExport(results.grau_saturacao)}%` });
-    if (results.umidade !== null) resultsList.push({ label: "Umidade", value: `${formatNumberForExport(results.umidade)}%` });
-    if (results.compacidade_relativa !== null) resultsList.push({ label: "Compacidade Relativa", value: `${formatNumberForExport(results.compacidade_relativa)}%` });
+    if (results.peso_especifico_natural != null) resultsList.push({ label: "Peso Específico Natural", value: `${formatNumberForExport(results.peso_especifico_natural!)} kN/m³`, highlight: true });
+    if (results.peso_especifico_seco != null) resultsList.push({ label: "Peso Específico Seco", value: `${formatNumberForExport(results.peso_especifico_seco!)} kN/m³` });
+    if (results.peso_especifico_saturado != null) resultsList.push({ label: "Peso Específico Saturado", value: `${formatNumberForExport(results.peso_especifico_saturado!)} kN/m³` });
+    if (results.peso_especifico_submerso != null) resultsList.push({ label: "Peso Específico Submerso", value: `${formatNumberForExport(results.peso_especifico_submerso!)} kN/m³` });
+    if (results.Gs != null) resultsList.push({ label: "Densidade dos Grãos (Gs)", value: formatNumberForExport(results.Gs!, 3) });
+    if (results.indice_vazios != null) resultsList.push({ label: "Índice de Vazios", value: formatNumberForExport(results.indice_vazios!, 3) });
+    if (results.porosidade != null) resultsList.push({ label: "Porosidade", value: `${formatNumberForExport(results.porosidade!)}%` });
+    if (results.grau_saturacao != null) resultsList.push({ label: "Grau de Saturação", value: `${formatNumberForExport(results.grau_saturacao!)}%` });
+    if (results.umidade != null) resultsList.push({ label: "Umidade", value: `${formatNumberForExport(results.umidade!)}%` });
+    if (results.compacidade_relativa != null) resultsList.push({ label: "Compacidade Relativa", value: `${formatNumberForExport(results.compacidade_relativa!)}%` });
     if (results.classificacao_compacidade) resultsList.push({ label: "Classificação", value: results.classificacao_compacidade });
 
     // Fórmulas utilizadas com LaTeX
@@ -582,7 +627,7 @@ function IndicesFisicosDesktop() {
       },
     ];
 
-    if (results.compacidade_relativa !== null) {
+    if (results.compacidade_relativa != null) {
       formulas.push({
         label: "Compacidade Relativa",
         formula: "D_r = \\frac{e_{max} - e}{e_{max} - e_{min}} \\times 100\\%",
@@ -684,20 +729,46 @@ function IndicesFisicosDesktop() {
       formulas,
       tables: tabelas,
       customFileName: pdfFileName,
+      // Passar título personalizado se a configuração estiver ativa
+      customTitle: settings.printSettings?.includeCustomTitle ? customReportTitle : undefined,
       theme,
       printSettings: settings.printSettings
     };
 
-    const success = await exportToPDF(exportData);
+    // Persistir último título personalizado para ser usado como padrão
+    try {
+      if (settings.printSettings?.includeCustomTitle) {
+        localStorage.setItem('edusolo_last_custom_report_title', customReportTitle || '');
+      }
+    } catch {}
+
+    const result = await exportToPDF(exportData, true);
     
     setIsExportingPDF(false);
     
-    if (success) {
-      toast({
-        title: "PDF exportado!",
-        description: "O arquivo foi baixado com sucesso.",
-      });
-      setExportPDFDialogOpen(false);
+    if (result instanceof Blob) {
+      try {
+        const reportName = pdfFileName.replace('.pdf', '');
+        const prepared = await prepareReportForStorage({
+          name: reportName,
+          moduleType: 'indices-fisicos',
+          moduleName: 'Índices Físicos',
+          pdfBlob: result,
+          calculationData: {
+            formData,
+            results,
+            exportDate: new Date().toISOString()
+          }
+        });
+        addReport(prepared);
+        setExportPDFDialogOpen(false);
+        // Padrão unificado: abrir diálogo pós-exportação com CTA
+        toast({ title: "Relatório salvo", description: "PDF disponível em Relatórios" });
+        setPdfSavedDialogOpen(true);
+      } catch (error) {
+        console.error('Erro ao salvar relatório:', error);
+        toast({ title: "PDF exportado, mas não foi possível salvar em Relatórios.", variant: 'destructive' });
+      }
     } else {
       toast({
         title: "Erro ao exportar",
@@ -731,17 +802,17 @@ function IndicesFisicosDesktop() {
 
     // Sheet de Resultados
     const resultadosData: { label: string; value: string | number }[] = [];
-    if (results.peso_especifico_natural !== null) resultadosData.push({ label: "Peso Específico Natural (kN/m³)", value: results.peso_especifico_natural.toFixed(2) });
-    if (results.peso_especifico_seco !== null) resultadosData.push({ label: "Peso Específico Seco (kN/m³)", value: results.peso_especifico_seco.toFixed(2) });
-    if (results.peso_especifico_saturado !== null) resultadosData.push({ label: "Peso Específico Saturado (kN/m³)", value: results.peso_especifico_saturado.toFixed(2) });
-    if (results.peso_especifico_submerso !== null) resultadosData.push({ label: "Peso Específico Submerso (kN/m³)", value: results.peso_especifico_submerso.toFixed(2) });
-    if (results.peso_especifico_solidos !== null) resultadosData.push({ label: "Peso Específico Sólidos (kN/m³)", value: results.peso_especifico_solidos.toFixed(2) });
-    if (results.Gs !== null) resultadosData.push({ label: "Densidade dos Grãos (Gs)", value: results.Gs.toFixed(3) });
-    if (results.indice_vazios !== null) resultadosData.push({ label: "Índice de Vazios", value: results.indice_vazios.toFixed(3) });
-    if (results.porosidade !== null) resultadosData.push({ label: "Porosidade (%)", value: results.porosidade.toFixed(2) });
-    if (results.grau_saturacao !== null) resultadosData.push({ label: "Grau de Saturação (%)", value: results.grau_saturacao.toFixed(2) });
-    if (results.umidade !== null) resultadosData.push({ label: "Umidade (%)", value: results.umidade.toFixed(2) });
-    if (results.compacidade_relativa !== null) resultadosData.push({ label: "Compacidade Relativa (%)", value: results.compacidade_relativa.toFixed(2) });
+    if (results.peso_especifico_natural != null) resultadosData.push({ label: "Peso Específico Natural (kN/m³)", value: results.peso_especifico_natural!.toFixed(2) });
+    if (results.peso_especifico_seco != null) resultadosData.push({ label: "Peso Específico Seco (kN/m³)", value: results.peso_especifico_seco!.toFixed(2) });
+    if (results.peso_especifico_saturado != null) resultadosData.push({ label: "Peso Específico Saturado (kN/m³)", value: results.peso_especifico_saturado!.toFixed(2) });
+    if (results.peso_especifico_submerso != null) resultadosData.push({ label: "Peso Específico Submerso (kN/m³)", value: results.peso_especifico_submerso!.toFixed(2) });
+    if (results.peso_especifico_solidos != null) resultadosData.push({ label: "Peso Específico Sólidos (kN/m³)", value: results.peso_especifico_solidos!.toFixed(2) });
+    if (results.Gs != null) resultadosData.push({ label: "Densidade dos Grãos (Gs)", value: results.Gs!.toFixed(3) });
+    if (results.indice_vazios != null) resultadosData.push({ label: "Índice de Vazios", value: results.indice_vazios!.toFixed(3) });
+    if (results.porosidade != null) resultadosData.push({ label: "Porosidade (%)", value: results.porosidade!.toFixed(2) });
+    if (results.grau_saturacao != null) resultadosData.push({ label: "Grau de Saturação (%)", value: results.grau_saturacao!.toFixed(2) });
+    if (results.umidade != null) resultadosData.push({ label: "Umidade (%)", value: results.umidade!.toFixed(2) });
+    if (results.compacidade_relativa != null) resultadosData.push({ label: "Compacidade Relativa (%)", value: results.compacidade_relativa!.toFixed(2) });
     if (results.classificacao_compacidade) resultadosData.push({ label: "Classificação", value: results.classificacao_compacidade });
 
     // Sheet de Estatísticas (se houver múltiplas amostras)
@@ -1273,9 +1344,9 @@ function IndicesFisicosDesktop() {
               Estatísticas ({results.num_amostras} amostras)
             </h2>
             
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto max-h-80 overflow-y-auto rounded-md border">
               <table className="w-full text-sm">
-                <thead>
+                <thead className="sticky top-0 bg-background z-10">
                   <tr className="border-b">
                     <th className="text-left py-2 px-2">Parâmetro</th>
                     <th className="text-right py-2 px-2">Média</th>
@@ -1300,7 +1371,7 @@ function IndicesFisicosDesktop() {
                 </thead>
                 <tbody>
                   {results.estatisticas.peso_especifico_natural && (
-                    <tr className="border-b hover:bg-muted/50">
+                    <tr className="border-b hover:bg-muted/50 odd:bg-muted/20">
                       <td className="py-2 px-2 font-medium">γn (kN/m³)</td>
                       <td className="text-right py-2 px-2">{formatNumber(results.estatisticas.peso_especifico_natural.media, settings)}</td>
                       <td className="text-right py-2 px-2">{results.estatisticas.peso_especifico_natural.desvio_padrao.toFixed(3)}</td>
@@ -1480,6 +1551,31 @@ function IndicesFisicosDesktop() {
           onConfirm={handleConfirmExportPDF}
           isExporting={isExportingPDF}
         />
+
+        {/* Diálogo pós-exportação: PDF salvo */}
+        <Dialog open={pdfSavedDialogOpen} onOpenChange={setPdfSavedDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Relatório gerado</DialogTitle>
+              <DialogDescription>
+                O PDF foi salvo na seção Relatórios. Deseja ir para lá agora?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-2">
+              <Button variant="outline" onClick={() => setPdfSavedDialogOpen(false)}>
+                Ficar aqui
+              </Button>
+              <Button
+                onClick={() => {
+                  setPdfSavedDialogOpen(false);
+                  navigate("/relatorios");
+                }}
+              >
+                Ir para Relatórios
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Dialog para carregar cálculos salvos */}
         <SavedCalculations

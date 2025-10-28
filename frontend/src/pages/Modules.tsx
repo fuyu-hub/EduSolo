@@ -1,0 +1,200 @@
+import { Beaker, Droplet, Filter, Database, Mountain, Target, MoveDown, Scissors, ArrowRight, BookOpen } from "lucide-react";
+import { memo } from "react";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { PreloaderLink } from "@/components/RoutePreloader";
+
+const modules = [
+  {
+    icon: Beaker,
+    title: "Índices Físicos",
+    description: "Calcule índices físicos do solo: umidade, densidade, porosidade e mais",
+    path: "/indices-fisicos",
+    color: "from-blue-500 via-blue-600 to-indigo-600",
+    preload: () => import("./IndicesFisicos"),
+  },
+  {
+    icon: Droplet,
+    title: "Limites de Consistência",
+    description: "Calcule LL, LP, IP, IL, IC e classifique a plasticidade do solo",
+    path: "/limites-consistencia",
+    color: "from-cyan-500 via-teal-500 to-emerald-600",
+    preload: () => import("./LimitesConsistencia"),
+  },
+  {
+    icon: Filter,
+    title: "Granulometria e Classificação",
+    description: "Análise granulométrica e classificação USCS/AASHTO",
+    path: "/granulometria",
+    color: "from-purple-500 via-purple-600 to-indigo-600",
+    preload: () => import("./Granulometria"),
+  },
+  {
+    icon: Database,
+    title: "Compactação",
+    description: "Análise de curvas de compactação e energia Proctor",
+    path: "/compactacao",
+    color: "from-violet-500 via-fuchsia-500 to-pink-600",
+    preload: () => import("./Compactacao"),
+  },
+  {
+    icon: Mountain,
+    title: "Tensões Geostáticas",
+    description: "Calcule tensões verticais, efetivas e neutras no solo",
+    path: "/tensoes",
+    color: "from-emerald-500 via-green-500 to-teal-600",
+    preload: () => import("./TensoesGeostaticas"),
+  },
+  {
+    icon: Target,
+    title: "Acréscimo de Tensões",
+    description: "Métodos de Boussinesq e análise de carregamentos",
+    path: "/acrescimo-tensoes",
+    color: "from-orange-500 via-red-500 to-rose-600",
+    preload: () => import("./AcrescimoTensoes"),
+  },
+  {
+    icon: MoveDown,
+    title: "Análise de Adensamento",
+    description: "Teoria de Terzaghi e análise de recalques",
+    path: "#",
+    color: "from-amber-500 via-orange-500 to-red-500",
+    comingSoon: true,
+  },
+  {
+    icon: Scissors,
+    title: "Resistência ao Cisalhamento",
+    description: "Análise de ensaios triaxiais e cisalhamento direto",
+    path: "#",
+    color: "from-rose-500 via-pink-500 to-fuchsia-600",
+    comingSoon: true,
+  },
+  {
+    icon: BookOpen,
+    title: "Material Educacional",
+    description: "Acesse conteúdos teóricos e conceitos fundamentais",
+    path: "/educacional",
+    color: "from-sky-500 via-cyan-500 to-blue-600",
+    comingSoon: true,
+  },
+];
+
+const ModuleCard = memo<{
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  color: string;
+  comingSoon?: boolean;
+}>(({ icon: Icon, title, description, color, comingSoon }) => {
+  return (
+    <Card
+      className={cn(
+        "group relative overflow-hidden transition-all duration-300 h-full flex flex-col",
+        "border border-border/50 bg-gradient-to-br from-card/80 via-card/60 to-card/40 backdrop-blur-sm",
+        !comingSoon && "hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer",
+        comingSoon && "opacity-60"
+      )}
+    >
+      <div className={cn(
+        "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-5 transition-opacity duration-300",
+        color
+      )} />
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+      </div>
+
+      <div className="relative p-6 space-y-4 flex flex-col h-full">
+        <div className="flex items-center justify-between">
+          <div className={cn("w-14 h-14 rounded-2xl bg-gradient-to-br flex items-center justify-center shadow-lg",
+            "transition-all duration-300 group-hover:scale-110 group-hover:rotate-3",
+            color
+          )}>
+            <Icon className="w-7 h-7 text-white" />
+          </div>
+          {comingSoon && (
+            <span className="px-2.5 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold">
+              Em breve
+            </span>
+          )}
+          {!comingSoon && (
+            <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />
+          )}
+        </div>
+        <div className="space-y-2 flex-1">
+          <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+            {title}
+          </h3>
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+            {description}
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+});
+
+ModuleCard.displayName = "ModuleCard";
+
+export default function Modules() {
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto">
+      <div className="glass-card p-5 sm:p-6 rounded-xl sm:rounded-2xl shadow-modern border border-primary/20">
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">
+            <span className="text-foreground">Bem-vindo ao </span>
+            <span className="bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">
+              EduSolo
+            </span>
+          </h1>
+          <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-3xl leading-relaxed">
+            Sua suíte completa de ferramentas para análise e aprendizado em Mecânica dos Solos. Selecione um módulo para começar.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr" role="list" aria-label="Módulos disponíveis">
+        {modules.map((module, idx) => {
+          const content = (
+            <ModuleCard
+              icon={module.icon}
+              title={module.title}
+              description={module.description}
+              color={module.color}
+              comingSoon={module.comingSoon}
+            />
+          );
+
+          if (module.comingSoon) {
+            return (
+              <div
+                key={module.title}
+                role="listitem"
+                className="animate-in fade-in slide-in-from-bottom-2 duration-300"
+                style={{ animationDelay: `${idx * 70}ms` }}
+              >
+                {content}
+              </div>
+            );
+          }
+
+          return (
+            <div
+              key={module.title}
+              className="animate-in fade-in slide-in-from-bottom-2 duration-300"
+              style={{ animationDelay: `${idx * 70}ms` }}
+            >
+              <PreloaderLink
+                to={module.path}
+                preload={module.preload}
+                role="listitem"
+                aria-label={`Acessar módulo ${module.title}`}
+              >
+                {content}
+              </PreloaderLink>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

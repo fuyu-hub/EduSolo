@@ -16,7 +16,6 @@ import { ToursProvider } from "@/components/WelcomeDialog";
 
 // Lazy loading de páginas para melhor performance
 // Páginas principais (carregamento imediato)
-import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
 // Páginas de cálculo (lazy loading)
@@ -40,6 +39,7 @@ const About = lazy(() => import("./pages/About"));
 const PlanosFuturos = lazy(() => import("./pages/PlanosFuturos"));
 const Salvos = lazy(() => import("./pages/Salvos"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
+const Modules = lazy(() => import("./pages/Modules"));
 
 // Componente interno para preload
 const AppContent = () => {
@@ -69,8 +69,17 @@ const AppContent = () => {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        {/* Rota principal - sem lazy loading */}
-        <Route path="/" element={<Index />} />
+        {/* Rota principal - Home como Módulos */}
+        <Route
+          path="/"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Modules />
+              </Suspense>
+            </Layout>
+          }
+        />
         
         {/* Rotas de cálculo - com lazy loading */}
         <Route
@@ -235,6 +244,8 @@ const AppContent = () => {
             </Layout>
           }
         />
+
+        
         
         {/* Rota 404 - sem lazy loading */}
         <Route path="*" element={<NotFound />} />

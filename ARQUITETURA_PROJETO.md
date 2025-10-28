@@ -252,12 +252,13 @@ EduSolo/
             ├── soil.ts
             ├── calculations.ts
             └── index.ts
-```
 
----
+### 🧾 Padrão de Exportação de Relatórios (PDF/Excel) e Notificação
 
-## 🎨 Arquitetura de UI
+Esta seção documenta o fluxo padronizado para exportar PDFs/Excel, salvar o relatório localmente e notificar o usuário com opção de navegação para a página de Relatórios. Esse padrão já está aplicado nos módulos:
 
+- Limites de Consistência (desktop)
+- Índices Físicos (desktop)
 ### Tecnologias de UI
 
 | Tecnologia | Versão | Propósito |
@@ -1142,5 +1143,117 @@ R: Sim! Interface responsiva e otimizada para mobile.
 ---
 
 **Desenvolvido com ❤️ para a comunidade de Engenharia Civil**
+
+## 🧩 Implementação detalhada: Relatórios e Geração de PDF
+
+- **Objetivo**: descrever de ponta a ponta como o sistema gera PDFs, salva relatórios, exibe/baixa, e como módulos integram com o fluxo.
+
+### Arquivos e responsabilidades
+- **frontend/src/lib/utils/export-utils.ts**
+  - Orquestra a geração de PDFs (jsPDF + autoTable + KaTeX/html2canvas).
+  - Funções e responsabilidades:
+    - `exportToPDF(data, returnBlob?)`
+      - Lê `data.printSettings` e tema para configurar doc (orientação, tamanho, margens, cores).
+      - Cabeçalho: faixa colorida, logo/nome "EduSolo", subtítulo, data opcional e, se habilitado, título personalizado abaixo da logo.
+      - Corpo: título do módulo, seções de dados de entrada, resultados, resumo, fórmulas (LaTeX/Unicode), tabelas (autoTable) e gráfico ao final.
+      - Rodapé: paginação e assinatura.
+      - Salva arquivo (`doc.save`) ou retorna `Blob` conforme `returnBlob`.
+    - `getPDFTheme(currentTheme, printSettings)`
+      - Decide tema do PDF (dinâmico ou fixo forçado claro) para manter consistência.
+    - `obterPaletaCores(theme)`
+      - Mapeia tema → paleta RGB para cabeçalhos, textos e bordas no PDF.
+    - Renderização de texto/fórmulas:
+      - `analisarTextoMatematico`, `renderizarTextoMatematico`, `calcularLarguraTextoMatematico` → tratam símbolos (γ, σ, Δ), subscritos e superscritos.
+      - `renderizarLatex(latex)` → converte LaTeX para HTML (KaTeX) com fallback seguro.
+      - `renderizarLatexNoPDF(doc, latex, x, y, maxWidth, fontSize)` → renderiza LaTeX como imagem via `html2canvas` e insere no PDF, com logs e fallbacks.
+    - Tabelas: `autoTable(doc, ...)` com estilos de cabeçalho/linhas baseados na paleta.
+
+- **frontend/src/lib/reportManager.ts**
+  - Converte e gerencia artefatos gerados para persistência e ações do usuário.
+  - Funções:
+    - `prepareReportForStorage({ name, moduleType, moduleName, pdfBlob, calculationData })` → retorna objeto pronto para `useRecentReports.addReport`, contendo `pdfUrl` (ObjectURL) e `pdfData` (base64).
+    - `blobToBase64`, `createPdfUrl` → utilitários de conversão.
+    - `downloadPdfFromUrl`, `downloadPdfFromBase64`, `openPdfFromBase64` → abrir/baixar.
+    - `revokePdfUrl` → revoga ObjectURLs (`blob:`) para evitar vazamentos.
+
+- **frontend/src/hooks/useRecentReports.ts**
+  - Persiste/recupera relatórios em `localStorage` na chave `edusolorecentreports`.
+  - Sanitiza `blob:` após reload: se `pdfUrl` começa com `blob:`, limpa ao carregar para evitar erros de segurança.
+  - Revoga `blob:` ao remover/limpar via `revokePdfUrl`.
+  - API: `addReport`, `removeReport`, `clearAll`.
+
+- **frontend/src/pages/Relatorios.tsx** e `mobile/RelatoriosMobile.tsx`
+  - UI para listar e ações: Ver, Baixar, Gerar (regenerar) e Remover.
+  - Preferência por `pdfData` para ver/baixar (gera Blob temporário em runtime). Fallback para `pdfUrl` quando presente na mesma sessão.
+
+- Integrações por módulo (ex.: **frontend/src/pages/IndicesFisicos.tsx**)
+  - Usa `ExportPDFDialog` para coletar nome e, se habilitado nas configurações, título personalizado.
+  - Monta `ExportData` (inputs, resultados, tabelas, fórmulas, gráfico, tema, `printSettings`).
+  - Chama `exportToPDF(..., true)` para obter `Blob`.
+  - Chama `prepareReportForStorage` e `addReport` para incluir nos Recentes.
+  - UX pós-exportação: toast com ação "Ir para Relatórios" (sem redirecionar automaticamente).
+
+### Campos e configurações relevantes
+- `ExportData.customTitle`
+  - Título customizado para o cabeçalho do PDF. Exibido abaixo da logo.
+  - Persistência: último valor salvo em `localStorage` com a chave `edusolo_last_custom_report_title`.
+- `PrintSettings.includeCustomTitle`
+  - Habilita exibição/coleta do título personalizado no diálogo e sua renderização no PDF.
+- Outras `PrintSettings`: `includeLogo`, `includeDate`, `includeFormulas`, `pageOrientation`, `paperSize`, `pageMargins`, `useDynamicTheme`, `fixedTheme`.
+
+### Armazenamento e chaves
+- `localStorage`:
+  - `edusolorecentreports` → lista de relatórios recentes (id, name, moduleType, moduleName, createdAt, pdfUrl?, pdfData?, calculationData).
+  - `edusolo_last_custom_report_title` → título personalizado persistido.
+- `sessionStorage`:
+  - `"<module>_lastData"` → dados para regenerar cálculo ao clicar em "Gerar" em Relatórios.
+
+### Fluxos detalhados
+- **Exportar (com título customizado)**
+  1. Página do módulo abre `ExportPDFDialog` com `showCustomTitle` conforme `settings.printSettings.includeCustomTitle`.
+  2. Usuário informa nome e opcionalmente título personalizado.
+  3. Página monta `ExportData` (inclui `customTitle` se habilitado) e chama `exportToPDF(..., true)`.
+  4. Recebe `Blob`, chama `prepareReportForStorage`, `addReport` e mostra toast com CTA.
+
+- **Ver/baixar relatório**
+  - Ver: tenta `openPdfFromBase64(pdfData)`; fallback `window.open(pdfUrl, '_blank')`.
+  - Baixar: `downloadPdfFromBase64(pdfData, filename)`; fallback `downloadPdfFromUrl(pdfUrl, filename)`.
+
+- **Regenerar**
+  - Salva `calculationData` no `sessionStorage` (`<module>_lastData`) e navega para a rota do módulo.
+
+- **Remover/Limpar**
+  - `removeReport(id)` / `clearAll()` atualizam storage e revogam `blob:` quando existir.
+
+### Tratamento de erros e decisões de segurança
+- Não reutilizar `blob:` após reload (sanitização em `useRecentReports`) → evita "Access to blob: denied".
+- Priorizar `pdfData` para robustez e compatibilidade (gera Blob temporário por sessão conforme necessário).
+- Revogar `ObjectURL` na exclusão/limpeza para evitar vazamento de memória.
+- KaTeX/html2canvas com fallback para texto garante exportação mesmo com falhas.
+
+### Como adicionar exportação PDF em um novo módulo
+- Passos mínimos:
+  - Montar `ExportData` (título do módulo, entradas, resultados, tabelas/gráficos quando houver, tema e `printSettings`).
+  - Exibir `ExportPDFDialog` e, se habilitado, coletar `customTitle`.
+  - Chamar `exportToPDF(data, true)` e salvar com `prepareReportForStorage` + `addReport`.
+  - Exibir toast com CTA opcional para Relatórios.
+
+- Exemplo (pseudo):
+```tsx
+const result = await exportToPDF(exportData, true);
+if (result instanceof Blob) {
+  const prepared = await prepareReportForStorage({ name, moduleType, moduleName, pdfBlob: result, calculationData });
+  addReport(prepared);
+  toast({ title: 'PDF exportado!', action: <ToastAction onClick={() => navigate('/relatorios')}>Ir para Relatórios</ToastAction> });
+}
+```
+
+### Padrões visuais do PDF
+- Cabeçalho: faixa primária, logo/título, data à direita, e opcionalmente título personalizado abaixo da logo.
+- Seções: cabeçalhos com fundo primário, itens com fundo suave alternado.
+- Fórmulas: LaTeX renderizado em imagem vetorializada via html2canvas (qualidade controlada por scale) com fallback.
+- Rodapé: numeração de páginas e assinatura "Gerado por EduSolo".
+
+---
 
 [⬆ Voltar ao topo](#-arquitetura-e-documentação---edusolo)

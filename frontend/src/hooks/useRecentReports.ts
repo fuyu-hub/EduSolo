@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { revokePdfUrl } from '@/lib/reportManager';
 
 export interface RecentReport {
   id: string;
@@ -8,6 +9,7 @@ export interface RecentReport {
   createdAt: string; // ISO date string
   pdfUrl: string; // URL local ou blob do PDF
   calculationData: Record<string, any>; // Dados do ensaio
+  pdfData?: string; // Base64 do PDF para persistência em mobile
 }
 
 const STORAGE_KEY = 'edusolorecentreports';
@@ -22,7 +24,12 @@ export function useRecentReports() {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        setReports(Array.isArray(parsed) ? parsed : []);
+        const sanitized = (Array.isArray(parsed) ? parsed : []).map((r: RecentReport) => ({
+          ...r,
+          // Evitar reutilizar blob URLs após recarregar a página
+          pdfUrl: typeof r.pdfUrl === 'string' && r.pdfUrl.startsWith('blob:') ? '' : r.pdfUrl,
+        }));
+        setReports(sanitized);
       }
     } catch (error) {
       console.error('Erro ao carregar relatórios:', error);
@@ -54,6 +61,10 @@ export function useRecentReports() {
   // Remover relatório
   const removeReport = useCallback((id: string) => {
     try {
+      const toRemove = reports.find(r => r.id === id);
+      if (toRemove?.pdfUrl) {
+        revokePdfUrl(toRemove.pdfUrl);
+      }
       const updated = reports.filter((r) => r.id !== id);
       setReports(updated);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
@@ -65,6 +76,10 @@ export function useRecentReports() {
   // Limpar todos os relatórios
   const clearAll = useCallback(() => {
     try {
+      // Revogar quaisquer blob URLs existentes
+      reports.forEach(r => {
+        if (r.pdfUrl) revokePdfUrl(r.pdfUrl);
+      });
       setReports([]);
       localStorage.removeItem(STORAGE_KEY);
     } catch (error) {

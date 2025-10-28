@@ -20,18 +20,38 @@ export function createPdfUrl(blob: Blob): string {
 }
 
 /**
+ * Converte um Blob para uma string base64 (sem prefixo data:)
+ */
+export function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      // result é um data URL: "data:application/pdf;base64,...." -> extrair a parte base64
+      const base64 = result.split(',')[1] || '';
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+/**
  * Salva um relatório no localStorage
  * Retorna um objeto RecentReport que pode ser salvo via useRecentReports
  */
-export function prepareReportForStorage(
+export async function prepareReportForStorage(
   params: CreateReportParams
-): Omit<RecentReport, 'id' | 'createdAt'> {
+): Promise<Omit<RecentReport, 'id' | 'createdAt'>> {
+  const pdfUrl = createPdfUrl(params.pdfBlob);
+  const pdfData = await blobToBase64(params.pdfBlob);
   return {
     name: params.name,
     moduleType: params.moduleType,
     moduleName: params.moduleName,
-    pdfUrl: createPdfUrl(params.pdfBlob),
+    pdfUrl,
     calculationData: params.calculationData,
+    pdfData,
   };
 }
 
@@ -50,7 +70,7 @@ export function prepareReportForStorage(
  *   moduleType: 'granulometria',
  *   moduleName: 'Granulometria',
  *   pdfBlob: pdfBlob,
- *   calculationData: { /* dados do ensaio */ }
+ *   calculationData: { }
  * });
  * addReport(reportData);
  */
@@ -75,4 +95,35 @@ export function revokePdfUrl(url: string) {
   if (url.startsWith('blob:')) {
     URL.revokeObjectURL(url);
   }
+}
+
+/**
+ * Abre um PDF a partir de base64 em nova aba, criando um Blob temporário
+ */
+export function openPdfFromBase64(base64: string) {
+  const byteCharacters = atob(base64);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+}
+
+/**
+ * Faz o download de um PDF a partir de base64 gerando um Blob temporário
+ */
+export function downloadPdfFromBase64(base64: string, filename: string) {
+  const byteCharacters = atob(base64);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  downloadPdfFromUrl(url, filename);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

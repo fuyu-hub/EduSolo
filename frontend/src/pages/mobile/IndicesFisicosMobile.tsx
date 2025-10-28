@@ -41,7 +41,10 @@ import { useSettings } from "@/hooks/use-settings";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { SoilExample, soilExamples, type AmostraIndicesFisicos } from "@/lib/soil-constants";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
+import { useRecentReports } from "@/hooks/useRecentReports";
+import { prepareReportForStorage } from "@/lib/reportManager";
 import ExportPDFDialog from "@/components/ExportPDFDialog";
+import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/hooks/use-theme";
 import { conteudoIndicesFisicos } from "@/lib/geotecnia/indicesFisicosConteudo";
 import {
@@ -78,6 +81,7 @@ export default function IndicesFisicosMobile() {
   const { settings } = useSettings();
   const { theme } = useTheme();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [formData, setFormData] = useState<FormData>({
     amostras: [{
@@ -106,6 +110,8 @@ export default function IndicesFisicosMobile() {
   const [exportPDFDialogOpen, setExportPDFDialogOpen] = useState(false);
   const [pdfFileName, setPdfFileName] = useState("");
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const { addReport } = useRecentReports();
+  const [pdfSavedDialogOpen, setPdfSavedDialogOpen] = useState(false);
 
   // Estados para exemplos e Gs
   const [examplesSheetOpen, setExamplesSheetOpen] = useState(false);
@@ -544,16 +550,31 @@ export default function IndicesFisicosMobile() {
       theme,
       printSettings: settings.printSettings
     };
-
-    const success = await exportToPDF(exportData);
+    const result = await exportToPDF(exportData, true);
     setIsExportingPDF(false);
     
-    if (success) {
-      toast({
-        title: "📄 PDF exportado!",
-        description: "Arquivo baixado com sucesso",
-      });
-      setExportPDFDialogOpen(false);
+    if (result instanceof Blob) {
+      try {
+        const reportName = pdfFileName.replace('.pdf', '');
+        const prepared = await prepareReportForStorage({
+          name: reportName,
+          moduleType: 'indices-fisicos',
+          moduleName: 'Índices Físicos',
+          pdfBlob: result,
+          calculationData: {
+            formData,
+            results,
+            exportDate: new Date().toISOString()
+          }
+        });
+        addReport(prepared);
+        toast({ title: "Relatório salvo", description: "PDF disponível em Relatórios" });
+        setExportPDFDialogOpen(false);
+        setPdfSavedDialogOpen(true);
+      } catch (error) {
+        console.error('Erro ao salvar relatório:', error);
+        toast({ title: "PDF gerado, mas não foi possível salvar em Relatórios.", variant: 'destructive' });
+      }
     } else {
       toast({
         title: "Erro",
@@ -562,6 +583,22 @@ export default function IndicesFisicosMobile() {
       });
     }
   };
+
+  // Restaurar dados ao abrir via "Gerar" em Relatórios
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('indices-fisicos_lastData');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.formData) setFormData(parsed.formData);
+        if (parsed?.results) setResults(parsed.results);
+        sessionStorage.removeItem('indices-fisicos_lastData');
+        toast({ title: "Dados do relatório carregados!" });
+      }
+    } catch (e) {
+      console.error('Erro ao restaurar dados (indices-fisicos mobile):', e);
+    }
+  }, []);
 
   // Exportação Excel
   const handleExportExcel = async () => {
@@ -1216,6 +1253,31 @@ export default function IndicesFisicosMobile() {
         onConfirm={handleConfirmExportPDF}
         isExporting={isExportingPDF}
       />
+
+      {/* Diálogo pós-exportação: PDF salvo */}
+      <Dialog open={pdfSavedDialogOpen} onOpenChange={setPdfSavedDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Relatório gerado</DialogTitle>
+            <DialogDescription>
+              O PDF foi salvo na seção Relatórios. Deseja ir para lá agora?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setPdfSavedDialogOpen(false)}>
+              Ficar aqui
+            </Button>
+            <Button
+              onClick={() => {
+                setPdfSavedDialogOpen(false);
+                navigate("/relatorios");
+              }}
+            >
+              Ir para Relatórios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
