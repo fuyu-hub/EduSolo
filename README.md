@@ -103,7 +103,6 @@
 
 ### Pré-requisitos
 
-- **Python** 3.8+
 - **Node.js** 18+
 - **npm** ou **bun**
 
@@ -114,32 +113,7 @@ git clone https://github.com/seu-usuario/edusolo.git
 cd edusolo
 ```
 
-### 2️⃣ Backend (FastAPI)
-
-```bash
-cd backend
-
-# Criar ambiente virtual
-python -m venv venv
-
-# Ativar ambiente virtual
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
-
-# Instalar dependências
-pip install -r requirements.txt
-
-# Executar servidor
-uvicorn app.main:app --reload
-```
-
-A API estará disponível em: `http://localhost:8000`
-
-Documentação interativa: `http://localhost:8000/docs`
-
-### 3️⃣ Frontend (React + TypeScript)
+### 2️⃣ Frontend (React + TypeScript + Backend Integrado)
 
 ```bash
 cd frontend
@@ -157,10 +131,12 @@ bun dev
 
 A aplicação estará disponível em: `http://localhost:5173`
 
-### 4️⃣ Build para Produção
+**Nota:** O backend foi integrado diretamente ao frontend em TypeScript, permitindo funcionamento **100% offline** sem necessidade de servidor externo.
+
+### 3️⃣ Build para Produção
 
 ```bash
-# Frontend
+# Frontend (com backend integrado)
 cd frontend
 npm run build
 # ou
@@ -177,59 +153,58 @@ bun run build
 
 ```
 EduSolo/
-├── backend/                 # API FastAPI
-│   ├── app/
-│   │   ├── main.py         # Entrada principal da API
-│   │   ├── models.py       # Modelos Pydantic
-│   │   └── modules/        # Módulos de cálculo
-│   │       ├── indices_fisicos.py
-│   │       ├── limites_consistencia.py
-│   │       ├── granulometria.py
-│   │       ├── compactacao.py
-│   │       ├── tensoes_geostaticas.py
-│   │       ├── acrescimo_tensoes.py
-│   │       ├── fluxo_hidraulico.py
-│   │       ├── recalque_adensamento.py
-│   │       ├── tempo_adensamento.py
-│   │       └── classificacao_uscs.py
-│   ├── tests/              # Testes unitários
-│   └── requirements.txt
-│
-├── frontend/               # Interface React
+├── frontend/                        # Interface React + Backend Integrado
 │   ├── src/
-│   │   ├── pages/          # Páginas da aplicação
-│   │   ├── components/     # Componentes reutilizáveis
-│   │   ├── lib/            # Utilitários e helpers
-│   │   ├── hooks/          # React hooks personalizados
-│   │   └── contexts/       # Context API
+│   │   ├── pages/                  # Páginas da aplicação
+│   │   ├── components/             # Componentes reutilizáveis
+│   │   ├── lib/
+│   │   │   ├── calculations/       # 🎯 Módulos de cálculo geotécnico
+│   │   │   │   ├── indices-fisicos.ts
+│   │   │   │   ├── limites-consistencia.ts
+│   │   │   │   ├── granulometria.ts
+│   │   │   │   ├── compactacao.ts
+│   │   │   │   ├── tensoes-geostaticas.ts
+│   │   │   │   ├── acrescimo-tensoes.ts
+│   │   │   │   ├── fluxo-hidraulico.ts
+│   │   │   │   ├── recalque-adensamento.ts
+│   │   │   │   ├── tempo-adensamento.ts
+│   │   │   │   └── classificacao-uscs.ts
+│   │   │   ├── schemas/            # Validação Zod
+│   │   │   └── geotecnia/          # Utilidades geotécnicas
+│   │   ├── stores/                 # Zustand stores (cache local)
+│   │   ├── hooks/                  # React hooks personalizados
+│   │   └── contexts/               # Context API
+│   ├── public/
 │   └── package.json
 │
 └── README.md
 ```
 
+**Backend Integrado:**
+- ✅ Todos os cálculos rodam **100% offline**
+- ✅ Sem dependência de servidor externo
+- ✅ Cache local com Zustand
+- ✅ Funções em TypeScript para melhor type-safety
+
 ### Documentação Detalhada
 
-- 📘 [Backend - Documentação da API](backend/README.md)
 - 📗 [Frontend - Guia de Desenvolvimento](frontend/README.md)
-- 📙 [Módulos de Cálculo](backend/docs/MODULES.md)
 - 📕 [Guia de Contribuição](CONTRIBUTING.md)
 
 ---
 
-## 🧪 Testes
+## 🧪 Testes e Qualidade
 
-### Backend
-
-```bash
-cd backend
-pytest tests/
-```
-
-### Frontend
+### Frontend (com backend integrado)
 
 ```bash
 cd frontend
+
+# Verificar estilo e erros
 npm run lint
+
+# Build otimizado
+npm run build
 ```
 
 ---

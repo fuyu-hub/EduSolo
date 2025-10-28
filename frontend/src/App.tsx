@@ -2,7 +2,6 @@ import { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { PageLoader } from "@/components/ui/loading-spinner";
@@ -40,18 +39,6 @@ const Settings = lazy(() => import("./pages/Settings"));
 const About = lazy(() => import("./pages/About"));
 const PlanosFuturos = lazy(() => import("./pages/PlanosFuturos"));
 const Salvos = lazy(() => import("./pages/Salvos"));
-
-// Configurar QueryClient com otimizações
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutos
-      gcTime: 10 * 60 * 1000, // 10 minutos (novo nome para cacheTime)
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
 
 // Componente interno para preload
 const AppContent = () => {
@@ -247,25 +234,23 @@ const AppContent = () => {
 
 const App = () => (
   <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <SettingsProvider>
-        <ThemeProvider>
-          <TourProvider>
-            <ToursProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <Tour />
-                <PWAUpdateNotification />
-                <BrowserRouter>
-                  <AppContent />
-                </BrowserRouter>
-              </TooltipProvider>
-            </ToursProvider>
-          </TourProvider>
-        </ThemeProvider>
-      </SettingsProvider>
-    </QueryClientProvider>
+    <SettingsProvider>
+      <ThemeProvider>
+        <TourProvider>
+          <ToursProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <Tour />
+              <PWAUpdateNotification />
+              <BrowserRouter>
+                <AppContent />
+              </BrowserRouter>
+            </TooltipProvider>
+          </ToursProvider>
+        </TourProvider>
+      </ThemeProvider>
+    </SettingsProvider>
   </ErrorBoundary>
 );
 

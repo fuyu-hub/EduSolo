@@ -92,13 +92,14 @@ Documentação é crucial! Você pode:
 
 #### Áreas que Precisam de Ajuda
 
-- ✨ Novos módulos de cálculo
-- 🐛 Correção de bugs
+- ✨ Novos módulos de cálculo (TypeScript em `/src/lib/calculations/`)
+- 🐛 Correção de bugs no frontend
 - 🎨 Melhorias de UI/UX
 - ⚡ Otimizações de performance
 - 🧪 Testes unitários e de integração
 - 📱 Responsividade mobile
 - 🌐 Internacionalização (i18n)
+- 📄 Geração e exportação de relatórios
 
 ---
 
@@ -106,7 +107,6 @@ Documentação é crucial! Você pode:
 
 ### Pré-requisitos
 
-- **Python** 3.8+
 - **Node.js** 18+
 - **Git**
 - Editor de código (recomendado: VS Code)
@@ -124,34 +124,7 @@ cd edusolo
 git remote add upstream https://github.com/original-usuario/edusolo.git
 ```
 
-### 2. Backend
-
-```bash
-cd backend
-
-# Criar ambiente virtual
-python -m venv venv
-
-# Ativar ambiente virtual
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
-
-# Instalar dependências
-pip install -r requirements.txt
-
-# Instalar dependências de desenvolvimento
-pip install pytest pytest-cov black flake8 mypy
-
-# Executar testes
-pytest
-
-# Executar servidor
-uvicorn app.main:app --reload
-```
-
-### 3. Frontend
+### 2. Frontend (com Backend Integrado)
 
 ```bash
 cd frontend
@@ -171,102 +144,28 @@ npm run lint
 npm run build
 ```
 
-### 4. Configuração do Editor (VS Code)
+**Nota:** O backend foi integrado diretamente em TypeScript, não há necessidade de servidor Python separado.
+
+### 3. Configuração do Editor (VS Code)
 
 Crie `.vscode/settings.json`:
 
 ```json
 {
-  "python.linting.enabled": true,
-  "python.linting.flake8Enabled": true,
-  "python.formatting.provider": "black",
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true
   },
-  "typescript.tsdk": "frontend/node_modules/typescript/lib"
+  "typescript.tsdk": "frontend/node_modules/typescript/lib",
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
 }
 ```
 
 ---
 
 ## 📏 Padrões de Código
-
-### Python (Backend)
-
-#### Estilo
-
-Seguimos **PEP 8** com algumas adaptações:
-
-- Formatador: **Black** (linha: 100 caracteres)
-- Linter: **Flake8**
-- Type hints: **mypy**
-
-```python
-# Bom
-def calcular_indice_vazios(
-    volume_vazios: float,
-    volume_solidos: float
-) -> float:
-    """
-    Calcula o índice de vazios.
-    
-    Args:
-        volume_vazios: Volume de vazios (cm³)
-        volume_solidos: Volume de sólidos (cm³)
-    
-    Returns:
-        Índice de vazios (adimensional)
-    """
-    if volume_solidos <= 0:
-        raise ValueError("Volume de sólidos deve ser positivo")
-    
-    return volume_vazios / volume_solidos
-```
-
-#### Convenções
-
-- **Funções**: `snake_case`
-- **Classes**: `PascalCase`
-- **Constantes**: `UPPER_SNAKE_CASE`
-- **Variáveis privadas**: `_leading_underscore`
-
-#### Docstrings
-
-Use o formato Google:
-
-```python
-def funcao_exemplo(param1: int, param2: str) -> bool:
-    """
-    Resumo de uma linha.
-    
-    Descrição mais detalhada se necessário.
-    
-    Args:
-        param1: Descrição do primeiro parâmetro
-        param2: Descrição do segundo parâmetro
-    
-    Returns:
-        Descrição do retorno
-    
-    Raises:
-        ValueError: Quando param1 é negativo
-    """
-    pass
-```
-
-#### Formatação
-
-```bash
-# Formatar código
-black backend/
-
-# Verificar estilo
-flake8 backend/
-
-# Type checking
-mypy backend/
-```
 
 ### TypeScript (Frontend)
 
