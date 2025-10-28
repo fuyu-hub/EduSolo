@@ -91,25 +91,25 @@ const ModuleCard = memo<{
       className={cn(
         "group relative overflow-hidden transition-all duration-300 h-full flex flex-col",
         "border border-border/50 bg-gradient-to-br from-card/80 via-card/60 to-card/40 backdrop-blur-sm",
-        !comingSoon && "hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1 hover:scale-[1.02] cursor-pointer",
+        !comingSoon && "md:hover:shadow-2xl md:hover:shadow-primary/10 md:hover:-translate-y-1 md:hover:scale-[1.02] active:scale-[0.98] cursor-pointer [-webkit-tap-highlight-color:transparent]",
         comingSoon && "opacity-60"
       )}
     >
       <div className={cn(
-        "absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-5 transition-opacity duration-300",
+        "absolute inset-0 bg-gradient-to-br opacity-0 md:group-hover:opacity-5 transition-opacity duration-300",
         color
       )} />
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+      <div className="absolute inset-0 opacity-0 md:group-hover:opacity-100 transition-opacity duration-500">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full md:group-hover:translate-x-full transition-transform duration-1000" />
       </div>
 
-      <div className="relative p-6 space-y-4 flex flex-col h-full">
+      <div className="relative p-4 sm:p-6 space-y-4 flex flex-col h-full">
         <div className="flex items-center justify-between">
-          <div className={cn("w-14 h-14 rounded-2xl bg-gradient-to-br flex items-center justify-center shadow-lg",
-            "transition-all duration-300 group-hover:scale-110 group-hover:rotate-3",
+          <div className={cn("w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br flex items-center justify-center shadow-lg",
+            "transition-all duration-300 md:group-hover:scale-110 md:group-hover:rotate-3",
             color
           )}>
-            <Icon className="w-7 h-7 text-white" />
+            <Icon className="w-6 h-6 md:w-7 md:h-7 text-white" />
           </div>
           {comingSoon && (
             <span className="px-2.5 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold">
@@ -117,11 +117,11 @@ const ModuleCard = memo<{
             </span>
           )}
           {!comingSoon && (
-            <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />
+            <ArrowRight className="w-5 h-5 text-muted-foreground md:group-hover:text-primary md:group-hover:translate-x-1 transition-all duration-300" />
           )}
         </div>
         <div className="space-y-2 flex-1">
-          <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors duration-300">
+          <h3 className="text-base md:text-lg font-bold text-foreground md:group-hover:text-primary transition-colors duration-300">
             {title}
           </h3>
           <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
@@ -131,13 +131,14 @@ const ModuleCard = memo<{
       </div>
     </Card>
   );
-});
+})
+;
 
 ModuleCard.displayName = "ModuleCard";
 
 export default function Modules() {
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-5 sm:space-y-6 max-w-7xl mx-auto">
       <div className="glass-card p-5 sm:p-6 rounded-xl sm:rounded-2xl shadow-modern border border-primary/20">
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">
@@ -152,7 +153,7 @@ export default function Modules() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr" role="list" aria-label="Módulos disponíveis">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 auto-rows-fr" role="list" aria-label="Módulos disponíveis">
         {modules.map((module, idx) => {
           const content = (
             <ModuleCard

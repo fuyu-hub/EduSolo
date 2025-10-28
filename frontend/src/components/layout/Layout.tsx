@@ -46,7 +46,10 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
     { icon: Mountain, label: "Tensões Geostáticas", path: "/tensoes" },
     { icon: Target, label: "Acréscimo de Tensões", path: "/acrescimo-tensoes" },
   ];
-  const isModulePath = modulesBrief.some((m) => location.pathname.startsWith(m.path)) || location.pathname === "/";
+  const isModulePath =
+    modulesBrief.some((m) => location.pathname.startsWith(m.path)) ||
+    location.pathname === "/" ||
+    location.pathname === "/modulos";
   const [modulesOpen, setModulesOpen] = React.useState<boolean>(isModulePath);
 
   return (

@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { PageLoader } from "@/components/ui/loading-spinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -80,6 +80,19 @@ const AppContent = () => {
             </Layout>
           }
         />
+        {/* Alias para Módulos */}
+        <Route
+          path="/modulos"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Modules />
+              </Suspense>
+            </Layout>
+          }
+        />
+        {/* Redirect antigo Dashboard -> Home */}
+        <Route path="/dashboard" element={<Navigate to="/" replace />} />
         
         {/* Rotas de cálculo - com lazy loading */}
         <Route
