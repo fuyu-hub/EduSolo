@@ -39,6 +39,7 @@ const Settings = lazy(() => import("./pages/Settings"));
 const About = lazy(() => import("./pages/About"));
 const PlanosFuturos = lazy(() => import("./pages/PlanosFuturos"));
 const Salvos = lazy(() => import("./pages/Salvos"));
+const Relatorios = lazy(() => import("./pages/Relatorios"));
 
 // Componente interno para preload
 const AppContent = () => {
@@ -220,6 +221,16 @@ const AppContent = () => {
             <Layout>
               <Suspense fallback={<PageLoader />}>
                 <Salvos />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/relatorios"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Relatorios />
               </Suspense>
             </Layout>
           }

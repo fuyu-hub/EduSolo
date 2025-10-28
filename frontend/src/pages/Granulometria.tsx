@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { useSettings } from "@/hooks/use-settings";
 import { useTheme } from "@/hooks/use-theme";
+import { useRecentReports } from "@/hooks/useRecentReports";
 import { useTour, TourStep } from "@/contexts/TourContext";
 import SavedCalculations from "@/components/SavedCalculations";
 import { useToursEnabled } from "@/components/WelcomeDialog";
@@ -19,7 +20,7 @@ import SaveDialog from "@/components/SaveDialog";
 import ExportPDFDialog from "@/components/ExportPDFDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
-import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, captureChartAsImage, generateDefaultPDFFileName } from "@/lib/export-utils";
+import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, captureChartAsImage, generateDefaultPDFFileName, createPDFBlobUrl } from "@/lib/export-utils";
 import TabelaDadosGranulometricos from "@/components/granulometria/TabelaDadosGranulometricos";
 import CurvaGranulometrica from "@/components/granulometria/CurvaGranulometrica";
 import SeletorPeneiras from "@/components/granulometria/SeletorPeneiras";
@@ -106,6 +107,7 @@ function GranulometriaDesktop() {
   const { theme } = useTheme();
   const { startTour } = useTour();
   const toursEnabled = useToursEnabled();
+  const { addReport } = useRecentReports();
   const [formData, setFormData] = useState<FormData>({
     massaTotal: "",
     peneiras: [],
@@ -631,13 +633,35 @@ function GranulometriaDesktop() {
     });
 
     toast.info("Gerando PDF...");
-    const success = await exportToPDF(exportData);
+    const result = await exportToPDF(exportData, true); // returnBlob = true
     
     setIsExportingPDF(false);
     
-    if (success) {
-      toast.success("PDF exportado com sucesso!");
-      setExportPDFDialogOpen(false);
+    if (result instanceof Blob) {
+      // Criar URL do Blob para armazenar como referência
+      const pdfUrl = createPDFBlobUrl(result);
+      
+      // Salvar relatório com metadados
+      try {
+        const reportName = pdfFileName.replace('.pdf', '');
+        addReport({
+          name: reportName,
+          moduleType: 'granulometria',
+          moduleName: 'Granulometria e Classificação',
+          pdfUrl: pdfUrl,
+          calculationData: {
+            formData,
+            results,
+            exportDate: new Date().toISOString()
+          }
+        });
+        
+        toast.success("PDF exportado com sucesso e salvo nos relatórios!");
+        setExportPDFDialogOpen(false);
+      } catch (error) {
+        console.error('Erro ao salvar relatório:', error);
+        toast.error("PDF exportado mas não foi possível salvar nos relatórios.");
+      }
     } else {
       toast.error("Erro ao exportar PDF.");
     }

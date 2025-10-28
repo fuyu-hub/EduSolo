@@ -1,4 +1,4 @@
-import { Home, Settings, BookOpen, MoreHorizontal, Save, Beaker, Droplet, Filter, Database, Mountain, Target, Info, Rocket } from "lucide-react";
+import { Home, Settings, BookOpen, MoreHorizontal, Save, Beaker, Droplet, Filter, Database, Mountain, Target, Info, Rocket, HelpCircle } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -18,13 +18,16 @@ const moreItems = [
 interface NavItem {
   icon: typeof Home;
   label: string;
-  path: string;
+  path?: string;
+  action?: () => void;
+  isExpandButton?: boolean;
 }
 
 const mainNavItems: NavItem[] = [
-  { icon: Save, label: "Salvos", path: "/salvos" },
+  { icon: Save, label: "Relatorios", path: "/relatorios" },
   { icon: BookOpen, label: "Educacional", path: "/educacional" },
-  { icon: Home, label: "Início", path: "/" },
+  { icon: Home, label: "Início", path: "/", isExpandButton: true },
+  { icon: HelpCircle, label: "Placeholder", path: "#placeholder" },
   { icon: Settings, label: "Config", path: "/settings" },
 ];
 
@@ -32,7 +35,8 @@ export function BottomNav() {
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const isActive = (path: string) => {
+  const isActive = (path: string | undefined) => {
+    if (!path || path === "#") return false;
     if (path === "/") {
       return location.pathname === "/";
     }
@@ -50,7 +54,68 @@ export function BottomNav() {
           {mainNavItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
+            const isExpandButton = item.isExpandButton;
+            const isPlaceholder = item.path === "#placeholder";
             
+            // Renderizar o botão "Início" como um button de expansão com função de Link
+            if (isExpandButton) {
+              return (
+                <button
+                  key={item.label}
+                  onClick={() => setMoreOpen(!moreOpen)}
+                  className={cn(
+                    "flex flex-col items-center justify-center h-full gap-1 transition-all duration-300 ease-out px-6",
+                    "active:scale-[0.92]"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 ease-out",
+                      moreOpen 
+                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-105"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 hover:scale-105",
+                      !moreOpen && location.pathname === "/" && "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-105"
+                    )}
+                  >
+                    <Icon className="w-5 h-5" strokeWidth={(moreOpen || location.pathname === "/") ? 2.5 : 2} />
+                  </div>
+                  <span className={cn(
+                    "text-[10px] font-medium transition-colors duration-300",
+                    (moreOpen || location.pathname === "/") ? "text-primary" : "text-muted-foreground"
+                  )}>
+                    {item.label}
+                  </span>
+                </button>
+              );
+            }
+
+            // Renderizar placeholder como button desabilitado
+            if (isPlaceholder) {
+              return (
+                <button
+                  key={item.label}
+                  disabled
+                  className={cn(
+                    "flex flex-col items-center justify-center h-full gap-1 transition-all duration-300 ease-out px-6 cursor-not-allowed opacity-50",
+                    "active:scale-[0.92]"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 ease-out",
+                      "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                    )}
+                  >
+                    <Icon className="w-5 h-5" strokeWidth={2} />
+                  </div>
+                  <span className="text-[10px] font-medium transition-colors duration-300 text-muted-foreground">
+                    {item.label}
+                  </span>
+                </button>
+              );
+            }
+
+            // Renderizar outros botões como Links
             return (
               <Link
                 key={item.path}
@@ -81,32 +146,6 @@ export function BottomNav() {
               </Link>
             );
           })}
-
-          {/* Botão "Mais" com Grid Expansível */}
-          <button
-            onClick={() => setMoreOpen(!moreOpen)}
-            className={cn(
-              "flex flex-col items-center justify-center h-full gap-1 transition-all duration-300 ease-out px-6",
-              "active:scale-[0.92]"
-            )}
-          >
-            <div
-              className={cn(
-                "flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 ease-out",
-                moreOpen 
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-105 rotate-90"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 hover:scale-105"
-              )}
-            >
-              <MoreHorizontal className="w-5 h-5" strokeWidth={moreOpen ? 2.5 : 2} />
-            </div>
-            <span className={cn(
-              "text-[10px] font-medium transition-colors duration-300",
-              moreOpen ? "text-primary" : "text-muted-foreground"
-            )}>
-              Mais
-            </span>
-          </button>
         </div>
       </nav>
 

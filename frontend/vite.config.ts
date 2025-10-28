@@ -269,8 +269,6 @@ export default defineConfig(({ mode }) => ({
           
           // Utilitários
           'vendor-utils': [
-            'axios',
-            '@tanstack/react-query',
             'class-variance-authority',
             'clsx',
             'tailwind-merge',
