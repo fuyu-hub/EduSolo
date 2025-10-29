@@ -31,6 +31,7 @@ const camadaSchema = z.object({
     message: "Ko entre 0-1 ou vazio",
   }),
   impermeavel: z.boolean().optional(),
+  compressivel: z.boolean().optional(),
 });
 
 type CamadaFormData = z.infer<typeof camadaSchema>;
@@ -44,6 +45,7 @@ export interface CamadaData {
   gamaSat: string;
   Ko: string;
   impermeavel?: boolean;
+  compressivel?: boolean;
 }
 
 interface DialogCamadaProps {
@@ -53,6 +55,7 @@ interface DialogCamadaProps {
   camadaInicial?: CamadaData;
   title?: string;
   description?: string;
+  showCompressivel?: boolean;
 }
 
 const tooltips = {
@@ -72,7 +75,8 @@ export default function DialogCamada({
   onConfirm, 
   camadaInicial,
   title = "Adicionar Camada",
-  description = "Insira os dados da nova camada de solo"
+  description = "Insira os dados da nova camada de solo",
+  showCompressivel = false
 }: DialogCamadaProps) {
   const form = useForm<CamadaFormData>({
     resolver: zodResolver(camadaSchema),
@@ -85,6 +89,7 @@ export default function DialogCamada({
       gamaSat: "",
       Ko: "",
       impermeavel: false,
+      compressivel: false,
     },
   });
 
@@ -101,6 +106,7 @@ export default function DialogCamada({
         gamaSat: "",
         Ko: "",
         impermeavel: false,
+        compressivel: false,
       });
     }
   }, [open, camadaInicial, form]);
@@ -115,6 +121,7 @@ export default function DialogCamada({
       gamaSat: data.gamaSat || "",
       Ko: data.Ko || "",
       impermeavel: data.impermeavel || false,
+      compressivel: data.compressivel || false,
     });
     onOpenChange(false);
   };
@@ -323,6 +330,34 @@ export default function DialogCamada({
                 </p>
               </div>
             </div>
+
+            {/* Checkbox Camada Compressível - apenas se showCompressivel estiver ativo */}
+            {showCompressivel && (
+              <div className="flex items-start space-x-2 pt-2">
+                <Controller
+                  name="compressivel"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Checkbox
+                      id="compressivel"
+                      checked={field.value || false}
+                      onCheckedChange={field.onChange}
+                    />
+                  )}
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label
+                    htmlFor="compressivel"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1"
+                  >
+                    Analisar esta camada (Camada Compressível)
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Marque esta opção para analisar o recalque por adensamento nesta camada
+                  </p>
+                </div>
+              </div>
+            )}
           </TooltipProvider>
 
           <DialogFooter>

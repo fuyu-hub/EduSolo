@@ -1,6 +1,6 @@
 // Adiciona React à importação
 import React, { useState, useEffect } from "react";
-import { Menu, Beaker, Droplet, Filter, Database, Mountain, Target, BookOpen, ArrowLeft, Settings, Sun, Moon, Info, Rocket, FileText, LayoutGrid, ChevronDown } from "lucide-react";
+import { Menu, Beaker, Droplet, Filter, Database, Mountain, Target, MoveDown, BookOpen, ArrowLeft, Settings, Sun, Moon, Info, Rocket, FileText, LayoutGrid, ChevronDown } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
@@ -45,6 +45,7 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
     { icon: Database, label: "Compactação", path: "/compactacao" },
     { icon: Mountain, label: "Tensões Geostáticas", path: "/tensoes" },
     { icon: Target, label: "Acréscimo de Tensões", path: "/acrescimo-tensoes" },
+    { icon: MoveDown, label: "Recalque por Adensamento", path: "/recalque-adensamento" },
   ];
   const isModulePath =
     modulesBrief.some((m) => location.pathname.startsWith(m.path)) ||

@@ -55,11 +55,11 @@ const modules = [
   },
   {
     icon: MoveDown,
-    title: "Análise de Adensamento",
-    description: "Teoria de Terzaghi e análise de recalques",
-    path: "#",
+    title: "Recalque por Adensamento",
+    description: "Cálculo de recalque primário por adensamento em camadas compressíveis",
+    path: "/recalque-adensamento",
     color: "from-amber-500 via-orange-500 to-red-500",
-    comingSoon: true,
+    preload: () => import("./RecalqueAdensamento"),
   },
   {
     icon: Scissors,

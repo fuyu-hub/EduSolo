@@ -12,9 +12,10 @@ interface CamadaResumo {
 interface TabelaCamadasProps {
   camadas: CamadaResumo[];
   profundidadeNA: number;
+  camadaCompressivelIndex?: number | null;
 }
 
-export default function TabelaCamadas({ camadas, profundidadeNA }: TabelaCamadasProps) {
+export default function TabelaCamadas({ camadas, profundidadeNA, camadaCompressivelIndex }: TabelaCamadasProps) {
   if (!camadas || camadas.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -64,8 +65,13 @@ export default function TabelaCamadas({ camadas, profundidadeNA }: TabelaCamadas
               badgeVariant = "destructive";
             }
 
+            const isCompressivel = camadaCompressivelIndex === index;
+
             return (
-              <TableRow key={index}>
+              <TableRow 
+                key={index}
+                className={isCompressivel ? "bg-primary/10 ring-2 ring-primary" : ""}
+              >
                 <TableCell className="text-center font-medium">{index + 1}</TableCell>
                 <TableCell className="text-center">{camada.espessura.toFixed(2)}</TableCell>
                 <TableCell className="text-center">

@@ -24,6 +24,7 @@ const Granulometria = lazy(() => import("./pages/Granulometria"));
 const Compactacao = lazy(() => import("./pages/Compactacao"));
 const TensoesGeostaticas = lazy(() => import("./pages/TensoesGeostaticas"));
 const AcrescimoTensoes = lazy(() => import("./pages/AcrescimoTensoes"));
+const RecalqueAdensamento = lazy(() => import("./pages/RecalqueAdensamento"));
 
 // Páginas de Acréscimo de Tensões (lazy loading)
 const Boussinesq = lazy(() => import("./pages/acrescimo-tensoes/Boussinesq"));
@@ -193,6 +194,16 @@ const AppContent = () => {
             <Layout>
               <Suspense fallback={<PageLoader />}>
                 <Newmark />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/recalque-adensamento"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <RecalqueAdensamento />
               </Suspense>
             </Layout>
           }
