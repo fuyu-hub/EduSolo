@@ -13,7 +13,7 @@ import {
   Maximize2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -33,7 +33,12 @@ import { type ExemploRecalque } from "@/lib/exemplos/recalque-adensamento";
 import DialogCamada, { CamadaData } from "@/modules/tensoes/components/DialogCamada";
 import TabelaCamadas from "@/modules/tensoes/components/TabelaCamadas";
 import DiagramaRecalque from "@/modules/recalque/components/DiagramaRecalque";
-import { exportToPDF, exportToExcel } from "@/lib/export-utils";
+import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
+import ExportPDFDialog from "@/components/ExportPDFDialog";
+import { useRecentReports } from "@/hooks/useRecentReports";
+import { prepareReportForStorage } from "@/lib/reportManager";
+import { useNotification } from "@/hooks/use-notification";
+import { useNavigate } from "react-router-dom";
 import type { 
   RecalqueAdensamentoInput, 
   RecalqueAdensamentoOutput 
@@ -76,7 +81,17 @@ const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
 export default function RecalqueAdensamento() {
   const { settings } = useSettings();
+  const { addReport } = useRecentReports();
+  const notify = useNotification();
+  const navigate = useNavigate();
   const [config, setConfig] = useState<ConfigData>({ pesoEspecificoAgua: "10.0" });
+  
+  // Estados para exportação
+  const [pdfFileName, setPdfFileName] = useState("");
+  const [exportPDFDialogOpen, setExportPDFDialogOpen] = useState(false);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [pdfSavedDialogOpen, setPdfSavedDialogOpen] = useState(false);
+  const [customReportTitle, setCustomReportTitle] = useState("");
   
   // Estados das abas
   const [camadaCompressivelIndex, setCamadaCompressivelIndex] = useState<number | null>(null);
@@ -715,6 +730,312 @@ export default function RecalqueAdensamento() {
     }
   };
 
+  const handleExportPDF = () => {
+    console.log('🔍 [DEBUG] handleExportPDF chamado');
+    console.log('🔍 [DEBUG] results:', results);
+    console.log('🔍 [DEBUG] results?.erro:', results?.erro);
+    
+    if (!results || results.erro) {
+      console.log('🔍 [DEBUG] Retornando early - sem results ou com erro');
+      return;
+    }
+    
+    // Gerar nome padrão usando a função auxiliar
+    const defaultName = generateDefaultPDFFileName("Recalque por Adensamento");
+    console.log('🔍 [DEBUG] Nome padrão gerado:', defaultName);
+    
+    setPdfFileName(defaultName);
+    console.log('🔍 [DEBUG] Abrindo diálogo de exportação...');
+    setExportPDFDialogOpen(true);
+  };
+
+  const handleConfirmExportPDF = async () => {
+    if (!results || results.erro) return;
+    
+    setIsExportingPDF(true);
+
+    // Parâmetros de entrada
+    const inputs: { label: string; value: string }[] = [];
+    
+    // Parâmetros da camada de argila
+    if (camadaArgila?.espessura) inputs.push({ label: "Espessura da Camada (H0)", value: `${camadaArgila.espessura.toFixed(2)} m` });
+    if (camadaArgila?.e0) inputs.push({ label: "Índice de Vazios Inicial (e0)", value: camadaArgila.e0.toFixed(3) });
+    if (camadaArgila?.Cc) inputs.push({ label: "Índice de Compressão (Cc)", value: camadaArgila.Cc.toFixed(3) });
+    if (camadaArgila?.Cr) inputs.push({ label: "Índice de Recompressão (Cr)", value: camadaArgila.Cr.toFixed(3) });
+    if (camadaArgila?.Cv) inputs.push({ label: "Coeficiente de Adensamento (Cv)", value: `${camadaArgila.Cv.toFixed(2)} m²/ano` });
+    
+    // Tensões
+    if (sigmaV0Prime) inputs.push({ label: "Tensão Efetiva Inicial - Presente", value: `${formatNumberForExport(sigmaV0Prime)} kPa` });
+    if (sigmaVmPrime) inputs.push({ label: "Tensão de Pré-Adensamento - Passado", value: `${formatNumberForExport(sigmaVmPrime)} kPa` });
+    if (deltaSigma) inputs.push({ label: "Acréscimo de Tensão", value: `${formatNumberForExport(deltaSigma)} kPa` });
+    
+    // Configurações do perfil
+    if (config.pesoEspecificoAgua) inputs.push({ label: "Peso Específico da Água", value: `${config.pesoEspecificoAgua} kN/m³` });
+    const profundidadeNA = perfilForm.watch("profundidadeNA");
+    if (profundidadeNA) inputs.push({ label: "Nível d'Água (rel. ao topo da argila)", value: `${profundidadeNA} m` });
+
+    // Resultados
+    const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
+    if (results.recalque_total_primario != null) {
+      resultsList.push({ 
+        label: "Recalque Total Primário", 
+        value: `${formatNumberForExport(results.recalque_total_primario)} m (${(results.recalque_total_primario * 1000).toFixed(2)} mm)`, 
+        highlight: true 
+      });
+    }
+    if (camadaArgila && results.recalque_total_primario) {
+      const porcentagem = ((results.recalque_total_primario / camadaArgila.espessura) * 100).toFixed(2);
+      resultsList.push({ 
+        label: "Porcentagem de Recalque", 
+        value: `${porcentagem}%` 
+      });
+    }
+    if (results.estado_adensamento) {
+      resultsList.push({ label: "Estado de Adensamento", value: results.estado_adensamento });
+    }
+    if (results.RPA != null) {
+      resultsList.push({ label: "RPA Calculado (sigma vm linha / sigma v0 linha)", value: formatNumberForExport(results.RPA, 2) });
+    }
+    if (results.deformacao_volumetrica != null) {
+      resultsList.push({ label: "Deformação Volumétrica", value: formatNumberForExport(results.deformacao_volumetrica, 5) });
+    }
+    if (results.tensao_efetiva_final != null) {
+      resultsList.push({ label: "Tensão Efetiva Final (sigma vf linha)", value: `${formatNumberForExport(results.tensao_efetiva_final)} kPa` });
+    }
+
+    // Fórmulas utilizadas
+    const formulas = [
+      { 
+        label: "Tensão Efetiva Final", 
+        formula: "sigma vf linha = sigma v0 linha + Delta sigma linha",
+        latex: false,
+        description: "Soma da tensão efetiva inicial com o acréscimo de tensão"
+      },
+      { 
+        label: "Razão de Pré-Adensamento (RPA)", 
+        formula: "RPA = sigma vm linha / sigma v0 linha",
+        latex: false,
+        description: "Relaciona a tensão de pré-adensamento com a tensão efetiva inicial"
+      },
+      { 
+        label: "Normalmente Adensado - Deformação", 
+        formula: "epsilon v = (Cc / (1 + e0)) × log10(sigma vf linha / sigma v0 linha)",
+        latex: false,
+        description: "Deformação para solo normalmente adensado (RPA ≈ 1)"
+      },
+      { 
+        label: "Pré-Adensado - Recompressão", 
+        formula: "epsilon v = (Cr / (1 + e0)) × log10(sigma vf linha / sigma v0 linha)",
+        latex: false,
+        description: "Deformação quando sigma vf linha menor ou igual a sigma vm linha (apenas recompressão)"
+      },
+      { 
+        label: "Pré-Adensado - Recompressão + Compressão Virgem", 
+        formula: "epsilon v = (Cr / (1 + e0)) × log10(sigma vm linha / sigma v0 linha) + (Cc / (1 + e0)) × log10(sigma vf linha / sigma vm linha)",
+        latex: false,
+        description: "Deformação quando sigma vf linha maior que sigma vm linha (recompressão até sigma vm linha, depois compressão virgem)"
+      },
+      { 
+        label: "Recalque Total", 
+        formula: "recalque = epsilon v × H0",
+        latex: false,
+        description: "Recalque calculado a partir da deformação volumétrica e espessura inicial"
+      },
+    ];
+
+    // Não incluir tabelas de camadas
+    const tabelas: { title: string; headers: string[]; rows: (string | number)[][] }[] = [];
+
+    const exportData: ExportData = {
+      moduleName: "recalque-adensamento",
+      moduleTitle: "Recalque por Adensamento",
+      inputs,
+      results: resultsList,
+      formulas,
+      tables: tabelas,
+      customFileName: pdfFileName,
+      customTitle: settings.printSettings?.includeCustomTitle ? customReportTitle : undefined,
+      theme: undefined, // Usar tema do sistema
+      printSettings: {
+        ...settings.printSettings,
+        // Forçar quebra de página após inputs usando uma flag especial se necessário
+      }
+    };
+
+    // Persistir último título personalizado para ser usado como padrão
+    try {
+      if (settings.printSettings?.includeCustomTitle) {
+        localStorage.setItem('edusolo_last_custom_report_title', customReportTitle || '');
+      }
+    } catch {}
+
+    console.log('🔍 [DEBUG] Iniciando exportação PDF...');
+    console.log('🔍 [DEBUG] exportData:', {
+      moduleName: exportData.moduleName,
+      moduleTitle: exportData.moduleTitle,
+      numInputs: exportData.inputs.length,
+      numResults: exportData.results.length,
+      numFormulas: exportData.formulas?.length || 0,
+      numTables: exportData.tables?.length || 0,
+      hasCustomFileName: !!exportData.customFileName,
+      hasCustomTitle: !!exportData.customTitle,
+      hasPrintSettings: !!exportData.printSettings
+    });
+    console.log('🔍 [DEBUG] pdfFileName:', pdfFileName);
+
+    try {
+      console.log('🔍 [DEBUG] Chamando exportToPDF...');
+      const result = await exportToPDF(exportData, true);
+      console.log('🔍 [DEBUG] exportToPDF retornou:', result);
+      console.log('🔍 [DEBUG] É Blob?', result instanceof Blob);
+      if (result instanceof Blob) {
+        console.log('🔍 [DEBUG] Tamanho do Blob:', result.size, 'bytes');
+      }
+      
+      setIsExportingPDF(false);
+      
+      if (result instanceof Blob) {
+        console.log('🔍 [DEBUG] Blob válido, preparando para salvar...');
+        try {
+          const reportName = pdfFileName.replace('.pdf', '');
+          console.log('🔍 [DEBUG] reportName:', reportName);
+          console.log('🔍 [DEBUG] Chamando prepareReportForStorage...');
+          
+          const prepared = await prepareReportForStorage({
+            name: reportName,
+            moduleType: 'recalque-adensamento',
+            moduleName: 'Recalque por Adensamento',
+            pdfBlob: result,
+            calculationData: {
+              camadaArgila,
+              camadasAterroPassado,
+              camadasAterroPresente,
+              camadasAterroFuturo,
+              sigmaV0Prime,
+              sigmaVmPrime,
+              sigmaVfPrime,
+              deltaSigma,
+              results,
+              exportDate: new Date().toISOString()
+            }
+          });
+          
+          console.log('🔍 [DEBUG] prepareReportForStorage concluído:', prepared);
+          console.log('🔍 [DEBUG] Chamando addReport...');
+          addReport(prepared);
+          console.log('🔍 [DEBUG] addReport concluído');
+          
+          setExportPDFDialogOpen(false);
+          console.log('🔍 [DEBUG] Fechando diálogo de exportação');
+          
+          // Padrão unificado: abrir diálogo pós-exportação com CTA
+          notify.success({ title: "Relatório salvo", description: "PDF disponível em Relatórios" });
+          console.log('🔍 [DEBUG] Notificação de sucesso enviada');
+          
+          console.log('🔍 [DEBUG] Abrindo diálogo de sucesso...');
+          setPdfSavedDialogOpen(true);
+          console.log('🔍 [DEBUG] ✅ Processo completo concluído com sucesso!');
+        } catch (error) {
+          console.error('❌ [DEBUG] Erro ao salvar relatório:', error);
+          console.error('❌ [DEBUG] Stack trace:', error instanceof Error ? error.stack : 'N/A');
+          console.error('❌ [DEBUG] Error name:', error instanceof Error ? error.name : 'N/A');
+          console.error('❌ [DEBUG] Error message:', error instanceof Error ? error.message : String(error));
+          notify.warning({ title: "PDF exportado", description: "Não foi possível salvar em Relatórios." });
+        }
+      } else {
+        console.error('❌ [DEBUG] exportToPDF não retornou Blob. Tipo:', typeof result, 'Valor:', result);
+        notify.error({ title: "Erro ao exportar", description: "Não foi possível gerar o PDF." });
+      }
+    } catch (error) {
+      console.error('❌ [DEBUG] Erro durante exportToPDF:', error);
+      console.error('❌ [DEBUG] Stack trace:', error instanceof Error ? error.stack : 'N/A');
+      console.error('❌ [DEBUG] Error name:', error instanceof Error ? error.name : 'N/A');
+      console.error('❌ [DEBUG] Error message:', error instanceof Error ? error.message : String(error));
+      setIsExportingPDF(false);
+      notify.error({ title: "Erro ao exportar", description: error instanceof Error ? error.message : "Erro desconhecido ao gerar o PDF." });
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (!results || results.erro) return;
+
+    // Sheet de Dados de Entrada
+    const entradaData: { label: string; value: string | number }[] = [
+      { label: "=== DADOS DE ENTRADA ===", value: "" },
+      { label: "", value: "" },
+    ];
+
+    // Parâmetros da camada de argila
+    entradaData.push({ label: "-- Camada de Argila --", value: "" });
+    if (camadaArgila?.espessura) entradaData.push({ label: "Espessura (m)", value: camadaArgila.espessura.toFixed(2) });
+    if (camadaArgila?.e0) entradaData.push({ label: "Índice de Vazios Inicial (e₀)", value: camadaArgila.e0.toFixed(3) });
+    if (camadaArgila?.Cc) entradaData.push({ label: "Índice de Compressão (Cc)", value: camadaArgila.Cc.toFixed(3) });
+    if (camadaArgila?.Cr) entradaData.push({ label: "Índice de Recompressão (Cr)", value: camadaArgila.Cr.toFixed(3) });
+    if (camadaArgila?.Cv) entradaData.push({ label: "Coeficiente de Adensamento - Cv (m²/ano)", value: camadaArgila.Cv.toFixed(2) });
+    entradaData.push({ label: "", value: "" });
+
+    // Tensões
+    entradaData.push({ label: "-- Tensões Efetivas --", value: "" });
+    if (sigmaV0Prime) entradaData.push({ label: "Tensão Efetiva Inicial - Presente (σ'v₀) (kPa)", value: sigmaV0Prime.toFixed(2) });
+    if (sigmaVmPrime) entradaData.push({ label: "Tensão de Pré-Adensamento - Passado (σ'vm) (kPa)", value: sigmaVmPrime.toFixed(2) });
+    if (deltaSigma) entradaData.push({ label: "Acréscimo de Tensão (Δσ') (kPa)", value: deltaSigma.toFixed(2) });
+    entradaData.push({ label: "", value: "" });
+
+    // Configurações
+    entradaData.push({ label: "-- Configurações --", value: "" });
+    if (config.pesoEspecificoAgua) entradaData.push({ label: "Peso Específico da Água (kN/m³)", value: config.pesoEspecificoAgua });
+    const profundidadeNA = perfilForm.watch("profundidadeNA");
+    if (profundidadeNA) entradaData.push({ label: "Nível d'Água (m)", value: profundidadeNA });
+
+    // Sheet de Resultados
+    const resultadosData: { label: string; value: string | number }[] = [
+      { label: "=== RESULTADOS ===", value: "" },
+      { label: "", value: "" },
+    ];
+    
+    if (results.recalque_total_primario != null) {
+      resultadosData.push({ label: "Recalque Total Primário (m)", value: results.recalque_total_primario.toFixed(4) });
+      resultadosData.push({ label: "Recalque Total Primário (mm)", value: (results.recalque_total_primario * 1000).toFixed(2) });
+    }
+    if (camadaArgila && results.recalque_total_primario) {
+      const porcentagem = ((results.recalque_total_primario / camadaArgila.espessura) * 100).toFixed(2);
+      resultadosData.push({ label: "Porcentagem de Recalque (%)", value: porcentagem });
+    }
+    if (results.estado_adensamento) {
+      resultadosData.push({ label: "Estado de Adensamento", value: results.estado_adensamento });
+    }
+    if (results.RPA != null) {
+      resultadosData.push({ label: "RPA Calculado", value: results.RPA.toFixed(2) });
+    }
+    if (results.deformacao_volumetrica != null) {
+      resultadosData.push({ label: "Deformação Volumétrica", value: results.deformacao_volumetrica.toFixed(5) });
+    }
+    if (results.tensao_efetiva_final != null) {
+      resultadosData.push({ label: "Tensão Efetiva Final - σ'vf (kPa)", value: results.tensao_efetiva_final.toFixed(2) });
+    }
+    if (camadaArgila?.espessura) {
+      resultadosData.push({ label: "Espessura da Camada (m)", value: camadaArgila.espessura.toFixed(2) });
+    }
+
+    const sheets: { name: string; data: { label: string; value: string | number }[] }[] = [
+      { name: "Dados de Entrada", data: entradaData },
+      { name: "Resultados", data: resultadosData }
+    ];
+
+    const excelData: ExcelExportData = {
+      moduleName: "recalque-adensamento",
+      moduleTitle: "Recalque por Adensamento",
+      sheets,
+    };
+
+    const success = await exportToExcel(excelData);
+    if (success) {
+      notify.success({ description: "Excel exportado com sucesso!" });
+    } else {
+      notify.error({ description: "Erro ao exportar Excel." });
+    }
+  };
+
   const camadasParaTabela = useMemo(() => {
     return fields.map((_, idx) => {
       const camada = perfilForm.watch(`camadas.${idx}`);
@@ -824,8 +1145,8 @@ export default function RecalqueAdensamento() {
           <CalculationActions
             onSave={() => setSaveDialogOpen(true)}
             onLoad={() => setLoadDialogOpen(true)}
-            onExportPDF={() => {}}
-            onExportExcel={() => {}}
+            onExportPDF={handleExportPDF}
+            onExportExcel={handleExportExcel}
             hasResults={results !== null && !results.erro}
             isCalculating={isCalculating}
           />
@@ -1243,6 +1564,44 @@ export default function RecalqueAdensamento() {
         onRename={renameCalculation}
         moduleName="Recalque por Adensamento"
       />
+
+      {/* Dialog de Exportação PDF */}
+      <ExportPDFDialog
+        open={exportPDFDialogOpen}
+        onOpenChange={setExportPDFDialogOpen}
+        fileName={pdfFileName}
+        onFileNameChange={setPdfFileName}
+        onConfirm={handleConfirmExportPDF}
+        isExporting={isExportingPDF}
+        customTitle={customReportTitle}
+        onCustomTitleChange={setCustomReportTitle}
+        showCustomTitle={settings.printSettings?.includeCustomTitle ?? false}
+      />
+
+      {/* Diálogo pós-exportação: PDF salvo */}
+      <Dialog open={pdfSavedDialogOpen} onOpenChange={setPdfSavedDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Relatório gerado</DialogTitle>
+            <DialogDescription>
+              O PDF foi salvo na seção Relatórios. Deseja ir para lá agora?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setPdfSavedDialogOpen(false)}>
+              Ficar aqui
+            </Button>
+            <Button
+              onClick={() => {
+                setPdfSavedDialogOpen(false);
+                navigate("/relatorios");
+              }}
+            >
+              Ir para Relatórios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

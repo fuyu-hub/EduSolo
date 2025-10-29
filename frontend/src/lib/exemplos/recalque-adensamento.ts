@@ -84,14 +84,14 @@ export const exemploRecalque1: ExemploRecalque = {
       ],
     },
     camadaArgila: {
-      espessura: 10.0,
-      gamaNat: 16.0,
-      gamaSat: 16.0, // Mesmo do natural
+      espessura: 8.0,
+      gamaNat: 16.5,
+      gamaSat: 16.5, // Mesmo do natural
       profundidadeNA: null,
-      Cc: 1.8,
-      Cr: 0.15,
-      Cv: 1.5,
-      e0: 2.8,
+      Cc: 0.45,
+      Cr: 0.06,
+      Cv: 2.5,
+      e0: 1.2,
     },
     camadaBase: {
       drenante: true,
@@ -115,7 +115,7 @@ export const exemploRecalque1: ExemploRecalque = {
     camadasAterroFuturo: [
       {
         nome: "Aterro",
-        espessura: 3.0,
+        espessura: 2.5,
         gamaNat: 19.0,
         gamaSat: 19.0,
       },
@@ -148,14 +148,14 @@ export const exemploRecalque2: ExemploRecalque = {
       ],
     },
     camadaArgila: {
-      espessura: 8.0,
-      gamaNat: 15.5,
-      gamaSat: 15.5,
+      espessura: 6.0,
+      gamaNat: 17.0,
+      gamaSat: 17.0,
       profundidadeNA: null,
-      Cc: 0.95,
-      Cr: 0.08,
-      Cv: 0.8,
-      e0: 1.5,
+      Cc: 0.35,
+      Cr: 0.05,
+      Cv: 3.0,
+      e0: 1.0,
     },
     camadaBase: {
       drenante: true,
@@ -179,7 +179,7 @@ export const exemploRecalque2: ExemploRecalque = {
     camadasAterroFuturo: [
       {
         nome: "Aterro Compactado",
-        espessura: 3.5,
+        espessura: 2.0,
         gamaNat: 20.0,
         gamaSat: 20.0,
       },

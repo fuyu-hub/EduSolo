@@ -711,14 +711,11 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
       yPosition += 3;
     }
 
-    // Seção de Resultados
+    // Seção de Resultados - Sempre começar em nova página
     if (data.results.length > 0) {
-      yPosition += 5;
-      
-      if (yPosition > pageHeight - 40) {
-        doc.addPage();
-        yPosition = margin;
-      }
+      // Forçar quebra de página para começar resultados em nova página
+      doc.addPage();
+      yPosition = margin;
 
       // Cabeçalho da seção
       doc.setFillColor(colors.sectionHeaderBg.r, colors.sectionHeaderBg.g, colors.sectionHeaderBg.b);
