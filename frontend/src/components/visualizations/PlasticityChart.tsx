@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Maximize2, Download, Activity } from "lucide-react";
 import html2canvas from 'html2canvas';
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 
 interface PlasticityChartProps {
   ll: number | null;

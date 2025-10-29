@@ -19,7 +19,7 @@ const menuItems = [
   {
     title: "Análise Geotécnica",
     items: [
-      { icon: LayoutGrid, label: "Módulos", path: "/", tourId: "" },
+      { icon: LayoutGrid, label: "Dashboard", path: "/", tourId: "" },
     ],
   },
   {
@@ -49,7 +49,7 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
   const isModulePath =
     modulesBrief.some((m) => location.pathname.startsWith(m.path)) ||
     location.pathname === "/" ||
-    location.pathname === "/modulos";
+    location.pathname === "/dashboard";
   const [modulesOpen, setModulesOpen] = React.useState<boolean>(isModulePath);
 
   return (
@@ -99,7 +99,7 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
                 );
 
                 // Use ConditionalSheetClose para envolver o Link apenas no mobile
-                if (item.label === "Módulos") {
+                if (item.label === "Dashboard") {
                   return (
                     <Collapsible key="modules-collapsible" open={modulesOpen} onOpenChange={setModulesOpen}>
                       <CollapsibleTrigger asChild>
@@ -110,7 +110,7 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
                             collapsed ? "justify-center px-2" : "justify-start px-3",
                             modulesOpen ? "bg-gradient-to-r from-primary/20 to-primary/10 text-primary border border-primary/30" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 border border-transparent"
                           )}
-                          aria-label="Módulos"
+                          aria-label="Dashboard"
                         >
                           {buttonContent}
                           {!collapsed && (

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Square, BookOpen, Settings, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import PrintHeader from "@/components/PrintHeader";
 import CanvasNewmark from "./CanvasNewmark";
 import PainelResultados, { PontoAnalise } from "./PainelResultados";

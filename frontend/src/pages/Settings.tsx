@@ -11,7 +11,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { ThemeColor } from "@/contexts/ThemeContext";
 import { UnitSystem, InterfaceDensity, PageOrientation, PageMargins, PaperSize } from "@/contexts/SettingsContext";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { useState, useRef } from "react";
 import { useToursControl } from "@/components/WelcomeDialog";
 import {

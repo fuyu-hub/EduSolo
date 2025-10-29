@@ -46,8 +46,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
-import { ToastAction } from "@/components/ui/toast";
+import { useNotification } from "@/hooks/use-notification";
 import DiagramaFases from "@/components/visualizations/DiagramaFases";
 import { conteudoIndicesFisicos } from "@/lib/geotecnia/indicesFisicosConteudo";
 import { cn } from "@/lib/utils";
@@ -154,7 +153,7 @@ function IndicesFisicosDesktop() {
   const [results, setResults] = useState<Results | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
+  const notify = useNotification();
 
   // Definição dos steps do tour
   const tourSteps: TourStep[] = [
@@ -256,7 +255,7 @@ function IndicesFisicosDesktop() {
         if (parsed?.formData) setFormData(parsed.formData);
         if (parsed?.results) setResults(parsed.results);
         sessionStorage.removeItem('indices-fisicos_lastData');
-        toast({ title: "Dados do relatório carregados!" });
+        notify.success({ description: "Dados do relatório carregados!" });
       }
     } catch (e) {
       console.error('Erro ao restaurar dados (indices-fisicos):', e);
@@ -313,10 +312,7 @@ function IndicesFisicosDesktop() {
       ]
     }));
     setCurrentAmostraIndex(formData.amostras.length);
-    toast({
-      title: "Amostra adicionada",
-      description: `Amostra ${formData.amostras.length + 1} criada`,
-    });
+    notify.success({ title: "Amostra adicionada", description: `Amostra ${formData.amostras.length + 1} criada` });
   };
 
   const removeAmostra = () => {
@@ -326,16 +322,9 @@ function IndicesFisicosDesktop() {
         amostras: prev.amostras.filter((_, idx) => idx !== currentAmostraIndex)
       }));
       setCurrentAmostraIndex(prev => Math.max(0, prev - 1));
-      toast({
-        title: "Amostra removida",
-        description: "Amostra excluída com sucesso",
-      });
+      notify.success({ title: "Amostra removida", description: "Amostra excluída com sucesso" });
     } else {
-      toast({
-        title: "Atenção",
-        description: "É necessário pelo menos 1 amostra",
-        variant: "default",
-      });
+      notify.warning({ title: "Atenção", description: "É necessário pelo menos 1 amostra" });
     }
   };
 
@@ -380,11 +369,7 @@ function IndicesFisicosDesktop() {
         amostrasLimpas[0].indice_vazios_max !== undefined && 
         amostrasLimpas[0].indice_vazios_min >= amostrasLimpas[0].indice_vazios_max) {
       setError("Índice de vazios mínimo (emin) deve ser menor que o máximo (emax).");
-      toast({
-        title: "Erro de Entrada",
-        description: "emin deve ser < emax",
-        variant: "destructive",
-      });
+      notify.error({ title: "Erro de Entrada", description: "emin deve ser < emax" });
       setIsCalculating(false);
       return;
     }
@@ -395,20 +380,13 @@ function IndicesFisicosDesktop() {
 
       if (resultado.erro) {
         setError(resultado.erro);
-        toast({
-          title: "Erro no Cálculo",
-          description: resultado.erro,
-          variant: "destructive",
-        });
+        notify.error({ title: "Erro no Cálculo", description: resultado.erro });
       } else {
         setResults(resultado);
         
         // Toast especial se houver múltiplas amostras
         if (resultado.num_amostras && resultado.num_amostras > 1) {
-          toast({
-            title: `✅ ${resultado.num_amostras} amostras calculadas!`,
-            description: "Estatísticas calculadas com sucesso",
-          });
+          notify.success({ title: `✅ ${resultado.num_amostras} amostras calculadas!`, description: "Estatísticas calculadas com sucesso" });
         }
       }
     } catch (err) {
@@ -417,11 +395,7 @@ function IndicesFisicosDesktop() {
         errorMessage = err.message;
       }
       setError(errorMessage);
-      toast({
-        title: "Erro",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      notify.error({ title: "Erro", description: errorMessage });
     } finally {
       setIsCalculating(false);
     }
@@ -456,18 +430,12 @@ function IndicesFisicosDesktop() {
     setCurrentAmostraIndex(0);
     setResults(null);
     setError(null);
-    toast({
-      title: `${example.icon} ${example.name} carregado!`,
-      description: example.description,
-    });
+    notify.success({ title: `${example.icon} ${example.name} carregado!`, description: example.description });
   };
 
   const handleSelectGs = (gsValue: number) => {
     setFormData(prev => ({ ...prev, Gs: gsValue.toString() }));
-    toast({
-      title: "Gs atualizado!",
-      description: `Densidade dos grãos definida como ${gsValue}`,
-    });
+    notify.success({ title: "Gs atualizado!", description: `Densidade dos grãos definida como ${gsValue}` });
   };
 
   // Funções de salvamento e carregamento
@@ -482,28 +450,18 @@ function IndicesFisicosDesktop() {
     
     const success = saveCalculation(saveName.trim(), formData, results);
     if (success) {
-      toast({
-        title: "Cálculo salvo!",
-        description: "O cálculo foi salvo com sucesso.",
-      });
+      notify.success({ title: "Cálculo salvo!", description: "O cálculo foi salvo com sucesso." });
       setSaveDialogOpen(false);
       setSaveName("");
     } else {
-      toast({
-        title: "Erro ao salvar",
-        description: "Não foi possível salvar o cálculo.",
-        variant: "destructive",
-      });
+      notify.error({ title: "Erro ao salvar", description: "Não foi possível salvar o cálculo." });
     }
   };
 
   const handleLoadCalculation = (calculation: any) => {
     setFormData(calculation.formData);
     setResults(calculation.results);
-    toast({
-      title: "Cálculo carregado!",
-      description: `"${calculation.name}" foi carregado com sucesso.`,
-    });
+    notify.success({ title: "Cálculo carregado!", description: `"${calculation.name}" foi carregado com sucesso.` });
   };
 
   const handleStartTour = async () => {
@@ -522,10 +480,7 @@ function IndicesFisicosDesktop() {
     
     // Iniciar o tour
     startTour(tourSteps, "indices-fisicos", true); // Force = true para reiniciar
-    toast({
-      title: "Tour iniciado!",
-      description: "Exemplo carregado automaticamente para demonstração.",
-    });
+    notify.info({ title: "Tour iniciado!", description: "Exemplo carregado automaticamente para demonstração." });
   };
 
   const handleExportPDF = () => {
@@ -763,18 +718,14 @@ function IndicesFisicosDesktop() {
         addReport(prepared);
         setExportPDFDialogOpen(false);
         // Padrão unificado: abrir diálogo pós-exportação com CTA
-        toast({ title: "Relatório salvo", description: "PDF disponível em Relatórios" });
+        notify.success({ title: "Relatório salvo", description: "PDF disponível em Relatórios" });
         setPdfSavedDialogOpen(true);
       } catch (error) {
         console.error('Erro ao salvar relatório:', error);
-        toast({ title: "PDF exportado, mas não foi possível salvar em Relatórios.", variant: 'destructive' });
+        notify.warning({ title: "PDF exportado", description: "Não foi possível salvar em Relatórios." });
       }
     } else {
-      toast({
-        title: "Erro ao exportar",
-        description: "Não foi possível gerar o PDF.",
-        variant: "destructive",
-      });
+      notify.error({ title: "Erro ao exportar", description: "Não foi possível gerar o PDF." });
     }
   };
 
@@ -871,16 +822,9 @@ function IndicesFisicosDesktop() {
 
     const success = await exportToExcel(excelData);
     if (success) {
-      toast({
-        title: "Excel exportado!",
-        description: "O arquivo foi baixado com sucesso.",
-      });
+      notify.success({ description: "Excel exportado com sucesso!" });
     } else {
-      toast({
-        title: "Erro ao exportar",
-        description: "Não foi possível gerar o Excel.",
-        variant: "destructive",
-      });
+      notify.error({ description: "Erro ao exportar Excel." });
     }
   };
 

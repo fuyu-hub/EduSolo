@@ -48,9 +48,9 @@ function classificarSoloGrosso(
   finos: number,
   dados: ClassificacaoUSCSInput
 ): ClassificacaoUSCSOutput {
-  // Determinar se é pedregulho (G) ou areia (S)
+  // Determinar se é pedregulho (G) ou areia (S) pela fração dominante na porção grossa
   const prefixo = pedregulho > areia ? 'G' : 'S';
-  const tipo_solo = pedregulho > areia ? 'Pedregulho' : 'Areia';
+  const tipo_solo = prefixo === 'G' ? 'Pedregulho' : 'Areia';
 
   // Analisar os finos
   if (finos < 5.0) {
@@ -92,42 +92,61 @@ function classificarSoloGrosso(
           ? Cu >= 4.0 && Cc >= 1.0 && Cc <= 3.0
           : Cu >= 6.0 && Cc >= 1.0 && Cc <= 3.0;
 
+      // Para classificar o tipo de finos (M/C/C-M) nesta faixa, LL e IP são necessários
+      if (dados.ll === undefined || dados.ip === undefined) {
+        return {
+          erro:
+            'Para solos grossos com 5-12% de finos, LL e IP são obrigatórios para classificar os finos (M/C/C-M).',
+        };
+      }
+
       const sufixo_finos = determinarSufixoFinos(dados);
 
       if (bem_graduado) {
+        const classificacao =
+          sufixo_finos === 'C-M'
+            ? `${prefixo}W-${prefixo}C/${prefixo}W-${prefixo}M`
+            : `${prefixo}W-${prefixo}${sufixo_finos}`;
         return {
-          classificacao: `${prefixo}W-${prefixo}${sufixo_finos}`,
+          classificacao,
           descricao: `${tipo_solo} bem graduado com finos`,
         };
       } else {
+        const classificacao =
+          sufixo_finos === 'C-M'
+            ? `${prefixo}P-${prefixo}C/${prefixo}P-${prefixo}M`
+            : `${prefixo}P-${prefixo}${sufixo_finos}`;
         return {
-          classificacao: `${prefixo}P-${prefixo}${sufixo_finos}`,
+          classificacao,
           descricao: `${tipo_solo} mal graduado com finos`,
         };
       }
     } else {
-      // Sem Cu e Cc, usa apenas os finos
-      const sufixo_finos = determinarSufixoFinos(dados);
+      // Sem Cu e Cc para 5-12% de finos: não é possível definir W/P; exigir parâmetros
       return {
-        classificacao: `${prefixo}${sufixo_finos}`,
-        descricao: `${tipo_solo} com finos`,
+        erro: 'Para solos grossos com 5-12% de finos, Cu e Cc são obrigatórios para a classificação dupla.',
       };
     }
   } else {
     // finos > 12%
     const sufixo_finos = determinarSufixoFinos(dados);
-
+    let classificacao: string;
     let descricao: string;
+
     if (sufixo_finos === 'M') {
+      classificacao = `${prefixo}M`;
       descricao = `${tipo_solo} siltoso`;
     } else if (sufixo_finos === 'C') {
+      classificacao = `${prefixo}C`;
       descricao = `${tipo_solo} argiloso`;
     } else {
-      descricao = `${tipo_solo} com finos`;
+      // Caso 'C-M' (zona hachurada): classificação dupla
+      classificacao = `${prefixo}C-${prefixo}M`;
+      descricao = `${tipo_solo} silto-argiloso`;
     }
 
     return {
-      classificacao: `${prefixo}${sufixo_finos}`,
+      classificacao,
       descricao,
     };
   }
@@ -146,122 +165,55 @@ function classificarSoloFino(dados: ClassificacaoUSCSInput): ClassificacaoUSCSOu
 
   // Calcular IP na Linha A para o LL do solo
   const ip_linha_a = 0.73 * (LL - 20.0);
+  const acima_linha_a = IP >= ip_linha_a;
 
-  // Tolerâncias
-  const tolerancia_linha_a = Math.max(Math.abs(ip_linha_a) * 0.08, 1.0);
-  const tolerancia_ll_50 = 3.0;
-
-  // Verificar se é solo orgânico
+  // Verificar solo orgânico
   if (dados.is_organico_fino) {
     if (LL < 50.0) {
-      return {
-        classificacao: 'OL',
-        descricao: 'Silte/argila orgânico de baixa plasticidade',
-      };
+      return { classificacao: 'OL', descricao: 'Silte/argila orgânico de baixa plasticidade' };
     } else {
-      return {
-        classificacao: 'OH',
-        descricao: 'Silte/argila orgânico de alta plasticidade',
-      };
+      return { classificacao: 'OH', descricao: 'Silte/argila orgânico de alta plasticidade' };
     }
   }
 
-  // Determinar se é solo de alta ou baixa plasticidade
+  // LL < 50: ML, CL-ML, CL
   if (LL < 50.0) {
-    // Baixa plasticidade (L)
-    const distancia_linha_a = IP - ip_linha_a;
-
-    if (IP >= 4.0 && IP <= 7.0) {
-      return {
-        classificacao: 'CL-ML',
-        descricao: 'Silte argiloso de baixa plasticidade',
-      };
-    } else if (IP > 7.0 && distancia_linha_a >= tolerancia_linha_a) {
-      return {
-        classificacao: 'CL',
-        descricao: 'Argila de baixa plasticidade',
-      };
-    } else if (IP < 4.0 && distancia_linha_a <= -tolerancia_linha_a) {
-      return {
-        classificacao: 'ML',
-        descricao: 'Silte de baixa plasticidade',
-      };
-    } else if (Math.abs(distancia_linha_a) <= tolerancia_linha_a && IP > 7.0) {
-      if (distancia_linha_a >= 0) {
-        return {
-          classificacao: 'CL-ML',
-          descricao: 'Argila-silte de baixa plasticidade (próximo à Linha A)',
-        };
-      } else {
-        return {
-          classificacao: 'ML-CL',
-          descricao: 'Silte-argila de baixa plasticidade (próximo à Linha A)',
-        };
-      }
-    } else {
-      return {
-        classificacao: 'CL-ML',
-        descricao: 'Silte argiloso de baixa plasticidade',
-      };
+    if (!acima_linha_a || IP < 4.0) {
+      return { classificacao: 'ML', descricao: 'Silte de baixa plasticidade' };
     }
+    if (IP >= 7.0 && acima_linha_a) {
+      return { classificacao: 'CL', descricao: 'Argila de baixa plasticidade' };
+    }
+    // 4 ≤ IP < 7 e acima da Linha A
+    return { classificacao: 'CL-ML', descricao: 'Silte argiloso de baixa plasticidade' };
+  }
+
+  // LL ≥ 50: MH ou CH
+  if (acima_linha_a) {
+    return { classificacao: 'CH', descricao: 'Argila de alta plasticidade' };
   } else {
-    // Alta plasticidade (H)
-    const distancia_linha_a = IP - ip_linha_a;
-    const proxima_ll_50 = Math.abs(LL - 50.0) <= tolerancia_ll_50;
-
-    if (distancia_linha_a >= tolerancia_linha_a) {
-      if (proxima_ll_50) {
-        return {
-          classificacao: 'CL-CH',
-          descricao: 'Argila na transição entre baixa e alta plasticidade',
-        };
-      } else {
-        return {
-          classificacao: 'CH',
-          descricao: 'Argila de alta plasticidade',
-        };
-      }
-    } else if (distancia_linha_a <= -tolerancia_linha_a) {
-      if (proxima_ll_50) {
-        return {
-          classificacao: 'ML-MH',
-          descricao: 'Silte na transição entre baixa e alta plasticidade',
-        };
-      } else {
-        return {
-          classificacao: 'MH',
-          descricao: 'Silte de alta plasticidade',
-        };
-      }
-    } else {
-      if (distancia_linha_a >= 0) {
-        return {
-          classificacao: 'CH-MH',
-          descricao: 'Argila-silte de alta plasticidade (próximo à Linha A)',
-        };
-      } else {
-        return {
-          classificacao: 'MH-CH',
-          descricao: 'Silte-argila de alta plasticidade (próximo à Linha A)',
-        };
-      }
-    }
+    return { classificacao: 'MH', descricao: 'Silte de alta plasticidade' };
   }
 }
 
 function determinarSufixoFinos(dados: ClassificacaoUSCSInput): string {
+  // Sem LL/IP não é possível avaliar plasticidade dos finos. Mantém 'M' como padrão conservador.
   if (dados.ll === undefined || dados.ip === undefined) {
-    return 'M'; // Padrão: assume siltoso
+    return 'M';
   }
 
   const LL = dados.ll;
   const IP = dados.ip;
+  const ip_linha_a = 0.73 * (LL - 20.0);
+  const acima_linha_a = IP >= ip_linha_a;
 
-  // Critério da linha A
-  if (IP >= 4.0 && IP >= 0.73 * (LL - 20.0)) {
-    return 'C'; // Argiloso
-  } else {
-    return 'M'; // Siltoso
+  if (IP < 4.0 || !acima_linha_a) {
+    return 'M';
   }
+  if (IP >= 7.0 && acima_linha_a) {
+    return 'C';
+  }
+  // 4 ≤ IP < 7 e acima da Linha A
+  return 'C-M';
 }
 

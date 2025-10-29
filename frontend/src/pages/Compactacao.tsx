@@ -1,5 +1,6 @@
 // frontend/src/pages/Compactacao.tsx
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { calcularCompactacao } from "@/lib/calculations/compactacao";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,14 +10,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter as UIDialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
+import { useRecentReports } from "@/hooks/useRecentReports";
 import { useSettings } from "@/hooks/use-settings";
 import { useTheme } from "@/hooks/use-theme";
 import { useTour, TourStep } from "@/contexts/TourContext";
@@ -27,6 +30,7 @@ import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
 import ExportPDFDialog from "@/components/ExportPDFDialog";
+import { prepareReportForStorage } from "@/lib/reportManager";
 import CurvaCompactacao, { CurvaCompactacaoRef } from "@/components/compactacao/CurvaCompactacao";
 import TabelaResultados from "@/components/compactacao/TabelaResultados";
 import DialogExemplos from "@/components/compactacao/DialogExemplos";
@@ -119,6 +123,8 @@ function CompactacaoDesktop() {
   const { theme } = useTheme();
   const { startTour } = useTour();
   const toursEnabled = useToursEnabled();
+  const { addReport } = useRecentReports();
+  const navigate = useNavigate();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
 
   const form = useForm<FormInputValues>({
@@ -153,6 +159,7 @@ function CompactacaoDesktop() {
   const [exportPDFDialogOpen, setExportPDFDialogOpen] = useState(false);
   const [pdfFileName, setPdfFileName] = useState("");
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [pdfSavedDialogOpen, setPdfSavedDialogOpen] = useState(false);
 
   // Ref para o gráfico de compactação
   const curvaCompactacaoRef = useRef<CurvaCompactacaoRef>(null);
@@ -497,13 +504,26 @@ function CompactacaoDesktop() {
     };
 
     toast("Gerando PDF...");
-    const success = await exportToPDF(exportData);
-    
+    const result = await exportToPDF(exportData, true);
     setIsExportingPDF(false);
-    
-    if (success) {
-      toast("PDF exportado!", { description: "O arquivo foi baixado com sucesso." });
-      setExportPDFDialogOpen(false);
+    if (result instanceof Blob) {
+      try {
+        const reportName = pdfFileName.replace('.pdf', '');
+        const prepared = await prepareReportForStorage({
+          name: reportName,
+          moduleType: 'compactacao',
+          moduleName: 'Compactação (Proctor)',
+          pdfBlob: result,
+          calculationData: { formData, results }
+        });
+        addReport(prepared);
+        setExportPDFDialogOpen(false);
+        toast("Relatório salvo", { description: "PDF disponível em Relatórios" });
+        setPdfSavedDialogOpen(true);
+      } catch (error) {
+        console.error('Erro ao salvar relatório:', error);
+        toast("PDF exportado", { description: "Não foi possível salvar em Relatórios." });
+      }
     } else {
       toast("Erro ao exportar", { description: "Não foi possível gerar o PDF." });
     }
@@ -1028,7 +1048,7 @@ function CompactacaoDesktop() {
                         )}
                         {results.peso_especifico_seco_max !== null && (
                           <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20">
-                            <p className="text-xs text-muted-foreground mb-0.5">γ<sub>d,máx</sub></p>
+                            <p className="text-xs text-muted-foreground mb-0.5">Peso Específico Seco Máximo</p>
                             <p className="text-base font-bold text-primary">{(results.peso_especifico_seco_max / 10).toFixed(3)} g/cm³</p>
                           </div>
                         )}
@@ -1081,6 +1101,31 @@ function CompactacaoDesktop() {
         onConfirm={handleConfirmExportPDF}
         isExporting={isExportingPDF}
       />
+
+      {/* Diálogo pós-exportação: PDF salvo */}
+      <Dialog open={pdfSavedDialogOpen} onOpenChange={setPdfSavedDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Relatório gerado</DialogTitle>
+            <DialogDescription>
+              O PDF foi salvo na seção Relatórios. Deseja ir para lá agora?
+            </DialogDescription>
+          </DialogHeader>
+          <UIDialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setPdfSavedDialogOpen(false)}>
+              Ficar aqui
+            </Button>
+            <Button
+              onClick={() => {
+                setPdfSavedDialogOpen(false);
+                navigate('/relatorios');
+              }}
+            >
+              Ir para Relatórios
+            </Button>
+          </UIDialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <SavedCalculations
         open={loadDialogOpen}

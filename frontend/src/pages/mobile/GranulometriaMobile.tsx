@@ -44,6 +44,9 @@ import CurvaGranulometrica from "@/components/granulometria/CurvaGranulometrica"
 import TabelaDadosGranulometricos from "@/components/granulometria/TabelaDadosGranulometricos";
 import PlasticityChart from "@/components/visualizations/PlasticityChart";
 import { EXEMPLOS_GRANULOMETRIA, ExemploGranulometria } from "@/lib/exemplos-granulometria";
+import { useRecentReports } from "@/hooks/useRecentReports";
+import { prepareReportForStorage } from "@/lib/reportManager";
+import { useNavigate } from "react-router-dom";
 import { PENEIRAS_PADRAO, getPeneiraInfo } from "@/lib/peneiras-padrao";
 
 interface PeneiraDado {
@@ -96,6 +99,9 @@ const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 export default function GranulometriaMobile() {
   const { settings } = useSettings();
   const { toast } = useToast();
+  const { theme } = useTheme();
+  const { addReport } = useRecentReports();
+  const navigate = useNavigate();
   
   const [formData, setFormData] = useState<FormData>({
     massaTotal: "",
@@ -125,6 +131,7 @@ export default function GranulometriaMobile() {
   const [exportPDFDialogOpen, setExportPDFDialogOpen] = useState(false);
   const [pdfFileName, setPdfFileName] = useState("");
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [pdfSavedDialogOpen, setPdfSavedDialogOpen] = useState(false);
 
   // Estados para exemplos
   const [examplesSheetOpen, setExamplesSheetOpen] = useState(false);
@@ -228,7 +235,6 @@ export default function GranulometriaMobile() {
         peneiras: peneirasValidas.map(p => ({
           abertura: parseFloat(p.abertura),
           massa_retida: parseFloat(p.massaRetida),
-          peneira: p.peneira,
         })),
         ll: formData.limitePercent ? parseFloat(formData.limitePercent) : null,
         lp: formData.limitePlasticidade ? parseFloat(formData.limitePlasticidade) : null,
@@ -491,19 +497,32 @@ export default function GranulometriaMobile() {
       inputs,
       results: resultsList,
       tables,
-      chartImageUrl: chartImage || undefined,
-      customFileName: pdfFileName
+      chartImage: chartImage || undefined,
+      customFileName: pdfFileName,
+      theme,
+      printSettings: settings.printSettings
     };
 
-    const success = await exportToPDF(exportData);
+    const result = await exportToPDF(exportData, true);
     setIsExportingPDF(false);
-    
-    if (success) {
-      toast({
-        title: "📄 PDF exportado!",
-        description: "Arquivo baixado com sucesso",
-      });
-      setExportPDFDialogOpen(false);
+    if (result instanceof Blob) {
+      try {
+        const reportName = pdfFileName.replace('.pdf', '');
+        const prepared = await prepareReportForStorage({
+          name: reportName,
+          moduleType: 'granulometria',
+          moduleName: 'Granulometria e Classificação',
+          pdfBlob: result,
+          calculationData: { formData, results }
+        });
+        addReport(prepared);
+        setExportPDFDialogOpen(false);
+        toast({ title: "Relatório salvo", description: "PDF disponível em Relatórios" });
+        setPdfSavedDialogOpen(true);
+      } catch (error) {
+        console.error('Erro ao salvar relatório:', error);
+        toast({ title: "PDF exportado", description: "Não foi possível salvar em Relatórios." });
+      }
     } else {
       toast({
         title: "Erro",
@@ -1054,7 +1073,7 @@ export default function GranulometriaMobile() {
                         <div id="carta-mobile-export" className="bg-white p-4" style={{ width: '800px' }}>
                           <PlasticityChart
                             ll={parseFloat(formData.limitePercent)}
-                            lp={parseFloat(formData.limitePlasticidade)}
+                            ip={parseFloat(formData.limitePercent) - parseFloat(formData.limitePlasticidade)}
                           />
                         </div>
                       )}
@@ -1261,6 +1280,31 @@ export default function GranulometriaMobile() {
         onConfirm={handleConfirmExportPDF}
         isExporting={isExportingPDF}
       />
+
+      {/* Diálogo pós-exportação: PDF salvo */}
+      <Dialog open={pdfSavedDialogOpen} onOpenChange={setPdfSavedDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Relatório gerado</DialogTitle>
+            <DialogDescription>
+              O PDF foi salvo na seção Relatórios. Deseja ir para lá agora?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setPdfSavedDialogOpen(false)}>
+              Ficar aqui
+            </Button>
+            <Button
+              onClick={() => {
+                setPdfSavedDialogOpen(false);
+                navigate('/relatorios');
+              }}
+            >
+              Ir para Relatórios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -808,6 +808,48 @@ App.tsx (raiz)
 └── Footer
 ```
 
+### Especificação de UI/UX (Resumo)
+
+- **Tipografia**
+  - Fonte: Inter (fallbacks do sistema). Tamanhos via Tailwind: `text-sm`, `text-base`, `text-lg`, `text-xl`, `text-2xl`.
+  - Pesos: `font-medium` para títulos de seção; `font-semibold` para títulos de cards; corpo `font-normal`.
+
+- **Cores e Tema**
+  - Tokens já definidos em Tailwind CSS (ver seção “Temas e Cores”).
+  - Contraste mínimo AA. Não usar opacidades que prejudiquem legibilidade em `bg-muted`.
+
+- **Espaçamentos e Layout**
+  - Escala 4/8: usar `p-4`, `p-6`, `gap-4`, `gap-6` como padrão.
+  - Container: largura máxima `max-w-7xl` no desktop; `px-4` em mobile.
+  - Grid: até 12 colunas em desktop via `grid-cols-12` quando necessário; preferir stacks simples em mobile.
+
+- **Componentes e Estados**
+  - Carregando: `Skeleton` para listas/tabelas; `LoadingSpinner` para ações pontuais.
+  - Erro: `Alert variant="destructive"` com ação de retry quando aplicável.
+  - Vazio: `Card` com ícone, breve explicação e CTA (ex.: “Adicionar dados”).
+
+- **Padrões de Interação**
+  - Formulários: validação inline (React Hook Form + Zod), mensagens curtas e específicas.
+  - Feedback: `Toast` em sucesso/erro; evitar modais para mensagens simples.
+  - Undo/Redo: usar `UndoRedoToolbar` nos módulos que suportam histórico.
+  - Navegação: breadcrumbs opcionais em rotas profundas; `BottomNav` no mobile.
+
+- **Fluxos Principais**
+  - Cálculo: entrada → validação → resultados (tabela + gráfico/diagrama) → salvar → exportar.
+  - Exportação: após gerar PDF/Excel, notificar e oferecer atalho para “Relatórios”.
+
+- **Acessibilidade**
+  - Navegação por teclado garantida (Radix). Foco visível (`focus:ring`, `focus:outline-none`).
+  - Labels associados a inputs; `aria-*` em elementos complexos (tabs, dialogs, tables).
+
+- **Impressão e Exportação**
+  - `print.css`: ocultar elementos de navegação, preservar tabelas e gráficos principais.
+  - Nomes de arquivo: `<modulo>-<aaaa-mm-dd>-<hh-mm>.pdf`.
+
+- **Mobile e PWA**
+  - Mobile-first: `MobileLayout`, entradas empilhadas, ações sempre visíveis.
+  - PWA: respeitar `PWAUpdateNotification` e estado offline (evitar toasts repetitivos sem rede).
+
 ---
 
 ## 📦 Stack Tecnológico Completo
@@ -1142,7 +1184,6 @@ R: Sim! Interface responsiva e otimizada para mobile.
 
 ---
 
-**Desenvolvido com ❤️ para a comunidade de Engenharia Civil**
 
 ## 🧩 Implementação detalhada: Relatórios e Geração de PDF
 

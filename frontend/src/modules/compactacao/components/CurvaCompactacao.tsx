@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Maximize2, Download } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Scatter, ReferenceDot } from "recharts";
 import html2canvas from "html2canvas";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 
 interface PontoCurva {
   umidade: number;

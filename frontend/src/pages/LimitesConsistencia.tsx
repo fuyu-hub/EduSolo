@@ -15,7 +15,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
+import { useNotification } from "@/hooks/use-notification";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -132,7 +132,7 @@ const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 interface ResultItemProps { label: string; value: number | string | null; unit: string; tooltip?: string; highlight?: boolean; precision?: number; }
 
 function LimitesConsistenciaDesktop() {
-  const { toast } = useToast();
+  const notify = useNotification();
   const { settings } = useSettings();
   const { theme } = useTheme();
   const { addReport } = useRecentReports();
@@ -294,12 +294,12 @@ function LimitesConsistenciaDesktop() {
   }, [currentStep, isTourActive, carouselApi, results]);
 
   const addPontoLL = () => { append({ id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }); setCurrentPointIndex(fields.length); };
-  const removePontoLL = () => { if (fields.length > 2) { remove(currentPointIndex); } else { toast({ title: "Atenção", description: "São necessários pelo menos 2 pontos para o cálculo do LL.", variant: "default" }); } };
+  const removePontoLL = () => { if (fields.length > 2) { remove(currentPointIndex); } else { notify.warning({ title: "Atenção", description: "São necessários pelo menos 2 pontos para o cálculo do LL." }); } };
   const goToNextPoint = () => { setCurrentPointIndex(prev => Math.min(prev + 1, fields.length - 1)); };
   const goToPreviousPoint = () => { setCurrentPointIndex(prev => Math.max(prev - 1, 0)); };
 
   const addPontoLP = () => { appendLP({ id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }); setCurrentLPIndex(fieldsLP.length); };
-  const removePontoLP = () => { if (fieldsLP.length > 1) { removeLP(currentLPIndex); setCurrentLPIndex(prev => Math.max(0, prev - 1)); } else { toast({ title: "Atenção", description: "É necessário pelo menos 1 ensaio LP.", variant: "default" }); } };
+  const removePontoLP = () => { if (fieldsLP.length > 1) { removeLP(currentLPIndex); setCurrentLPIndex(prev => Math.max(0, prev - 1)); } else { notify.warning({ title: "Atenção", description: "É necessário pelo menos 1 ensaio LP." }); } };
   const goToNextLP = () => { setCurrentLPIndex(prev => Math.min(prev + 1, fieldsLP.length - 1)); };
   const goToPreviousLP = () => { setCurrentLPIndex(prev => Math.max(prev - 1, 0)); };
 
@@ -344,10 +344,7 @@ function LimitesConsistenciaDesktop() {
       setCurrentLPIndex(0);
       setResults(null);
       setApiError(null);
-      toast({ 
-        title: "Exemplo Carregado", 
-        description: `Dados de ${exemplo.nome} preenchidos com sucesso.` 
-      });
+      notify.success({ title: "Exemplo Carregado", description: `Dados de ${exemplo.nome} preenchidos com sucesso.` });
     }, 0);
   };
 
@@ -363,11 +360,11 @@ function LimitesConsistenciaDesktop() {
     const formData = form.getValues();
     const success = saveCalculation(saveName.trim(), formData, results);
     if (success) {
-      toast({ title: "Cálculo salvo!", description: "O cálculo foi salvo com sucesso." });
+      notify.success({ title: "Cálculo salvo!", description: "O cálculo foi salvo com sucesso." });
       setSaveDialogOpen(false);
       setSaveName("");
     } else {
-      toast({ title: "Erro ao salvar", description: "Não foi possível salvar o cálculo.", variant: "destructive" });
+      notify.error({ title: "Erro ao salvar", description: "Não foi possível salvar o cálculo." });
     }
   };
 
@@ -376,7 +373,7 @@ function LimitesConsistenciaDesktop() {
     form.reset(data);
     setResults(calculation.results);
     setCurrentPointIndex(0);
-    toast({ title: "Cálculo carregado!", description: `"${calculation.name}" foi carregado com sucesso.` });
+    notify.success({ title: "Cálculo carregado!", description: `"${calculation.name}" foi carregado com sucesso.` });
   };
 
   const handleStartTour = async () => {
@@ -397,10 +394,7 @@ function LimitesConsistenciaDesktop() {
     
     // Iniciar o tour
     startTour(tourSteps, "limites-consistencia", true); // Force = true para reiniciar
-    toast({
-      title: "Tour iniciado!",
-      description: "Exemplo carregado automaticamente para demonstração.",
-    });
+    notify.info({ title: "Tour iniciado!", description: "Exemplo carregado automaticamente para demonstração." });
   };
 
   const handleExportPDF = () => {
@@ -420,7 +414,7 @@ function LimitesConsistenciaDesktop() {
     setIsExportingPDF(true);
     
     try {
-      toast({ title: "Gerando PDF..." });
+      notify.info({ description: "Gerando PDF..." });
       
       const inputs: { label: string; value: string }[] = [];
       if (formData.umidadeNatural) inputs.push({ label: "Umidade Natural", value: `${formData.umidadeNatural}%` });
@@ -536,20 +530,16 @@ function LimitesConsistenciaDesktop() {
       setExportPDFDialogOpen(false);
 
       if (saved) {
-        toast({ title: "Relatório salvo", description: "PDF disponível em Relatórios" });
+        notify.success({ title: "Relatório salvo", description: "PDF disponível em Relatórios" });
         // No desktop, exibir diálogo com CTA para navegar
         setPdfSavedDialogOpen(true);
       } else {
-        toast({ title: "Erro ao salvar relatório", description: "O PDF foi gerado, mas não pôde ser salvo em Relatórios.", variant: "destructive" });
+        notify.error({ title: "Erro ao salvar relatório", description: "O PDF foi gerado, mas não pôde ser salvo em Relatórios." });
       }
     } catch (error) {
       console.error("Erro ao exportar PDF:", error);
       setIsExportingPDF(false);
-      toast({ 
-        title: "Erro ao exportar", 
-        description: "Ocorreu um erro ao gerar o PDF. Tente novamente.", 
-        variant: "destructive" 
-      });
+      notify.error({ title: "Erro ao exportar", description: "Ocorreu um erro ao gerar o PDF. Tente novamente." });
     }
   };
 
@@ -608,9 +598,9 @@ function LimitesConsistenciaDesktop() {
 
     const success = await exportToExcel(excelData);
     if (success) {
-      toast({ title: "Excel exportado!", description: "O arquivo foi baixado com sucesso." });
+      notify.success({ title: "Excel exportado!", description: "O arquivo foi baixado com sucesso." });
     } else {
-      toast({ title: "Erro ao exportar", description: "Não foi possível gerar o Excel.", variant: "destructive" });
+      notify.error({ title: "Erro ao exportar", description: "Não foi possível gerar o Excel." });
     }
   };
 
@@ -624,16 +614,16 @@ function LimitesConsistenciaDesktop() {
             umidade_natural: (data.umidadeNatural && data.umidadeNatural !== "") ? parseFloat(data.umidadeNatural) : undefined, percentual_argila: (data.percentualArgila && data.percentualArgila !== "") ? parseFloat(data.percentualArgila) : undefined,
         };
         if (apiInput.umidade_natural === undefined) delete apiInput.umidade_natural; if (apiInput.percentual_argila === undefined) delete apiInput.percentual_argila;
-    } catch (parseError) { setApiError("Erro interno ao processar os dados do formulário. Verifique se os números são válidos."); toast({ title: "Erro de Formulário", description: "Verifique se todos os campos numéricos contêm valores válidos.", variant: "destructive" }); setIsCalculating(false); return; }
+    } catch (parseError) { setApiError("Erro interno ao processar os dados do formulário. Verifique se os números são válidos."); notify.error({ title: "Erro de Formulário", description: "Verifique se todos os campos numéricos contêm valores válidos." }); setIsCalculating(false); return; }
     try {
       // Calcula localmente no frontend
       const resultado = calcularLimitesConsistencia(apiInput);
-      if (resultado.erro) { setApiError(resultado.erro); toast({ title: "Erro no Cálculo", description: resultado.erro, variant: "destructive" }); }
+      if (resultado.erro) { setApiError(resultado.erro); notify.error({ title: "Erro no Cálculo", description: resultado.erro }); }
       else { 
         setResults(resultado); 
-        toast({ title: "Sucesso", description: "Cálculo dos limites de consistência realizado." }); 
+        notify.success({ title: "Sucesso", description: "Cálculo dos limites de consistência realizado." }); 
       }
-    } catch (err) { let errorMessage = "Erro ao calcular limites de consistência."; if (err instanceof Error) { errorMessage = err.message; } setApiError(errorMessage); toast({ title: "Erro no Cálculo", description: errorMessage, variant: "destructive" }); }
+    } catch (err) { let errorMessage = "Erro ao calcular limites de consistência."; if (err instanceof Error) { errorMessage = err.message; } setApiError(errorMessage); notify.error({ title: "Erro no Cálculo", description: errorMessage }); }
     finally { setIsCalculating(false); }
   };
 

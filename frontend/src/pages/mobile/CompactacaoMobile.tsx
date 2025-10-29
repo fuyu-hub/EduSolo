@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { calcularCompactacao } from "@/lib/calculations/compactacao";
 import { Database, Calculator, Plus, Trash2, Info, Save, FolderOpen, Download, FileText, AlertCircle, ChevronLeft, ChevronRight, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,10 @@ import ExportPDFDialog from "@/components/ExportPDFDialog";
 import { cn } from "@/lib/utils";
 import CurvaCompactacao, { CurvaCompactacaoRef } from "@/components/compactacao/CurvaCompactacao";
 import { exemplosCompactacao, ExemploCompactacao } from "@/lib/exemplos-compactacao";
+import { useRecentReports } from "@/hooks/useRecentReports";
+import { prepareReportForStorage } from "@/lib/reportManager";
+import { useSettings } from "@/hooks/use-settings";
+import { useTheme } from "@/hooks/use-theme";
 
 interface PontoEnsaio {
   id: string;
@@ -88,6 +93,10 @@ const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
 export default function CompactacaoMobile() {
   const { toast } = useToast();
+  const { settings } = useSettings();
+  const { theme } = useTheme();
+  const { addReport } = useRecentReports();
+  const navigate = useNavigate();
   
   const [formData, setFormData] = useState<FormData>({
     volumeCilindro: "982",
@@ -119,6 +128,7 @@ export default function CompactacaoMobile() {
   const [exportPDFDialogOpen, setExportPDFDialogOpen] = useState(false);
   const [pdfFileName, setPdfFileName] = useState("");
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [pdfSavedDialogOpen, setPdfSavedDialogOpen] = useState(false);
 
   // Estados para exemplos
   const [examplesSheetOpen, setExamplesSheetOpen] = useState(false);
@@ -364,7 +374,7 @@ export default function CompactacaoMobile() {
 
     const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
     if (results.umidade_otima !== null) resultsList.push({ label: "Umidade Ótima", value: `${formatNumberForExport(results.umidade_otima, 2)}%`, highlight: true });
-    if (results.peso_especifico_seco_max !== null) resultsList.push({ label: "γd,máx", value: `${formatNumberForExport(results.peso_especifico_seco_max / 10, 3)} g/cm³`, highlight: true });
+    if (results.peso_especifico_seco_max !== null) resultsList.push({ label: "Peso Específico Seco Máximo", value: `${formatNumberForExport(results.peso_especifico_seco_max / 10, 3)} g/cm³`, highlight: true });
 
     const tables = [];
     const ensaioHeaders = ["Ponto", "Peso Amostra+Cil (g)", "Peso Bruto Úmido (g)", "Peso Bruto Seco (g)", "Tara (g)"];
@@ -384,23 +394,35 @@ export default function CompactacaoMobile() {
 
     const exportData: ExportData = {
       moduleName: "compactacao",
-      moduleTitle: "Ensaio de Compactação",
+      moduleTitle: "Compactação (Proctor)",
       inputs,
       results: resultsList,
       tables,
       chartImage: chartImage || undefined,
-      customFileName: pdfFileName
+      customFileName: pdfFileName,
+      theme,
+      printSettings: settings.printSettings
     };
-
-    const success = await exportToPDF(exportData);
+    const result = await exportToPDF(exportData, true);
     setIsExportingPDF(false);
-    
-    if (success) {
-      toast({
-        title: "📄 PDF exportado!",
-        description: "Arquivo baixado com sucesso",
-      });
-      setExportPDFDialogOpen(false);
+    if (result instanceof Blob) {
+      try {
+        const reportName = pdfFileName.replace('.pdf', '');
+        const prepared = await prepareReportForStorage({
+          name: reportName,
+          moduleType: 'compactacao',
+          moduleName: 'Compactação (Proctor)',
+          pdfBlob: result,
+          calculationData: { formData, results }
+        });
+        addReport(prepared);
+        setExportPDFDialogOpen(false);
+        toast({ title: "Relatório salvo", description: "PDF disponível em Relatórios" });
+        setPdfSavedDialogOpen(true);
+      } catch (error) {
+        console.error('Erro ao salvar relatório:', error);
+        toast({ title: "PDF exportado", description: "Não foi possível salvar em Relatórios." });
+      }
     } else {
       toast({
         title: "Erro",
@@ -732,7 +754,7 @@ export default function CompactacaoMobile() {
                     )}
                     {results.peso_especifico_seco_max !== null && (
                       <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-                        <p className="text-xs text-muted-foreground mb-1">γd,máx</p>
+                        <p className="text-xs text-muted-foreground mb-1">Peso Específico Seco Máximo</p>
                         <p className="text-xl font-bold text-primary">{(results.peso_especifico_seco_max / 10).toFixed(3)}</p>
                         <p className="text-xs text-muted-foreground">g/cm³</p>
                       </div>
@@ -904,6 +926,31 @@ export default function CompactacaoMobile() {
         onConfirm={handleConfirmExportPDF}
         isExporting={isExportingPDF}
       />
+
+      {/* Diálogo pós-exportação: PDF salvo */}
+      <Dialog open={pdfSavedDialogOpen} onOpenChange={setPdfSavedDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Relatório gerado</DialogTitle>
+            <DialogDescription>
+              O PDF foi salvo na seção Relatórios. Deseja ir para lá agora?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setPdfSavedDialogOpen(false)}>
+              Ficar aqui
+            </Button>
+            <Button
+              onClick={() => {
+                setPdfSavedDialogOpen(false);
+                navigate('/relatorios');
+              }}
+            >
+              Ir para Relatórios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

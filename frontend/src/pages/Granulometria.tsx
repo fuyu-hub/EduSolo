@@ -6,10 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { useSettings } from "@/hooks/use-settings";
 import { useTheme } from "@/hooks/use-theme";
@@ -132,6 +133,7 @@ function GranulometriaDesktop() {
   const [pdfFileName, setPdfFileName] = useState("");
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("curva");
+  const [pdfSavedDialogOpen, setPdfSavedDialogOpen] = useState(false);
 
   // Definição dos steps do tour
   const tourSteps: TourStep[] = [
@@ -657,7 +659,6 @@ function GranulometriaDesktop() {
     setIsExportingPDF(false);
     
     if (result instanceof Blob) {
-      // Salvar relatório com metadados (inclui pdfData para mobile)
       try {
         const reportName = pdfFileName.replace('.pdf', '');
         const prepared = await prepareReportForStorage({
@@ -672,12 +673,9 @@ function GranulometriaDesktop() {
           }
         });
         addReport(prepared);
-        
-        toast.success("PDF exportado com sucesso e salvo nos relatórios!");
         setExportPDFDialogOpen(false);
-        
-        // Navegar para a aba de relatórios
-        navigate('/relatorios');
+        toast.success("Relatório salvo. PDF disponível em Relatórios.");
+        setPdfSavedDialogOpen(true);
       } catch (error) {
         console.error('Erro ao salvar relatório:', error);
         toast.error("PDF exportado mas não foi possível salvar nos relatórios.");
@@ -970,7 +968,7 @@ function GranulometriaDesktop() {
                                 </p>
                               </div>
                               <div className="flex items-center gap-1">
-                                {results.classificacao_uscs.includes('-') && (
+                                {(results.classificacao_uscs.includes('-') || results.classificacao_uscs.includes('/')) && (
                                   <span className="text-[8px] text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded-full font-bold animate-pulse">
                                     DUPLA
                                   </span>
@@ -980,13 +978,23 @@ function GranulometriaDesktop() {
                                 </span>
                               </div>
                             </div>
-                            <p className="text-xl font-bold bg-gradient-to-r from-fuchsia-600 to-purple-600 bg-clip-text text-transparent mb-1">
-                              {results.classificacao_uscs}
-                            </p>
+                            {results.classificacao_uscs.includes('/') ? (
+                              <div className="mb-1 space-y-0.5">
+                                {results.classificacao_uscs.split('/').map((c, idx) => (
+                                  <div key={idx} className="text-xl font-bold bg-gradient-to-r from-fuchsia-600 to-purple-600 bg-clip-text text-transparent">
+                                    {c}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-xl font-bold bg-gradient-to-r from-fuchsia-600 to-purple-600 bg-clip-text text-transparent mb-1">
+                                {results.classificacao_uscs}
+                              </p>
+                            )}
                             <p className="text-[11px] text-foreground/80 leading-tight">{results.descricao_uscs}</p>
                             
                             {/* Explicação da classificação dupla */}
-                            {results.classificacao_uscs.includes('-') && (
+                            {(results.classificacao_uscs.includes('-') || results.classificacao_uscs.includes('/')) && (
                               <div className="mt-2 pt-2 border-t border-fuchsia-500/20">
                                 <p className="text-[10px] text-fuchsia-700 dark:text-fuchsia-300 font-semibold mb-1">
                                   🔄 Classificação Dupla
@@ -994,8 +1002,8 @@ function GranulometriaDesktop() {
                                 <p className="text-[10px] text-foreground/70 leading-tight">
                                   {results.classificacao_uscs.includes('CL-ML') || results.classificacao_uscs.includes('ML-CL') 
                                     ? 'Solo na zona de transição entre argila e silte. O ponto está próximo à Linha A ou na zona CL-ML (IP 4-7).'
-                                    : results.classificacao_uscs.match(/[GS][WP]-[GS][MC]/)
-                                    ? 'Solo com 5-12% de finos. Classificação baseada em graduação + plasticidade dos finos.'
+                                    : (results.classificacao_uscs.match(/[GS][WP]-[GS][MC]/) || results.classificacao_uscs.includes('/'))
+                                    ? 'Solo com 5–12% de finos (borderline). Classificação baseada em graduação (W/P) + plasticidade dos finos (M/C).'
                                     : results.classificacao_uscs.includes('CL-CH') || results.classificacao_uscs.includes('CH-CL')
                                     ? 'Argila próxima à transição entre baixa e alta plasticidade (LL próximo a 50%).'
                                     : results.classificacao_uscs.includes('ML-MH') || results.classificacao_uscs.includes('MH-ML')
@@ -1228,8 +1236,32 @@ function GranulometriaDesktop() {
         fileName={pdfFileName}
         onFileNameChange={setPdfFileName}
         onConfirm={handleConfirmExportPDF}
-        isExporting={isExportingPDF}
       />
+
+      {/* Diálogo pós-exportação: PDF salvo */}
+      <Dialog open={pdfSavedDialogOpen} onOpenChange={setPdfSavedDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Relatório gerado</DialogTitle>
+            <DialogDescription>
+              O PDF foi salvo na seção Relatórios. Deseja ir para lá agora?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setPdfSavedDialogOpen(false)}>
+              Ficar aqui
+            </Button>
+            <Button
+              onClick={() => {
+                setPdfSavedDialogOpen(false);
+                navigate('/relatorios');
+              }}
+            >
+              Ir para Relatórios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <SavedCalculations
         open={loadDialogOpen}

@@ -7,7 +7,7 @@
 [![React](https://img.shields.io/badge/React-18.3+-61dafb?style=flat-square&logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8+-3178c6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Python](https://img.shields.io/badge/Python-3.8+-3776ab?style=flat-square&logo=python)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-green?style=flat-square)](LICENSE)
 
 **Plataforma educacional completa para análise e aprendizado em Mecânica dos Solos**
 
@@ -284,7 +284,7 @@ Contribuições são bem-vindas! Veja o [Guia de Contribuição](CONTRIBUTING.md
 
 ## 📄 Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+Este projeto está licenciado sob a PolyForm Noncommercial 1.0.0. Consulte o arquivo [LICENSE](LICENSE) para detalhes. Saiba mais em https://polyformproject.org/licenses/noncommercial/1.0.0/
 
 ---
 

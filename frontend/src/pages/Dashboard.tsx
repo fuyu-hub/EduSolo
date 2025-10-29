@@ -136,7 +136,7 @@ const ModuleCard = memo<{
 
 ModuleCard.displayName = "ModuleCard";
 
-export default function Modules() {
+export default function Dashboard() {
   return (
     <div className="space-y-5 sm:space-y-6 max-w-7xl mx-auto">
       <div className="glass-card p-5 sm:p-6 rounded-xl sm:rounded-2xl shadow-modern border border-primary/20">
@@ -170,8 +170,8 @@ export default function Modules() {
               <div
                 key={module.title}
                 role="listitem"
-                className="animate-in fade-in slide-in-from-bottom-2 duration-300"
-                style={{ animationDelay: `${idx * 70}ms` }}
+                className="animate-in fade-in slide-in-from-bottom-2 zoom-in-95 duration-800 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                style={{ animationDelay: `${idx * 120}ms` }}
               >
                 {content}
               </div>
@@ -181,8 +181,8 @@ export default function Modules() {
           return (
             <div
               key={module.title}
-              className="animate-in fade-in slide-in-from-bottom-2 duration-300"
-              style={{ animationDelay: `${idx * 70}ms` }}
+              className="animate-in fade-in slide-in-from-bottom-2 zoom-in-95 duration-800 ease-[cubic-bezier(0.22,1,0.36,1)]"
+              style={{ animationDelay: `${idx * 120}ms` }}
             >
               <PreloaderLink
                 to={module.path}

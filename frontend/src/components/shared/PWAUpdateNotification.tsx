@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Smartphone, Zap, Wifi, Loader2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/sonner';
 import {
   Sheet,
   SheetContent,

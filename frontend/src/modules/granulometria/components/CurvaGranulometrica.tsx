@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Maximize2, Download } from "lucide-react";
 import { Line, XAxis, YAxis, CartesianGrid, Tooltip, ComposedChart, ReferenceLine, ReferenceArea } from "recharts";
 import html2canvas from "html2canvas";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/sonner";
 
 interface PontoGranulometrico {
   abertura: number;

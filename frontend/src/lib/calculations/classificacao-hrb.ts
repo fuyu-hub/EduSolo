@@ -32,8 +32,8 @@ export function classificarHRB(dados: ClassificacaoHRBInput): ClassificacaoHRBOu
     // Determina o grupo principal
     const [grupo, subgrupo] = determinarGrupoHRB(p200, p40, p10, ll, ip);
 
-    // Calcula o Índice de Grupo (IG)
-    const ig = calcularIndiceGrupo(p200, ll, ip);
+    // Calcula o Índice de Grupo (IG) após determinar o grupo
+    const ig = calcularIndiceGrupo(grupo, subgrupo, p200, ll, ip);
 
     // Monta a classificação completa
     let classificacao = subgrupo ? `${grupo}-${subgrupo}` : grupo;
@@ -73,53 +73,42 @@ function determinarGrupoHRB(
 ): [string, string | undefined] {
   // MATERIAIS GRANULARES (≤ 35% passando na #200)
   if (p200 <= 35) {
-    // Grupo A-1
-    if (p200 <= 15) {
-      if (p40 !== undefined && p40 <= 50) {
-        return ['A-1', 'a'];
-      } else if (p40 !== undefined && p40 > 50) {
-        return ['A-1', 'b'];
-      } else {
-        return ['A-1', undefined];
-      }
+    // A-1-a
+    if (
+      ip !== undefined && ip <= 6 &&
+      p200 <= 15 &&
+      p40 !== undefined && p40 <= 30 &&
+      p10 !== undefined && p10 <= 50
+    ) {
+      return ['A-1', 'a'];
     }
-
-    // Grupo A-3 (areia fina)
-    if (p200 <= 10) {
-      if (ll !== undefined && ll <= 40) {
-        if (ip === undefined || ip <= 10) {
-          if (p40 !== undefined && p40 > 51) {
-            return ['A-3', undefined];
-          }
-        }
-      }
+    // A-1-b (sem requisito de P#10)
+    else if (
+      ip !== undefined && ip <= 6 &&
+      p200 <= 25 &&
+      p40 !== undefined && p40 <= 50
+    ) {
+      return ['A-1', 'b'];
     }
-
-    // Grupo A-2 (materiais granulares siltosos ou argilosos)
-    if (ll !== undefined && ip !== undefined) {
-      if (ll <= 40) {
-        if (ip <= 10) {
-          return ['A-2', '4'];
+    // A-3 (sem requisito de P#10)
+    else if (
+      p40 !== undefined && p40 > 50 &&
+      p200 <= 10 &&
+      ip === 0
+    ) {
+      return ['A-3', undefined];
+    }
+    // A-2
+    else {
+      if (ll !== undefined && ip !== undefined) {
+        if (ll <= 40) {
+          return ip <= 10 ? ['A-2', '4'] : ['A-2', '6'];
         } else {
-          return ['A-2', '6'];
-        }
-      } else {
-        // LL > 40
-        if (ip <= 10) {
-          return ['A-2', '5'];
-        } else {
-          return ['A-2', '7'];
+          return ip <= 10 ? ['A-2', '5'] : ['A-2', '7'];
         }
       }
+      return ['A-2', undefined];
     }
-
-    // Se não tem LL e IP, assume A-2-4 como padrão para granulares com finos
-    if (p200 > 15) {
-      return ['A-2', '4'];
-    }
-
-    // Padrão para granulares
-    return ['A-1', undefined];
   }
 
   // MATERIAIS SILTO-ARGILOSOS (> 35% passando na #200)
@@ -127,76 +116,49 @@ function determinarGrupoHRB(
     if (ll === undefined || ip === undefined) {
       throw new Error('LL e IP são necessários para classificar solos com mais de 35% de finos.');
     }
-
-    // Grupo A-7 (solos argilosos)
-    if (ll > 40 && ip > 10) {
-      // A-7-5 se IP ≤ LL - 30
-      // A-7-6 se IP > LL - 30
-      if (ip <= ll - 30) {
-        return ['A-7', '5'];
-      } else {
-        return ['A-7', '6'];
-      }
-    }
-
-    // Grupo A-6 (solos argilosos)
-    if (ll <= 40 && ip > 10) {
-      return ['A-6', undefined];
-    }
-
-    // Grupo A-5 (solos siltosos)
-    if (ll > 40 && ip <= 10) {
-      return ['A-5', undefined];
-    }
-
-    // Grupo A-4 (solos siltosos)
     if (ll <= 40 && ip <= 10) {
       return ['A-4', undefined];
+    } else if (ll > 40 && ip <= 10) {
+      return ['A-5', undefined];
+    } else if (ll <= 40 && ip > 10) {
+      return ['A-6', undefined];
+    } else {
+      return ip <= ll - 30 ? ['A-7', '5'] : ['A-7', '6'];
     }
-
-    // Fallback
-    return ['A-4', undefined];
   }
 }
 
 function calcularIndiceGrupo(
+  grupo: string,
+  subgrupo: string | undefined,
   p200: number,
   ll: number | undefined,
   ip: number | undefined
 ): number {
-  // IG só é calculado para solos com mais de 35% de finos
-  if (p200 <= 35) {
+  // IG é sempre 0 para A-1-a, A-1-b e A-3
+  if (grupo === 'A-1' || grupo === 'A-3') {
     return 0;
   }
-
-  // Se não temos LL ou IP, não podemos calcular IG
+  // Se não temos LL ou IP, IG = 0
   if (ll === undefined || ip === undefined) {
     return 0;
   }
 
-  // Primeira parcela: (F - 35)[0.2 + 0.005(LL - 40)]
-  let parcela1 = 0.0;
-  if (p200 > 35 && ll > 40) {
-    parcela1 = (p200 - 35) * (0.2 + 0.005 * (ll - 40));
-    parcela1 = Math.min(parcela1, 4.0); // Máximo de 4
-  }
+  // Fórmula geral
+  let ig = (p200 - 35) * (0.2 + 0.005 * (ll - 40)) + 0.01 * (p200 - 15) * (ip - 10);
 
-  // Segunda parcela: 0.01(F - 15)(IP - 10)
-  let parcela2 = 0.0;
-  if (p200 > 15 && ip > 10) {
-    parcela2 = 0.01 * (p200 - 15) * (ip - 10);
-    parcela2 = Math.min(parcela2, 4.0); // Máximo de 4
+  // Para A-2-4 e A-2-5, somente a parcela do IP é usada
+  if (grupo === 'A-2' && (subgrupo === '4' || subgrupo === '5')) {
+    ig = 0.01 * (p200 - 15) * (ip - 10);
   }
-
-  let ig_total = parcela1 + parcela2;
 
   // IG não pode ser negativo
-  if (ig_total < 0) {
-    ig_total = 0;
+  if (ig < 0) {
+    return 0;
   }
 
   // Arredondar para o inteiro mais próximo
-  return Math.round(ig_total);
+  return Math.round(ig);
 }
 
 function obterDescricaoHRB(grupo: string, subgrupo: string | undefined): string {

@@ -1,5 +1,4 @@
 import { lazy, Suspense, useEffect } from "react";
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -39,7 +38,7 @@ const About = lazy(() => import("./pages/About"));
 const PlanosFuturos = lazy(() => import("./pages/PlanosFuturos"));
 const Salvos = lazy(() => import("./pages/Salvos"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
-const Modules = lazy(() => import("./pages/Modules"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
 
 // Componente interno para preload
 const AppContent = () => {
@@ -69,30 +68,33 @@ const AppContent = () => {
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
-        {/* Rota principal - Home como Módulos */}
+        {/* Rota principal - Home como Dashboard */}
         <Route
           path="/"
           element={
             <Layout>
               <Suspense fallback={<PageLoader />}>
-                <Modules />
+                <Dashboard />
               </Suspense>
             </Layout>
           }
         />
-        {/* Alias para Módulos */}
+        {/* Alias para Dashboard */}
         <Route
           path="/modulos"
+          element={<Navigate to="/dashboard" replace />}
+        />
+        {/* Dashboard */}
+        <Route
+          path="/dashboard"
           element={
             <Layout>
               <Suspense fallback={<PageLoader />}>
-                <Modules />
+                <Dashboard />
               </Suspense>
             </Layout>
           }
         />
-        {/* Redirect antigo Dashboard -> Home */}
-        <Route path="/dashboard" element={<Navigate to="/" replace />} />
         
         {/* Rotas de cálculo - com lazy loading */}
         <Route
@@ -274,7 +276,6 @@ const App = () => (
         <TourProvider>
           <ToursProvider>
             <TooltipProvider>
-              <Toaster />
               <Sonner />
               <Tour />
               <PWAUpdateNotification />
