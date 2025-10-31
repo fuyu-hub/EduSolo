@@ -11,16 +11,20 @@ import {
   Info,
   BarChart3,
   Maximize2,
+  Clock,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from "@/components/ui/carousel";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/components/ui/sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { useSettings } from "@/hooks/use-settings";
 import CalculationActions from "@/components/shared/CalculationActions";
@@ -149,7 +153,48 @@ export default function RecalqueAdensamento() {
   // Estados resultados
   const [results, setResults] = useState<RecalqueAdensamentoOutput | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const tempoAdensamento = results?.tempo_adensamento;
+const [indiceTempoSelecionado, setIndiceTempoSelecionado] = useState(0);
+const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+const [carouselProgress, setCarouselProgress] = useState(0);
+const [carouselTotalSlides, setCarouselTotalSlides] = useState(0);
+const tabelaTempo = useMemo(() => tempoAdensamento?.tabela_por_tempo ?? [], [tempoAdensamento]);
+const maxIndiceTempo = tabelaTempo.length > 0 ? tabelaTempo.length - 1 : 0;
+const tempoSelecionado = tabelaTempo[indiceTempoSelecionado] ?? null;
+const tempoInicial = tabelaTempo[0] ?? null;
+const tempoFinal = tabelaTempo.length > 0 ? tabelaTempo[tabelaTempo.length - 1] : null;
   
+useEffect(() => {
+  setIndiceTempoSelecionado(0);
+}, [tempoAdensamento]);
+
+useEffect(() => {
+  if (indiceTempoSelecionado > maxIndiceTempo) {
+    setIndiceTempoSelecionado(maxIndiceTempo);
+  }
+}, [indiceTempoSelecionado, maxIndiceTempo]);
+
+useEffect(() => {
+  if (!carouselApi) {
+    return;
+  }
+
+  const updateCarouselProgress = () => {
+    const total = carouselApi.scrollSnapList().length;
+    setCarouselTotalSlides(total);
+    setCarouselProgress(total > 0 ? (carouselApi.selectedScrollSnap() + 1) / total : 0);
+  };
+
+  updateCarouselProgress();
+  carouselApi.on("select", updateCarouselProgress);
+  carouselApi.on("reInit", updateCarouselProgress);
+
+  return () => {
+    carouselApi.off("select", updateCarouselProgress);
+    carouselApi.off("reInit", updateCarouselProgress);
+  };
+}, [carouselApi]);
+
   // Estados salvamento
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
@@ -701,6 +746,9 @@ export default function RecalqueAdensamento() {
       const sigmaV0PrimeVal = sigmaV0Prime!;
       const sigmaVmPrimeVal = sigmaVmPrime!;
       const deltaSigmaPrime = deltaSigma!;
+      const coeficienteAdensamento = camadaArgila.Cv ?? null;
+      const drenagemDupla = camadaBase?.drenante ?? false;
+      const alturaDrenagem = camadaArgila.espessura / (drenagemDupla ? 2 : 1);
 
       const input: RecalqueAdensamentoInput = {
         espessura_camada: espessura,
@@ -711,6 +759,12 @@ export default function RecalqueAdensamento() {
         tensao_pre_adensamento: sigmaVmPrimeVal, // σvm′ do passado (pré-adensamento)
         acrescimo_tensao: deltaSigmaPrime,
       };
+
+      if (coeficienteAdensamento && coeficienteAdensamento > 0) {
+        input.coeficiente_adensamento = coeficienteAdensamento;
+        input.altura_drenagem = alturaDrenagem;
+        input.drenagem_dupla = drenagemDupla;
+      }
 
       const resultado = calcularRecalqueAdensamento(input);
       setResults(resultado);
@@ -1266,7 +1320,7 @@ export default function RecalqueAdensamento() {
             </CardTitle>
           </CardHeader>
 
-          <CardContent className="flex-1 p-4 pt-0 min-h-[500px]">
+          <CardContent className="flex-1 p-4 pt-0 min-h-[420px]">
             <div className="space-y-4">
 
               {/* Perfil e Parâmetros */}
@@ -1407,32 +1461,31 @@ export default function RecalqueAdensamento() {
             </Card>
           )}
 
-          {results && !results.erro && (
-            <>
-              {/* Card Resumo das Tensões - substitui o card de Camada de Argila quando há resultados */}
-              <Card className="h-[180px]">
+          {results && !results.erro ? (
+            <div className="space-y-4">
+              <Card className="h-[140px]">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Info className="w-5 h-5" />
                     Resumo das Tensões
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-6">
+                <CardContent className="pt-0">
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label className="text-muted-foreground text-sm">σ<sub>vm</sub>′ (Pré-Adens. - Passado)</Label>
+                      <Label className="text-muted-foreground text-lg">σ<sub>vm′</sub> (Pré-Adens.)</Label>
                       <p className="text-lg font-semibold">
                         {sigmaVmPrime?.toFixed(2) || "0.00"} kPa
                       </p>
                     </div>
                     <div>
-                      <Label className="text-muted-foreground text-sm">σ<sub>v0</sub>′ (Inicial - Presente)</Label>
+                      <Label className="text-muted-foreground text-lg">σ<sub>v0′</sub> (Efetiva Inicial)</Label>
                       <p className="text-lg font-semibold">
                         {sigmaV0Prime?.toFixed(2) || "0.00"} kPa
                       </p>
                     </div>
                     <div>
-                      <Label className="text-muted-foreground text-sm">σ<sub>vf</sub>′ (Tensão Efetiva Final)</Label>
+                      <Label className="text-muted-foreground text-lg">σ<sub>vf′</sub> (Efetiva Final)</Label>
                       <p className="text-lg font-semibold">
                         {sigmaVfPrime?.toFixed(2) || "0.00"} kPa
                       </p>
@@ -1441,92 +1494,182 @@ export default function RecalqueAdensamento() {
                 </CardContent>
               </Card>
 
-              <Card className="h-[380px]">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5" />
-                    Resultados do Cálculo
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 pt-6">
-                  {/* Recalque - Resultado Principal */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-muted-foreground text-xs">Recalque Total Primário</Label>
-                      <p className="text-2xl font-bold">
-                        {results.recalque_total_primario?.toFixed(4)} m
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        ({(results.recalque_total_primario! * 1000).toFixed(2)} mm)
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground text-xs">Porcentagem de Recalque</Label>
-                      <p className="text-2xl font-bold">
-                        {camadaArgila && results.recalque_total_primario 
-                          ? `${((results.recalque_total_primario / camadaArgila.espessura) * 100).toFixed(2)}%`
-                          : "0.00%"}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        em relação à espessura
-                      </p>
-                    </div>
+              <Carousel className="relative w-full" setApi={setCarouselApi}>
+                {carouselTotalSlides > 1 && (
+                  <div className="absolute inset-x-0 top-0 z-20 h-1 rounded-full bg-muted/30">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all duration-300"
+                      style={{ width: `${Math.max(carouselProgress, 0) * 100}%` }}
+                    />
                   </div>
-                  
-                  {/* Estado e Parâmetros de Adensamento */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-muted-foreground text-xs">Estado de Adensamento</Label>
-                      <p className="text-lg font-semibold">
-                        {results.estado_adensamento}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground text-xs">RPA Calculado</Label>
-                      <p className="text-xl font-semibold">
-                        {results.RPA?.toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* Parâmetros do Solo */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-muted-foreground text-xs">Deformação Volumétrica</Label>
-                      <p className="text-xl font-semibold">
-                        {results.deformacao_volumetrica?.toFixed(5) || "0.00000"}
-                      </p>
-                    </div>
-                    <div>
-                      <Label className="text-muted-foreground text-xs">Espessura da Camada</Label>
-                      <p className="text-xl font-semibold">
-                        {camadaArgila?.espessura?.toFixed(2) || "0.00"} m
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </>
-          )}
+                )}
+                <CarouselContent className={cn(carouselTotalSlides > 1 ? "pt-4" : "")}>
+                  <CarouselItem>
+                    <div className="space-y-4">
+                      <Card className="h-[340px]">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <BarChart3 className="w-5 h-5" />
+                            Resultados do Cálculo
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-muted-foreground text-xs">Recalque Total Primário</Label>
+                              <p className="text-2xl font-bold">
+                                {results.recalque_total_primario?.toFixed(4)} m
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                ({(results.recalque_total_primario! * 1000).toFixed(2)} mm)
+                              </p>
+                            </div>
+                            <div>
+                              <Label className="text-muted-foreground text-xs">Porcentagem de Recalque</Label>
+                              <p className="text-2xl font-bold">
+                                {camadaArgila && results.recalque_total_primario
+                                  ? `${((results.recalque_total_primario / camadaArgila.espessura) * 100).toFixed(2)}%`
+                                  : "0.00%"}
+                              </p>
+                              <p className="text-sm text-muted-foreground">em relação à espessura</p>
+                            </div>
+                          </div>
 
-          {results?.erro && (
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-muted-foreground text-xs">Estado de Adensamento</Label>
+                              <p className="text-lg font-semibold">{results.estado_adensamento}</p>
+                            </div>
+                            <div>
+                              <Label className="text-muted-foreground text-xs">RPA Calculado</Label>
+                              <p className="text-xl font-semibold">{results.RPA?.toFixed(2)}</p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-muted-foreground text-xs">Deformação Volumétrica</Label>
+                              <p className="text-xl font-semibold">
+                                {results.deformacao_volumetrica?.toFixed(5) || "0.00000"}
+                              </p>
+                            </div>
+                            <div>
+                              <Label className="text-muted-foreground text-xs">Espessura da Camada</Label>
+                              <p className="text-xl font-semibold">
+                                {camadaArgila?.espessura?.toFixed(2) || "0.00"} m
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </CarouselItem>
+
+                  <CarouselItem>
+                    <div className="space-y-4">
+                      <Card className="min-h-[340px]">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Clock className="w-5 h-5" />
+                            Evolução do Adensamento
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                          {tempoAdensamento ? (
+                            <div className="space-y-6">
+                              <div className="grid grid-cols-3 gap-3 text-sm">
+                                <div>
+                                  <Label className="text-muted-foreground text-xs">Coeficiente Cv</Label>
+                                  <p className="font-semibold">
+                                    {tempoAdensamento.coeficiente_adensamento.toFixed(2)} m²/ano
+                                  </p>
+                                </div>
+                                <div>
+                                  <Label className="text-muted-foreground text-xs">Altura de Drenagem (Hd)</Label>
+                                  <p className="font-semibold">{tempoAdensamento.altura_drenagem.toFixed(2)} m</p>
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                  <Label className="text-muted-foreground text-xs">Esquema de Drenagem</Label>
+                                  <Badge variant={tempoAdensamento.drenagem_dupla ? "secondary" : "outline"}>
+                                    {tempoAdensamento.drenagem_dupla ? "Dupla" : "Simples"}
+                                  </Badge>
+                                </div>
+                              </div>
+
+                              <div className="space-y-1">
+                                <Label className="text-muted-foreground text-xs">Tempo de consolidação selecionado</Label>
+                                <Slider
+                                  value={[indiceTempoSelecionado]}
+                                  max={maxIndiceTempo}
+                                  min={0}
+                                  step={1}
+                                  onValueChange={(value) => setIndiceTempoSelecionado(value[0] ?? 0)}
+                                  disabled={maxIndiceTempo === 0}
+                                />
+                                <div className="flex justify-between text-xs text-muted-foreground">
+                                  <span>{tempoInicial ? `${tempoInicial.tempo_anos.toFixed(2)} anos` : "0.00 anos"}</span>
+                                  <span>{tempoFinal ? `${tempoFinal.tempo_anos.toFixed(2)} anos` : "—"}</span>
+                                </div>
+                              </div>
+
+                              {tempoSelecionado ? (
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                      <Label className="text-muted-foreground text-xs">Tempo</Label>
+                                      <p className="text-xl font-semibold">
+                                        {tempoSelecionado.tempo_anos.toFixed(2)} anos
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">
+                                        ({tempoSelecionado.tempo_meses.toFixed(1)} meses)
+                                      </p>
+                                    </div>
+                                    <div className="p-3 border rounded-lg bg-muted/40">
+                                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Solução Exata</p>
+                                      <p className="text-lg font-semibold">{tempoSelecionado.grau_exato.toFixed(2)}%</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        Recalque: {tempoSelecionado.recalque_exato.toFixed(4)} m
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="text-sm text-muted-foreground">
+                                  Ajuste o slider para visualizar grau de adensamento e recalque ao longo do tempo.
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center text-center py-12 text-sm text-muted-foreground">
+                              <Clock className="w-10 h-10 mb-3" />
+                              <p>Informe o coeficiente de adensamento (Cv) e a altura de drenagem para visualizar a evolução temporal.</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </CarouselItem>
+                </CarouselContent>
+              </Carousel>
+            </div>
+          ) : results?.erro ? (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{results.erro}</AlertDescription>
             </Alert>
-          )}
-
-          {!results && !isCalculating && (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <MoveDown className="w-12 h-12 text-muted-foreground/50 mb-4" />
-                  <p className="text-muted-foreground text-sm">
-                    Preencha os dados nas três abas e clique em "Calcular Recalque" para ver os resultados.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+          ) : (
+            !isCalculating && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <MoveDown className="w-12 h-12 text-muted-foreground/50 mb-4" />
+                    <p className="text-muted-foreground text-sm">
+                      Preencha os dados nas três abas e clique em "Calcular Recalque" para ver os resultados.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )
           )}
         </div>
       </div>
