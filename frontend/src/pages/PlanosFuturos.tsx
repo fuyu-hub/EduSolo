@@ -21,56 +21,61 @@ export default function PlanosFuturos() {
 
       {/* Visão Geral */}
       <Card className="glass p-4 md:p-6 border-l-4 border-l-violet-500">
-        <p className="text-xs md:text-sm text-foreground font-semibold leading-relaxed">
-          O EduSolo está em constante evolução! Nosso objetivo é tornar a ferramenta cada vez mais completa, 
-          abrangendo todos os principais tópicos da Mecânica dos Solos e oferecendo uma experiência educacional 
-          excepcional para estudantes e profissionais.
-        </p>
+        <div className="space-y-2">
+          <p className="text-xs md:text-sm text-foreground font-semibold leading-relaxed">
+            O EduSolo está em constante evolução! Com <span className="text-primary font-bold">7 módulos principais já implementados</span> e funcionalidades 
+            profissionais como exportação PDF/Excel, salvamento de cálculos e tutoriais interativos, nossa plataforma oferece 
+            uma experiência completa para análise e aprendizado em Mecânica dos Solos.
+          </p>
+          <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
+            Nosso objetivo é continuar expandindo a ferramenta, abrangendo todos os principais tópicos da Mecânica dos Solos 
+            e oferecendo uma experiência educacional excepcional para estudantes, professores e profissionais.
+          </p>
+        </div>
       </Card>
 
-      {/* Destaque Especial - Funcionalidades Prioritárias */}
-      <Card className="glass p-4 md:p-6 border-2 border-orange-500/50 bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent shadow-lg">
+      {/* Destaque Especial - Conquistas Recentes */}
+      <Card className="glass p-4 md:p-6 border-2 border-emerald-500/50 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent shadow-lg">
         <div className="space-y-3 md:space-y-4">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-              <Zap className="w-4 h-4 md:w-5 md:h-5 text-orange-500" />
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+              <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-emerald-500" />
             </div>
             <div className="flex-1">
-              <h3 className="text-base md:text-lg font-bold text-foreground mb-1">Foco Atual de Desenvolvimento</h3>
+              <h3 className="text-base md:text-lg font-bold text-foreground mb-1">Conquistas Recentes</h3>
               <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-                Antes de adicionar novos módulos, estamos priorizando melhorar a experiência dos módulos existentes 
-                e adicionar funcionalidades que tornarão o EduSolo ainda mais prático e educacional:
+                Funcionalidades implementadas recentemente que tornam o EduSolo uma ferramenta ainda mais completa e profissional:
               </p>
             </div>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 pt-2">
             <div className="flex items-start gap-2 text-xs md:text-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 flex-shrink-0"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0"></div>
               <div>
-                <strong className="text-foreground">Melhorias Contínuas:</strong>
-                <span className="text-muted-foreground"> Aprimorando UX/UI, validações e performance</span>
+                <strong className="text-foreground">✅ Sistema de Exportação:</strong>
+                <span className="text-muted-foreground"> Relatórios PDF e Excel profissionais com personalização completa</span>
               </div>
             </div>
             <div className="flex items-start gap-2 text-xs md:text-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 flex-shrink-0"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0"></div>
               <div>
-                <strong className="text-foreground">Exportações Personalizadas:</strong>
-                <span className="text-muted-foreground"> Relatórios customizáveis e multi-cálculos</span>
+                <strong className="text-foreground">✅ Salvamento de Cálculos:</strong>
+                <span className="text-muted-foreground"> Sistema completo de salvamento e carregamento funcional</span>
               </div>
             </div>
             <div className="flex items-start gap-2 text-xs md:text-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 flex-shrink-0"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0"></div>
               <div>
-                <strong className="text-foreground">Modo Ensaio:</strong>
-                <span className="text-muted-foreground"> Simulação interativa de procedimentos laboratoriais</span>
+                <strong className="text-foreground">✅ Tutoriais Interativos:</strong>
+                <span className="text-muted-foreground"> Guias passo a passo em todos os módulos</span>
               </div>
             </div>
             <div className="flex items-start gap-2 text-xs md:text-sm">
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-1.5 flex-shrink-0"></div>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0"></div>
               <div>
-                <strong className="text-foreground">Integração Entre Módulos:</strong>
-                <span className="text-muted-foreground"> Reutilizar dados entre diferentes ensaios</span>
+                <strong className="text-foreground">✅ Módulo Recalque:</strong>
+                <span className="text-muted-foreground"> Implementação completa com análise temporal e visualização interativa</span>
               </div>
             </div>
           </div>
@@ -86,12 +91,12 @@ export default function PlanosFuturos() {
               <span className="truncate">Progresso Geral do Projeto</span>
             </h2>
             <Badge variant="secondary" className="text-sm md:text-base flex-shrink-0">
-              70%
+              85%
             </Badge>
           </div>
-          <Progress value={70} className="h-2 md:h-3" />
+          <Progress value={85} className="h-2 md:h-3" />
           <p className="text-xs md:text-sm text-muted-foreground">
-            6 módulos frontend completos • 3 módulos backend prontos (aguardando interface)
+            7 módulos principais completos • Sistema de exportação PDF/Excel • Salvamento de cálculos • Tutoriais interativos • Interface responsiva
           </p>
         </div>
       </Card>
@@ -100,89 +105,89 @@ export default function PlanosFuturos() {
       <section className="space-y-3 md:space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <Zap className="w-4 h-4 md:w-5 md:h-5 text-orange-500" />
-          <h2 className="text-xl md:text-2xl font-semibold text-foreground">Prioridades Imediatas</h2>
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground">Em Desenvolvimento</h2>
           <Badge variant="destructive" className="text-xs md:text-sm">Alta Prioridade</Badge>
         </div>
 
         <div className="space-y-3">
           <FeatureCard
             status="em-desenvolvimento"
-            title="Implementar Interfaces para Módulos Backend Prontos"
-            description="Desenvolver as interfaces de usuário para os 3 módulos que já possuem toda a lógica de cálculo implementada no backend: Fluxo Hidráulico, Recalque por Adensamento e Tempo de Adensamento."
-            tags={["Frontend", "UI/UX", "Integração API", "Alta Prioridade"]}
-            progress={5}
+            title="Resistência ao Cisalhamento"
+            description="Análise de ensaios triaxiais (UU, CU, CD) e cisalhamento direto. Cálculo de parâmetros de resistência (c, φ), círculo de Mohr e análise de tensões efetivas."
+            tags={["Triaxial", "Cisalhamento Direto", "Mohr-Coulomb", "Resistência"]}
+            progress={0}
           />
 
           <FeatureCard
             status="em-desenvolvimento"
-            title="Melhorias nos Módulos Atuais"
-            description="Aprimoramento contínuo dos módulos existentes: validações mais robustas, feedback visual aprimorado, otimização de performance e correção de bugs."
+            title="Empuxo de Terra"
+            description="Cálculo de empuxo em repouso (K₀), empuxo ativo (Ka) e passivo (Kp) usando teorias de Rankine e Coulomb. Análise de muros de contenção e estabilidade."
+            tags={["Rankine", "Coulomb", "Muros de Arrimo", "Estabilidade"]}
+            progress={0}
+          />
+          
+          <FeatureCard
+            status="em-desenvolvimento"
+            title="Capacidade de Carga"
+            description="Cálculo de capacidade de carga de fundações rasas e profundas usando fórmulas clássicas (Terzaghi, Meyerhof, Hansen). Fatores de capacidade, influência da forma e profundidade."
+            tags={["Terzaghi", "Meyerhof", "Hansen", "Fundações"]}
+            progress={0}
+          />
+          
+          <FeatureCard
+            status="em-desenvolvimento"
+            title="Estabilidade de Taludes"
+            description="Análise de estabilidade usando métodos de equilíbrio limite: Fellenius, Bishop, Janbu. Superfície de ruptura circular e cálculo de fator de segurança."
+            tags={["Bishop", "Fellenius", "Janbu", "Fator de Segurança"]}
+            progress={0}
+          />
+
+          <FeatureCard
+            status="em-desenvolvimento"
+            title="Melhorias Contínuas"
+            description="Aprimoramento contínuo dos módulos existentes: validações mais robustas, feedback visual aprimorado, otimização de performance, correção de bugs e melhorias de UX/UI."
             tags={["UX/UI", "Performance", "Validações", "Feedback"]}
-            progress={70}
-          />
-          
-          <FeatureCard
-            status="em-desenvolvimento"
-            title="Exportações Personalizadas"
-            description="Sistema avançado de exportação permitindo escolher quais dados incluir, personalizar layout, adicionar logos e notas, e selecionar múltiplos cálculos para exportar em um único documento."
-            tags={["PDF Customizado", "Excel Avançado", "Templates", "Multi-cálculos"]}
-            progress={25}
-          />
-          
-          <FeatureCard
-            status="em-desenvolvimento"
-            title="Modo Ensaio"
-            description="Modo especial que simula ensaios laboratoriais passo a passo, com guias interativos, dicas educacionais em tempo real e validação pedagógica dos procedimentos."
-            tags={["Educacional", "Passo-a-passo", "Simulação", "Guias"]}
-            progress={15}
-          />
-          
-          <FeatureCard
-            status="em-desenvolvimento"
-            title="Integração Entre Módulos"
-            description="Possibilidade de aproveitar dados de um ensaio/módulo em outro. Por exemplo: usar Gs e umidade dos Índices Físicos direto na Compactação, ou granulometria no cálculo de permeabilidade."
-            tags={["Workflow", "Dados Compartilhados", "Produtividade", "Integração"]}
-            progress={10}
+            progress={75}
           />
         </div>
       </section>
 
-      {/* Backend Completo - Aguardando Interface */}
+      {/* Módulos Concluídos Recentemente */}
       <section className="space-y-3 md:space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-emerald-500" />
-          <h2 className="text-xl md:text-2xl font-semibold text-foreground">Backend Completo - Aguardando Interface</h2>
-          <Badge className="bg-emerald-500 hover:bg-emerald-600 text-xs md:text-sm">Backend 100%</Badge>
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground">Módulos Concluídos Recentemente</h2>
+          <Badge className="bg-emerald-500 hover:bg-emerald-600 text-xs md:text-sm">✅ Completo</Badge>
         </div>
 
         <Card className="glass p-3 md:p-4 border-l-4 border-l-emerald-500 bg-emerald-500/5">
           <p className="text-xs md:text-sm text-muted-foreground">
-            <strong className="text-foreground">Estes módulos já possuem toda a lógica de cálculo implementada no backend.</strong> Falta apenas desenvolver a interface de usuário para torná-los acessíveis na aplicação.
+            <strong className="text-foreground">Estes módulos foram finalizados e estão disponíveis para uso:</strong> Recalque por Adensamento foi recentemente implementado com todas as funcionalidades, incluindo análise temporal e visualização interativa do perfil.
           </p>
         </Card>
 
         <div className="space-y-3">
           <FeatureCard
             status="concluido"
-            title="Análise de Fluxo Hidráulico"
-            description="Cálculo de permeabilidade equivalente (horizontal e vertical), velocidades de fluxo, tensões com fluxo, gradiente crítico e fator de segurança contra liquefação. Backend completo e funcional."
-            tags={["Permeabilidade", "Redes de Fluxo", "Lei de Darcy", "Gradiente Crítico"]}
-            progress={100}
-          />
-          
-          <FeatureCard
-            status="concluido"
             title="Recalque por Adensamento"
-            description="Cálculo de recalques em solos argilosos considerando estados normalmente adensado, pré-adensado e sobreadensado. Implementa teoria de Terzaghi com todos os índices de compressão."
-            tags={["Recalques", "Terzaghi", "Cc", "Cr", "OCR"]}
+            description="Cálculo completo de recalques em solos argilosos com análise de três períodos (passado, presente, futuro). Implementa teoria de Terzaghi com solução exata e aproximada, evolução temporal, configuração de drenagem simples e dupla, e visualização interativa do perfil geotécnico."
+            tags={["Recalques", "Terzaghi", "Cc", "Cr", "Evolução Temporal", "Drenagem"]}
             progress={100}
           />
 
           <FeatureCard
             status="concluido"
-            title="Tempo de Adensamento"
-            description="Análise temporal do adensamento com cálculo de grau de adensamento, fator tempo e previsão de recalques ao longo do tempo. Suporta drenagem simples e dupla."
-            tags={["Cv", "Fator Tempo", "Grau de Adensamento", "Drenagem"]}
+            title="Sistema de Exportação"
+            description="Geração completa de relatórios profissionais em PDF e Excel com personalização de layout, temas, margens, orientação e elementos. Sistema de gerenciamento de relatórios com visualização, download e regeneração."
+            tags={["PDF", "Excel", "Relatórios", "Exportação"]}
+            progress={100}
+          />
+
+          <FeatureCard
+            status="concluido"
+            title="Salvamento e Carregamento"
+            description="Sistema completo de salvamento e carregamento de cálculos, permitindo retomar trabalhos posteriormente. Organização por nome, renomeação e exclusão de cálculos salvos."
+            tags={["Salvamento", "Carregamento", "Persistência", "Organização"]}
             progress={100}
           />
         </div>
@@ -192,41 +197,27 @@ export default function PlanosFuturos() {
       <section className="space-y-3 md:space-y-4">
         <div className="flex items-center gap-2">
           <Clock className="w-4 h-4 md:w-5 md:h-5 text-blue-500" />
-          <h2 className="text-xl md:text-2xl font-semibold text-foreground">Planejados</h2>
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground">Planejados para Médio Prazo</h2>
         </div>
 
         <div className="space-y-3">
           <FeatureCard
             status="planejado"
-            title="Estabilidade de Taludes"
-            description="Análise de estabilidade usando métodos de Bishop, Fellenius e outros."
-            tags={["Bishop", "Fellenius", "Fator de Segurança"]}
+            title="Fluxo Hidráulico"
+            description="Análise de permeabilidade equivalente (horizontal e vertical), velocidades de descarga e percolação, gradiente crítico, fator de segurança contra liquefação e análise de tensões sob fluxo. Redes de fluxo e lei de Darcy."
+            tags={["Permeabilidade", "Redes de Fluxo", "Lei de Darcy", "Gradiente Crítico"]}
           />
           
           <FeatureCard
             status="planejado"
-            title="Capacidade de Carga"
-            description="Cálculo de capacidade de carga de fundações rasas e profundas."
-            tags={["Terzaghi", "Meyerhof", "Fundações"]}
-          />
-          
-          <FeatureCard
-            status="planejado"
-            title="Empuxos de Terra"
-            description="Cálculo de empuxos ativos, passivos e em repouso para estruturas de contenção."
-            tags={["Rankine", "Coulomb", "Muros de Arrimo"]}
-          />
-          
-          <FeatureCard
-            status="planejado"
-            title="Ensaios de Cisalhamento"
-            description="Análise de ensaios triaxiais, cisalhamento direto e envoltória de ruptura."
-            tags={["Triaxial", "Mohr-Coulomb", "Resistência"]}
+            title="Melhorias nos Módulos Existentes"
+            description="Análise avançada de recalques (recalque secundário), múltiplos métodos de classificação, melhorias na integração entre módulos e validações adicionais."
+            tags={["Recalque Secundário", "Classificação", "Integração", "Validações"]}
           />
         </div>
       </section>
 
-      {/* Melhorias Futuras */}
+      {/* Funcionalidades Complementares */}
       <section className="space-y-3 md:space-y-4">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-emerald-500" />
@@ -264,8 +255,8 @@ export default function PlanosFuturos() {
           
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
-            title="Modo Offline Completo"
-            description="Uso total da aplicação sem conexão, com sincronização automática"
+            title="Integração Entre Módulos"
+            description="Reutilizar dados entre diferentes ensaios (ex: usar Gs dos Índices Físicos na Compactação)"
             status="planejado"
           />
           
@@ -278,6 +269,37 @@ export default function PlanosFuturos() {
           
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
+            title="Material Educacional"
+            description="Seção com conteúdo teórico, vídeos explicativos, exercícios práticos e banco de questões"
+            status="planejado"
+          />
+          
+          <ImprovementCard
+            icon={<CheckCircle2 className="w-5 h-5" />}
+            title="Modo Ensaio Interativo"
+            description="Simulação passo a passo de ensaios laboratoriais com guias educacionais em tempo real"
+            status="planejado"
+          />
+        </div>
+      </section>
+
+      {/* Funcionalidades Futuras */}
+      <section className="space-y-3 md:space-y-4">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-violet-500" />
+          <h2 className="text-xl md:text-2xl font-semibold text-foreground">Funcionalidades Futuras (Longo Prazo)</h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+          <ImprovementCard
+            icon={<CheckCircle2 className="w-5 h-5" />}
+            title="Sistema de Autenticação"
+            description="Autenticação de usuários e sincronização de cálculos na nuvem"
+            status="futuro"
+          />
+          
+          <ImprovementCard
+            icon={<CheckCircle2 className="w-5 h-5" />}
             title="Colaboração em Equipe"
             description="Compartilhar cálculos, comentar e trabalhar em equipe em tempo real"
             status="futuro"
@@ -286,7 +308,28 @@ export default function PlanosFuturos() {
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
             title="App Mobile Nativo"
-            description="Versão nativa para Android e iOS com suporte a câmera para OCR"
+            description="Versão nativa para Android e iOS com sincronização e suporte a câmera para OCR"
+            status="futuro"
+          />
+          
+          <ImprovementCard
+            icon={<CheckCircle2 className="w-5 h-5" />}
+            title="Integração com CAD"
+            description="Exportação e importação de dados para software CAD (AutoCAD, etc.)"
+            status="futuro"
+          />
+          
+          <ImprovementCard
+            icon={<CheckCircle2 className="w-5 h-5" />}
+            title="Inteligência Artificial"
+            description="Machine Learning para predições, sugestões automáticas de parâmetros e validação inteligente"
+            status="futuro"
+          />
+          
+          <ImprovementCard
+            icon={<CheckCircle2 className="w-5 h-5" />}
+            title="Análises Avançadas"
+            description="Análise de elementos finitos (FEM), análise probabilística, análise de sensibilidade e otimização"
             status="futuro"
           />
         </div>
@@ -308,7 +351,7 @@ export default function PlanosFuturos() {
         </div>
       </Card>
 
-      {/* Destaque Especial - Acréscimo de Tensões */}
+      {/* Destaque Especial - Módulos Completos */}
       <Card className="glass p-4 md:p-6 border-2 border-primary/50 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
         <div className="space-y-3 md:space-y-4">
           <div className="flex items-start gap-3">
@@ -316,9 +359,9 @@ export default function PlanosFuturos() {
               <Target className="w-4 h-4 md:w-5 md:h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <h3 className="text-base md:text-lg font-bold text-foreground mb-1">Módulo Acréscimo de Tensões - Completo!</h3>
+              <h3 className="text-base md:text-lg font-bold text-foreground mb-1">Módulos Destaque - Totalmente Implementados!</h3>
               <p className="text-xs md:text-sm text-muted-foreground leading-relaxed mb-2 md:mb-3">
-                Um dos módulos mais completos do EduSolo, implementando 4 métodos diferentes de cálculo de acréscimo de tensões no solo:
+                Alguns dos módulos mais completos e robustos do EduSolo, com funcionalidades avançadas e visualizações interativas:
               </p>
             </div>
           </div>
@@ -327,36 +370,36 @@ export default function PlanosFuturos() {
             <div className="flex items-start gap-2 text-xs md:text-sm bg-background/50 p-2 md:p-3 rounded-lg border border-border/50">
               <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
               <div>
-                <strong className="text-foreground">Boussinesq:</strong>
-                <span className="text-muted-foreground"> Carga pontual vertical na superfície</span>
+                <strong className="text-foreground">Acréscimo de Tensões:</strong>
+                <span className="text-muted-foreground"> 4 métodos (Boussinesq, Carothers, Love, Newmark) com canvas 2D interativo</span>
               </div>
             </div>
             <div className="flex items-start gap-2 text-xs md:text-sm bg-background/50 p-2 md:p-3 rounded-lg border border-border/50">
               <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
               <div>
-                <strong className="text-foreground">Love:</strong>
-                <span className="text-muted-foreground"> Carga uniformemente distribuída em área circular</span>
+                <strong className="text-foreground">Recalque por Adensamento:</strong>
+                <span className="text-muted-foreground"> Teoria de Terzaghi completa com análise temporal e 3 períodos</span>
               </div>
             </div>
             <div className="flex items-start gap-2 text-xs md:text-sm bg-background/50 p-2 md:p-3 rounded-lg border border-border/50">
               <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
               <div>
-                <strong className="text-foreground">Carothers:</strong>
-                <span className="text-muted-foreground"> Carga uniformemente distribuída em faixa infinita</span>
+                <strong className="text-foreground">Granulometria:</strong>
+                <span className="text-muted-foreground"> Classificação USCS e HRB com curvas granulométricas interativas</span>
               </div>
             </div>
             <div className="flex items-start gap-2 text-xs md:text-sm bg-background/50 p-2 md:p-3 rounded-lg border border-border/50">
               <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
               <div>
-                <strong className="text-foreground">Newmark:</strong>
-                <span className="text-muted-foreground"> Carga uniformemente distribuída em área retangular</span>
+                <strong className="text-foreground">Tensões Geostáticas:</strong>
+                <span className="text-muted-foreground"> Análise multicamadas com visualização do perfil e gráficos de tensões</span>
               </div>
             </div>
           </div>
 
           <div className="pt-2 border-t border-border/50">
             <p className="text-xs text-muted-foreground leading-relaxed">
-              <strong className="text-foreground">✨ Diferencial:</strong> Todos os métodos incluem análise 2D interativa, permitindo adicionar múltiplos pontos de análise e visualizar o perfil do solo com representação gráfica das tensões.
+              <strong className="text-foreground">✨ Diferenciais:</strong> Todos os módulos incluem exportação profissional (PDF/Excel), salvamento de cálculos, tutoriais interativos, exemplos práticos e visualizações gráficas avançadas para melhor compreensão dos resultados.
             </p>
           </div>
         </div>
@@ -364,8 +407,11 @@ export default function PlanosFuturos() {
 
       {/* Versão e Última Atualização */}
       <div className="text-center text-xs md:text-sm text-muted-foreground pb-4 space-y-1">
-        <p>Roadmap atualizado em Janeiro/2026</p>
-        <p className="text-xs">As datas e prioridades podem ser ajustadas conforme o desenvolvimento evolui</p>
+        <p>Roadmap atualizado em 2025</p>
+        <p className="text-xs">As prioridades podem ser ajustadas conforme o desenvolvimento evolui e novas necessidades surgem</p>
+        <p className="text-xs mt-2">
+          <strong className="text-foreground">Status Atual:</strong> 7 módulos principais completos • Sistema de exportação implementado • Salvamento de cálculos funcional • Interface responsiva completa
+        </p>
       </div>
     </div>
   );

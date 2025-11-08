@@ -37,6 +37,7 @@ const Educacional = lazy(() => import("./pages/Educacional"));
 const Settings = lazy(() => import("./pages/Settings"));
 const About = lazy(() => import("./pages/About"));
 const PlanosFuturos = lazy(() => import("./pages/PlanosFuturos"));
+const Manual = lazy(() => import("./pages/Manual"));
 const Salvos = lazy(() => import("./pages/Salvos"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -246,6 +247,16 @@ const AppContent = () => {
             <Layout>
               <Suspense fallback={<PageLoader />}>
                 <PlanosFuturos />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/manual"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Manual />
               </Suspense>
             </Layout>
           }

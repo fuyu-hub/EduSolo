@@ -3,10 +3,9 @@
 <div align="center">
 
 ![EduSolo Banner](https://img.shields.io/badge/EduSolo-Mecânica_dos_Solos-blue?style=for-the-badge)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-00a393?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-18.3+-61dafb?style=flat-square&logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8+-3178c6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Python](https://img.shields.io/badge/Python-3.8+-3776ab?style=flat-square&logo=python)](https://www.python.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.0+-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
 [![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-green?style=flat-square)](LICENSE)
 
 **Plataforma educacional completa para análise e aprendizado em Mecânica dos Solos**
@@ -19,15 +18,28 @@
 
 ## 📋 Sobre o Projeto
 
-**EduSolo** é uma suíte completa de ferramentas para cálculos geotécnicos e ensino de Mecânica dos Solos. Desenvolvido com foco em educação, oferece uma interface moderna e intuitiva para estudantes, professores e profissionais da engenharia civil e geotecnia.
+**EduSolo** é uma plataforma educacional completa para análise e aprendizado em **Mecânica dos Solos**. Desenvolvido com foco em educação e praticidade, oferece uma suíte integrada de ferramentas profissionais para cálculos geotécnicos, com interface moderna e intuitiva adaptada para estudantes, professores e profissionais de engenharia civil e geotecnia.
 
 ### 🎯 Objetivos
 
-- 🎓 **Educação**: Facilitar o aprendizado de conceitos de mecânica dos solos
-- 🧮 **Cálculos Precisos**: Fornecer ferramentas confiáveis para análises geotécnicas
-- 📊 **Visualização**: Apresentar resultados de forma gráfica e intuitiva
-- 🌐 **Acessibilidade**: 100% gratuito e open source
-- 🔬 **Rigor Técnico**: Baseado em normas e métodos consolidados
+- 🎓 **Educação**: Facilitar o aprendizado de conceitos fundamentais de mecânica dos solos através de ferramentas interativas e exemplos práticos
+- 🧮 **Cálculos Precisos**: Fornecer ferramentas confiáveis e validadas para análises geotécnicas baseadas em teorias consolidadas
+- 📊 **Visualização**: Apresentar resultados de forma gráfica e intuitiva, facilitando a compreensão de fenômenos complexos
+- 🌐 **Acessibilidade**: 100% gratuito, open source e funcionamento completamente offline
+- 🔬 **Rigor Técnico**: Baseado em normas técnicas (NBR, ASTM) e métodos consolidados da engenharia geotécnica
+- 📱 **Versatilidade**: Interface responsiva que funciona em computadores, tablets e smartphones
+- 📄 **Documentação**: Geração de relatórios profissionais em PDF e Excel para documentação de projetos
+
+### 🌟 Características Principais
+
+- ✅ **100% Offline**: Todos os cálculos são realizados no navegador, sem necessidade de servidor externo ou conexão à internet
+- ✅ **Interface Moderna**: Design intuitivo e responsivo, adaptado para diferentes dispositivos e preferências
+- ✅ **Exportação Profissional**: Geração de relatórios completos em PDF e planilhas Excel com dados, resultados e gráficos
+- ✅ **Salvamento Inteligente**: Sistema de salvamento e carregamento de cálculos para retomada posterior
+- ✅ **Exemplos Práticos**: Exemplos pré-configurados em cada módulo para facilitar aprendizado
+- ✅ **Tutoriais Interativos**: Guias passo a passo integrados em cada módulo
+- ✅ **Personalização**: Temas de cores, modo claro/escuro e configurações personalizáveis
+- ✅ **Baseado em Normas**: Implementações seguindo normas técnicas NBR e ASTM
 
 ---
 
@@ -73,29 +85,44 @@
 
 6. **Acréscimo de Tensões**
    - Solução de Boussinesq (carga pontual)
-   - Carga em faixa infinita
-   - Carga circular uniformemente distribuída
-   - Análise em profundidade
+   - Método de Carothers (carga em faixa infinita)
+   - Método de Love (carga circular)
+   - Método de Newmark (carga retangular)
+   - Canvas 2D interativo para visualização
+   - Análise em profundidade e múltiplas cargas
 
-7. **Fluxo Hidráulico**
-   - Permeabilidade equivalente (horizontal e vertical)
-   - Velocidades de descarga e percolação
-   - Gradiente crítico
-   - Fator de segurança contra liquefação
-   - Análise de tensões sob fluxo
-
-8. **Adensamento**
+7. **Recalque por Adensamento**
    - Recalque por adensamento primário
-   - Teoria de Terzaghi
-   - Tempo de adensamento
-   - Curvas U vs T
+   - Teoria de Terzaghi (solução exata e aproximada)
+   - Análise temporal de adensamento
+   - Grau de adensamento (U) vs. Tempo (t)
+   - Análise de três períodos (passado, presente, futuro)
+   - Configuração de drenagem simples e dupla
+   - Visualização interativa do perfil geotécnico
+
+### 🎨 Funcionalidades Gerais
+
+- **Exportação de Resultados**: Geração de relatórios PDF profissionais e planilhas Excel
+- **Salvamento e Carregamento**: Sistema completo para salvar e retomar cálculos
+- **Configurações Personalizáveis**: Temas, precisão, layout de exportação
+- **Tutoriais Interativos**: Guias passo a passo em cada módulo
+- **Exemplos Práticos**: Exemplos pré-configurados para aprendizado
+- **Interface Responsiva**: Funciona perfeitamente em desktop, tablet e mobile
+- **Modo Claro/Escuro**: Interface adaptável às suas preferências
+- **Gerenciamento de Relatórios**: Visualize, baixe e gerencie todos os relatórios gerados
 
 #### 🚧 Em Desenvolvimento
 
-- Resistência ao Cisalhamento
-- Empuxo de Terra
-- Capacidade de Carga
-- Estabilidade de Taludes
+- **Resistência ao Cisalhamento** - Ensaios triaxiais e cisalhamento direto
+- **Empuxo de Terra** - Análise de muros de contenção
+- **Capacidade de Carga** - Fundações rasas e profundas
+- **Estabilidade de Taludes** - Análise de estabilidade por métodos de equilíbrio limite
+
+#### 📋 Planejado para Futuro
+
+- **Fluxo Hidráulico** - Permeabilidade, redes de fluxo, gradiente crítico
+- **Análises Avançadas** - Elementos finitos, análises probabilísticas
+- **Material Educacional** - Conteúdo teórico e exercícios práticos
 
 ---
 
@@ -188,8 +215,11 @@ EduSolo/
 
 ### Documentação Detalhada
 
+- 📘 [Manual Geral do EduSolo](MANUAL_GERAL_EDUSOLO.md) - Guia completo para usuários
+- 📗 [Manual de Recalque por Adensamento](MANUAL_RECALQUE_ADENSAMENTO.md) - Documentação detalhada do módulo
 - 📗 [Frontend - Guia de Desenvolvimento](frontend/README.md)
 - 📕 [Guia de Contribuição](CONTRIBUTING.md)
+- 📙 [Arquitetura do Projeto](ARQUITETURA_PROJETO.md)
 
 ---
 
@@ -211,23 +241,26 @@ npm run build
 
 ## 🛠️ Tecnologias Utilizadas
 
-### Backend
+### Tecnologia Principal
 
-- **FastAPI** - Framework web moderno para APIs
-- **Pydantic** - Validação de dados
-- **NumPy** - Cálculos numéricos
-- **Uvicorn** - Servidor ASGI
+- **React 18** - Biblioteca UI moderna
+- **TypeScript** - Tipagem estática para maior confiabilidade
+- **Vite** - Build tool rápida e eficiente
+- **Backend Integrado** - Cálculos 100% no frontend (TypeScript puro)
 
-### Frontend
+### Bibliotecas e Ferramentas
 
-- **React 18** - Biblioteca UI
-- **TypeScript** - Tipagem estática
-- **Vite** - Build tool
-- **TanStack Query** - Gerenciamento de estado assíncrono
-- **Recharts** - Gráficos interativos
-- **Radix UI** - Componentes acessíveis
-- **Tailwind CSS** - Estilização
-- **shadcn/ui** - Sistema de componentes
+- **React Hook Form** - Gerenciamento de formulários
+- **Zod** - Validação de esquemas
+- **Recharts** - Gráficos interativos e responsivos
+- **Radix UI** - Componentes acessíveis e sem estilo
+- **Tailwind CSS** - Framework CSS utilitário
+- **shadcn/ui** - Sistema de componentes moderno
+- **Lucide React** - Ícones modernos
+- **date-fns** - Manipulação de datas
+- **jsPDF** - Geração de PDFs
+- **xlsx** - Geração de planilhas Excel
+- **Zustand** - Gerenciamento de estado leve
 
 ---
 
@@ -253,32 +286,101 @@ Contribuições são bem-vindas! Veja o [Guia de Contribuição](CONTRIBUTING.md
 - [x] Limites de Consistência
 - [x] Interface básica
 
-### Fase 2 🚧 (Em Andamento)
+### Fase 2 ✅ (Concluída)
 
-- [x] Granulometria
-- [x] Compactação
-- [x] Tensões Geostáticas
-- [x] Acréscimo de Tensões
-- [x] Fluxo Hidráulico
-- [x] Adensamento
-- [ ] Sistema de autenticação
-- [ ] Salvamento de cálculos
+- [x] Granulometria e Classificação (USCS e HRB)
+- [x] Compactação (Proctor)
+- [x] Tensões Geostáticas (multicamadas)
+- [x] Acréscimo de Tensões (Boussinesq, Carothers, Love, Newmark)
+- [x] Recalque por Adensamento (Teoria de Terzaghi)
+- [x] Sistema de salvamento e carregamento de cálculos
+- [x] Geração de relatórios PDF profissionais
+- [x] Exportação para Excel
+- [x] Sistema de configurações personalizáveis
+- [x] Tutoriais interativos
+- [x] Interface responsiva (mobile, tablet, desktop)
+- [x] Temas personalizáveis e modo claro/escuro
+- [x] Gerenciamento de relatórios
 
-### Fase 3 📋 (Planejado)
+### Fase 3 🚧 (Em Desenvolvimento)
 
-- [ ] Resistência ao Cisalhamento
-- [ ] Empuxo de Terra
-- [ ] Capacidade de Carga
-- [ ] Estabilidade de Taludes
-- [ ] Geração de relatórios PDF
-- [ ] API de exportação de dados
+- [ ] **Resistência ao Cisalhamento**
+  - Ensaio triaxial (UU, CU, CD)
+  - Ensaio de cisalhamento direto
+  - Parâmetros de resistência (c, φ)
+  - Círculo de Mohr
+  - Análise de tensões efetivas
 
-### Fase 4 🔮 (Futuro)
+- [ ] **Empuxo de Terra**
+  - Empuxo em repouso (K₀)
+  - Empuxo ativo (Ka) - Teoria de Rankine e Coulomb
+  - Empuxo passivo (Kp)
+  - Muros de contenção
+  - Análise de estabilidade
 
-- [ ] Aplicativo mobile
-- [ ] Modo offline
-- [ ] Integração com CAD
-- [ ] Machine Learning para predições
+- [ ] **Capacidade de Carga**
+  - Fórmulas clássicas (Terzaghi, Meyerhof, Hansen)
+  - Fatores de capacidade de carga
+  - Influência da forma e profundidade
+  - Análise de fundações rasas e profundas
+
+- [ ] **Estabilidade de Taludes**
+  - Método de Fellenius
+  - Método de Bishop
+  - Método de Janbu
+  - Superfície de ruptura circular
+  - Fator de segurança
+
+### Fase 4 📋 (Planejado)
+
+- [ ] **Melhorias nos Módulos Existentes**
+  - Fluxo hidráulico (permeabilidade, redes de fluxo)
+  - Análise avançada de recalques (recalque secundário)
+  - Múltiplos métodos de classificação
+
+- [ ] **Funcionalidades Adicionais**
+  - Sistema de autenticação e sincronização na nuvem
+  - Colaboração em tempo real
+  - Histórico de versões de cálculos
+  - Compartilhamento de cálculos
+  - Biblioteca de solos e materiais
+
+- [ ] **Integração e Exportação**
+  - Integração com software CAD
+  - Exportação para formatos padrão da indústria
+  - API para integração com outros sistemas
+  - Importação de dados de equipamentos de laboratório
+
+- [ ] **Material Educacional**
+  - Seção de conteúdo teórico
+  - Vídeos explicativos
+  - Exercícios práticos
+  - Banco de questões
+
+### Fase 5 🔮 (Futuro)
+
+- [ ] **Aplicativo Mobile Nativo**
+  - Apps para iOS e Android
+  - Sincronização com versão web
+  - Modo offline completo
+
+- [ ] **Inteligência Artificial**
+  - Machine Learning para predições
+  - Sugestões automáticas de parâmetros
+  - Validação inteligente de resultados
+  - Análise de padrões em dados de solos
+
+- [ ] **Colaboração Avançada**
+  - Trabalho em equipe
+  - Revisão de cálculos
+  - Comentários e anotações
+  - Sistema de aprovação
+
+- [ ] **Análises Avançadas**
+  - Análise de elementos finitos (FEM)
+  - Análise probabilística
+  - Análise de sensibilidade
+  - Otimização de projetos
 
 ---
 

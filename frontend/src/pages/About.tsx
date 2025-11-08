@@ -35,19 +35,25 @@ export default function About() {
               <div className="space-y-2 flex-1">
                 <h3 className="text-lg md:text-xl font-semibold text-foreground">EduSolo</h3>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  O <strong className="text-foreground">EduSolo</strong> é uma ferramenta educacional desenvolvida para auxiliar 
-                  estudantes e profissionais de <strong className="text-foreground">Engenharia Civil</strong> na realização 
-                  de cálculos geotécnicos. O projeto foi criado com o objetivo de tornar o aprendizado e a prática da 
-                  <strong className="text-foreground"> Mecânica dos Solos</strong> mais acessível e interativa.
+                  O <strong className="text-foreground">EduSolo</strong> é uma plataforma educacional completa para análise e aprendizado em 
+                  <strong className="text-foreground"> Mecânica dos Solos</strong>. Desenvolvido com foco em educação e praticidade, oferece uma 
+                  suíte integrada de ferramentas profissionais para cálculos geotécnicos, com interface moderna e intuitiva adaptada para 
+                  estudantes, professores e profissionais de <strong className="text-foreground">Engenharia Civil</strong> e geotecnia.
                 </p>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                   Com uma interface moderna e intuitiva, o EduSolo oferece módulos completos para análise de 
                   <strong className="text-foreground"> índices físicos</strong>, 
                   <strong className="text-foreground"> limites de consistência</strong>, 
-                  <strong className="text-foreground"> granulometria</strong>, 
-                  <strong className="text-foreground"> compactação</strong>, 
-                  <strong className="text-foreground"> tensões geostáticas</strong> e 
-                  <strong className="text-foreground"> acréscimo de tensões</strong>.
+                  <strong className="text-foreground"> granulometria e classificação (USCS e HRB)</strong>, 
+                  <strong className="text-foreground"> compactação (Proctor)</strong>, 
+                  <strong className="text-foreground"> tensões geostáticas</strong>, 
+                  <strong className="text-foreground"> acréscimo de tensões (Boussinesq, Carothers, Love, Newmark)</strong> e 
+                  <strong className="text-foreground"> recalque por adensamento (Teoria de Terzaghi)</strong>.
+                </p>
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                  Todos os cálculos são realizados <strong className="text-foreground">100% offline</strong> no navegador, sem necessidade de 
+                  servidor externo ou conexão à internet. O sistema é baseado em normas técnicas (NBR, ASTM) e métodos consolidados da 
+                  engenharia geotécnica, garantindo precisão e confiabilidade nos resultados.
                 </p>
               </div>
             </div>
@@ -58,7 +64,11 @@ export default function About() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                 <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
-                  <span>Cálculos geotécnicos automatizados</span>
+                  <span>100% offline - Funciona sem internet</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+                  <span>Cálculos geotécnicos automatizados e precisos</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
@@ -66,19 +76,31 @@ export default function About() {
                 </div>
                 <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
-                  <span>Exportação em PDF e Excel</span>
+                  <span>Exportação profissional em PDF e Excel</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
-                  <span>Material educacional integrado</span>
+                  <span>Sistema de salvamento e carregamento</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
-                  <span>Interface moderna e responsiva</span>
+                  <span>Tutoriais interativos em cada módulo</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
-                  <span>Salvamento local de cálculos</span>
+                  <span>Exemplos práticos pré-configurados</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+                  <span>Interface responsiva (desktop, tablet, mobile)</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+                  <span>Temas personalizáveis e modo claro/escuro</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0"></div>
+                  <span>Baseado em normas técnicas (NBR, ASTM)</span>
                 </div>
               </div>
             </div>
@@ -168,20 +190,25 @@ export default function About() {
             </div>
           </Card>
 
-          {/* Backend */}
+          {/* Bibliotecas e Ferramentas */}
           <Card className="glass p-4 md:p-5">
             <div className="space-y-2 md:space-y-3">
               <h3 className="text-sm md:text-base font-medium text-foreground flex items-center gap-2">
                 <Package className="w-3.5 h-3.5 md:w-4 md:h-4 text-primary" />
-                Backend
+                Bibliotecas e Ferramentas
               </h3>
               <div className="flex flex-wrap gap-1.5 md:gap-2">
-                <Badge variant="outline" className="text-xs">Python</Badge>
-                <Badge variant="outline" className="text-xs">FastAPI</Badge>
-                <Badge variant="outline" className="text-xs">Pydantic</Badge>
-                <Badge variant="outline" className="text-xs">NumPy</Badge>
-                <Badge variant="outline" className="text-xs">SciPy</Badge>
+                <Badge variant="outline" className="text-xs">React Hook Form</Badge>
+                <Badge variant="outline" className="text-xs">Zod</Badge>
+                <Badge variant="outline" className="text-xs">Recharts</Badge>
+                <Badge variant="outline" className="text-xs">jsPDF</Badge>
+                <Badge variant="outline" className="text-xs">xlsx</Badge>
+                <Badge variant="outline" className="text-xs">Zustand</Badge>
+                <Badge variant="outline" className="text-xs">date-fns</Badge>
               </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                <strong className="text-foreground">Backend Integrado:</strong> Todos os cálculos são realizados 100% no frontend usando TypeScript puro, sem necessidade de servidor externo.
+              </p>
             </div>
           </Card>
         </div>
@@ -245,8 +272,9 @@ export default function About() {
           <div className="space-y-1 md:space-y-2">
             <h3 className="text-sm md:text-base font-semibold text-foreground">Licença</h3>
             <p className="text-xs md:text-sm text-muted-foreground">
-              Este projeto é distribuído sob a licença MIT. Você é livre para usar, modificar e distribuir 
-              conforme os termos da licença.
+              Este projeto é distribuído sob a licença <strong className="text-foreground">PolyForm Noncommercial 1.0.0</strong>. 
+              Você é livre para usar, modificar e distribuir conforme os termos da licença. 
+              Para mais informações, consulte o arquivo LICENSE no repositório.
             </p>
           </div>
         </Card>

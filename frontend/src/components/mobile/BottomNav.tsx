@@ -27,7 +27,7 @@ const mainNavItems: NavItem[] = [
   { icon: Save, label: "Relatorios", path: "/relatorios" },
   { icon: BookOpen, label: "Educacional", path: "/educacional" },
   { icon: Home, label: "Início", path: "/", isExpandButton: true },
-  { icon: HelpCircle, label: "Placeholder", path: "#placeholder" },
+  { icon: HelpCircle, label: "Manual", path: "/manual" },
   { icon: Settings, label: "Config", path: "/settings" },
 ];
 
