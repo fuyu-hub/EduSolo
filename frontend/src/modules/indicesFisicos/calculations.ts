@@ -6,7 +6,8 @@
  * - Índices Físicos dos Solos (mecânica dos solos)
  */
 
-import type { IndicesFisicosInput, IndicesFisicosOutput } from '../schemas';
+import type { IndicesFisicosInput, IndicesFisicosOutput } from './schemas';
+// Tipos importados do schema Zod para validação de entrada/saída
 
 const EPSILON = 1e-9;
 
@@ -20,6 +21,9 @@ export interface EstatisticaParametro {
 }
 
 export interface IndicesFisicosOutputComEstatisticas extends IndicesFisicosOutput {
+  erro?: string;
+  aviso?: string;
+  num_amostras?: number;
   estatisticas?: {
     peso_especifico_natural?: EstatisticaParametro;
     peso_especifico_seco?: EstatisticaParametro;
@@ -29,7 +33,6 @@ export interface IndicesFisicosOutputComEstatisticas extends IndicesFisicosOutpu
     porosidade?: EstatisticaParametro;
     grau_saturacao?: EstatisticaParametro;
   };
-  num_amostras?: number;
 }
 
 /**
@@ -386,12 +389,14 @@ export function calcularIndicesFisicos(dados: IndicesFisicosInput): IndicesFisic
         if (Math.abs(1 + e) <= EPSILON) {
           throw new Error('Índice de Vazios (e) inválido');
         }
+        // γsat = γw * (Gs + e) / (1 + e)
         gama_sat = (gama_w * (gs + e)) / (1 + e);
       } else if (gama_d !== undefined && e !== undefined) {
         if (Math.abs(1 + e) <= EPSILON) {
           throw new Error('Índice de Vazios (e) inválido');
         }
-        gama_sat = gama_d + (e * gama_w) / (1 + e);
+        // γsat = γd + γw * e / (1 + e)
+        gama_sat = gama_d + (gama_w * e) / (1 + e);
       }
     }
 
