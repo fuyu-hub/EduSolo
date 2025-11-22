@@ -30,9 +30,9 @@ export function MobileHeader({ title, showBackButton = true }: MobileHeaderProps
           </Button>
         ) : (
           <div className="flex items-center gap-2 shrink-0">
-            <img 
-              src="/edusolo - logo.svg" 
-              alt="EduSolo" 
+            <img
+              src="/edusolo - logo.svg"
+              alt="EduSolos"
               className="w-8 h-8"
             />
           </div>
@@ -45,9 +45,9 @@ export function MobileHeader({ title, showBackButton = true }: MobileHeaderProps
               {title}
             </h1>
           ) : (
-            <img 
-              src="/edusolo-logo-texto.svg" 
-              alt="EduSolo - Ferramentas de Mecânica dos Solos" 
+            <img
+              src="/edusolo-logo-texto.svg"
+              alt="EduSolos - Ferramentas de Mecânica dos Solos"
               className="h-7"
             />
           )}

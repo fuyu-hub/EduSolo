@@ -20,7 +20,7 @@ export default function PrintHeader({ moduleTitle, moduleName }: PrintHeaderProp
         <div className="flex items-center gap-2">
           <IsometricCube className="w-12 h-12" />
           <div>
-            <h1 className="text-2xl font-bold">EduSolo</h1>
+            <h1 className="text-2xl font-bold">EduSolos</h1>
             <p className="text-sm text-muted-foreground">Sistema de Análise Geotécnica</p>
           </div>
         </div>

@@ -13,7 +13,7 @@ export default function About() {
             <Info className="w-5 h-5 md:w-6 md:h-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Sobre o EduSolo</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Sobre o EduSolos</h1>
             <p className="text-sm md:text-base text-muted-foreground">Conheça o projeto e seu desenvolvedor</p>
           </div>
         </div>
@@ -33,26 +33,26 @@ export default function About() {
                 <BookOpen className="w-6 h-6 md:w-8 md:h-8 text-primary" />
               </div>
               <div className="space-y-2 flex-1">
-                <h3 className="text-lg md:text-xl font-semibold text-foreground">EduSolo</h3>
+                <h3 className="text-lg md:text-xl font-semibold text-foreground">EduSolos</h3>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  O <strong className="text-foreground">EduSolo</strong> é uma plataforma educacional completa para análise e aprendizado em 
-                  <strong className="text-foreground"> Mecânica dos Solos</strong>. Desenvolvido com foco em educação e praticidade, oferece uma 
-                  suíte integrada de ferramentas profissionais para cálculos geotécnicos, com interface moderna e intuitiva adaptada para 
+                  O <strong className="text-foreground">EduSolos</strong> é uma plataforma educacional completa para análise e aprendizado em
+                  <strong className="text-foreground"> Mecânica dos Solos</strong>. Desenvolvido com foco em educação e praticidade, oferece uma
+                  suíte integrada de ferramentas profissionais para cálculos geotécnicos, com interface moderna e intuitiva adaptada para
                   estudantes, professores e profissionais de <strong className="text-foreground">Engenharia Civil</strong> e geotecnia.
                 </p>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  Com uma interface moderna e intuitiva, o EduSolo oferece módulos completos para análise de 
-                  <strong className="text-foreground"> índices físicos</strong>, 
-                  <strong className="text-foreground"> limites de consistência</strong>, 
-                  <strong className="text-foreground"> granulometria e classificação (USCS e HRB)</strong>, 
-                  <strong className="text-foreground"> compactação (Proctor)</strong>, 
-                  <strong className="text-foreground"> tensões geostáticas</strong>, 
-                  <strong className="text-foreground"> acréscimo de tensões (Boussinesq, Carothers, Love, Newmark)</strong> e 
+                  Com uma interface moderna e intuitiva, o EduSolos oferece módulos completos para análise de
+                  <strong className="text-foreground"> índices físicos</strong>,
+                  <strong className="text-foreground"> limites de consistência</strong>,
+                  <strong className="text-foreground"> granulometria e classificação (USCS e HRB)</strong>,
+                  <strong className="text-foreground"> compactação (Proctor)</strong>,
+                  <strong className="text-foreground"> tensões geostáticas</strong>,
+                  <strong className="text-foreground"> acréscimo de tensões (Boussinesq, Carothers, Love, Newmark)</strong> e
                   <strong className="text-foreground"> recalque por adensamento (Teoria de Terzaghi)</strong>.
                 </p>
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  Todos os cálculos são realizados <strong className="text-foreground">100% offline</strong> no navegador, sem necessidade de 
-                  servidor externo ou conexão à internet. O sistema é baseado em normas técnicas (NBR, ASTM) e métodos consolidados da 
+                  Todos os cálculos são realizados <strong className="text-foreground">100% offline</strong> no navegador, sem necessidade de
+                  servidor externo ou conexão à internet. O sistema é baseado em normas técnicas (NBR, ASTM) e métodos consolidados da
                   engenharia geotécnica, garantindo precisão e confiabilidade nos resultados.
                 </p>
               </div>
@@ -126,7 +126,7 @@ export default function About() {
                   <h3 className="text-lg md:text-xl font-semibold text-foreground">Samuel Sousa Santos</h3>
                   <p className="text-sm md:text-base text-muted-foreground">Desenvolvedor & Estudante de Engenharia Civil</p>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="secondary" className="flex items-center gap-1.5 text-xs md:text-sm">
                     <GraduationCap className="w-3 h-3 md:w-3.5 md:h-3.5" />
@@ -135,9 +135,9 @@ export default function About() {
                 </div>
 
                 <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
-                  Estudante de <strong className="text-foreground">Engenharia Civil</strong> na 
-                  <strong className="text-foreground"> Universidade Federal do Cariri (UFCA)</strong>. O EduSolo nasceu da vontade de unir conhecimentos 
-                  em programação com a área de geotecnia, criando uma ferramenta que pudesse beneficiar 
+                  Estudante de <strong className="text-foreground">Engenharia Civil</strong> na
+                  <strong className="text-foreground"> Universidade Federal do Cariri (UFCA)</strong>. O EduSolos nasceu da vontade de unir conhecimentos
+                  em programação com a área de geotecnia, criando uma ferramenta que pudesse beneficiar
                   outros estudantes e profissionais da área.
                 </p>
               </div>
@@ -260,9 +260,9 @@ export default function About() {
             <div className="space-y-1 md:space-y-2">
               <h3 className="text-sm md:text-base font-semibold text-foreground">Agradecimentos</h3>
               <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-                Este projeto foi desenvolvido com muito carinho e dedicação para a comunidade acadêmica. 
-                Agradeço a todos os professores, colegas e profissionais que contribuíram com conhecimento 
-                e feedback para tornar o EduSolo uma ferramenta cada vez melhor.
+                Este projeto foi desenvolvido com muito carinho e dedicação para a comunidade acadêmica.
+                Agradeço a todos os professores, colegas e profissionais que contribuíram com conhecimento
+                e feedback para tornar o EduSolos uma ferramenta cada vez melhor.
               </p>
             </div>
           </div>
@@ -272,8 +272,8 @@ export default function About() {
           <div className="space-y-1 md:space-y-2">
             <h3 className="text-sm md:text-base font-semibold text-foreground">Licença</h3>
             <p className="text-xs md:text-sm text-muted-foreground">
-              Este projeto é distribuído sob a licença <strong className="text-foreground">PolyForm Noncommercial 1.0.0</strong>. 
-              Você é livre para usar, modificar e distribuir conforme os termos da licença. 
+              Este projeto é distribuído sob a licença <strong className="text-foreground">PolyForm Noncommercial 1.0.0</strong>.
+              Você é livre para usar, modificar e distribuir conforme os termos da licença.
               Para mais informações, consulte o arquivo LICENSE no repositório.
             </p>
           </div>
@@ -282,7 +282,7 @@ export default function About() {
 
       {/* Versão */}
       <div className="text-center text-xs md:text-sm text-muted-foreground pb-4">
-        <p>EduSolo v1.0.0 - Desenvolvido por Samuel Sousa Santos</p>
+        <p>EduSolos v1.0.0 - Desenvolvido por Samuel Sousa Santos</p>
         <p className="text-xs mt-1">© 2025 - Todos os direitos reservados</p>
       </div>
     </div>

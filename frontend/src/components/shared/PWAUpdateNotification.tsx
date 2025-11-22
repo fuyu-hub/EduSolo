@@ -30,7 +30,7 @@ export function PWAUpdateNotification() {
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      
+
       // Verifica se o usuário já dispensou o prompt
       const dismissed = localStorage.getItem(PWA_DISMISSED_KEY);
       if (dismissed === 'true') {
@@ -38,7 +38,7 @@ export function PWAUpdateNotification() {
       }
 
       setDeferredPrompt(e);
-      
+
       // Mostra o prompt após um delay de 3 segundos
       setTimeout(() => {
         setShowInstallPrompt(true);
@@ -50,7 +50,7 @@ export function PWAUpdateNotification() {
       setShowSuccess(true);
       setShowInstallPrompt(false);
       setIsInstalling(false);
-      
+
       // Esconde a mensagem de sucesso após 5 segundos
       setTimeout(() => {
         setShowSuccess(false);
@@ -69,11 +69,11 @@ export function PWAUpdateNotification() {
   const handleInstall = async () => {
     if (deferredPrompt) {
       setIsInstalling(true);
-      
+
       try {
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
-        
+
         if (outcome === 'accepted') {
           console.log('Usuário aceitou a instalação');
           // A mensagem de sucesso será mostrada pelo evento 'appinstalled'
@@ -85,7 +85,7 @@ export function PWAUpdateNotification() {
         console.error('Erro ao instalar:', error);
         setIsInstalling(false);
       }
-      
+
       setDeferredPrompt(null);
     }
   };
@@ -166,7 +166,7 @@ export function PWAUpdateNotification() {
             </>
           )}
         </Button>
-        
+
         {!isInstalling && (
           <div className="flex gap-2">
             <Button
@@ -185,7 +185,7 @@ export function PWAUpdateNotification() {
             </Button>
           </div>
         )}
-        
+
         {isInstalling && (
           <p className="text-center text-sm text-muted-foreground animate-pulse">
             Aguardando confirmação no navegador...
@@ -199,7 +199,7 @@ export function PWAUpdateNotification() {
   useEffect(() => {
     if (showSuccess) {
       toast.success('🎉 Aplicativo instalado com sucesso!', {
-        description: 'O EduSolo agora está disponível na sua tela inicial!',
+        description: 'O EduSolos agora está disponível na sua tela inicial!',
         duration: 5000,
         action: {
           label: 'Fechar',
@@ -213,8 +213,8 @@ export function PWAUpdateNotification() {
   if (isMobile) {
     return (
       <Sheet open={showInstallPrompt} onOpenChange={!isInstalling ? setShowInstallPrompt : undefined}>
-        <SheetContent 
-          side="bottom" 
+        <SheetContent
+          side="bottom"
           className="rounded-t-2xl border-t-4 border-t-primary"
           onInteractOutside={(e) => {
             // Previne fechar durante instalação
@@ -225,12 +225,12 @@ export function PWAUpdateNotification() {
         >
           <SheetHeader className="text-left space-y-2 mb-6">
             <SheetTitle className="text-xl">
-              {isInstalling ? 'Instalando...' : 'Instalar EduSolo'}
+              {isInstalling ? 'Instalando...' : 'Instalar EduSolos'}
             </SheetTitle>
             <SheetDescription>
-              {isInstalling 
+              {isInstalling
                 ? 'Aguarde enquanto preparamos tudo para você...'
-                : 'Tenha o EduSolo sempre à mão! Instale em seu dispositivo para uma experiência completa.'
+                : 'Tenha o EduSolos sempre à mão! Instale em seu dispositivo para uma experiência completa.'
               }
             </SheetDescription>
           </SheetHeader>
@@ -242,7 +242,7 @@ export function PWAUpdateNotification() {
 
   return (
     <Dialog open={showInstallPrompt} onOpenChange={!isInstalling ? setShowInstallPrompt : undefined}>
-      <DialogContent 
+      <DialogContent
         className="sm:max-w-md"
         onInteractOutside={(e) => {
           // Previne fechar durante instalação
@@ -253,12 +253,12 @@ export function PWAUpdateNotification() {
       >
         <DialogHeader className="space-y-3">
           <DialogTitle className="text-xl">
-            {isInstalling ? 'Instalando...' : 'Instalar EduSolo'}
+            {isInstalling ? 'Instalando...' : 'Instalar EduSolos'}
           </DialogTitle>
           <DialogDescription>
-            {isInstalling 
+            {isInstalling
               ? 'Aguarde enquanto preparamos tudo para você...'
-              : 'Tenha o EduSolo sempre à mão! Instale em seu dispositivo para uma experiência completa.'
+              : 'Tenha o EduSolos sempre à mão! Instale em seu dispositivo para uma experiência completa.'
             }
           </DialogDescription>
         </DialogHeader>

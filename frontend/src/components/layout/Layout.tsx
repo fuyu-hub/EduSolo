@@ -27,7 +27,6 @@ const menuItems = [
     items: [
       { icon: FileText, label: "Relatórios", path: "/relatorios", tourId: "" },
       { icon: BookOpen, label: "Material Educacional", path: "/educacional", tourId: "" },
-      { icon: HelpCircle, label: "Manual", path: "/manual", tourId: "" },
       { icon: Settings, label: "Configurações", path: "/settings", tourId: "settings-menu" },
       { icon: Info, label: "Sobre", path: "/about", tourId: "" },
       { icon: Rocket, label: "Planos Futuros", path: "/planos-futuros", tourId: "" },
@@ -63,16 +62,16 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
           <Link to="/" className="flex items-center gap-2.5 group" onClick={onLinkClick}>
             {collapsed ? (
               // Mostrar logo pequena quando colapsado
-              <img 
-                src="/edusolo - logo.svg" 
-                alt="EduSolo" 
+              <img
+                src="/edusolo - logo.svg"
+                alt="EduSolos"
                 className="w-10 h-10 group-hover:scale-105 transition-transform"
               />
             ) : (
               // Mostrar logo com texto quando expandido
-              <img 
-                src="/edusolo-logo-texto.svg" 
-                alt="EduSolo - Ferramentas de Mecânica dos Solos" 
+              <img
+                src="/edusolo-logo-texto.svg"
+                alt="EduSolos - Ferramentas de Mecânica dos Solos"
                 className="h-20 group-hover:scale-105 transition-transform"
               />
             )}
@@ -94,10 +93,10 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
                 const buttonContent = (
-                   <>
+                  <>
                     <Icon className={cn("h-5 w-5", !collapsed && "mr-3")} />
                     {!collapsed && <span className="font-medium">{item.label}</span>}
-                   </>
+                  </>
                 );
 
                 // Use ConditionalSheetClose para envolver o Link apenas no mobile
@@ -120,8 +119,8 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
                           )}
                         </Button>
                       </CollapsibleTrigger>
-                      <CollapsibleContent className={cn("mt-1 pl-0 collapsible-content", !collapsed && "pl-2")}> 
-                        <div className={cn("space-y-1", collapsed ? "px-1" : "")}> 
+                      <CollapsibleContent className={cn("mt-1 pl-0 collapsible-content", !collapsed && "pl-2")}>
+                        <div className={cn("space-y-1", collapsed ? "px-1" : "")}>
                           {modulesBrief.map((m) => {
                             const MIcon = m.icon;
                             const active = location.pathname === m.path;
@@ -194,18 +193,18 @@ const ConditionalSheetClose = ({ shouldWrap, children, ...props }: { shouldWrap:
 // Agora usa React.ReactNode corretamente
 export function Layout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
-  
+
   // Usa React.useMemo para garantir renderização consistente e evitar flash
   const layout = React.useMemo(() => {
     // Se for mobile, usa o MobileLayout
     if (isMobile) {
       return <MobileLayout>{children}</MobileLayout>;
     }
-    
+
     // Caso contrário, usa o layout desktop normal
     return <DesktopLayout>{children}</DesktopLayout>;
   }, [isMobile, children]);
-  
+
   return layout;
 }
 
@@ -218,7 +217,7 @@ function DesktopLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     // For desktop, check localStorage, default to true if not found
     if (typeof window !== 'undefined') {
-       return JSON.parse(localStorage.getItem('sidebarCollapsed') ?? 'true');
+      return JSON.parse(localStorage.getItem('sidebarCollapsed') ?? 'true');
     }
     return true; // Fallback default
   });
@@ -262,7 +261,7 @@ function DesktopLayout({ children }: { children: React.ReactNode }) {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          
+
           {/* Botão de Voltar */}
           {location.pathname !== "/" && (
             <Button
@@ -275,9 +274,9 @@ function DesktopLayout({ children }: { children: React.ReactNode }) {
               <span className="hidden sm:inline">Voltar</span>
             </Button>
           )}
-          
+
           <div className="flex-1"></div>
-          
+
           <Button
             variant="ghost"
             size="sm"
@@ -288,6 +287,15 @@ function DesktopLayout({ children }: { children: React.ReactNode }) {
             Relatórios
           </Button>
 
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/manual")}
+            className="mr-1 text-muted-foreground hover:text-foreground hidden md:inline-flex"
+          >
+            <HelpCircle className="h-4 w-4 mr-2" />
+            Manual
+          </Button>
 
           {/* Botão de Toggle de Modo Claro/Escuro */}
           <Button

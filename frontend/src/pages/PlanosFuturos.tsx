@@ -23,12 +23,12 @@ export default function PlanosFuturos() {
       <Card className="glass p-4 md:p-6 border-l-4 border-l-violet-500">
         <div className="space-y-2">
           <p className="text-xs md:text-sm text-foreground font-semibold leading-relaxed">
-            O EduSolo está em constante evolução! Com <span className="text-primary font-bold">7 módulos principais já implementados</span> e funcionalidades 
-            profissionais como exportação PDF/Excel, salvamento de cálculos e tutoriais interativos, nossa plataforma oferece 
+            O EduSolos está em constante evolução! Com <span className="text-primary font-bold">7 módulos principais já implementados</span> e funcionalidades
+            profissionais como exportação PDF/Excel, salvamento de cálculos e tutoriais interativos, nossa plataforma oferece
             uma experiência completa para análise e aprendizado em Mecânica dos Solos.
           </p>
           <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-            Nosso objetivo é continuar expandindo a ferramenta, abrangendo todos os principais tópicos da Mecânica dos Solos 
+            Nosso objetivo é continuar expandindo a ferramenta, abrangendo todos os principais tópicos da Mecânica dos Solos
             e oferecendo uma experiência educacional excepcional para estudantes, professores e profissionais.
           </p>
         </div>
@@ -44,11 +44,11 @@ export default function PlanosFuturos() {
             <div className="flex-1">
               <h3 className="text-base md:text-lg font-bold text-foreground mb-1">Conquistas Recentes</h3>
               <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-                Funcionalidades implementadas recentemente que tornam o EduSolo uma ferramenta ainda mais completa e profissional:
+                Funcionalidades implementadas recentemente que tornam o EduSolos uma ferramenta ainda mais completa e profissional:
               </p>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3 pt-2">
             <div className="flex items-start gap-2 text-xs md:text-sm">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0"></div>
@@ -125,7 +125,7 @@ export default function PlanosFuturos() {
             tags={["Rankine", "Coulomb", "Muros de Arrimo", "Estabilidade"]}
             progress={0}
           />
-          
+
           <FeatureCard
             status="em-desenvolvimento"
             title="Capacidade de Carga"
@@ -133,7 +133,7 @@ export default function PlanosFuturos() {
             tags={["Terzaghi", "Meyerhof", "Hansen", "Fundações"]}
             progress={0}
           />
-          
+
           <FeatureCard
             status="em-desenvolvimento"
             title="Estabilidade de Taludes"
@@ -207,7 +207,7 @@ export default function PlanosFuturos() {
             description="Análise de permeabilidade equivalente (horizontal e vertical), velocidades de descarga e percolação, gradiente crítico, fator de segurança contra liquefação e análise de tensões sob fluxo. Redes de fluxo e lei de Darcy."
             tags={["Permeabilidade", "Redes de Fluxo", "Lei de Darcy", "Gradiente Crítico"]}
           />
-          
+
           <FeatureCard
             status="planejado"
             title="Melhorias nos Módulos Existentes"
@@ -231,49 +231,49 @@ export default function PlanosFuturos() {
             description="Biblioteca de templates prontos para diferentes tipos de relatórios e normas técnicas"
             status="planejado"
           />
-          
+
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
             title="Histórico de Ensaios"
             description="Visualizar evolução temporal dos ensaios e comparar resultados ao longo do tempo"
             status="planejado"
           />
-          
+
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
             title="Banco de Dados de Solos"
             description="Biblioteca com propriedades de solos brasileiros típicos por região"
             status="planejado"
           />
-          
+
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
             title="Sistema de Projetos"
             description="Organizar múltiplos cálculos e ensaios por projeto/obra com estrutura hierárquica"
             status="planejado"
           />
-          
+
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
             title="Integração Entre Módulos"
             description="Reutilizar dados entre diferentes ensaios (ex: usar Gs dos Índices Físicos na Compactação)"
             status="planejado"
           />
-          
+
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
             title="Validação por Normas"
             description="Verificação automática de conformidade com NBR e outras normas técnicas"
             status="planejado"
           />
-          
+
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
             title="Material Educacional"
             description="Seção com conteúdo teórico, vídeos explicativos, exercícios práticos e banco de questões"
             status="planejado"
           />
-          
+
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
             title="Modo Ensaio Interativo"
@@ -297,35 +297,35 @@ export default function PlanosFuturos() {
             description="Autenticação de usuários e sincronização de cálculos na nuvem"
             status="futuro"
           />
-          
+
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
             title="Colaboração em Equipe"
             description="Compartilhar cálculos, comentar e trabalhar em equipe em tempo real"
             status="futuro"
           />
-          
+
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
             title="App Mobile Nativo"
             description="Versão nativa para Android e iOS com sincronização e suporte a câmera para OCR"
             status="futuro"
           />
-          
+
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
             title="Integração com CAD"
             description="Exportação e importação de dados para software CAD (AutoCAD, etc.)"
             status="futuro"
           />
-          
+
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
             title="Inteligência Artificial"
             description="Machine Learning para predições, sugestões automáticas de parâmetros e validação inteligente"
             status="futuro"
           />
-          
+
           <ImprovementCard
             icon={<CheckCircle2 className="w-5 h-5" />}
             title="Análises Avançadas"
@@ -344,7 +344,7 @@ export default function PlanosFuturos() {
           <div className="space-y-2 md:space-y-3 flex-1">
             <h3 className="text-base md:text-lg font-semibold text-foreground">Contribua com Ideias!</h3>
             <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-              Tem alguma sugestão de funcionalidade ou módulo que gostaria de ver no EduSolo? 
+              Tem alguma sugestão de funcionalidade ou módulo que gostaria de ver no EduSolos?
               Entre em contato através do e-mail <a href="mailto:contactsamsantos@gmail.com" className="text-primary hover:underline font-medium">contactsamsantos@gmail.com</a>.
             </p>
           </div>
@@ -361,11 +361,11 @@ export default function PlanosFuturos() {
             <div className="flex-1">
               <h3 className="text-base md:text-lg font-bold text-foreground mb-1">Módulos Destaque - Totalmente Implementados!</h3>
               <p className="text-xs md:text-sm text-muted-foreground leading-relaxed mb-2 md:mb-3">
-                Alguns dos módulos mais completos e robustos do EduSolo, com funcionalidades avançadas e visualizações interativas:
+                Alguns dos módulos mais completos e robustos do EduSolos, com funcionalidades avançadas e visualizações interativas:
               </p>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
             <div className="flex items-start gap-2 text-xs md:text-sm bg-background/50 p-2 md:p-3 rounded-lg border border-border/50">
               <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>

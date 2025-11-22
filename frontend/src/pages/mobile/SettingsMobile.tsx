@@ -54,7 +54,7 @@ const themeColors: ThemeOption[] = [
   {
     value: "soil",
     label: "Terra Natural",
-    description: "Tema oficial EduSolo - tons terrosos vibrantes",
+    description: "Tema oficial EduSolos - tons terrosos vibrantes",
     colors: ["28 72% 65%", "28 70% 55%", "28 68% 45%", "28 66% 38%", "28 60% 30%"],
   },
   {
@@ -88,7 +88,7 @@ export default function SettingsMobile() {
   const { settings, updateSettings, resetSettings, clearAllCalculations, exportSettings, importSettings } = useSettings();
   const { toast } = useToast();
   const { toursEnabled, setToursEnabled } = useToursControl();
-  
+
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [themeSheetOpen, setThemeSheetOpen] = useState(false);
@@ -112,7 +112,7 @@ export default function SettingsMobile() {
         variant: "destructive",
       });
     }
-    
+
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -182,7 +182,7 @@ export default function SettingsMobile() {
             className="w-full p-4 rounded-xl bg-secondary/50 hover:bg-secondary border-2 border-primary/20 transition-all active:scale-95 text-left focus-visible:outline-none [-webkit-tap-highlight-color:transparent]"
           >
             <div className="flex items-center gap-3">
-              <div 
+              <div
                 className="w-12 h-12 rounded-xl shadow-md flex-shrink-0"
                 style={{
                   background: `linear-gradient(135deg, hsl(${selectedTheme?.colors[0]}) 0%, hsl(${selectedTheme?.colors[2]}) 100%)`,
@@ -355,8 +355,8 @@ export default function SettingsMobile() {
             Personalize layout, margens e elementos dos documentos exportados
           </p>
           <p className="text-xs text-muted-foreground">
-            {settings.printSettings.pageOrientation === "portrait" ? "Retrato" : "Paisagem"} • 
-            Margens {settings.printSettings.pageMargins === "narrow" ? "estreitas" : settings.printSettings.pageMargins === "normal" ? "normais" : "amplas"} • 
+            {settings.printSettings.pageOrientation === "portrait" ? "Retrato" : "Paisagem"} •
+            Margens {settings.printSettings.pageMargins === "narrow" ? "estreitas" : settings.printSettings.pageMargins === "normal" ? "normais" : "amplas"} •
             {settings.printSettings.paperSize}
           </p>
           <Button
@@ -395,11 +395,11 @@ export default function SettingsMobile() {
                       if (checked) {
                         // Habilitar tours e reiniciar automaticamente
                         localStorage.removeItem("tours-globally-disabled");
-                        
+
                         // Limpar todos os tours vistos
                         const keys = Object.keys(localStorage).filter(key => key.startsWith("tour-seen-"));
                         keys.forEach(key => localStorage.removeItem(key));
-                        
+
                         toast({
                           title: "🎉 Tours habilitados e reiniciados!",
                           description: "Os tutoriais aparecerão novamente em todos os módulos",
@@ -414,7 +414,7 @@ export default function SettingsMobile() {
                     }}
                   />
                 </div>
-                <Badge 
+                <Badge
                   variant={toursEnabled ? "default" : "outline"}
                   className="text-xs mb-2"
                 >
@@ -559,17 +559,17 @@ export default function SettingsMobile() {
           <div className="mt-6 grid grid-cols-1 gap-4 overflow-y-auto max-h-[calc(70vh-100px)] pb-4 scrollbar-hide">
             {themeColors.map((themeOption) => {
               const isSelected = theme.color === themeOption.value;
-              
+
               // Função para converter HSL para HEX
               const hslToHex = (hsl: string) => {
                 const [h, s, l] = hsl.split(' ').map(v => parseFloat(v));
                 const sDecimal = s / 100;
                 const lDecimal = l / 100;
-                
+
                 const c = (1 - Math.abs(2 * lDecimal - 1)) * sDecimal;
                 const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
                 const m = lDecimal - c / 2;
-                
+
                 let r = 0, g = 0, b = 0;
                 if (h < 60) { r = c; g = x; b = 0; }
                 else if (h < 120) { r = x; g = c; b = 0; }
@@ -577,15 +577,15 @@ export default function SettingsMobile() {
                 else if (h < 240) { r = 0; g = x; b = c; }
                 else if (h < 300) { r = x; g = 0; b = c; }
                 else { r = c; g = 0; b = x; }
-                
+
                 const toHex = (n: number) => {
                   const hex = Math.round((n + m) * 255).toString(16);
                   return hex.length === 1 ? '0' + hex : hex;
                 };
-                
+
                 return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
               };
-              
+
               return (
                 <button
                   key={themeOption.value}
@@ -602,8 +602,8 @@ export default function SettingsMobile() {
                     isSelected && "ring-4 ring-primary ring-offset-2 scale-[1.02]"
                   )}
                   style={{
-                    boxShadow: isSelected 
-                      ? "0 10px 40px rgba(0,0,0,0.15)" 
+                    boxShadow: isSelected
+                      ? "0 10px 40px rgba(0,0,0,0.15)"
                       : "0 10px 20px rgba(0,0,0,0.08)"
                   }}
                 >
@@ -613,7 +613,7 @@ export default function SettingsMobile() {
                       <div
                         key={index}
                         className="palette-color h-full flex-1 flex items-center justify-center text-white text-[9px] font-medium tracking-tight"
-                        style={{ 
+                        style={{
                           backgroundColor: `hsl(${color})`,
                         }}
                       >
@@ -623,7 +623,7 @@ export default function SettingsMobile() {
                       </div>
                     ))}
                   </div>
-                  
+
                   {/* Stats Section - 14% height */}
                   <div className="h-[14%] w-full bg-card flex items-center justify-between px-3 text-[10px]">
                     <span className="font-medium text-foreground">{themeOption.label}</span>
@@ -660,15 +660,15 @@ export default function SettingsMobile() {
             {/* Layout do Documento */}
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-foreground">Layout do Documento</h4>
-              
+
               {/* Orientação */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Orientação</Label>
                 <Select
                   value={settings.printSettings.pageOrientation}
-                  onValueChange={(value: PageOrientation) => 
-                    updateSettings({ 
-                      printSettings: { ...settings.printSettings, pageOrientation: value } 
+                  onValueChange={(value: PageOrientation) =>
+                    updateSettings({
+                      printSettings: { ...settings.printSettings, pageOrientation: value }
                     })
                   }
                 >
@@ -687,9 +687,9 @@ export default function SettingsMobile() {
                 <Label className="text-sm font-medium">Tamanho do Papel</Label>
                 <Select
                   value={settings.printSettings.paperSize}
-                  onValueChange={(value: PaperSize) => 
-                    updateSettings({ 
-                      printSettings: { ...settings.printSettings, paperSize: value } 
+                  onValueChange={(value: PaperSize) =>
+                    updateSettings({
+                      printSettings: { ...settings.printSettings, paperSize: value }
                     })
                   }
                 >
@@ -708,9 +708,9 @@ export default function SettingsMobile() {
                 <Label className="text-sm font-medium">Margens</Label>
                 <Select
                   value={settings.printSettings.pageMargins}
-                  onValueChange={(value: PageMargins) => 
-                    updateSettings({ 
-                      printSettings: { ...settings.printSettings, pageMargins: value } 
+                  onValueChange={(value: PageMargins) =>
+                    updateSettings({
+                      printSettings: { ...settings.printSettings, pageMargins: value }
                     })
                   }
                 >
@@ -729,7 +729,7 @@ export default function SettingsMobile() {
             {/* Tema do PDF */}
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-foreground">Tema do PDF</h4>
-              
+
               {/* Usar Tema Dinâmico */}
               <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50">
                 <div className="flex-1 pr-3">
@@ -739,9 +739,9 @@ export default function SettingsMobile() {
                 <Switch
                   variant="ios"
                   checked={settings.printSettings.useDynamicTheme}
-                  onCheckedChange={(checked) => 
-                    updateSettings({ 
-                      printSettings: { ...settings.printSettings, useDynamicTheme: checked } 
+                  onCheckedChange={(checked) =>
+                    updateSettings({
+                      printSettings: { ...settings.printSettings, useDynamicTheme: checked }
                     })
                   }
                 />
@@ -753,9 +753,9 @@ export default function SettingsMobile() {
                   <Label className="text-sm font-medium">Tema Fixo para PDFs</Label>
                   <Select
                     value={settings.printSettings.fixedTheme || "indigo"}
-                    onValueChange={(value) => 
-                      updateSettings({ 
-                        printSettings: { ...settings.printSettings, fixedTheme: value } 
+                    onValueChange={(value) =>
+                      updateSettings({
+                        printSettings: { ...settings.printSettings, fixedTheme: value }
                       })
                     }
                   >
@@ -778,13 +778,13 @@ export default function SettingsMobile() {
             {/* Elementos do Documento */}
             <div className="space-y-3">
               <h4 className="text-sm font-semibold text-foreground">Elementos do Documento</h4>
-              
+
               {/* Logo sempre incluído - informativo */}
               <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-primary" />
                   <div className="flex-1">
-                    <Label className="text-sm font-medium text-foreground">Logo EduSolo</Label>
+                    <Label className="text-sm font-medium text-foreground">Logo EduSolos</Label>
                     <p className="text-xs text-muted-foreground mt-0.5">O logo será sempre incluído no cabeçalho do PDF</p>
                   </div>
                 </div>
@@ -799,9 +799,9 @@ export default function SettingsMobile() {
                 <Switch
                   variant="ios"
                   checked={settings.printSettings.includeDate}
-                  onCheckedChange={(checked) => 
-                    updateSettings({ 
-                      printSettings: { ...settings.printSettings, includeDate: checked } 
+                  onCheckedChange={(checked) =>
+                    updateSettings({
+                      printSettings: { ...settings.printSettings, includeDate: checked }
                     })
                   }
                 />
@@ -816,9 +816,9 @@ export default function SettingsMobile() {
                 <Switch
                   variant="ios"
                   checked={settings.printSettings.includeCustomTitle}
-                  onCheckedChange={(checked) => 
-                    updateSettings({ 
-                      printSettings: { ...settings.printSettings, includeCustomTitle: checked } 
+                  onCheckedChange={(checked) =>
+                    updateSettings({
+                      printSettings: { ...settings.printSettings, includeCustomTitle: checked }
                     })
                   }
                 />
@@ -836,9 +836,9 @@ export default function SettingsMobile() {
                 <Switch
                   variant="ios"
                   checked={settings.printSettings.includeFormulas}
-                  onCheckedChange={(checked) => 
-                    updateSettings({ 
-                      printSettings: { ...settings.printSettings, includeFormulas: checked } 
+                  onCheckedChange={(checked) =>
+                    updateSettings({
+                      printSettings: { ...settings.printSettings, includeFormulas: checked }
                     })
                   }
                   disabled
@@ -850,13 +850,13 @@ export default function SettingsMobile() {
             <div className="space-y-2 p-4 rounded-lg bg-primary/5 border border-primary/20">
               <h4 className="text-sm font-semibold text-foreground">Preview</h4>
               <div className="flex items-center gap-4">
-                <div 
+                <div
                   className={cn(
                     "rounded border-2 border-primary/30 shadow-sm flex-shrink-0 bg-background",
                     settings.printSettings.pageOrientation === "portrait" ? "w-16 h-24" : "w-24 h-16"
                   )}
                 >
-                  <div 
+                  <div
                     className={cn(
                       "w-full h-full rounded-sm bg-primary/10",
                       settings.printSettings.pageMargins === "narrow" && "p-0.5",

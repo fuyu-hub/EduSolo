@@ -85,7 +85,7 @@ export function getPDFTheme(
   if (!printSettings || printSettings.useDynamicTheme) {
     return currentTheme || { color: 'indigo', mode: 'light' };
   }
-  
+
   // Usa tema fixo configurado
   return {
     color: (printSettings.fixedTheme as ThemeColor) || 'indigo',
@@ -119,28 +119,28 @@ interface TextoFormatado {
 function analisarTextoMatematico(texto: string): TextoFormatado[] {
   const segmentos: TextoFormatado[] = [];
   const simbolosGrecos = ['γ', 'σ', 'τ', 'φ', 'ω', 'μ', 'ε', 'δ', 'α', 'β', 'θ', 'ρ', 'Δ', 'Γ', 'Σ', 'Φ', 'Ω', 'Θ'];
-  
+
   // Padrões complexos: γsat, γ_sat, σ'v, σ'_v, Δσv, Δσ_v, etc.
   // Captura: símbolo(s) + apóstrofo opcional + underscore opcional + subscrito opcional
   // Subscrito pode ser: letras minúsculas ou números (sat, sub, n, d, v, h, w, 0, 1, etc.)
   const padraoComplexo = /([γσταφωμεδαβθρΔΓΣΦΩΘ]{1,2})(['']?)(_)?([a-z0-9]+)?/gi;
-  
+
   let ultimoIndice = 0;
   let match;
   let encontrouPadrao = false;
-  
+
   while ((match = padraoComplexo.exec(texto)) !== null) {
     // Ignorar matches vazios ou apenas com o símbolo sem subscrito
     const temConteudoRelevante = match[2] || match[4]; // tem apóstrofo ou subscrito
-    
+
     // Se tem só o símbolo sem nada relevante, pular (será processado depois)
     if (!temConteudoRelevante && match[0].length <= 2) {
       // É apenas um ou dois símbolos isolados, processar depois
       continue;
     }
-    
+
     encontrouPadrao = true;
-    
+
     // Adicionar texto antes do match (se houver)
     if (match.index > ultimoIndice) {
       const textoAntes = texto.substring(ultimoIndice, match.index);
@@ -161,38 +161,38 @@ function analisarTextoMatematico(texto: string): TextoFormatado[] {
         }
       }
     }
-    
+
     // Processar símbolos (pode ser Δσ - dois símbolos)
     const simbolos = match[1];
     for (const simbolo of simbolos) {
-      segmentos.push({ 
-        texto: simbolo, 
-        tamanho: 'grande', 
-        tipo: 'simbolo' 
+      segmentos.push({
+        texto: simbolo,
+        tamanho: 'grande',
+        tipo: 'simbolo'
       });
     }
-    
+
     // Apóstrofo (linha) - tamanho normal ao lado do símbolo
     if (match[2]) {
-      segmentos.push({ 
-        texto: match[2] === '\u2019' ? "'" : match[2], 
-        tamanho: 'normal', 
-        tipo: 'superscrito' 
+      segmentos.push({
+        texto: match[2] === '\u2019' ? "'" : match[2],
+        tamanho: 'normal',
+        tipo: 'superscrito'
       });
     }
-    
+
     // Subscrito (menor)
     if (match[4]) {
-      segmentos.push({ 
-        texto: match[4], 
-        tamanho: 'pequeno', 
-        tipo: 'subscrito' 
+      segmentos.push({
+        texto: match[4],
+        tamanho: 'pequeno',
+        tipo: 'subscrito'
       });
     }
-    
+
     ultimoIndice = match.index + match[0].length;
   }
-  
+
   // Adicionar texto restante
   if (ultimoIndice < texto.length) {
     const textoRestante = texto.substring(ultimoIndice);
@@ -213,12 +213,12 @@ function analisarTextoMatematico(texto: string): TextoFormatado[] {
       }
     }
   }
-  
+
   // Se não encontrou nenhum padrão matemático, retornar o texto completo como normal
   if (!encontrouPadrao) {
     return [{ texto, tamanho: 'normal', tipo: 'texto' }];
   }
-  
+
   return segmentos;
 }
 
@@ -226,21 +226,21 @@ function analisarTextoMatematico(texto: string): TextoFormatado[] {
  * Renderiza texto com símbolos matemáticos formatados no PDF
  */
 function renderizarTextoMatematico(
-  doc: jsPDF, 
-  texto: string, 
-  x: number, 
-  y: number, 
+  doc: jsPDF,
+  texto: string,
+  x: number,
+  y: number,
   tamanhoBase: number = 10
 ): number {
   const segmentos = analisarTextoMatematico(texto);
   let posX = x;
-  
+
   for (let i = 0; i < segmentos.length; i++) {
     const segmento = segmentos[i];
     let tamanhoFonte = tamanhoBase;
     let offsetY = 0;
     let espacamentoExtra = 0;
-    
+
     switch (segmento.tamanho) {
       case 'grande':
         tamanhoFonte = tamanhoBase * 1.35; // 35% maior para símbolos
@@ -260,19 +260,19 @@ function renderizarTextoMatematico(
         }
         break;
     }
-    
+
     posX += espacamentoExtra;
     doc.setFontSize(tamanhoFonte);
     const larguraTexto = doc.getTextWidth(segmento.texto);
     doc.text(segmento.texto, posX, y + offsetY);
     posX += larguraTexto;
-    
+
     // Adicionar pequeno espaço depois de subscritos antes de texto normal
     if (segmento.tipo === 'subscrito' && i < segmentos.length - 1 && segmentos[i + 1].tipo === 'texto') {
       posX += tamanhoBase * 0.15;
     }
   }
-  
+
   // Retornar posição X final
   return posX;
 }
@@ -288,12 +288,12 @@ function calcularLarguraTextoMatematico(
 ): number {
   const segmentos = analisarTextoMatematico(texto);
   let larguraTotal = 0;
-  
+
   for (let i = 0; i < segmentos.length; i++) {
     const segmento = segmentos[i];
     let tamanhoFonte = tamanhoBase;
     let espacamentoExtra = 0;
-    
+
     switch (segmento.tamanho) {
       case 'grande':
         tamanhoFonte = tamanhoBase * 1.35;
@@ -310,17 +310,17 @@ function calcularLarguraTextoMatematico(
         }
         break;
     }
-    
+
     const tamanhoAnterior = doc.getFontSize();
     doc.setFontSize(tamanhoFonte);
     larguraTotal += espacamentoExtra + doc.getTextWidth(segmento.texto);
     doc.setFontSize(tamanhoAnterior);
-    
+
     if (segmento.tipo === 'subscrito' && i < segmentos.length - 1 && segmentos[i + 1].tipo === 'texto') {
       larguraTotal += tamanhoBase * 0.15;
     }
   }
-  
+
   return larguraTotal;
 }
 
@@ -359,7 +359,7 @@ async function renderizarLatexNoPDF(
   fontSize: number = 9
 ): Promise<number> {
   console.log('    🔄 Renderizando LaTeX:', latex.substring(0, 40));
-  
+
   try {
     // Criar container para renderização
     const container = document.createElement('div');
@@ -370,7 +370,7 @@ async function renderizarLatexNoPDF(
     container.style.padding = '20px';
     container.style.backgroundColor = '#ffffff';
     document.body.appendChild(container);
-    
+
     // Criar elemento para LaTeX com tamanho maior para melhor qualidade
     const tempDiv = document.createElement('div');
     tempDiv.style.fontSize = `${fontSize * 2.5}px`; // 2.5x para qualidade sem ser gigante
@@ -381,7 +381,7 @@ async function renderizarLatexNoPDF(
     tempDiv.style.color = '#000000'; // Preto puro
     tempDiv.className = 'katex-black'; // Classe para garantir preto
     container.appendChild(tempDiv);
-    
+
     // Adicionar estilo inline para forçar cor preta em todos os elementos
     const style = document.createElement('style');
     style.textContent = `
@@ -404,7 +404,7 @@ async function renderizarLatexNoPDF(
       }
     `;
     document.head.appendChild(style);
-    
+
     // Renderizar LaTeX
     try {
       const html = katex.renderToString(latex, {
@@ -423,11 +423,11 @@ async function renderizarLatexNoPDF(
       document.head.removeChild(style);
       throw katexError;
     }
-    
+
     // Aguardar fontes e renderização
     await document.fonts.ready;
     await new Promise(resolve => setTimeout(resolve, 300));
-    
+
     // Capturar como imagem em alta qualidade
     try {
       const html2canvas = (await import('html2canvas')).default;
@@ -440,15 +440,15 @@ async function renderizarLatexNoPDF(
         width: tempDiv.scrollWidth,
         height: tempDiv.scrollHeight,
       });
-      
+
       const imgData = canvas.toDataURL('image/png', 1.0); // Máxima qualidade PNG
-      
+
       // Calcular dimensões finais mantendo tamanho natural da fórmula
       // Scale ajustado para que fórmulas fiquem no tamanho correto (similar a texto 10-11pt)
       const targetScale = 11; // Converte pixels para mm (aumentado para reduzir tamanho final)
       let finalWidth = canvas.width / targetScale;
       let finalHeight = canvas.height / targetScale;
-      
+
       // Limitar a um tamanho máximo razoável (70% da largura disponível)
       const maxFormWidth = maxWidth * 0.7;
       if (finalWidth > maxFormWidth) {
@@ -456,19 +456,19 @@ async function renderizarLatexNoPDF(
         finalWidth = maxFormWidth;
         finalHeight = finalHeight * ratio;
       }
-      
+
       console.log('    📐 Canvas:', canvas.width, 'x', canvas.height, '→ PDF:', finalWidth.toFixed(1), 'x', finalHeight.toFixed(1), 'mm');
       console.log('    📍 Posição no PDF: x=', x, 'y=', y);
       console.log('    🖼️  Dados da imagem:', imgData.substring(0, 50) + '...');
-      
+
       // Adicionar imagem ao PDF
       doc.addImage(imgData, 'PNG', x, y, finalWidth, finalHeight, undefined, 'FAST');
       console.log('    ✅ Imagem adicionada ao PDF!');
-      
+
       // Limpar
       document.body.removeChild(container);
       document.head.removeChild(style);
-      
+
       console.log('    ✓ LaTeX inserido no PDF');
       return finalHeight + 2;
     } catch (canvasError) {
@@ -505,7 +505,7 @@ function obterPaletaCores(theme?: { color: ThemeColor; mode: ThemeMode }) {
   const themeColor = theme?.color || 'indigo';
   // Forçar sempre tema claro para PDFs
   const themeMode = 'light';
-  
+
   // Cores primárias por tema (usando as cores mais escuras da paleta)
   const colorMap: Record<ThemeColor, { r: number; g: number; b: number }> = {
     soil: { r: 72, g: 48, b: 30 },        // Terra Natural - cor mais escura (28 60% 30%)
@@ -520,47 +520,47 @@ function obterPaletaCores(theme?: { color: ThemeColor; mode: ThemeMode }) {
     red: { r: 153, g: 27, b: 27 },        // Red - tom mais escuro (2 80% 29%)
     slate: { r: 30, g: 41, b: 59 },       // Slate - tom mais escuro (0 0% 15%)
   };
-  
+
   const primaryColor = colorMap[themeColor];
-  
+
   // PDFs sempre em modo claro
   return {
     // Cor primária do tema
     primary: primaryColor,
-    
+
     // Cor mais escura para cabeçalhos (já estamos usando a cor mais escura, então mantém igual)
     primaryDark: primaryColor,
-    
+
     // Fundo do cabeçalho principal
     headerBg: primaryColor,
-    
+
     // Texto do cabeçalho
     headerText: { r: 255, g: 255, b: 255 },
-    
+
     // Fundo do título do módulo
     moduleTitleBg: { r: 245, g: 245, b: 250 },
-    
+
     // Texto do título do módulo
     moduleTitleText: primaryColor,
-    
+
     // Fundo das seções
     sectionHeaderBg: primaryColor,
-    
+
     // Fundo alternado dos itens
     itemBg: { r: 250, g: 250, b: 252 },
-    
+
     // Fundo de destaque
     highlightBg: { r: 255, g: 245, b: 230 },
-    
+
     // Texto normal
     text: { r: 0, g: 0, b: 0 },
-    
+
     // Texto secundário
     textSecondary: { r: 100, g: 100, b: 100 },
-    
+
     // Fundo da página
     pageBg: { r: 255, g: 255, b: 255 },
-    
+
     // Linhas e bordas
     border: { r: 200, g: 200, b: 200 },
   };
@@ -581,7 +581,7 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
     const includeDate = printSettings.includeDate !== false; // padrão true
     const marginsType = printSettings.pageMargins || 'normal';
     const allowCustomTitle = printSettings.includeCustomTitle === true;
-    
+
     // Definir margens baseado na configuração
     // narrow = 1.27cm = 12.7mm, normal = 2.0cm = 20mm, wide = 2.54cm = 25.4mm
     const marginValues = {
@@ -590,7 +590,7 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
       wide: 25.4
     };
     const margin = marginValues[marginsType];
-    
+
     const doc = new jsPDF({
       orientation: orientation === 'landscape' ? 'landscape' : 'portrait',
       unit: 'mm',
@@ -598,31 +598,31 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
       compress: true,
       putOnlyUsedFonts: true,
     });
-    
+
     // Usar helvetica que é mais confiável
     doc.setFont('helvetica');
-    
+
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
     let yPosition = margin;
 
     // Obter tema correto (dinâmico ou fixo) baseado nas configurações
     const themeToUse = getPDFTheme(data.theme, data.printSettings);
-    
+
     // Obter paleta de cores baseada no tema
     const colors = obterPaletaCores(themeToUse);
 
     // Cabeçalho com fundo colorido (tema) - sempre incluir
     doc.setFillColor(colors.headerBg.r, colors.headerBg.g, colors.headerBg.b);
     doc.rect(0, 0, pageWidth, 35, 'F');
-    
-    // Logo/Nome EduSolo - condicional
+
+    // Logo/Nome EduSolos - condicional
     if (includeLogo) {
       doc.setFontSize(24);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(colors.headerText.r, colors.headerText.g, colors.headerText.b);
-      doc.text('EduSolo', margin, yPosition + 5);
-      
+      doc.text('EduSolos', margin, yPosition + 5);
+
       // Subtítulo
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
@@ -641,7 +641,7 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
         doc.text(effectiveCustomTitle, margin, yPosition + 20);
       }
     }
-    
+
     // Data - condicional
     if (includeDate) {
       const currentDate = new Date().toLocaleString('pt-BR', {
@@ -656,7 +656,7 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
       doc.setTextColor(colors.headerText.r, colors.headerText.g, colors.headerText.b);
       doc.text(currentDate, pageWidth - margin, yPosition + 8, { align: 'right' });
     }
-    
+
     // Resetar cor do texto
     doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
     yPosition = 45;
@@ -685,7 +685,7 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      
+
       for (const input of data.inputs) {
         if (yPosition > pageHeight - 30) {
           doc.addPage();
@@ -695,17 +695,17 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
         // Fundo alternado
         doc.setFillColor(colors.itemBg.r, colors.itemBg.g, colors.itemBg.b);
         doc.rect(margin, yPosition - 4, pageWidth - 2 * margin, 7, 'F');
-        
+
         // Renderizar label com símbolos matemáticos
         doc.setFont('helvetica', 'normal');
         const labelPosX = renderizarTextoMatematico(doc, input.label, margin + 5, yPosition, 10);
         doc.setFontSize(10);
         doc.text(':', labelPosX, yPosition);
-        
+
         // Renderizar valor com símbolos matemáticos
         doc.setFont('helvetica', 'bold');
         renderizarTextoMatematico(doc, input.value, margin + 90, yPosition, 10);
-        
+
         yPosition += 7;
       }
       yPosition += 3;
@@ -728,7 +728,7 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
       yPosition += 12;
 
       doc.setFontSize(10);
-      
+
       for (const result of data.results) {
         if (yPosition > pageHeight - 30) {
           doc.addPage();
@@ -756,11 +756,11 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
         const labelPosX = renderizarTextoMatematico(doc, result.label, margin + 5, yPosition, 10);
         doc.setFontSize(10);
         doc.text(':', labelPosX, yPosition);
-        
+
         // Renderizar valor com símbolos matemáticos
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
-        
+
         if (numLines === 1) {
           renderizarTextoMatematico(doc, result.value, margin + 90, yPosition, 10);
         } else {
@@ -772,7 +772,7 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
           }
         }
         doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
-        
+
         yPosition += totalHeight;
       }
       yPosition += 3;
@@ -781,7 +781,7 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
     // Seção de Resumo da Análise
     if (data.summary && data.summary.length > 0) {
       yPosition += 5;
-      
+
       if (yPosition > pageHeight - 40) {
         doc.addPage();
         yPosition = margin;
@@ -798,7 +798,7 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
       yPosition += 12;
 
       doc.setFontSize(10);
-      
+
       for (const item of data.summary) {
         if (yPosition > pageHeight - 30) {
           doc.addPage();
@@ -827,7 +827,7 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
         const labelPosX = renderizarTextoMatematico(doc, item.label, margin + 5, yPosition, 10);
         doc.setFontSize(10);
         doc.text(':', labelPosX, yPosition);
-        
+
         // Renderizar valor com símbolos matemáticos
         doc.setFont('helvetica', 'bold');
         if (numLines === 1) {
@@ -840,7 +840,7 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
             currentY += lineHeight;
           }
         }
-        
+
         yPosition += totalHeight;
       }
       yPosition += 3;
@@ -850,7 +850,7 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
     if (printSettings.includeFormulas && data.formulas && data.formulas.length > 0) {
       console.log('📐 Renderizando fórmulas:', data.formulas.length, 'fórmulas');
       yPosition += 5;
-      
+
       if (yPosition > pageHeight - 40) {
         doc.addPage();
         yPosition = margin;
@@ -867,19 +867,19 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
       yPosition += 12;
 
       doc.setFontSize(10);
-      
+
       // Processar cada fórmula sequencialmente
       for (let i = 0; i < data.formulas.length; i++) {
         const item = data.formulas[i];
         console.log(`Processando fórmula ${i + 1}/${data.formulas.length}: ${item.label}, LaTeX: ${item.latex}`);
-        
+
         if (yPosition > pageHeight - 30) {
           doc.addPage();
           yPosition = margin;
         }
 
         const maxWidth = pageWidth - 2 * margin - 20;
-        
+
         // Renderizar label primeiro (sem fundo fixo)
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(10);
@@ -950,12 +950,12 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
     // Adicionar tabelas se disponíveis (ANTES do gráfico)
     if (data.tables && data.tables.length > 0) {
       console.log(`Processando ${data.tables.length} tabelas...`);
-      
+
       for (const table of data.tables) {
         console.log(`Tabela: ${table.title}, Headers: ${table.headers.length}, Rows: ${table.rows.length}`);
-        
+
         yPosition += 5;
-        
+
         if (yPosition > pageHeight - 50) {
           doc.addPage();
           yPosition = margin;
@@ -1022,9 +1022,9 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
       const imgHeight = 110; // Altura maior para o gráfico ampliado
       const titleHeight = 10;
       const totalHeight = imgHeight + titleHeight + 20; // Total com margens
-      
+
       yPosition += 5;
-      
+
       // Só criar nova página se não houver espaço suficiente
       if (yPosition + totalHeight > pageHeight - 30) {
         doc.addPage();
@@ -1040,12 +1040,12 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
       doc.text('GRÁFICO', margin + 3, yPosition + 5.5);
       doc.setTextColor(colors.text.r, colors.text.g, colors.text.b);
       yPosition += 12;
-      
+
       // Borda ao redor do gráfico
       doc.setDrawColor(colors.primary.r, colors.primary.g, colors.primary.b);
       doc.setLineWidth(0.5);
       doc.rect(margin, yPosition, imgWidth, imgHeight);
-      
+
       doc.addImage(data.chartImage, 'PNG', margin, yPosition, imgWidth, imgHeight);
       yPosition += imgHeight + 10;
     }
@@ -1055,20 +1055,20 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
     const totalPages = doc.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
-      
+
 
       const footerY = pageHeight - 12;
-      
+
       // Linha superior do rodapé
       doc.setDrawColor(colors.primary.r, colors.primary.g, colors.primary.b);
       doc.setLineWidth(0.3);
       doc.line(margin, footerY - 3, pageWidth - margin, footerY - 3);
-      
+
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(colors.textSecondary.r, colors.textSecondary.g, colors.textSecondary.b);
       doc.text(
-        'Gerado por EduSolo - Sistema de Análise Geotécnica',
+        'Gerado por EduSolos - Sistema de Análise Geotécnica',
         pageWidth / 2,
         footerY,
         { align: 'center' }
@@ -1087,19 +1087,19 @@ export async function exportToPDF(data: ExportData, returnBlob: boolean = false)
     let fileName: string;
     if (data.customFileName) {
       // Remove extensão .pdf se já estiver presente
-      fileName = data.customFileName.endsWith('.pdf') 
-        ? data.customFileName 
+      fileName = data.customFileName.endsWith('.pdf')
+        ? data.customFileName
         : `${data.customFileName}.pdf`;
     } else {
-      // Nome padrão: [Módulo] - EduSolo - [Data]
+      // Nome padrão: [Módulo] - EduSolos - [Data]
       const dateStr = new Date().toLocaleDateString('pt-BR', {
         day: '2-digit',
         month: '2-digit',
         year: '2-digit'
       }).replace(/\//g, '-');
-      fileName = `${data.moduleTitle} - EduSolo - ${dateStr}.pdf`;
+      fileName = `${data.moduleTitle} - EduSolos - ${dateStr}.pdf`;
     }
-    
+
     // Se solicitado, retornar Blob; caso contrário, salvar direto
     if (returnBlob) {
       const blob = doc.output('blob') as Blob;
@@ -1133,9 +1133,9 @@ export function formatPercentageForExport(value: number | null | undefined): str
 }
 
 /**
- * Gera nome padrão para arquivo PDF no formato: [Nome do Módulo] - EduSolo - [Data]
+ * Gera nome padrão para arquivo PDF no formato: [Nome do Módulo] - EduSolos - [Data]
  * @param moduleTitle - Nome do módulo (ex: "Índices Físicos", "Granulometria")
- * @returns Nome do arquivo formatado (ex: "Índices Físicos - EduSolo - 25/10/25")
+ * @returns Nome do arquivo formatado (ex: "Índices Físicos - EduSolos - 25/10/25")
  */
 export function generateDefaultPDFFileName(moduleTitle: string): string {
   const dateStr = new Date().toLocaleDateString('pt-BR', {
@@ -1143,8 +1143,8 @@ export function generateDefaultPDFFileName(moduleTitle: string): string {
     month: '2-digit',
     year: '2-digit'
   }).replace(/\//g, '/');
-  
-  return `${moduleTitle} - EduSolo - ${dateStr}`;
+
+  return `${moduleTitle} - EduSolos - ${dateStr}`;
 }
 
 export async function captureChartAsImage(elementId: string): Promise<string | null> {
@@ -1158,7 +1158,7 @@ export async function captureChartAsImage(elementId: string): Promise<string | n
       backgroundColor: '#ffffff',
       scale: 2,
     });
-    
+
     return canvas.toDataURL('image/png');
   } catch (error) {
     return null;
@@ -1169,68 +1169,68 @@ export async function exportToExcel(data: ExcelExportData): Promise<boolean> {
   try {
     // Dinamicamente importar xlsx apenas quando necessário
     const XLSX = await import('xlsx');
-    
+
     const workbook = XLSX.utils.book_new();
-    
+
     // Adicionar sheets de dados
     data.sheets.forEach((sheet, index) => {
       const wsData: any[][] = [];
-      
+
       // Cabeçalho
       wsData.push([data.moduleTitle]);
       wsData.push([]);
       wsData.push([sheet.name]);
       wsData.push([]);
-      
+
       // Dados
       sheet.data.forEach(item => {
         wsData.push([item.label, item.value]);
       });
-      
+
       const ws = XLSX.utils.aoa_to_sheet(wsData);
-      
+
       // Estilizar a primeira linha
       const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
       ws['!cols'] = [{ wch: 30 }, { wch: 20 }];
-      
+
       XLSX.utils.book_append_sheet(workbook, ws, sheet.name.substring(0, 31));
     });
-    
+
     // Adicionar tabelas se existirem
     if (data.tables && data.tables.length > 0) {
       data.tables.forEach((table, index) => {
         const wsData: any[][] = [];
-        
+
         // Título da tabela
         wsData.push([table.title]);
         wsData.push([]);
-        
+
         // Headers
         wsData.push(table.headers);
-        
+
         // Rows
         table.rows.forEach(row => {
           wsData.push(row);
         });
-        
+
         const ws = XLSX.utils.aoa_to_sheet(wsData);
-        
+
         // Ajustar largura das colunas
         const colWidths = table.headers.map(() => ({ wch: 15 }));
         ws['!cols'] = colWidths;
-        
+
         XLSX.utils.book_append_sheet(
-          workbook, 
-          ws, 
+          workbook,
+          ws,
           table.title.substring(0, 31)
         );
       });
     }
-    
+
     // Salvar arquivo
     const fileName = `${data.moduleName}_${new Date().getTime()}.xlsx`;
     XLSX.writeFile(workbook, fileName);
-    
+
     return true;
   } catch (error) {
     return false;

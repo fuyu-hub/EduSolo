@@ -548,7 +548,7 @@ All colors MUST be HSL.
   }
 
   /* ========== TEMA SOLO / TERRA ========== */
-  /* Dark Mode - Solo/Terra (baseado nas cores oficiais EduSolo: tons terrosos vibrantes) */
+  /* Dark Mode - Solo/Terra (baseado nas cores oficiais EduSolos: tons terrosos vibrantes) */
   .dark.theme-soil {
     --background: 28 30% 9%;
     --foreground: 35 35% 97%;
@@ -641,12 +641,15 @@ All colors MUST be HSL.
   * {
     @apply border-border;
     /* Ocultar scrollbar globalmente */
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
 
   *::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari and Opera */
+    display: none;
+    /* Chrome, Safari and Opera */
   }
 
   body {
@@ -674,7 +677,7 @@ All colors MUST be HSL.
     background: var(--glass-bg);
     backdrop-filter: blur(16px) saturate(150%);
     border: 1px solid var(--glass-border);
-    box-shadow: 
+    box-shadow:
       0 4px 6px -1px rgb(0 0 0 / 0.1),
       0 2px 4px -2px rgb(0 0 0 / 0.1),
       0 0 0 1px rgba(255, 255, 255, 0.05) inset;
@@ -702,21 +705,21 @@ All colors MUST be HSL.
 
   /* Sombras modernas */
   .shadow-modern {
-    box-shadow: 
+    box-shadow:
       0 10px 15px -3px rgb(0 0 0 / 0.1),
       0 4px 6px -4px rgb(0 0 0 / 0.1),
       0 0 0 1px rgba(255, 255, 255, 0.05) inset;
   }
 
   .shadow-modern-lg {
-    box-shadow: 
+    box-shadow:
       0 20px 25px -5px rgb(0 0 0 / 0.1),
       0 8px 10px -6px rgb(0 0 0 / 0.1),
       0 0 0 1px rgba(255, 255, 255, 0.05) inset;
   }
 
   .shadow-glow {
-    box-shadow: 
+    box-shadow:
       0 0 20px rgba(var(--primary) / 0.3),
       0 10px 15px -3px rgb(0 0 0 / 0.1);
   }
@@ -777,6 +780,7 @@ All colors MUST be HSL.
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -787,6 +791,7 @@ All colors MUST be HSL.
   from {
     transform: translateY(0);
   }
+
   to {
     transform: translateY(-4px);
   }
@@ -796,24 +801,31 @@ All colors MUST be HSL.
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(100%);
   }
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-10px);
   }
 }
 
 @keyframes bounce-subtle {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-5px);
   }
@@ -824,6 +836,7 @@ All colors MUST be HSL.
     transform: translateY(0) rotate(0deg) scale(1);
     opacity: 1;
   }
+
   100% {
     transform: translateY(100vh) rotate(720deg) scale(0.5);
     opacity: 0;
@@ -835,6 +848,7 @@ All colors MUST be HSL.
     transform: scale(0);
     opacity: 1;
   }
+
   100% {
     transform: scale(4);
     opacity: 0;
@@ -842,9 +856,26 @@ All colors MUST be HSL.
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
-  20%, 40%, 60%, 80% { transform: translateX(2px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-2px);
+  }
+
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(2px);
+  }
 }
 
 @keyframes slideUp {
@@ -852,6 +883,7 @@ All colors MUST be HSL.
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -863,6 +895,7 @@ All colors MUST be HSL.
     opacity: 0;
     transform: scale(0.3);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -874,6 +907,7 @@ All colors MUST be HSL.
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -884,6 +918,7 @@ All colors MUST be HSL.
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -894,6 +929,7 @@ All colors MUST be HSL.
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -905,6 +941,7 @@ All colors MUST be HSL.
     opacity: 0;
     transform: scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -916,6 +953,7 @@ All colors MUST be HSL.
     opacity: 0;
     transform: translateX(20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -927,6 +965,7 @@ All colors MUST be HSL.
     opacity: 0;
     transform: translateX(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -938,35 +977,52 @@ All colors MUST be HSL.
     opacity: 0;
     transform: scale(0.3);
   }
+
   50% {
     opacity: 1;
     transform: scale(1.05);
   }
+
   70% {
     transform: scale(0.9);
   }
+
   100% {
     transform: scale(1);
   }
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
   }
+
   50% {
     transform: scale(1.05);
   }
 }
 
 @keyframes shake {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateX(0);
   }
-  10%, 30%, 50%, 70%, 90% {
+
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
     transform: translateX(-5px);
   }
-  20%, 40%, 60%, 80% {
+
+  20%,
+  40%,
+  60%,
+  80% {
     transform: translateX(5px);
   }
 }
@@ -1060,15 +1116,17 @@ html {
 /* ========== MOBILE OPTIMIZATIONS ========== */
 /* Touch optimization for mobile devices */
 @media (hover: none) and (pointer: coarse) {
+
   /* Aumenta áreas de toque para elementos pequenos */
   button,
   a,
   input[type="checkbox"],
   input[type="radio"] {
-    min-height: 44px; /* iOS recommendation */
+    min-height: 44px;
+    /* iOS recommendation */
     min-width: 44px;
   }
-  
+
   /* Desabilita hover effects em touch devices */
   *:hover {
     transition-duration: 0s;
@@ -1077,6 +1135,7 @@ html {
 
 /* Previne zoom em inputs no iOS */
 @media screen and (max-width: 767px) {
+
   input[type="text"],
   input[type="number"],
   input[type="email"],
@@ -1095,21 +1154,25 @@ html {
 
 /* ========== HIDE SCROLLBAR ========== */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;  /* Chrome, Safari and Opera */
+  display: none;
+  /* Chrome, Safari and Opera */
 }
 
 /* Mobile-specific scroll behavior */
 @media (max-width: 767px) {
+
   /* Scroll suave para mobile */
   * {
     -webkit-overflow-scrolling: touch;
   }
-  
+
   /* Remove o bounce do iOS quando não é necessário */
   body {
     overscroll-behavior-y: none;
@@ -1123,13 +1186,23 @@ html {
 }
 
 @keyframes collapsible-down {
-  from { height: 0; }
-  to { height: var(--radix-collapsible-content-height); }
+  from {
+    height: 0;
+  }
+
+  to {
+    height: var(--radix-collapsible-content-height);
+  }
 }
 
 @keyframes collapsible-up {
-  from { height: var(--radix-collapsible-content-height); }
-  to { height: 0; }
+  from {
+    height: var(--radix-collapsible-content-height);
+  }
+
+  to {
+    height: 0;
+  }
 }
 
 .collapsible-content[data-state="open"] {

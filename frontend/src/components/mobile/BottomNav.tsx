@@ -27,7 +27,7 @@ const mainNavItems: NavItem[] = [
   { icon: Save, label: "Relatorios", path: "/relatorios" },
   { icon: BookOpen, label: "Educacional", path: "/educacional" },
   { icon: Home, label: "Início", path: "/", isExpandButton: true },
-  { icon: HelpCircle, label: "Manual", path: "/manual" },
+  { icon: MoreHorizontal, label: "Mais", path: "#placeholder" },
   { icon: Settings, label: "Config", path: "/settings" },
 ];
 
@@ -60,12 +60,12 @@ export function BottomNav() {
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
     }
-    
+
     // Se não foi long press, navega para home
     if (!isLongPressRef.current) {
       navigate("/");
     }
-    
+
     isLongPressRef.current = false;
   };
 
@@ -81,7 +81,7 @@ export function BottomNav() {
     <>
       {/* Espaçador para evitar que o conteúdo fique sob a bottom nav */}
       <div className="h-16" />
-      
+
       {/* Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border/40 safe-area-inset-bottom">
         <div className="flex items-center justify-center h-16 px-2 gap-1">
@@ -90,7 +90,7 @@ export function BottomNav() {
             const active = isActive(item.path);
             const isExpandButton = item.isExpandButton;
             const isPlaceholder = item.path === "#placeholder";
-            
+
             // Renderizar o botão "Início" com long press para menu e click para navegar
             if (isExpandButton) {
               return (
@@ -110,7 +110,7 @@ export function BottomNav() {
                   <div
                     className={cn(
                       "flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 ease-out",
-                      moreOpen 
+                      moreOpen
                         ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-105"
                         : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 hover:scale-105",
                       !moreOpen && location.pathname === "/" && "bg-primary text-primary-foreground shadow-lg shadow-primary/30 scale-105"
@@ -192,16 +192,16 @@ export function BottomNav() {
       {moreOpen && (
         <>
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
             onClick={() => setMoreOpen(false)}
             style={{
               animation: 'fadeIn 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards'
             }}
           />
-          
+
           {/* Grid de Módulos - Centralizado */}
-          <div 
+          <div
             className="fixed top-1/2 left-1/2 z-50"
             style={{
               transform: 'translate(-50%, -50%)',
@@ -214,7 +214,7 @@ export function BottomNav() {
                 const Icon = item.icon;
                 const active = isActive(item.path);
                 const isDisabled = item.disabled;
-                
+
                 // Cálculo de distância do centro (índice 4) para animação
                 // Grid 3x3: [0,1,2,3,4,5,6,7,8]
                 // Distâncias: [2,1,2,1,0,1,2,1,2]
@@ -224,14 +224,14 @@ export function BottomNav() {
                 const centerRow = Math.floor(centerIndex / 3);
                 const centerCol = centerIndex % 3;
                 const distanceFromCenter = Math.abs(row - centerRow) + Math.abs(col - centerCol);
-                
+
                 const content = (
                   <div
                     className={cn(
                       "flex items-center justify-center w-[70px] h-[70px] rounded-xl relative",
                       "backdrop-blur-md transition-all duration-300",
                       !isDisabled && "active:scale-95",
-                      active 
+                      active
                         ? "bg-gradient-to-br border-2 border-white/30 shadow-xl shadow-primary/30" + " " + item.color
                         : "bg-background/70 border border-border/40" + " " + item.color,
                       !isDisabled && !active && "hover:bg-gradient-to-br hover:shadow-xl hover:shadow-primary/20 hover:border-transparent",
@@ -265,7 +265,7 @@ export function BottomNav() {
                     </div>
                   );
                 }
-                
+
                 return (
                   <Link
                     key={item.path}

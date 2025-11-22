@@ -1,6 +1,6 @@
 /**
  * Índice de exportação de todos os módulos de cálculo
- * Centraliza acesso às funções de cálculo do EduSolo
+ * Centraliza acesso às funções de cálculo do EduSolos
  */
 
 export { calcularIndicesFisicos } from './indices-fisicos';

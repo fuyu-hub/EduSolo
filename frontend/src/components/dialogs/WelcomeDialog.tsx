@@ -59,13 +59,13 @@ export function WelcomeDialog({ onComplete }: WelcomeDialogProps) {
   useEffect(() => {
     // Verifica se já foi mostrado antes
     const hasSeenWelcome = localStorage.getItem(WELCOME_DIALOG_KEY);
-    
+
     if (!hasSeenWelcome) {
       // Delay para garantir que a página carregou completamente
       const timer = setTimeout(() => {
         setOpen(true);
       }, 800);
-      
+
       return () => clearTimeout(timer);
     }
   }, []);
@@ -73,13 +73,13 @@ export function WelcomeDialog({ onComplete }: WelcomeDialogProps) {
   const handleChoice = (enableTours: boolean) => {
     // Salvar que já viu o welcome
     localStorage.setItem(WELCOME_DIALOG_KEY, "true");
-    
+
     // Salvar preferência de tours
     localStorage.setItem(TOURS_ENABLED_KEY, enableTours ? "true" : "false");
-    
+
     // Atualizar contexto
     context?.setToursEnabled(enableTours);
-    
+
     // Se desabilitou, marcar todos os tours como vistos
     if (!enableTours) {
       // Limpar tours existentes e adicionar flag global
@@ -89,14 +89,14 @@ export function WelcomeDialog({ onComplete }: WelcomeDialogProps) {
     } else {
       localStorage.removeItem("tours-globally-disabled");
     }
-    
+
     setOpen(false);
     onComplete?.(enableTours);
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent 
+      <DialogContent
         className="sm:max-w-[500px] border-primary/20"
         onInteractOutside={(e) => e.preventDefault()} // Previne fechar clicando fora
       >
@@ -104,11 +104,11 @@ export function WelcomeDialog({ onComplete }: WelcomeDialogProps) {
           <div className="mx-auto mb-4 w-16 h-16 rounded-2xl bg-gradient-to-br from-primary via-primary to-primary/70 flex items-center justify-center shadow-lg">
             <Sparkles className="w-8 h-8 text-white" />
           </div>
-          
+
           <DialogTitle className="text-center text-2xl">
-            Bem-vindo ao EduSolo! 👋
+            Bem-vindo ao EduSolos! 👋
           </DialogTitle>
-          
+
           <DialogDescription className="text-center text-base pt-2">
             Este é um sistema completo para análise e aprendizado em Mecânica dos Solos.
           </DialogDescription>
@@ -125,7 +125,7 @@ export function WelcomeDialog({ onComplete }: WelcomeDialogProps) {
                   Gostaria de ver tutoriais interativos?
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  Os tutoriais guiam você pelos recursos do sistema, explicando cada funcionalidade passo a passo. 
+                  Os tutoriais guiam você pelos recursos do sistema, explicando cada funcionalidade passo a passo.
                   Você pode reativá-los depois nas configurações.
                 </p>
               </div>
