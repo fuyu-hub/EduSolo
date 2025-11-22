@@ -3,28 +3,20 @@ import { FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import * as XLSX from 'xlsx';
 
-interface PontoGranulometrico {
-  abertura: number;
-  massa_retida: number;
-  porc_retida: number;
-  porc_retida_acum: number;
-  porc_passante: number;
-}
+import { PontoGranulometrico } from "../schemas";
 
 interface TabelaDadosGranulometricosProps {
   dados: PontoGranulometrico[];
-  massaTotal: number;
   showDadosDetalhados?: boolean;
   showComposicao?: boolean;
 }
 
-export default function TabelaDadosGranulometricos({ 
-  dados, 
-  massaTotal, 
+export default function TabelaDadosGranulometricos({
+  dados,
   showDadosDetalhados = true,
-  showComposicao = true 
+  showComposicao = true
 }: TabelaDadosGranulometricosProps) {
-  
+
   const exportarExcel = () => {
     // Sheet 1: Dados Granulométricos Detalhados
     const wsData1 = [
@@ -56,14 +48,14 @@ export default function TabelaDadosGranulometricos({
       ["Silte", "0.002 - 0.06", parseFloat(porcentagens.silte.toFixed(2))],
       ["Argila", "< 0.002", parseFloat(porcentagens.argila.toFixed(2))],
       [],
-      ["TOTAL", "", parseFloat((porcentagens.pedregulho + porcentagens.areiaGrossa + 
-        porcentagens.areiaMedia + porcentagens.areiaFina + 
+      ["TOTAL", "", parseFloat((porcentagens.pedregulho + porcentagens.areiaGrossa +
+        porcentagens.areiaMedia + porcentagens.areiaFina +
         porcentagens.silte + porcentagens.argila).toFixed(2))]
     ];
 
     // Criar workbook
     const wb = XLSX.utils.book_new();
-    
+
     // Worksheet 1
     const ws1 = XLSX.utils.aoa_to_sheet(wsData1);
     ws1['!cols'] = [
@@ -89,16 +81,14 @@ export default function TabelaDadosGranulometricos({
     XLSX.writeFile(wb, `analise_granulometrica_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  // Calcular total para verificação
+  // Calcular total para verificação (opcional, apenas interno se necessário)
   const massaTotalCalculada = dados.reduce((sum, ponto) => sum + ponto.massa_retida, 0);
-  const perdaMassa = massaTotal - massaTotalCalculada;
-  const percPerdaMassa = (perdaMassa / massaTotal) * 100;
 
   // Calcular porcentagens por tipo de material
   const calcularPorcentagensPorTipo = () => {
     // Ordenar dados por abertura decrescente
     const dadosOrdenados = [...dados].sort((a, b) => b.abertura - a.abertura);
-    
+
     // Inicializar acumuladores
     let pedregulho = 0;
     let areiaGrossa = 0;
@@ -112,10 +102,10 @@ export default function TabelaDadosGranulometricos({
     for (let i = 0; i < dadosOrdenados.length; i++) {
       const pontoAtual = dadosOrdenados[i];
       const pontoAnterior = i > 0 ? dadosOrdenados[i - 1] : null;
-      
+
       // % do material nesta faixa
-      const percNaFaixa = pontoAnterior 
-        ? pontoAnterior.porc_passante - pontoAtual.porc_passante 
+      const percNaFaixa = pontoAnterior
+        ? pontoAnterior.porc_passante - pontoAtual.porc_passante
         : 100 - pontoAtual.porc_passante;
 
       const aberturaAtual = pontoAtual.abertura;
@@ -141,7 +131,7 @@ export default function TabelaDadosGranulometricos({
     if (dadosOrdenados.length > 0) {
       const ultimoPonto = dadosOrdenados[dadosOrdenados.length - 1];
       const percPassante = ultimoPonto.porc_passante;
-      
+
       // Classificar o material passante pela menor abertura
       if (ultimoPonto.abertura >= 0.002) {
         // Se a menor peneira é >= 0.002, considerar tudo como silte/argila proporcionalmente
@@ -275,11 +265,11 @@ export default function TabelaDadosGranulometricos({
               <TableRow className="bg-gradient-to-r from-fuchsia-500/10 to-purple-600/10 font-bold border-t-2 border-fuchsia-500/30">
                 <TableCell className="text-center text-sm py-2.5" colSpan={2}>TOTAL</TableCell>
                 <TableCell className="text-center text-sm py-2.5 bg-primary/10">
-                  {(porcentagensPorTipo.pedregulho + 
-                    porcentagensPorTipo.areiaGrossa + 
-                    porcentagensPorTipo.areiaMedia + 
-                    porcentagensPorTipo.areiaFina + 
-                    porcentagensPorTipo.silte + 
+                  {(porcentagensPorTipo.pedregulho +
+                    porcentagensPorTipo.areiaGrossa +
+                    porcentagensPorTipo.areiaMedia +
+                    porcentagensPorTipo.areiaFina +
+                    porcentagensPorTipo.silte +
                     porcentagensPorTipo.argila).toFixed(2)}%
                 </TableCell>
               </TableRow>
@@ -288,40 +278,7 @@ export default function TabelaDadosGranulometricos({
         </div>
       )}
 
-      {/* Informações adicionais */}
-      {showDadosDetalhados && (
-        <div className="p-3 rounded-lg bg-gradient-to-br from-muted/50 to-muted/30 border border-muted space-y-1.5 text-sm">
-          <p className="text-sm font-semibold text-muted-foreground uppercase mb-2">Resumo</p>
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Massa Total:</span>
-            <span className="font-bold text-sm">{massaTotal.toFixed(2)} g</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-muted-foreground">Massa Retida:</span>
-            <span className="font-bold text-sm">{massaTotalCalculada.toFixed(2)} g</span>
-          </div>
-          {Math.abs(perdaMassa) > 0.01 && (
-            <div className="flex justify-between items-center pt-1.5 border-t border-muted-foreground/20">
-              <span className="text-muted-foreground">Perda:</span>
-              <span className={`font-bold text-sm ${Math.abs(percPerdaMassa) > 1 ? "text-amber-600 dark:text-amber-400" : "text-green-600 dark:text-green-400"}`}>
-                {perdaMassa.toFixed(2)} g ({percPerdaMassa.toFixed(2)}%)
-              </span>
-            </div>
-          )}
-          {Math.abs(percPerdaMassa) > 1 && (
-            <div className="mt-2 p-2 rounded bg-amber-100 dark:bg-amber-900/30 border border-amber-400 dark:border-amber-700 text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
-              <span>⚠️</span>
-              <p>Perda &gt; 1%. Verificar NBR 7181</p>
-            </div>
-          )}
-          {Math.abs(percPerdaMassa) <= 1 && Math.abs(perdaMassa) > 0.01 && (
-            <div className="mt-2 p-2 rounded bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-700 text-xs text-green-800 dark:text-green-200 flex items-center gap-2">
-              <span>✓</span>
-              <p>Perda aceitável</p>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Informações adicionais removidas conforme solicitação */}
     </div>
   );
 }
@@ -330,30 +287,18 @@ export default function TabelaDadosGranulometricos({
 function getNomePeneira(abertura: number): string {
   const peneiras: { [key: number]: string } = {
     50.8: '2"',
-    50.80: '2"',
     38.1: '1½"',
-    38.10: '1½"',
     25.4: '1"',
-    25.40: '1"',
     19.1: '¾"',
-    19.10: '¾"',
     9.52: '3/8"',
-    9.5: '3/8"',
     4.76: 'Nº 4',
-    4.75: 'Nº 4',
     2.0: 'Nº 10',
-    2.00: 'Nº 10',
     1.19: 'Nº 16',
-    1.20: 'Nº 16',
     0.59: 'Nº 30',
-    0.60: 'Nº 30',
     0.42: 'Nº 40',
     0.25: 'Nº 60',
     0.149: 'Nº 100',
-    0.15: 'Nº 100',
-    0.150: 'Nº 100',
     0.075: 'Nº 200',
-    0.074: 'Nº 200', // Tolerância ASTM
   };
 
   // Procurar correspondência exata ou próxima

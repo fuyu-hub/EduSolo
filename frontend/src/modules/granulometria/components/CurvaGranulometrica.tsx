@@ -6,13 +6,7 @@ import { Line, XAxis, YAxis, CartesianGrid, Tooltip, ComposedChart, ReferenceLin
 import html2canvas from "html2canvas";
 import { toast } from "@/components/ui/sonner";
 
-interface PontoGranulometrico {
-  abertura: number;
-  massa_retida: number;
-  porc_retida: number;
-  porc_retida_acum: number;
-  porc_passante: number;
-}
+import { PontoGranulometrico } from "../schemas";
 
 interface CurvaGranulometricaProps {
   dados: PontoGranulometrico[];
@@ -25,12 +19,12 @@ interface CurvaGranulometricaProps {
 // Otimizado com React.memo para evitar re-renders desnecessários
 const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30, d60, isMobile = false }: CurvaGranulometricaProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
-  
+
   // Função para exportar o gráfico como JPG
   const handleExportJPG = async () => {
     try {
       toast.info("Capturando gráfico...");
-      
+
       const chartElement = document.getElementById('curva-granulometrica-ampliada');
       if (!chartElement) {
         toast.error("Erro ao localizar o gráfico");
@@ -61,7 +55,7 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
       toast.error("Erro ao exportar o gráfico");
     }
   };
-  
+
   // Preparar dados para o gráfico (ordenar por abertura crescente para plotagem)
   const dadosGrafico = [...dados]
     .filter(ponto => ponto.abertura > 0) // Filtrar valores inválidos
@@ -70,8 +64,8 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
       abertura: ponto.abertura,
       aberturaLog: Math.log10(ponto.abertura),
       passante: ponto.porc_passante,
-      aberturaFormatada: ponto.abertura >= 1 
-        ? ponto.abertura.toFixed(1) 
+      aberturaFormatada: ponto.abertura >= 1
+        ? ponto.abertura.toFixed(1)
         : ponto.abertura.toFixed(3),
     }));
 
@@ -88,7 +82,7 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
 
   // Definir domínio do eixo X (escala logarítmica) dinamicamente baseado nos dados
   const valoresLog = dadosGrafico.map(d => d.aberturaLog).filter(v => isFinite(v));
-  
+
   if (valoresLog.length === 0) {
     return (
       <div className="p-8 text-center">
@@ -162,7 +156,7 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
   const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       const curveData = payload.find(p => p.dataKey === 'passante');
-      
+
       if (curveData && curveData.payload) {
         const data = curveData.payload;
         return (
@@ -186,17 +180,17 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
       width={isDialog ? 1200 : (isMobile ? 340 : 1300)}
       height={isDialog ? 600 : (isMobile ? 300 : 380)}
       data={dadosGrafico}
-      margin={isDialog 
-        ? { top: 50, right: 40, left: 60, bottom: 80 } 
-        : (isMobile 
+      margin={isDialog
+        ? { top: 50, right: 40, left: 60, bottom: 80 }
+        : (isMobile
           ? { top: 35, right: 10, left: 50, bottom: 40 }
           : { top: 45, right: 30, left: 60, bottom: 50 })
       }
     >
       <defs>
         <linearGradient id="colorCurva" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
-          <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+          <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1} />
+          <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
         </linearGradient>
       </defs>
 
@@ -245,14 +239,14 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
       )}
 
       {/* Grid: horizontal linear, vertical logarítmico */}
-      <CartesianGrid 
-        strokeDasharray="0" 
-        stroke="#d1d5db" 
+      <CartesianGrid
+        strokeDasharray="0"
+        stroke="#d1d5db"
         strokeWidth={0.8}
         horizontal={true}
         vertical={false}
       />
-      
+
       {/* Linhas verticais do grid logarítmico */}
       {gridLinesX.map((valor, index) => {
         const ehDecadaPrincipal = Math.abs(valor - Math.round(valor)) < 0.001;
@@ -266,7 +260,7 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
           />
         );
       })}
-      
+
       {/* Eixo X - Escala Logarítmica */}
       <XAxis
         dataKey="aberturaLog"
@@ -274,8 +268,8 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
         domain={[minAberturaLog, maxAberturaLog]}
         ticks={ticksX}
         tickFormatter={formatarEixoX}
-        label={{ 
-          value: isMobile ? 'Diâmetro (mm)' : 'Diâmetro das partículas (mm) - Escala Logarítmica', 
+        label={{
+          value: isMobile ? 'Diâmetro (mm)' : 'Diâmetro das partículas (mm) - Escala Logarítmica',
           position: 'bottom',
           offset: isDialog ? 5 : (isMobile ? 5 : 10),
           style: { fontSize: isDialog ? 14 : (isMobile ? 10 : 13), fontWeight: 600, fill: '#374151' }
@@ -284,17 +278,17 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
         stroke="#9ca3af"
         strokeWidth={1}
       />
-      
+
       {/* Eixo Y - Porcentagem Passante */}
       <YAxis
         domain={[0, 100]}
-        ticks={isDialog 
+        ticks={isDialog
           ? [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]
           : (isMobile ? [0, 20, 40, 60, 80, 100] : [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
         }
-        label={{ 
-          value: '% Passante', 
-          angle: -90, 
+        label={{
+          value: '% Passante',
+          angle: -90,
           position: 'insideLeft',
           offset: isDialog ? 10 : (isMobile ? 0 : 5),
           style: { fontSize: isDialog ? 14 : (isMobile ? 10 : 13), fontWeight: 600, fill: '#374151' }
@@ -303,14 +297,14 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
         stroke="#9ca3af"
         strokeWidth={1}
       />
-      
+
       {!isMobile && <Tooltip content={<CustomTooltip />} />}
 
       {/* Área sob a curva */}
       <defs>
         <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15}/>
-          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
+          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
         </linearGradient>
       </defs>
 
@@ -320,13 +314,13 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
         dataKey="passante"
         stroke="#065f46"
         strokeWidth={isDialog ? 3 : (isMobile ? 2 : 2.5)}
-        dot={isMobile ? false : { 
-          fill: "#065f46", 
+        dot={isMobile ? false : {
+          fill: "#065f46",
           stroke: "#fff",
           strokeWidth: 2,
           r: isDialog ? 5 : 4
         }}
-        activeDot={isMobile ? false : { 
+        activeDot={isMobile ? false : {
           r: isDialog ? 7 : 6,
           fill: "#065f46",
           stroke: "#fff",
@@ -400,117 +394,117 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
 
       {/* Labels das frações principais */}
       {!isMobile && (
-      <>
-      {/* Label ARGILA (< 0.02 mm) */}
-      {minAberturaLog <= Math.log10(0.02) && (
-        <ReferenceLine
-          x={(minAberturaLog + Math.log10(0.02)) / 2}
-          stroke="transparent"
-          label={{ 
-            value: 'ARGILA',
-            position: 'top',
-            fill: '#dc2626',
-            fontSize: isDialog ? 13 : 11,
-            fontWeight: 'bold',
-            offset: 20
-          }}
-        />
-      )}
+        <>
+          {/* Label ARGILA (< 0.02 mm) */}
+          {minAberturaLog <= Math.log10(0.02) && (
+            <ReferenceLine
+              x={(minAberturaLog + Math.log10(0.02)) / 2}
+              stroke="transparent"
+              label={{
+                value: 'ARGILA',
+                position: 'top',
+                fill: '#dc2626',
+                fontSize: isDialog ? 13 : 11,
+                fontWeight: 'bold',
+                offset: 20
+              }}
+            />
+          )}
 
-      {/* Label SILTE (0.02 - 0.06 mm) */}
-      {minAberturaLog <= Math.log10(0.06) && maxAberturaLog >= Math.log10(0.02) && (
-        <ReferenceLine
-          x={(Math.log10(0.02) + Math.log10(0.06)) / 2}
-          stroke="transparent"
-          label={{ 
-            value: 'SILTE',
-            position: 'top',
-            fill: '#dc2626',
-            fontSize: isDialog ? 13 : 11,
-            fontWeight: 'bold',
-            offset: 20
-          }}
-        />
-      )}
+          {/* Label SILTE (0.02 - 0.06 mm) */}
+          {minAberturaLog <= Math.log10(0.06) && maxAberturaLog >= Math.log10(0.02) && (
+            <ReferenceLine
+              x={(Math.log10(0.02) + Math.log10(0.06)) / 2}
+              stroke="transparent"
+              label={{
+                value: 'SILTE',
+                position: 'top',
+                fill: '#dc2626',
+                fontSize: isDialog ? 13 : 11,
+                fontWeight: 'bold',
+                offset: 20
+              }}
+            />
+          )}
 
-      {/* Label AREIA (0.06 - 2.0 mm) */}
-      {minAberturaLog <= Math.log10(2.0) && maxAberturaLog >= Math.log10(0.06) && (
-        <ReferenceLine
-          x={(Math.log10(0.06) + Math.log10(2.0)) / 2}
-          stroke="transparent"
-          label={{ 
-            value: 'AREIA',
-            position: 'top',
-            fill: '#dc2626',
-            fontSize: isDialog ? 13 : 11,
-            fontWeight: 'bold',
-            offset: 20
-          }}
-        />
-      )}
+          {/* Label AREIA (0.06 - 2.0 mm) */}
+          {minAberturaLog <= Math.log10(2.0) && maxAberturaLog >= Math.log10(0.06) && (
+            <ReferenceLine
+              x={(Math.log10(0.06) + Math.log10(2.0)) / 2}
+              stroke="transparent"
+              label={{
+                value: 'AREIA',
+                position: 'top',
+                fill: '#dc2626',
+                fontSize: isDialog ? 13 : 11,
+                fontWeight: 'bold',
+                offset: 20
+              }}
+            />
+          )}
 
-      {/* Subdivisões da Areia - Labels (acima do gráfico) */}
-      {minAberturaLog <= Math.log10(0.2) && maxAberturaLog >= Math.log10(0.06) && (
-        <ReferenceLine
-          x={(Math.log10(0.06) + Math.log10(0.2)) / 2}
-          stroke="transparent"
-          label={{ 
-            value: 'Fina',
-            position: 'top',
-            fill: '#991b1b',
-            fontSize: isDialog ? 11 : 9,
-            fontWeight: '600',
-            offset: 5
-          }}
-        />
-      )}
+          {/* Subdivisões da Areia - Labels (acima do gráfico) */}
+          {minAberturaLog <= Math.log10(0.2) && maxAberturaLog >= Math.log10(0.06) && (
+            <ReferenceLine
+              x={(Math.log10(0.06) + Math.log10(0.2)) / 2}
+              stroke="transparent"
+              label={{
+                value: 'Fina',
+                position: 'top',
+                fill: '#991b1b',
+                fontSize: isDialog ? 11 : 9,
+                fontWeight: '600',
+                offset: 5
+              }}
+            />
+          )}
 
-      {minAberturaLog <= Math.log10(0.6) && maxAberturaLog >= Math.log10(0.2) && (
-        <ReferenceLine
-          x={(Math.log10(0.2) + Math.log10(0.6)) / 2}
-          stroke="transparent"
-          label={{ 
-            value: 'Média',
-            position: 'top',
-            fill: '#991b1b',
-            fontSize: isDialog ? 11 : 9,
-            fontWeight: '600',
-            offset: 5
-          }}
-        />
-      )}
+          {minAberturaLog <= Math.log10(0.6) && maxAberturaLog >= Math.log10(0.2) && (
+            <ReferenceLine
+              x={(Math.log10(0.2) + Math.log10(0.6)) / 2}
+              stroke="transparent"
+              label={{
+                value: 'Média',
+                position: 'top',
+                fill: '#991b1b',
+                fontSize: isDialog ? 11 : 9,
+                fontWeight: '600',
+                offset: 5
+              }}
+            />
+          )}
 
-      {minAberturaLog <= Math.log10(2.0) && maxAberturaLog >= Math.log10(0.6) && (
-        <ReferenceLine
-          x={(Math.log10(0.6) + Math.log10(2.0)) / 2}
-          stroke="transparent"
-          label={{ 
-            value: 'Grossa',
-            position: 'top',
-            fill: '#991b1b',
-            fontSize: isDialog ? 11 : 9,
-            fontWeight: '600',
-            offset: 5
-          }}
-        />
-      )}
+          {minAberturaLog <= Math.log10(2.0) && maxAberturaLog >= Math.log10(0.6) && (
+            <ReferenceLine
+              x={(Math.log10(0.6) + Math.log10(2.0)) / 2}
+              stroke="transparent"
+              label={{
+                value: 'Grossa',
+                position: 'top',
+                fill: '#991b1b',
+                fontSize: isDialog ? 11 : 9,
+                fontWeight: '600',
+                offset: 5
+              }}
+            />
+          )}
 
-      {/* Label PEDREGULHO (2.0 - 60 mm) */}
-      {maxAberturaLog >= Math.log10(2.0) && (
-        <ReferenceLine
-          x={(Math.log10(2.0) + Math.min(maxAberturaLog, Math.log10(60))) / 2}
-          stroke="transparent"
-          label={{ 
-            value: 'PEDREGULHO',
-            position: 'top',
-            fill: '#dc2626',
-            fontSize: isDialog ? 13 : 11,
-            fontWeight: 'bold',
-            offset: 20
-          }}
-        />
-      )}
-      </>
+          {/* Label PEDREGULHO (2.0 - 60 mm) */}
+          {maxAberturaLog >= Math.log10(2.0) && (
+            <ReferenceLine
+              x={(Math.log10(2.0) + Math.min(maxAberturaLog, Math.log10(60))) / 2}
+              stroke="transparent"
+              label={{
+                value: 'PEDREGULHO',
+                position: 'top',
+                fill: '#dc2626',
+                fontSize: isDialog ? 13 : 11,
+                fontWeight: 'bold',
+                offset: 20
+              }}
+            />
+          )}
+        </>
       )}
 
     </ComposedChart>
@@ -520,44 +514,44 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
     <div id="curva-granulometrica-chart" className="space-y-4">
       {/* Botões Ampliar e Exportar */}
       <div className="flex justify-end gap-2">
-            <Button
-              onClick={handleExportJPG}
-              variant="outline"
-              size="sm"
-              className="gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Salvar JPG
-            </Button>
-            
-            {!isMobile && (
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Maximize2 className="w-4 h-4" />
-                    Ampliar
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-[95vw] max-h-[95vh] w-full">
-                  <DialogHeader>
-                    <DialogTitle>Curva Granulométrica - Visualização Ampliada</DialogTitle>
-                  </DialogHeader>
-                  <div className="w-full flex justify-center items-center p-4">
-                    <GraficoContent isDialog={true} />
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
-          </div>
-      
+        <Button
+          onClick={handleExportJPG}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
+          <Download className="w-4 h-4" />
+          Salvar JPG
+        </Button>
+
+        {!isMobile && (
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Maximize2 className="w-4 h-4" />
+                Ampliar
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-[95vw] max-h-[95vh] w-full">
+              <DialogHeader>
+                <DialogTitle>Curva Granulométrica - Visualização Ampliada</DialogTitle>
+              </DialogHeader>
+              <div className="w-full flex justify-center items-center p-4">
+                <GraficoContent isDialog={true} />
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+
       {/* Gráfico ampliado renderizado em background (invisível) para captura */}
-      <div 
-        className="fixed pointer-events-none" 
-        style={{ 
-          left: '-9999px', 
+      <div
+        className="fixed pointer-events-none"
+        style={{
+          left: '-9999px',
           top: 0,
           width: '1240px', // Largura fixa para o gráfico ampliado
-          zIndex: -9999 
+          zIndex: -9999
         }}
       >
         <div id="curva-granulometrica-ampliada" className="bg-white p-4">
@@ -572,28 +566,28 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
 
       {/* Legenda dos diâmetros característicos */}
       {!isMobile && (
-      <div className="grid grid-cols-2 gap-4">
-        {/* Diâmetros característicos */}
-        {(d10 || d30 || d60) && (
-          <div className="p-4 rounded-lg bg-white dark:bg-gray-900 border shadow-sm">
-            <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Diâmetros Característicos</p>
-            <div className="space-y-2 text-sm">
-              {d10 && (
-                <div className="flex items-center gap-3 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
-                  <div className="w-4 h-4 rounded-full bg-red-500 shadow-sm"></div>
-                  <span className="text-gray-700 dark:text-gray-300"><strong>D10</strong> = {d10.toFixed(4)} mm</span>
-                </div>
-              )}
-              {d30 && (
-                <div className="flex items-center gap-3 p-2 rounded-md hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors">
-                  <div className="w-4 h-4 rounded-full bg-amber-500 shadow-sm"></div>
-                  <span className="text-gray-700 dark:text-gray-300"><strong>D30</strong> = {d30.toFixed(4)} mm</span>
-                </div>
-              )}
-              {d60 && (
-                <div className="flex items-center gap-3 p-2 rounded-md hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors">
-                  <div className="w-4 h-4 rounded-full bg-green-500 shadow-sm"></div>
-                  <span className="text-gray-700 dark:text-gray-300"><strong>D60</strong> = {d60.toFixed(4)} mm</span>
+        <div className="grid grid-cols-2 gap-4">
+          {/* Diâmetros característicos */}
+          {(d10 || d30 || d60) && (
+            <div className="p-4 rounded-lg bg-white dark:bg-gray-900 border shadow-sm">
+              <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Diâmetros Característicos</p>
+              <div className="space-y-2 text-sm">
+                {d10 && (
+                  <div className="flex items-center gap-3 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
+                    <div className="w-4 h-4 rounded-full bg-red-500 shadow-sm"></div>
+                    <span className="text-gray-700 dark:text-gray-300"><strong>D10</strong> = {d10.toFixed(4)} mm</span>
+                  </div>
+                )}
+                {d30 && (
+                  <div className="flex items-center gap-3 p-2 rounded-md hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors">
+                    <div className="w-4 h-4 rounded-full bg-amber-500 shadow-sm"></div>
+                    <span className="text-gray-700 dark:text-gray-300"><strong>D30</strong> = {d30.toFixed(4)} mm</span>
+                  </div>
+                )}
+                {d60 && (
+                  <div className="flex items-center gap-3 p-2 rounded-md hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors">
+                    <div className="w-4 h-4 rounded-full bg-green-500 shadow-sm"></div>
+                    <span className="text-gray-700 dark:text-gray-300"><strong>D60</strong> = {d60.toFixed(4)} mm</span>
                   </div>
                 )}
               </div>
@@ -601,28 +595,28 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
           )}
 
           {/* Classificação granulométrica */}
-        <div className="p-4 rounded-lg bg-white dark:bg-gray-900 border shadow-sm">
-          <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Limites de Tamanho (ABNT)</p>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="p-2 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-              <span className="font-semibold text-amber-900 dark:text-amber-300">Argila</span>
-              <div className="text-amber-800 dark:text-amber-400 font-medium mt-1">&lt; 0.002 mm</div>
+          <div className="p-4 rounded-lg bg-white dark:bg-gray-900 border shadow-sm">
+            <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Limites de Tamanho (ABNT)</p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="p-2 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                <span className="font-semibold text-amber-900 dark:text-amber-300">Argila</span>
+                <div className="text-amber-800 dark:text-amber-400 font-medium mt-1">&lt; 0.002 mm</div>
               </div>
-            <div className="p-2 rounded-md bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
-              <span className="font-semibold text-orange-900 dark:text-orange-300">Silte</span>
-              <div className="text-orange-800 dark:text-orange-400 font-medium mt-1">0.002-0.06</div>
+              <div className="p-2 rounded-md bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
+                <span className="font-semibold text-orange-900 dark:text-orange-300">Silte</span>
+                <div className="text-orange-800 dark:text-orange-400 font-medium mt-1">0.002-0.06</div>
               </div>
-            <div className="p-2 rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
-              <span className="font-semibold text-yellow-900 dark:text-yellow-300">Areia</span>
-              <div className="text-yellow-800 dark:text-yellow-400 font-medium mt-1">0.06-2.0</div>
+              <div className="p-2 rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+                <span className="font-semibold text-yellow-900 dark:text-yellow-300">Areia</span>
+                <div className="text-yellow-800 dark:text-yellow-400 font-medium mt-1">0.06-2.0</div>
               </div>
-            <div className="p-2 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
-              <span className="font-semibold text-gray-900 dark:text-gray-300">Pedregulho</span>
-              <div className="text-gray-800 dark:text-gray-400 font-medium mt-1">2.0-60 mm</div>
+              <div className="p-2 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+                <span className="font-semibold text-gray-900 dark:text-gray-300">Pedregulho</span>
+                <div className="text-gray-800 dark:text-gray-400 font-medium mt-1">2.0-60 mm</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
       )}
     </div>
   );

@@ -55,8 +55,8 @@ const camadaSchema = z.object({
   gamaSat: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) > 0), {
     message: "γ saturado deve ser maior que 0 (ou deixe vazio)",
   }),
-  Ko: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0 && parseFloat(val) <= 1), { 
-    message: "Ko deve estar entre 0 e 1 (ou deixe vazio)" 
+  Ko: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) >= 0 && parseFloat(val) <= 1), {
+    message: "Ko deve estar entre 0 e 1 (ou deixe vazio)"
   }),
   impermeavel: z.boolean().optional(),
 });
@@ -227,11 +227,11 @@ function TensoesGeostaticasDesktop() {
   useEffect(() => {
     // Verificar se tours estão globalmente desabilitados
     if (!toursEnabled) return;
-    
+
     const initTour = async () => {
       const hasSeenTour = localStorage.getItem('tour-seen-tensoes-geostaticas');
       if (hasSeenTour === 'true') return;
-      
+
       // Carregar exemplo de perfil de 3 camadas para demonstração
       const exemploParaTour = {
         icon: "🏗️",
@@ -241,58 +241,58 @@ function TensoesGeostaticasDesktop() {
         alturaCapilar: "0.5",
         pesoEspecificoAgua: "10.0",
         camadas: [
-          { 
-            id: generateId(), 
-            nome: "Areia Fina", 
-            espessura: "3.0", 
-            profundidadeNA: "2.0", 
-            capilaridade: "0.5", 
-            gamaNat: "17.0", 
-            gamaSat: "19.5", 
+          {
+            id: generateId(),
+            nome: "Areia Fina",
+            espessura: "3.0",
+            profundidadeNA: "2.0",
+            capilaridade: "0.5",
+            gamaNat: "17.0",
+            gamaSat: "19.5",
             Ko: "",
-            impermeavel: false 
+            impermeavel: false
           },
-          { 
-            id: generateId(), 
-            nome: "Argila Mole", 
-            espessura: "5.0", 
-            profundidadeNA: "", 
-            capilaridade: "", 
-            gamaNat: "", 
-            gamaSat: "17.0", 
+          {
+            id: generateId(),
+            nome: "Argila Mole",
+            espessura: "5.0",
+            profundidadeNA: "",
+            capilaridade: "",
+            gamaNat: "",
+            gamaSat: "17.0",
             Ko: "",
-            impermeavel: false 
+            impermeavel: false
           },
-          { 
-            id: generateId(), 
-            nome: "Areia Média", 
-            espessura: "5.0", 
-            profundidadeNA: "", 
-            capilaridade: "", 
-            gamaNat: "", 
-            gamaSat: "20.0", 
+          {
+            id: generateId(),
+            nome: "Areia Média",
+            espessura: "5.0",
+            profundidadeNA: "",
+            capilaridade: "",
+            gamaNat: "",
+            gamaSat: "20.0",
             Ko: "",
-            impermeavel: false 
+            impermeavel: false
           },
         ],
       };
-      
+
       // Carregar exemplo no formulário
       handleSelectExample(exemploParaTour as any);
-      
+
       // Aguardar formulário ser preenchido
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       // Calcular automaticamente
       form.handleSubmit(onSubmit)();
-      
+
       // Aguardar cálculo completar
       await new Promise(resolve => setTimeout(resolve, 1200));
-      
+
       // Iniciar tour
       startTour(tourSteps, "tensoes-geostaticas");
     };
-    
+
     const timer = setTimeout(initTour, 800);
     return () => clearTimeout(timer);
   }, [toursEnabled]);
@@ -312,44 +312,44 @@ function TensoesGeostaticasDesktop() {
 
   // Handlers para o diagrama interativo
   const handleAddCamadaFromDiagram = (data: CamadaData) => {
-    const novaCamada = { 
+    const novaCamada = {
       id: generateId(),
-      nome: data.nome, 
-      espessura: data.espessura, 
-      profundidadeNA: data.profundidadeNA, 
-      capilaridade: data.capilaridade, 
-      gamaNat: data.gamaNat, 
-      gamaSat: data.gamaSat, 
+      nome: data.nome,
+      espessura: data.espessura,
+      profundidadeNA: data.profundidadeNA,
+      capilaridade: data.capilaridade,
+      gamaNat: data.gamaNat,
+      gamaSat: data.gamaSat,
       Ko: data.Ko || "",
       impermeavel: data.impermeavel || false
     };
-    
+
     append(novaCamada);
-    
+
     // Se foi definido um NA, transferir para a camada correta
     if (data.profundidadeNA && data.profundidadeNA !== "") {
       const profNA = parseFloat(data.profundidadeNA);
       const cap = parseFloat(data.capilaridade || "0");
-      
+
       if (!isNaN(profNA)) {
         setTimeout(() => {
           const camadasAtuais = form.getValues("camadas") as CamadaTensoes[];
           const resultado = transferirNAParaCamadaCorreta(profNA, cap, camadasAtuais.length - 1, camadasAtuais);
-          
+
           if (resultado.erro) {
             toast("Aviso", { description: resultado.erro });
           } else {
             form.setValue("camadas", resultado.camadas);
             if (resultado.indexDestino !== camadasAtuais.length - 1) {
-              toast("NA transferido", { 
-                description: `O NA foi movido para a Camada ${resultado.indexDestino + 1} (profundidade correta)` 
+              toast("NA transferido", {
+                description: `O NA foi movido para a Camada ${resultado.indexDestino + 1} (profundidade correta)`
               });
             }
           }
         }, 100);
       }
     }
-    
+
     toast("Nova camada adicionada!", { description: "Camada inserida com sucesso no perfil." });
   };
 
@@ -361,19 +361,19 @@ function TensoesGeostaticasDesktop() {
     form.setValue(`camadas.${index}.gamaSat`, data.gamaSat);
     form.setValue(`camadas.${index}.Ko`, data.Ko || "");
     form.setValue(`camadas.${index}.impermeavel`, data.impermeavel || false);
-    
+
     // Se foi definido um NA, transferir para a camada correta
     const profNAStr = data.profundidadeNA;
     const capilaridadeStr = data.capilaridade;
-    
+
     if (profNAStr && profNAStr !== "") {
       const profNA = parseFloat(profNAStr);
       const cap = parseFloat(capilaridadeStr || "0");
-      
+
       if (!isNaN(profNA)) {
         const camadasAtuais = form.getValues("camadas") as CamadaTensoes[];
         const resultado = transferirNAParaCamadaCorreta(profNA, cap, index, camadasAtuais);
-        
+
         if (resultado.erro) {
           toast("Erro", { description: resultado.erro });
           // Limpa o NA da camada atual se houver erro
@@ -382,8 +382,8 @@ function TensoesGeostaticasDesktop() {
         } else {
           form.setValue("camadas", resultado.camadas);
           if (resultado.indexDestino !== index) {
-            toast("NA transferido", { 
-              description: `O NA foi movido para a Camada ${resultado.indexDestino + 1} (profundidade correta)` 
+            toast("NA transferido", {
+              description: `O NA foi movido para a Camada ${resultado.indexDestino + 1} (profundidade correta)`
             });
           }
         }
@@ -393,7 +393,7 @@ function TensoesGeostaticasDesktop() {
       form.setValue(`camadas.${index}.profundidadeNA`, "");
       form.setValue(`camadas.${index}.capilaridade`, "");
     }
-    
+
     toast("Camada atualizada!", { description: `${data.nome} foi atualizada.` });
   };
 
@@ -414,14 +414,14 @@ function TensoesGeostaticasDesktop() {
   const goToPreviousCamada = () => setCurrentCamadaIndex(prev => Math.max(prev - 1, 0));
 
   const handleClear = () => {
-      form.reset({
-        profundidadeNA: "",
-        alturaCapilar: "0.0",
-        pesoEspecificoAgua: "10.0",
-        camadas: [
-          { id: generateId(), nome: "Camada 1", espessura: "5.0", profundidadeNA: "", capilaridade: "", gamaNat: "18.0", gamaSat: "20.0", Ko: "", impermeavel: false },
-        ],
-      });
+    form.reset({
+      profundidadeNA: "",
+      alturaCapilar: "0.0",
+      pesoEspecificoAgua: "10.0",
+      camadas: [
+        { id: generateId(), nome: "Camada 1", espessura: "5.0", profundidadeNA: "", capilaridade: "", gamaNat: "18.0", gamaSat: "20.0", Ko: "", impermeavel: false },
+      ],
+    });
     setCurrentCamadaIndex(0);
     setResults(null);
     setApiError(null);
@@ -497,58 +497,58 @@ function TensoesGeostaticasDesktop() {
       alturaCapilar: "0.5",
       pesoEspecificoAgua: "10.0",
       camadas: [
-        { 
-          id: generateId(), 
-          nome: "Areia Fina", 
-          espessura: "3.0", 
-          profundidadeNA: "2.0", 
-          capilaridade: "0.5", 
-          gamaNat: "17.0", 
-          gamaSat: "19.5", 
+        {
+          id: generateId(),
+          nome: "Areia Fina",
+          espessura: "3.0",
+          profundidadeNA: "2.0",
+          capilaridade: "0.5",
+          gamaNat: "17.0",
+          gamaSat: "19.5",
           Ko: "",
-          impermeavel: false 
+          impermeavel: false
         },
-        { 
-          id: generateId(), 
-          nome: "Argila Mole", 
-          espessura: "5.0", 
-          profundidadeNA: "", 
-          capilaridade: "", 
-          gamaNat: "", 
-          gamaSat: "17.0", 
+        {
+          id: generateId(),
+          nome: "Argila Mole",
+          espessura: "5.0",
+          profundidadeNA: "",
+          capilaridade: "",
+          gamaNat: "",
+          gamaSat: "17.0",
           Ko: "",
-          impermeavel: false 
+          impermeavel: false
         },
-        { 
-          id: generateId(), 
-          nome: "Areia Média", 
-          espessura: "5.0", 
-          profundidadeNA: "", 
-          capilaridade: "", 
-          gamaNat: "", 
-          gamaSat: "20.0", 
+        {
+          id: generateId(),
+          nome: "Areia Média",
+          espessura: "5.0",
+          profundidadeNA: "",
+          capilaridade: "",
+          gamaNat: "",
+          gamaSat: "20.0",
           Ko: "",
-          impermeavel: false 
+          impermeavel: false
         },
       ],
     };
-    
+
     handleSelectExample(exemploParaTour as any);
-    
+
     await new Promise(resolve => setTimeout(resolve, 300));
     form.handleSubmit(onSubmit)();
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     startTour(tourSteps, "tensoes-geostaticas", true);
     toast("Tour iniciado!", { description: "Exemplo de 3 camadas carregado para demonstração." });
   };
 
   const handleExportPDF = () => {
     if (!results) return;
-    
+
     // Gerar nome padrão usando a função auxiliar
     const defaultName = generateDefaultPDFFileName("Tensões Geostáticas");
-    
+
     setPdfFileName(defaultName);
     setExportPDFDialogOpen(true);
   };
@@ -576,7 +576,7 @@ function TensoesGeostaticasDesktop() {
 
     // Tabelas
     const tables = [];
-    
+
     // TABELA 1: Configurações Gerais
     const configHeaders = ["Parâmetro", "Valor"];
     const configRows = [
@@ -607,12 +607,12 @@ function TensoesGeostaticasDesktop() {
     // TABELA 3: Tensões nos Pontos de Cálculo
     // Verifica se há tensão horizontal nos resultados
     const temTensaoHorizontal = results.pontos_calculo.some(p => p.tensao_efetiva_horizontal !== null && p.tensao_efetiva_horizontal !== undefined);
-    
+
     const tensoesHeaders = ["Prof. (m)", "Tensao Total (kPa)", "Pressao Neutra (kPa)", "Tensao Efet. V (kPa)"];
     if (temTensaoHorizontal) {
       tensoesHeaders.push("Tensao Efet. H (kPa)");
     }
-    
+
     const tensoesRows = results.pontos_calculo.map(p => {
       const row = [
         formatNumberForExport(p.profundidade, 2),
@@ -680,9 +680,9 @@ function TensoesGeostaticasDesktop() {
 
     toast("Gerando PDF...");
     const success = await exportToPDF(exportData);
-    
+
     setIsExportingPDF(false);
-    
+
     if (success) {
       toast("PDF exportado!", { description: "O arquivo foi baixado com sucesso." });
       setExportPDFDialogOpen(false);
@@ -711,7 +711,7 @@ function TensoesGeostaticasDesktop() {
 
     const resultadosData: { label: string; value: string | number }[] = [];
     const temTensaoHorizontalExcel = results.pontos_calculo.some(p => p.tensao_efetiva_horizontal !== null && p.tensao_efetiva_horizontal !== undefined);
-    
+
     results.pontos_calculo.forEach((p, i) => {
       resultadosData.push({ label: `Ponto ${i + 1} - Prof (m)`, value: p.profundidade.toFixed(2) });
       if (p.tensao_total_vertical !== null && p.tensao_total_vertical !== undefined) {
@@ -759,7 +759,7 @@ function TensoesGeostaticasDesktop() {
         camadas: data.camadas.map((c, index) => {
           const espessura = parseFloat(c.espessura);
           const Ko = c.Ko && c.Ko !== "" ? parseFloat(c.Ko) : null;
-          
+
           // Calcula profundidade da camada
           let profTopo = 0;
           for (let i = 0; i < index; i++) {
@@ -856,7 +856,7 @@ function TensoesGeostaticasDesktop() {
     Ko: c.Ko && c.Ko !== "" ? parseFloat(c.Ko) : null,
     impermeavel: c.impermeavel || false,
   }));
-  
+
   // Coleta TODOS os NAs definidos nas camadas
   const niveisAgua = camadasParaTabela
     .map((c, index) => c.profundidadeNA !== null && c.profundidadeNA !== undefined ? {
@@ -865,7 +865,7 @@ function TensoesGeostaticasDesktop() {
       index
     } : null)
     .filter((na): na is { profundidade: number; capilaridade: number; index: number } => na !== null);
-  
+
   // Para compatibilidade, pega o primeiro NA (usado em alguns lugares)
   const profNA = niveisAgua.length > 0 ? niveisAgua[0].profundidade : 999;
   const alturaCapilar = niveisAgua.length > 0 ? niveisAgua[0].capilaridade : 0;
@@ -951,9 +951,9 @@ function TensoesGeostaticasDesktop() {
               <TooltipProvider>
                 {/* Perfil de Solo Interativo */}
                 <div className="space-y-2" data-tour="diagrama-camadas">
-                  <DiagramaCamadas 
-                    camadas={camadasParaTabela} 
-                    profundidadeNA={profNA} 
+                  <DiagramaCamadas
+                    camadas={camadasParaTabela}
+                    profundidadeNA={profNA}
                     alturaCapilar={alturaCapilar}
                     niveisAgua={niveisAgua}
                     interactive={true}

@@ -235,11 +235,11 @@ function CompactacaoDesktop() {
   useEffect(() => {
     // Verificar se tours estão globalmente desabilitados
     if (!toursEnabled) return;
-    
+
     const initTour = async () => {
       const hasSeenTour = localStorage.getItem('tour-seen-compactacao');
       if (hasSeenTour === 'true') return;
-      
+
       // Carregar exemplo para demonstração (Areia Argilosa)
       const exemploParaTour = {
         icon: "🏜️",
@@ -256,19 +256,19 @@ function CompactacaoDesktop() {
           { id: generateId(), pesoAmostaCilindro: "6095.0", pesoBrutoUmido: "114.92", pesoBrutoSeco: "94.63", tara: "27.41" },
         ],
       };
-      
+
       handleSelectExample(exemploParaTour as any);
-      
+
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       // Submeter automaticamente
       form.handleSubmit(onSubmit)();
-      
+
       await new Promise(resolve => setTimeout(resolve, 1200));
-      
+
       startTour(tourSteps, "compactacao");
     };
-    
+
     const timer = setTimeout(initTour, 800);
     return () => clearTimeout(timer);
   }, [toursEnabled]);
@@ -386,23 +386,23 @@ function CompactacaoDesktop() {
         { id: generateId(), pesoAmostaCilindro: "6095.0", pesoBrutoUmido: "114.92", pesoBrutoSeco: "94.63", tara: "27.41" },
       ],
     };
-    
+
     handleSelectExample(exemploParaTour as any);
-    
+
     await new Promise(resolve => setTimeout(resolve, 300));
     form.handleSubmit(onSubmit)();
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     startTour(tourSteps, "compactacao", true);
     toast("Tour iniciado!", { description: "Exemplo carregado automaticamente para demonstração." });
   };
 
   const handleExportPDF = () => {
     if (!results) return;
-    
+
     // Gerar nome padrão usando a função auxiliar
     const defaultName = generateDefaultPDFFileName("Compactação");
-    
+
     setPdfFileName(defaultName);
     setExportPDFDialogOpen(true);
   };
@@ -415,7 +415,7 @@ function CompactacaoDesktop() {
 
     // Capturar imagem do gráfico usando a função do componente
     toast("Capturando gráfico...");
-    const chartImage = curvaCompactacaoRef.current 
+    const chartImage = curvaCompactacaoRef.current
       ? await curvaCompactacaoRef.current.getImageForExport()
       : null;
 
