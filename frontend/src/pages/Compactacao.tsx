@@ -121,7 +121,7 @@ function CompactacaoDesktop() {
   const { toast: toastFn } = { toast };
   const { settings } = useSettings();
   const { theme } = useTheme();
-  const { startTour } = useTour();
+  const { startTour, suggestTour } = useTour();
   const toursEnabled = useToursEnabled();
   const { addReport } = useRecentReports();
   const navigate = useNavigate();
@@ -231,46 +231,47 @@ function CompactacaoDesktop() {
     },
   ];
 
-  // Iniciar tour automaticamente na primeira visita
+  // Sugerir tour via toast na primeira visita
   useEffect(() => {
     // Verificar se tours estão globalmente desabilitados
     if (!toursEnabled) return;
 
-    const initTour = async () => {
-      const hasSeenTour = localStorage.getItem('tour-seen-compactacao');
-      if (hasSeenTour === 'true') return;
+    let toastId: string | number | undefined;
 
-      // Carregar exemplo para demonstração (Areia Argilosa)
-      const exemploParaTour = {
-        icon: "🏜️",
-        nome: "Areia Argilosa",
-        descricao: "Curva típica de areia argilosa",
-        volumeCilindro: "982",
-        pesoCilindro: "4100",
-        Gs: "2.68",
-        pontos: [
-          { id: generateId(), pesoAmostaCilindro: "6012.5", pesoBrutoUmido: "106.56", pesoBrutoSeco: "93.69", tara: "24.72" },
-          { id: generateId(), pesoAmostaCilindro: "6102.0", pesoBrutoUmido: "115.23", pesoBrutoSeco: "100.14", tara: "28.65" },
-          { id: generateId(), pesoAmostaCilindro: "6150.0", pesoBrutoUmido: "122.78", pesoBrutoSeco: "104.82", tara: "26.13" },
-          { id: generateId(), pesoAmostaCilindro: "6138.0", pesoBrutoUmido: "118.44", pesoBrutoSeco: "99.28", tara: "25.87" },
-          { id: generateId(), pesoAmostaCilindro: "6095.0", pesoBrutoUmido: "114.92", pesoBrutoSeco: "94.63", tara: "27.41" },
-        ],
+    const timer = setTimeout(() => {
+      // Preparação: carregar exemplo e calcular
+      const prepareForTour = async () => {
+        const exemploParaTour = {
+          icon: "🏜️",
+          nome: "Areia Argilosa",
+          descricao: "Curva típica de areia argilosa",
+          volumeCilindro: "982",
+          pesoCilindro: "4100",
+          Gs: "2.68",
+          pontos: [
+            { id: generateId(), pesoAmostaCilindro: "6012.5", pesoBrutoUmido: "106.56", pesoBrutoSeco: "93.69", tara: "24.72" },
+            { id: generateId(), pesoAmostaCilindro: "6102.0", pesoBrutoUmido: "115.23", pesoBrutoSeco: "100.14", tara: "28.65" },
+            { id: generateId(), pesoAmostaCilindro: "6150.0", pesoBrutoUmido: "122.78", pesoBrutoSeco: "104.82", tara: "26.13" },
+            { id: generateId(), pesoAmostaCilindro: "6138.0", pesoBrutoUmido: "118.44", pesoBrutoSeco: "99.28", tara: "25.87" },
+            { id: generateId(), pesoAmostaCilindro: "6095.0", pesoBrutoUmido: "114.92", pesoBrutoSeco: "94.63", tara: "27.41" },
+          ],
+        };
+        handleSelectExample(exemploParaTour as any);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        form.handleSubmit(onSubmit)();
+        await new Promise(resolve => setTimeout(resolve, 800));
       };
 
-      handleSelectExample(exemploParaTour as any);
+      // Sugerir tour com toast
+      toastId = suggestTour(tourSteps, "compactacao", "Compactação", prepareForTour);
+    }, 1000);
 
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Submeter automaticamente
-      form.handleSubmit(onSubmit)();
-
-      await new Promise(resolve => setTimeout(resolve, 1200));
-
-      startTour(tourSteps, "compactacao");
+    return () => {
+      clearTimeout(timer);
+      if (toastId) {
+        toast.dismiss(toastId);
+      }
     };
-
-    const timer = setTimeout(initTour, 800);
-    return () => clearTimeout(timer);
   }, [toursEnabled]);
 
   useEffect(() => {

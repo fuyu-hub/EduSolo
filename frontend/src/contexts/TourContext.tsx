@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { toast } from "@/components/ui/sonner";
+import { GraduationCap, X } from "lucide-react";
 
 export interface TourStep {
   target: string; // Seletor CSS ou ID do elemento
@@ -19,6 +21,7 @@ interface TourContextType {
   prevStep: () => void;
   skipTour: () => void;
   tourId: string | null;
+  suggestTour: (steps: TourStep[], tourId: string, moduleName: string, onAccept?: () => Promise<void>) => string | number | undefined;
 }
 
 const TourContext = createContext<TourContextType | undefined>(undefined);
@@ -79,6 +82,58 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentStep]);
 
+  // Função para sugerir tour via toast
+  const suggestTour = useCallback((
+    newSteps: TourStep[],
+    id: string,
+    moduleName: string,
+    onAccept?: () => Promise<void>
+  ): string | number | undefined => {
+    // Não sugerir em dispositivos móveis
+    if (window.innerWidth < MOBILE_BREAKPOINT) {
+      return undefined;
+    }
+
+    // Verificar se já sugeriu/viu este tour
+    const hasSeenTour = localStorage.getItem(`tour-seen-${id}`);
+    if (hasSeenTour === "true") {
+      return undefined;
+    }
+
+    // Marcar como sugerido para não aparecer novamente
+    localStorage.setItem(`tour-seen-${id}`, "true");
+
+    // Mostrar toast de sugestão e retornar o ID
+    const toastId = toast(`Tutorial disponível`, {
+      description: `Deseja ver o tutorial interativo de ${moduleName}?`,
+      duration: 60000, // 1 minuto
+      action: {
+        label: "Iniciar",
+        onClick: async () => {
+          // Executar preparação se existir (carregar exemplo, calcular, etc.)
+          if (onAccept) {
+            await onAccept();
+          }
+          // Aguardar um pouco para a UI atualizar
+          await new Promise(resolve => setTimeout(resolve, 500));
+          // Iniciar o tour forçadamente
+          setSteps(newSteps);
+          setCurrentStep(0);
+          setTourId(id);
+          setIsActive(true);
+        },
+      },
+      cancel: {
+        label: "Agora não",
+        onClick: () => {
+          // Já marcou como visto acima, apenas fecha o toast
+        },
+      },
+    });
+
+    return toastId;
+  }, []);
+
   // Scroll to element when step changes
   useEffect(() => {
     if (isActive && steps[currentStep]) {
@@ -86,19 +141,19 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
       if (steps[currentStep].action) {
         steps[currentStep].action!();
       }
-      
+
       // Pequeno delay para garantir que o elemento está renderizado
       const timer = setTimeout(() => {
         const element = document.querySelector(steps[currentStep].target);
         if (element) {
           const rect = element.getBoundingClientRect();
           const absoluteTop = window.pageYOffset + rect.top;
-          
+
           // Calcular posição ideal considerando espaço para o tooltip
           // Deixar espaço extra acima e abaixo (300px de cada lado)
           const tooltipSpace = 300;
           const viewportHeight = window.innerHeight;
-          
+
           // Se o elemento é muito grande, centralizar ele
           if (rect.height > viewportHeight - tooltipSpace * 2) {
             const middle = absoluteTop - (viewportHeight / 2) + (rect.height / 2);
@@ -109,11 +164,11 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
           } else {
             // Tentar posicionar o elemento na parte superior da tela com espaço para tooltip acima
             const targetTop = absoluteTop - tooltipSpace;
-            
+
             // Verificar se há espaço suficiente abaixo também
             const elementBottom = absoluteTop + rect.height;
             const bottomSpace = window.pageYOffset + viewportHeight - elementBottom;
-            
+
             if (bottomSpace < tooltipSpace) {
               // Se não há espaço embaixo, tentar centralizar
               const middle = absoluteTop - (viewportHeight / 2) + (rect.height / 2);
@@ -131,7 +186,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
           }
         }
       }, 100);
-      
+
       return () => clearTimeout(timer);
     }
   }, [currentStep, isActive, steps]);
@@ -148,6 +203,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
         prevStep,
         skipTour,
         tourId,
+        suggestTour,
       }}
     >
       {children}
@@ -162,4 +218,3 @@ export function useTour() {
   }
   return context;
 }
-

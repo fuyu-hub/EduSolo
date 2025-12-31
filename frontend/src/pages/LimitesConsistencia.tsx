@@ -6,6 +6,7 @@ import { calcularLimitesConsistencia } from "@/lib/calculations/limites-consiste
 import { z } from "zod";
 import { Droplet, Info, Calculator as CalcIcon, Plus, Trash2, LineChart, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, FileText, GraduationCap } from "lucide-react";
 import { useTour, TourStep } from "@/contexts/TourContext";
+import { toast } from "@/components/ui/sonner";
 import type { CarouselApi } from "@/components/ui/carousel";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -137,7 +138,7 @@ function LimitesConsistenciaDesktop() {
   const { theme } = useTheme();
   const { addReport } = useRecentReports();
   const navigate = useNavigate();
-  const { startTour, currentStep, isActive: isTourActive } = useTour();
+  const { startTour, suggestTour, currentStep, isActive: isTourActive } = useTour();
   const toursEnabled = useToursEnabled();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
   const [currentLPIndex, setCurrentLPIndex] = useState(0);
@@ -246,35 +247,33 @@ function LimitesConsistenciaDesktop() {
     },
   ];
 
-  // Iniciar tour automaticamente na primeira visita
+  // Sugerir tour via toast na primeira visita
   useEffect(() => {
     // Verificar se tours estão globalmente desabilitados
     if (!toursEnabled) return;
 
-    const initTour = async () => {
-      // Verificar se já viu o tour
-      const hasSeenTour = localStorage.getItem('tour-seen-limites-consistencia');
-      if (hasSeenTour === 'true') return;
+    let toastId: string | number | undefined;
 
-      // Carregar exemplo para demonstração
-      const exemploParaTour = exemplosLimites[0];
-      handleSelectExample(exemploParaTour);
+    const timer = setTimeout(() => {
+      // Preparação: carregar exemplo e calcular
+      const prepareForTour = async () => {
+        const exemploParaTour = exemplosLimites[0];
+        handleSelectExample(exemploParaTour);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        form.handleSubmit(onSubmit)();
+        await new Promise(resolve => setTimeout(resolve, 800));
+      };
 
-      // Aguardar formulário ser preenchido
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Sugerir tour com toast
+      toastId = suggestTour(tourSteps, "limites-consistencia", "Limites de Consistência", prepareForTour);
+    }, 1000);
 
-      // Submeter automaticamente
-      form.handleSubmit(onSubmit)();
-
-      // Aguardar cálculo
-      await new Promise(resolve => setTimeout(resolve, 1200));
-
-      // Iniciar tour
-      startTour(tourSteps, "limites-consistencia");
+    return () => {
+      clearTimeout(timer);
+      if (toastId) {
+        toast.dismiss(toastId);
+      }
     };
-
-    const timer = setTimeout(initTour, 800);
-    return () => clearTimeout(timer);
   }, [toursEnabled]);
 
   useEffect(() => { if (fields.length > 0) { setCurrentPointIndex(prev => Math.min(prev, fields.length - 1)); } else { setCurrentPointIndex(0); } }, [fields.length]);

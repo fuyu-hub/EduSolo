@@ -9,7 +9,6 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { TourProvider } from "@/contexts/TourContext";
 import { Tour } from "@/components/Tour";
-import { PWAUpdateNotification } from "@/components/PWAUpdateNotification";
 import { useRoutePreload } from "@/hooks/use-route-preload";
 import { ToursProvider } from "@/components/WelcomeDialog";
 
@@ -97,7 +96,7 @@ const AppContent = () => {
             </Layout>
           }
         />
-        
+
         {/* Rotas de cálculo - com lazy loading */}
         <Route
           path="/indices-fisicos"
@@ -209,7 +208,7 @@ const AppContent = () => {
             </Layout>
           }
         />
-        
+
         {/* Rotas auxiliares - com lazy loading */}
         <Route
           path="/educacional"
@@ -282,8 +281,8 @@ const AppContent = () => {
           }
         />
 
-        
-        
+
+
         {/* Rota 404 - sem lazy loading */}
         <Route path="*" element={<NotFound />} />
       </Routes>
@@ -300,7 +299,6 @@ const App = () => (
             <TooltipProvider>
               <Sonner />
               <Tour />
-              <PWAUpdateNotification />
               <BrowserRouter>
                 <AppContent />
               </BrowserRouter>

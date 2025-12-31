@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import PrintHeader from "@/components/PrintHeader";
 import { useNavigate } from "react-router-dom";
 import { useTour, TourStep } from "@/contexts/TourContext";
+import { toast } from "@/components/ui/sonner";
 import { MobileModuleWrapper } from "@/components/mobile";
 import AcrescimoTensoesMobile from "./mobile/AcrescimoTensoesMobile";
 import { useToursEnabled } from "@/components/WelcomeDialog";
@@ -59,7 +60,7 @@ const metodos = [
 
 function AcrescimoTensoesDesktop() {
   const navigate = useNavigate();
-  const { startTour } = useTour();
+  const { startTour, suggestTour } = useTour();
   const toursEnabled = useToursEnabled();
 
   const tourSteps: TourStep[] = [
@@ -114,17 +115,24 @@ function AcrescimoTensoesDesktop() {
     },
   ];
 
+  // Sugerir tour via toast na primeira visita
   useEffect(() => {
     // Verificar se tours estão globalmente desabilitados
     if (!toursEnabled) return;
-    
-    const initTour = () => {
-      const hasSeenTour = localStorage.getItem('tour-seen-acrescimo-tensoes');
-      if (hasSeenTour !== 'true') {
-        setTimeout(() => startTour(tourSteps, "acrescimo-tensoes"), 800);
+
+    let toastId: string | number | undefined;
+
+    const timer = setTimeout(() => {
+      // Sugerir tour com toast (sem preparação necessária)
+      toastId = suggestTour(tourSteps, "acrescimo-tensoes", "Acréscimo de Tensões");
+    }, 1000);
+
+    return () => {
+      clearTimeout(timer);
+      if (toastId) {
+        toast.dismiss(toastId);
       }
     };
-    initTour();
   }, [toursEnabled]);
 
   const handleStartTour = () => {
@@ -140,7 +148,7 @@ function AcrescimoTensoesDesktop() {
   return (
     <div className="space-y-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <PrintHeader moduleTitle="Acréscimo de Tensões" moduleName="acrescimo-tensoes" />
-      
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="header">
         <div className="flex items-center gap-2 sm:gap-3">
@@ -191,11 +199,10 @@ function AcrescimoTensoesDesktop() {
                 <Card
                   key={metodo.id}
                   data-tour={tourId}
-                  className={`transition-all ${
-                    isDisponivel 
-                      ? "cursor-pointer hover:shadow-lg hover:border-primary group" 
-                      : "opacity-60 cursor-not-allowed"
-                  }`}
+                  className={`transition-all ${isDisponivel
+                    ? "cursor-pointer hover:shadow-lg hover:border-primary group"
+                    : "opacity-60 cursor-not-allowed"
+                    }`}
                   onClick={() => handleMetodoClick(metodo)}
                 >
                   <CardContent className="p-4">
@@ -225,7 +232,7 @@ function AcrescimoTensoesDesktop() {
                         <p className="text-xs text-muted-foreground mb-2 leading-relaxed">
                           {metodo.detalhes}
                         </p>
-                        
+
                         <div className="text-xs">
                           <span className="font-semibold text-foreground">Aplicações: </span>
                           <span className="text-muted-foreground">{metodo.aplicacoes}</span>
@@ -250,8 +257,8 @@ function AcrescimoTensoesDesktop() {
             <div className="space-y-2 text-sm">
               <h3 className="font-semibold text-foreground">Sobre a Análise 2D Interativa</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Este módulo permite analisar a distribuição de tensões no solo em um plano 2D (eixos X e Z). 
-                Você pode adicionar múltiplos pontos de análise e visualizar graficamente como as tensões se distribuem 
+                Este módulo permite analisar a distribuição de tensões no solo em um plano 2D (eixos X e Z).
+                Você pode adicionar múltiplos pontos de análise e visualizar graficamente como as tensões se distribuem
                 no subsolo devido ao carregamento aplicado na superfície.
               </p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">

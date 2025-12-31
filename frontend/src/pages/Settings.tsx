@@ -1,4 +1,4 @@
-import { Settings as SettingsIcon, Palette, Check, Calculator, Monitor, Eye, Database, Download, Upload, Trash2, RotateCcw, Zap, HelpCircle, Printer } from "lucide-react";
+import { Settings as SettingsIcon, Check, Calculator, Monitor, Eye, Database, Download, Upload, Trash2, RotateCcw, Zap, HelpCircle, Printer } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -6,9 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { useTheme } from "@/hooks/use-theme";
 import { useSettings } from "@/hooks/use-settings";
-import { ThemeColor } from "@/contexts/ThemeContext";
 import { UnitSystem, InterfaceDensity, PageOrientation, PageMargins, PaperSize } from "@/contexts/SettingsContext";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
@@ -35,56 +33,9 @@ import {
 import { MobileModuleWrapper } from "@/components/mobile";
 import SettingsMobile from "./mobile/SettingsMobile";
 
-interface ThemeOption {
-  value: ThemeColor;
-  label: string;
-  description: string;
-  colors: string[]; // Array de cores HSL para a paleta
-}
-
-const themeColors: ThemeOption[] = [
-  {
-    value: "indigo",
-    label: "Índigo Profundo",
-    description: "Sofisticado e intenso",
-    colors: ["238 84% 62%", "238 84% 52%", "238 84% 42%", "241 86% 36%", "244 88% 30%"],
-  },
-  {
-    value: "soil",
-    label: "Terra Natural",
-    description: "Tema oficial EduSolos - tons terrosos vibrantes",
-    colors: ["28 72% 65%", "28 70% 55%", "28 68% 45%", "28 66% 38%", "28 60% 30%"],
-  },
-  {
-    value: "green",
-    label: "Verde Esmeralda",
-    description: "Natural e equilibrado",
-    colors: ["142 76% 56%", "142 76% 46%", "142 76% 36%", "145 80% 30%", "148 85% 25%"],
-  },
-  {
-    value: "amber",
-    label: "Âmbar Dourado",
-    description: "Caloroso e acolhedor",
-    colors: ["38 92% 58%", "38 92% 48%", "38 92% 38%", "35 92% 33%", "32 92% 28%"],
-  },
-  {
-    value: "red",
-    label: "Vermelho Coral",
-    description: "Forte e determinado",
-    colors: ["358 75% 59%", "358 75% 49%", "358 75% 39%", "0 78% 34%", "2 80% 29%"],
-  },
-  {
-    value: "slate",
-    label: "Minimalista",
-    description: "Clean e com bordas definidas",
-    colors: ["0 0% 85%", "0 0% 70%", "0 0% 50%", "0 0% 30%", "0 0% 15%"],
-  },
-];
-
 function SettingsDesktop() {
-  const { theme, setThemeColor } = useTheme();
   const { settings, updateSettings, resetSettings, clearAllCalculations, exportSettings, importSettings } = useSettings();
-  const { toursEnabled, setToursEnabled } = useToursControl();
+  const { resetAllTours } = useToursControl();
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
@@ -135,103 +86,7 @@ function SettingsDesktop() {
           </div>
         </div>
 
-        {/* Aparência */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Palette className="w-5 h-5 text-primary" />
-            <h2 className="text-2xl font-semibold text-foreground">Aparência</h2>
-          </div>
 
-          {/* Nota sobre o modo claro/escuro */}
-          <Card className="glass p-4 border-l-4 border-l-primary">
-            <p className="text-sm text-muted-foreground">
-              <strong className="text-foreground">Dica:</strong> Use o botão no canto superior direito para alternar entre modo claro e escuro.
-            </p>
-          </Card>
-
-          {/* Temas - Accent Colors */}
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-medium text-foreground">Cores de Destaque</h3>
-              <p className="text-sm text-muted-foreground">Defina a personalidade do design com acentos perfeitos</p>
-            </div>
-
-            {/* Cards de Paleta de Cores */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {themeColors.map((themeOption) => {
-                const isSelected = theme.color === themeOption.value;
-
-                // Função para converter HSL para HEX
-                const hslToHex = (hsl: string) => {
-                  const [h, s, l] = hsl.split(' ').map(v => parseFloat(v));
-                  const sDecimal = s / 100;
-                  const lDecimal = l / 100;
-
-                  const c = (1 - Math.abs(2 * lDecimal - 1)) * sDecimal;
-                  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
-                  const m = lDecimal - c / 2;
-
-                  let r = 0, g = 0, b = 0;
-                  if (h < 60) { r = c; g = x; b = 0; }
-                  else if (h < 120) { r = x; g = c; b = 0; }
-                  else if (h < 180) { r = 0; g = c; b = x; }
-                  else if (h < 240) { r = 0; g = x; b = c; }
-                  else if (h < 300) { r = x; g = 0; b = c; }
-                  else { r = c; g = 0; b = x; }
-
-                  const toHex = (n: number) => {
-                    const hex = Math.round((n + m) * 255).toString(16);
-                    return hex.length === 1 ? '0' + hex : hex;
-                  };
-
-                  return `#${toHex(r)}${toHex(g)}${toHex(b)}`.toUpperCase();
-                };
-
-                return (
-                  <button
-                    key={themeOption.value}
-                    onClick={() => setThemeColor(themeOption.value)}
-                    className={cn(
-                      "h-[100px] rounded-xl overflow-hidden transition-all duration-300",
-                      "hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-                      isSelected && "ring-4 ring-primary ring-offset-2 scale-[1.02]"
-                    )}
-                    style={{
-                      boxShadow: isSelected
-                        ? "0 10px 40px rgba(0,0,0,0.15)"
-                        : "0 10px 20px rgba(0,0,0,0.08)"
-                    }}
-                  >
-                    {/* Palette Section - 86% height */}
-                    <div className="flex h-[86%] w-full">
-                      {themeOption.colors.slice(0, 5).map((color, index) => (
-                        <div
-                          key={index}
-                          className="palette-color h-full flex-1 flex items-center justify-center text-white text-[9px] font-medium tracking-tight"
-                          style={{
-                            backgroundColor: `hsl(${color})`,
-                          }}
-                        >
-                          <span className="rotate-180 [writing-mode:vertical-lr]">
-                            {hslToHex(color)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Stats Section - 14% height */}
-                    <div className="h-[14%] w-full bg-card flex items-center justify-between px-3 text-[10px]">
-                      <span className="font-medium text-foreground">{themeOption.label}</span>
-                      {isSelected && (
-                        <Check className="w-3 h-3 text-primary" strokeWidth={3} />
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </section>
 
         {/* Cálculos */}
         <section className="space-y-4">
@@ -468,7 +323,7 @@ function SettingsDesktop() {
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <HelpCircle className="w-5 h-5 text-primary" />
-            <h2 className="text-2xl font-semibold text-foreground">Ajuda e Tutoriais</h2>
+            <h2 className="text-2xl font-semibold text-foreground">Tutoriais</h2>
           </div>
 
           <Card className="glass p-6">
@@ -480,51 +335,30 @@ function SettingsDesktop() {
                       <HelpCircle className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1">
-                      <Label htmlFor="enable-tours" className="text-lg font-semibold cursor-pointer">
-                        Tutoriais Interativos
+                      <Label className="text-lg font-semibold">
+                        Resetar Tutoriais
                       </Label>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <Badge
-                          variant={toursEnabled ? "default" : "outline"}
-                          className="text-xs"
-                        >
-                          {toursEnabled ? "✓ Ativos" : "✗ Desativados"}
-                        </Badge>
-                      </div>
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground pl-12">
-                    Guias interativos que explicam cada funcionalidade do sistema.
+                    Ao acessar cada módulo pela primeira vez, você verá uma sugestão para
+                    visualizar o tutorial interativo.
                     <span className="block mt-1 text-xs">
-                      💡 <strong>Dica:</strong> Ao ativar, todos os tours serão reiniciados automaticamente.
+                      <strong>Dica:</strong> Clique no botão abaixo para resetar todos os tutoriais e vê-los novamente.
                     </span>
                   </p>
                 </div>
-                <Switch
-                  id="enable-tours"
-                  checked={toursEnabled}
-                  onCheckedChange={(checked) => {
-                    setToursEnabled(checked);
-                    if (checked) {
-                      // Habilitar tours e reiniciar automaticamente
-                      localStorage.removeItem("tours-globally-disabled");
-
-                      // Limpar todos os tours vistos
-                      const keys = Object.keys(localStorage).filter(key => key.startsWith("tour-seen-"));
-                      keys.forEach(key => localStorage.removeItem(key));
-
-                      toast.success("🎉 Tours habilitados e reiniciados!", {
-                        description: "Os tutoriais aparecerão novamente em todos os módulos",
-                      });
-                    } else {
-                      // Desabilitar tours
-                      localStorage.setItem("tours-globally-disabled", "true");
-                      toast.success("🔕 Tours desabilitados", {
-                        description: "Os tutoriais não aparecerão mais",
-                      });
-                    }
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    resetAllTours();
+                    toast.success("Tutoriais resetados", {
+                      description: "As sugestões de tutorial aparecerão novamente em todos os módulos",
+                    });
                   }}
-                />
+                >
+                  Resetar Tutoriais
+                </Button>
               </div>
             </div>
           </Card>
@@ -631,7 +465,6 @@ function SettingsDesktop() {
           <Card className="glass p-5 border-l-4 border-l-accent">
             <h3 className="text-sm font-semibold text-foreground mb-2">Configurações Ativas:</h3>
             <ul className="text-xs text-muted-foreground space-y-1">
-              <li>• Tema: <span className="font-medium text-foreground capitalize">{themeColors.find(t => t.value === theme.color)?.label}</span> ({theme.mode === "dark" ? "escuro" : "claro"})</li>
               <li>• Casas decimais: <span className="font-medium text-foreground">{settings.decimalPlaces}</span></li>
               <li>• {settings.showEducationalTips ? "✓" : "✗"} Dicas educacionais {settings.showEducationalTips ? "ativas" : "desativadas"}</li>
               <li>• {settings.showFormulas ? "✓" : "✗"} Fórmulas {settings.showFormulas ? "visíveis" : "ocultas"}</li>

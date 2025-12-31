@@ -1,22 +1,18 @@
 import React, { createContext, useEffect, useState } from "react";
 
-export type ThemeColor = "blue" | "indigo" | "soil" | "green" | "amber" | "red" | "slate";
 export type ThemeMode = "light" | "dark";
 
 export interface ThemeConfig {
-  color: ThemeColor;
   mode: ThemeMode;
 }
 
 interface ThemeContextType {
   theme: ThemeConfig;
-  setThemeColor: (color: ThemeColor) => void;
   setThemeMode: (mode: ThemeMode) => void;
   toggleMode: () => void;
 }
 
 const defaultTheme: ThemeConfig = {
-  color: "blue",
   mode: "dark",
 };
 
@@ -24,11 +20,12 @@ export const ThemeContext = createContext<ThemeContextType | undefined>(undefine
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<ThemeConfig>(() => {
-    // Carregar tema salvo do localStorage
+    // Carregar modo salvo do localStorage
     const savedTheme = localStorage.getItem("edusolo-theme");
     if (savedTheme) {
       try {
-        return JSON.parse(savedTheme) as ThemeConfig;
+        const parsed = JSON.parse(savedTheme);
+        return { mode: parsed.mode || "dark" };
       } catch {
         return defaultTheme;
       }
@@ -39,32 +36,31 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Aplicar tema ao root element
   useEffect(() => {
     const root = document.documentElement;
-    
-    // Remover classes anteriores
-    root.classList.remove("light", "dark", "theme-blue", "theme-indigo", "theme-soil", "theme-green", "theme-amber", "theme-red", "theme-slate");
-    
-    // Adicionar novas classes
+
+    // Remover TODAS as classes de tema anteriores (incluindo cores antigas)
+    root.classList.remove(
+      "light", "dark",
+      "theme-blue", "theme-indigo", "theme-soil", "theme-green", "theme-amber", "theme-red", "theme-slate"
+    );
+
+    // Adicionar modo e sempre tema indigo fixo
     root.classList.add(theme.mode);
-    root.classList.add(`theme-${theme.color}`);
-    
+    root.classList.add("theme-indigo");
+
     // Salvar no localStorage
     localStorage.setItem("edusolo-theme", JSON.stringify(theme));
   }, [theme]);
 
-  const setThemeColor = (color: ThemeColor) => {
-    setTheme((prev) => ({ ...prev, color }));
-  };
-
   const setThemeMode = (mode: ThemeMode) => {
-    setTheme((prev) => ({ ...prev, mode }));
+    setTheme({ mode });
   };
 
   const toggleMode = () => {
-    setTheme((prev) => ({ ...prev, mode: prev.mode === "dark" ? "light" : "dark" }));
+    setTheme((prev) => ({ mode: prev.mode === "dark" ? "light" : "dark" }));
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, setThemeColor, setThemeMode, toggleMode }}>
+    <ThemeContext.Provider value={{ theme, setThemeMode, toggleMode }}>
       {children}
     </ThemeContext.Provider>
   );

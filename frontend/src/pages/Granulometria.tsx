@@ -96,7 +96,7 @@ const peneirasComuns = [
 function GranulometriaDesktop() {
   const { settings } = useSettings();
   const { theme } = useTheme();
-  const { startTour } = useTour();
+  const { startTour, suggestTour } = useTour();
   const toursEnabled = useToursEnabled();
   const { addReport } = useRecentReports();
   const navigate = useNavigate();
@@ -209,50 +209,48 @@ function GranulometriaDesktop() {
     },
   ];
 
-  // Iniciar tour automaticamente na primeira visita
+  // Sugerir tour via toast na primeira visita
   useEffect(() => {
     // Verificar se tours estão globalmente desabilitados
     if (!toursEnabled) return;
 
-    const hasSeenTour = localStorage.getItem('tour-seen-granulometria');
-    if (hasSeenTour === 'true') return;
+    let toastId: string | number | undefined;
 
-    // Usar timeout inicial para carregar exemplo
-    const timerLoad = setTimeout(() => {
-      const exemploParaTour = {
-        nome: "Areia Siltosa",
-        massaTotal: 500,
-        peneiras: [
-          { aberturaMM: 9.52, massaRetida: 0 },
-          { aberturaMM: 4.76, massaRetida: 5 },
-          { aberturaMM: 2.0, massaRetida: 45 },
-          { aberturaMM: 1.19, massaRetida: 85 },
-          { aberturaMM: 0.59, massaRetida: 120 },
-          { aberturaMM: 0.42, massaRetida: 95 },
-          { aberturaMM: 0.25, massaRetida: 65 },
-          { aberturaMM: 0.149, massaRetida: 40 },
-          { aberturaMM: 0.075, massaRetida: 30 },
-        ],
-        ll: 25,
-        lp: 18,
+    const timer = setTimeout(() => {
+      // Preparação: carregar exemplo e calcular
+      const prepareForTour = async () => {
+        const exemploParaTour = {
+          nome: "Areia Siltosa",
+          massaTotal: 500,
+          peneiras: [
+            { aberturaMM: 9.52, massaRetida: 0 },
+            { aberturaMM: 4.76, massaRetida: 5 },
+            { aberturaMM: 2.0, massaRetida: 45 },
+            { aberturaMM: 1.19, massaRetida: 85 },
+            { aberturaMM: 0.59, massaRetida: 120 },
+            { aberturaMM: 0.42, massaRetida: 95 },
+            { aberturaMM: 0.25, massaRetida: 65 },
+            { aberturaMM: 0.149, massaRetida: 40 },
+            { aberturaMM: 0.075, massaRetida: 30 },
+          ],
+          ll: 25,
+          lp: 18,
+        };
+        handleCarregarExemplo(exemploParaTour as any);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await handleCalculate();
+        await new Promise(resolve => setTimeout(resolve, 800));
       };
-      handleCarregarExemplo(exemploParaTour as any);
-    }, 500);
 
-    // Calcular após o estado ser atualizado
-    const timerCalc = setTimeout(async () => {
-      await handleCalculate();
-    }, 1500);
-
-    // Iniciar tour após cálculo completar
-    const timerTour = setTimeout(() => {
-      startTour(tourSteps, "granulometria");
-    }, 3500);
+      // Sugerir tour com toast
+      toastId = suggestTour(tourSteps, "granulometria", "Granulometria", prepareForTour);
+    }, 1000);
 
     return () => {
-      clearTimeout(timerLoad);
-      clearTimeout(timerCalc);
-      clearTimeout(timerTour);
+      clearTimeout(timer);
+      if (toastId) {
+        toast.dismiss(toastId);
+      }
     };
   }, [toursEnabled]);
 

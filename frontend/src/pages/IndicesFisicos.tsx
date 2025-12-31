@@ -70,6 +70,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { formatNumber } from "@/lib/format-number";
 import { AppSettings } from "@/contexts/SettingsContext";
 import { useTour, TourStep } from "@/contexts/TourContext";
+import { toast } from "@/components/ui/sonner";
 
 // Interface para o estado do formulário
 interface FormData {
@@ -129,12 +130,12 @@ const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 function IndicesFisicosDesktop() {
   // Configurações
   const { settings } = useSettings();
-  const { startTour } = useTour();
+  const { startTour, suggestTour } = useTour();
   const { theme } = useTheme();
   const toursEnabled = useToursEnabled();
   const { addReport } = useRecentReports();
   const navigate = useNavigate();
-  
+
   // Estados
   const [formData, setFormData] = useState<FormData>({
     amostras: [{
@@ -215,35 +216,34 @@ function IndicesFisicosDesktop() {
     },
   ];
 
-  // Iniciar tour automaticamente na primeira visita
+  // Sugerir tour via toast na primeira visita
   useEffect(() => {
     // Verificar se tours estão globalmente desabilitados
     if (!toursEnabled) return;
-    
-    const initTour = async () => {
-      // Verificar se já viu o tour
-      const hasSeenTour = localStorage.getItem('tour-seen-indices-fisicos');
-      if (hasSeenTour === 'true') return;
-      
-      // Carregar exemplo para demonstração (Areia Compacta)
-      const exemploParaTour = soilExamples[1]; // Areia Compacta com todos os dados
-      handleLoadExample(exemploParaTour);
-      
-      // Aguardar formulário ser preenchido
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Calcular automaticamente
-      await handleCalculate();
-      
-      // Aguardar cálculo
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      // Iniciar tour
-      startTour(tourSteps, "indices-fisicos");
+
+    let toastId: string | number | undefined;
+
+    const timer = setTimeout(() => {
+      // Preparação: carregar exemplo e calcular
+      const prepareForTour = async () => {
+        const exemploParaTour = soilExamples[1]; // Areia Compacta
+        handleLoadExample(exemploParaTour);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await handleCalculate();
+        await new Promise(resolve => setTimeout(resolve, 800));
+      };
+
+      // Sugerir tour com toast
+      toastId = suggestTour(tourSteps, "indices-fisicos", "Índices Físicos", prepareForTour);
+    }, 1000);
+
+    return () => {
+      clearTimeout(timer);
+      // Dismiss toast on navigation
+      if (toastId) {
+        toast.dismiss(toastId);
+      }
     };
-    
-    const timer = setTimeout(initTour, 800);
-    return () => clearTimeout(timer);
   }, [toursEnabled]);
 
   // Restaurar dados ao abrir via "Gerar" em Relatórios
@@ -365,9 +365,9 @@ function IndicesFisicosDesktop() {
     });
 
     // Validação emin < emax
-    if (amostrasLimpas[0].indice_vazios_min !== undefined && 
-        amostrasLimpas[0].indice_vazios_max !== undefined && 
-        amostrasLimpas[0].indice_vazios_min >= amostrasLimpas[0].indice_vazios_max) {
+    if (amostrasLimpas[0].indice_vazios_min !== undefined &&
+      amostrasLimpas[0].indice_vazios_max !== undefined &&
+      amostrasLimpas[0].indice_vazios_min >= amostrasLimpas[0].indice_vazios_max) {
       setError("Índice de vazios mínimo (emin) deve ser menor que o máximo (emax).");
       notify.error({ title: "Erro de Entrada", description: "emin deve ser < emax" });
       setIsCalculating(false);
@@ -383,7 +383,7 @@ function IndicesFisicosDesktop() {
         notify.error({ title: "Erro no Cálculo", description: resultado.erro });
       } else {
         setResults(resultado);
-        
+
         // Toast especial se houver múltiplas amostras
         if (resultado.num_amostras && resultado.num_amostras > 1) {
           notify.success({ title: `✅ ${resultado.num_amostras} amostras calculadas!`, description: "Estatísticas calculadas com sucesso" });
@@ -447,7 +447,7 @@ function IndicesFisicosDesktop() {
 
   const handleConfirmSave = () => {
     if (!results || !saveName.trim()) return;
-    
+
     const success = saveCalculation(saveName.trim(), formData, results);
     if (success) {
       notify.success({ title: "Cálculo salvo!", description: "O cálculo foi salvo com sucesso." });
@@ -468,16 +468,16 @@ function IndicesFisicosDesktop() {
     // Carregar exemplo automaticamente para demonstração
     const exemploParaTour = soilExamples[1]; // Areia Compacta
     handleLoadExample(exemploParaTour);
-    
+
     // Aguardar formulário ser preenchido
     await new Promise(resolve => setTimeout(resolve, 300));
-    
+
     // Calcular automaticamente
     await handleCalculate();
-    
+
     // Aguardar cálculo completar
     await new Promise(resolve => setTimeout(resolve, 1000));
-    
+
     // Iniciar o tour
     startTour(tourSteps, "indices-fisicos", true); // Force = true para reiniciar
     notify.info({ title: "Tour iniciado!", description: "Exemplo carregado automaticamente para demonstração." });
@@ -485,17 +485,17 @@ function IndicesFisicosDesktop() {
 
   const handleExportPDF = () => {
     if (!results) return;
-    
+
     // Gerar nome padrão usando a função auxiliar
     const defaultName = generateDefaultPDFFileName("Índices Físicos");
-    
+
     setPdfFileName(defaultName);
     setExportPDFDialogOpen(true);
   };
 
   const handleConfirmExportPDF = async () => {
     if (!results) return;
-    
+
     setIsExportingPDF(true);
 
     // Criar tabela de amostras
@@ -532,50 +532,50 @@ function IndicesFisicosDesktop() {
 
     // Fórmulas utilizadas com LaTeX
     const formulas = [
-      { 
-        label: "Peso Específico Natural", 
+      {
+        label: "Peso Específico Natural",
         formula: "\\gamma_{nat} = \\frac{M_{total}}{V_{total}} \\times 10",
         latex: true,
         description: "Relação entre a massa total do solo (úmido) e seu volume total em kN/m³"
       },
-      { 
-        label: "Umidade", 
+      {
+        label: "Umidade",
         formula: "w = \\frac{M_{\\acute{u}mida} - M_{seca}}{M_{seca}} \\times 100\\%",
         latex: true,
         description: "Percentual de água em relação à massa seca dos sólidos"
       },
-      { 
-        label: "Peso Específico Seco", 
+      {
+        label: "Peso Específico Seco",
         formula: "\\gamma_d = \\frac{\\gamma_{nat}}{1 + \\frac{w}{100}}",
         latex: true,
         description: "Peso específico do solo sem considerar a massa de água"
       },
-      { 
-        label: "Índice de Vazios", 
+      {
+        label: "Índice de Vazios",
         formula: "e = \\frac{G_s \\times \\gamma_w}{\\gamma_d} - 1",
         latex: true,
         description: "Relação entre o volume de vazios e o volume de sólidos (adimensional)"
       },
-      { 
-        label: "Porosidade", 
+      {
+        label: "Porosidade",
         formula: "n = \\frac{e}{1 + e} \\times 100\\%",
         latex: true,
         description: "Percentual de vazios em relação ao volume total"
       },
-      { 
-        label: "Grau de Saturação", 
+      {
+        label: "Grau de Saturação",
         formula: "S_r = \\frac{w \\times G_s}{e} \\times 100\\%",
         latex: true,
         description: "Percentual dos vazios ocupados por água"
       },
-      { 
-        label: "Peso Específico Saturado", 
+      {
+        label: "Peso Específico Saturado",
         formula: "\\gamma_{sat} = \\frac{G_s + e}{1 + e} \\times \\gamma_w",
         latex: true,
         description: "Peso específico quando todos os vazios estão preenchidos com água"
       },
-      { 
-        label: "Peso Específico Submerso", 
+      {
+        label: "Peso Específico Submerso",
         formula: "\\gamma_{sub} = \\gamma_{sat} - \\gamma_w",
         latex: true,
         description: "Peso específico efetivo do solo quando submerso (Princípio de Arquimedes)"
@@ -593,7 +593,7 @@ function IndicesFisicosDesktop() {
 
     // Criar tabela de estatísticas (se houver múltiplas amostras)
     const tabelas: { title: string; headers: string[]; rows: (string | number)[][] }[] = [tabelaAmostras];
-    
+
     if (results.num_amostras && results.num_amostras > 1 && results.estatisticas) {
       const tabelaEstatisticas = {
         title: `Estatísticas (${results.num_amostras} amostras)`,
@@ -695,12 +695,12 @@ function IndicesFisicosDesktop() {
       if (settings.printSettings?.includeCustomTitle) {
         localStorage.setItem('edusolo_last_custom_report_title', customReportTitle || '');
       }
-    } catch {}
+    } catch { }
 
     const result = await exportToPDF(exportData, true);
-    
+
     setIsExportingPDF(false);
-    
+
     if (result instanceof Blob) {
       try {
         const reportName = pdfFileName.replace('.pdf', '');
@@ -742,7 +742,7 @@ function IndicesFisicosDesktop() {
       amostrasData.push({ label: "Massa Seca (g)", value: amostra.massaSeca || "—" });
       amostrasData.push({ label: "Volume (cm³)", value: amostra.volume || "—" });
     });
-    
+
     // Parâmetros comuns
     amostrasData.push({ label: "", value: "" });
     amostrasData.push({ label: "=== PARÂMETROS COMUNS ===", value: "" });
@@ -830,19 +830,19 @@ function IndicesFisicosDesktop() {
 
   // Validação: precisa dos dados da amostra atual E do Gs (OBRIGATÓRIO)
   const currentAmostra = formData.amostras[currentAmostraIndex];
-  const isCurrentAmostraValid = 
-    currentAmostra?.massaUmida && 
-    currentAmostra?.massaSeca && 
+  const isCurrentAmostraValid =
+    currentAmostra?.massaUmida &&
+    currentAmostra?.massaSeca &&
     currentAmostra?.volume &&
     !isNaN(parseFloat(currentAmostra.massaUmida)) &&
     !isNaN(parseFloat(currentAmostra.massaSeca)) &&
     !isNaN(parseFloat(currentAmostra.volume));
 
-  const isFormValid = 
+  const isFormValid =
     isCurrentAmostraValid &&
     formData.Gs &&
     !isNaN(parseFloat(formData.Gs)) &&
-    formData.amostras.every(a => 
+    formData.amostras.every(a =>
       a.massaUmida && a.massaSeca && a.volume &&
       !isNaN(parseFloat(a.massaUmida)) &&
       !isNaN(parseFloat(a.massaSeca)) &&
@@ -882,7 +882,7 @@ function IndicesFisicosDesktop() {
     <TooltipProvider>
       <div className="space-y-6 max-w-7xl mx-auto">
         <PrintHeader moduleTitle="Índices Físicos" moduleName="indices-fisicos" />
-        
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
           <div className="flex items-center gap-3">
@@ -894,7 +894,7 @@ function IndicesFisicosDesktop() {
               <p className="text-sm sm:text-base text-muted-foreground">Análise das propriedades físicas do solo</p>
             </div>
           </div>
-          
+
           {/* Action Buttons */}
           <div className="flex items-center gap-2" data-tour="actions">
             <SoilExamples onSelect={handleLoadExample} disabled={isCalculating} />
@@ -935,7 +935,7 @@ function IndicesFisicosDesktop() {
                 <Info className="w-5 h-5" />
                 Amostra {currentAmostraIndex + 1} de {formData.amostras.length}
               </h2>
-              
+
               {/* Navegação entre amostras */}
               <div className="flex items-center gap-2">
                 <Button
@@ -947,7 +947,7 @@ function IndicesFisicosDesktop() {
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   size="icon"
@@ -957,7 +957,7 @@ function IndicesFisicosDesktop() {
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
-                
+
                 <Button
                   variant="outline"
                   size="icon"
@@ -968,7 +968,7 @@ function IndicesFisicosDesktop() {
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
-                
+
                 {formData.amostras.length > 1 && (
                   <Button
                     variant="outline"
@@ -1006,7 +1006,7 @@ function IndicesFisicosDesktop() {
                   },
                 ]}
               />
-              
+
               <InputWithValidation
                 id="massaSeca"
                 label="Massa Seca (g)"
@@ -1028,7 +1028,7 @@ function IndicesFisicosDesktop() {
                   },
                 ]}
               />
-              
+
               <InputWithValidation
                 id="volume"
                 label="Volume Total (cm³)"
@@ -1044,12 +1044,12 @@ function IndicesFisicosDesktop() {
                 ]}
               />
             </div>
-            
+
             <Separator className="my-4" />
-            
+
             {/* Parâmetros comuns (Gs, emax, emin) em 2 colunas */}
             <h3 className="text-md font-semibold mb-4">Parâmetros Comuns (Todas as Amostras)</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -1066,20 +1066,20 @@ function IndicesFisicosDesktop() {
                   </Popover>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Input 
-                    id="Gs" 
-                    type="number" 
-                    step="0.01" 
-                    value={formData.Gs} 
-                    onChange={(e) => handleChange("Gs", e.target.value)} 
-                    className="bg-background/50 flex-1" 
-                    placeholder="Ex: 2.65" 
+                  <Input
+                    id="Gs"
+                    type="number"
+                    step="0.01"
+                    value={formData.Gs}
+                    onChange={(e) => handleChange("Gs", e.target.value)}
+                    className="bg-background/50 flex-1"
+                    placeholder="Ex: 2.65"
                     required
                   />
                   <GsSuggestions onSelect={handleSelectGs} />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Label htmlFor="indice_vazios_max">Índice de Vazios Máximo (emax)</Label>
@@ -1094,17 +1094,17 @@ function IndicesFisicosDesktop() {
                     </PopoverContent>
                   </Popover>
                 </div>
-                <Input 
-                  id="indice_vazios_max" 
-                  type="number" 
-                  step="0.01" 
-                  value={formData.indice_vazios_max} 
-                  onChange={(e) => handleChange("indice_vazios_max", e.target.value)} 
-                  className="bg-background/50" 
-                  placeholder="Opcional (ex: 0.85)" 
+                <Input
+                  id="indice_vazios_max"
+                  type="number"
+                  step="0.01"
+                  value={formData.indice_vazios_max}
+                  onChange={(e) => handleChange("indice_vazios_max", e.target.value)}
+                  className="bg-background/50"
+                  placeholder="Opcional (ex: 0.85)"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Label htmlFor="indice_vazios_min">Índice de Vazios Mínimo (emin)</Label>
@@ -1119,146 +1119,146 @@ function IndicesFisicosDesktop() {
                     </PopoverContent>
                   </Popover>
                 </div>
-                <Input 
-                  id="indice_vazios_min" 
-                  type="number" 
-                  step="0.01" 
-                  value={formData.indice_vazios_min} 
-                  onChange={(e) => handleChange("indice_vazios_min", e.target.value)} 
-                  className="bg-background/50" 
-                  placeholder="Opcional (ex: 0.45)" 
+                <Input
+                  id="indice_vazios_min"
+                  type="number"
+                  step="0.01"
+                  value={formData.indice_vazios_min}
+                  onChange={(e) => handleChange("indice_vazios_min", e.target.value)}
+                  className="bg-background/50"
+                  placeholder="Opcional (ex: 0.45)"
                 />
               </div>
             </div>
-              {/* Select - Peso Específico Água */}
-              <div className="space-y-2 mb-8 md:col-span-2">
-                 <div className="flex items-center gap-2">
-                   <Label htmlFor="pesoEspecificoAgua">Peso Específico Água (kN/m³)</Label>
-                   <Popover>
-                     <PopoverTrigger asChild>
-                       <PopoverButton variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
-                         <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
-                       </PopoverButton>
-                     </PopoverTrigger>
-                     <PopoverContent className="max-w-xs" align="start">
-                       <p className="text-sm">{tooltips.pesoEspecificoAgua}</p>
-                     </PopoverContent>
-                   </Popover>
-                 </div>
-                 <Select value={formData.pesoEspecificoAgua} onValueChange={(value) => handleChange("pesoEspecificoAgua", value)}>
-                   <SelectTrigger className="bg-background/50">
-                     <SelectValue placeholder="Selecione o peso específico" />
-                   </SelectTrigger>
-                   <SelectContent>
-                     <SelectItem value="9.81">9.81 kN/m³ (exato)</SelectItem>
-                     <SelectItem value="10.0">10.0 kN/m³ (aproximado)</SelectItem>
-                   </SelectContent>
-                 </Select>
+            {/* Select - Peso Específico Água */}
+            <div className="space-y-2 mb-8 md:col-span-2">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="pesoEspecificoAgua">Peso Específico Água (kN/m³)</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <PopoverButton variant="ghost" size="icon" className="h-5 w-5 p-0 hover:bg-muted">
+                      <Info className="w-4 h-4 text-muted-foreground cursor-pointer" />
+                    </PopoverButton>
+                  </PopoverTrigger>
+                  <PopoverContent className="max-w-xs" align="start">
+                    <p className="text-sm">{tooltips.pesoEspecificoAgua}</p>
+                  </PopoverContent>
+                </Popover>
               </div>
-              {/* Actions */}
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:col-span-2 mt-auto pt-4" role="group" aria-label="Ações do formulário">
-                <Button 
-                  onClick={handleCalculate} 
-                  disabled={!isFormValid || isCalculating} 
-                  className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground h-10"
-                  aria-label={isCalculating ? "Calculando dados" : "Calcular índices físicos"}
-                  data-tour="btn-calcular"
-                >
-                  <Calculator className="w-4 h-4 mr-2" />
-                  {isCalculating ? "Calculando..." : "Calcular"}
-                </Button>
-                <Button 
-                  onClick={handleClear} 
-                  variant="outline" 
-                  disabled={isCalculating}
-                  aria-label="Limpar todos os campos"
-                  className="h-10 w-full sm:w-auto"
-                >
-                  Limpar
-                </Button>
-              </div>
+              <Select value={formData.pesoEspecificoAgua} onValueChange={(value) => handleChange("pesoEspecificoAgua", value)}>
+                <SelectTrigger className="bg-background/50">
+                  <SelectValue placeholder="Selecione o peso específico" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="9.81">9.81 kN/m³ (exato)</SelectItem>
+                  <SelectItem value="10.0">10.0 kN/m³ (aproximado)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:col-span-2 mt-auto pt-4" role="group" aria-label="Ações do formulário">
+              <Button
+                onClick={handleCalculate}
+                disabled={!isFormValid || isCalculating}
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground h-10"
+                aria-label={isCalculating ? "Calculando dados" : "Calcular índices físicos"}
+                data-tour="btn-calcular"
+              >
+                <Calculator className="w-4 h-4 mr-2" />
+                {isCalculating ? "Calculando..." : "Calcular"}
+              </Button>
+              <Button
+                onClick={handleClear}
+                variant="outline"
+                disabled={isCalculating}
+                aria-label="Limpar todos os campos"
+                className="h-10 w-full sm:w-auto"
+              >
+                Limpar
+              </Button>
+            </div>
           </Card>
 
           {/* Card de Saída Unificado */}
           <Card className="glass p-4 sm:p-6 md:col-span-1 space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
-              {/* Seção do Diagrama de Fases */}
-              <div data-tour="diagrama-fases">
-                <h2 className="text-xl font-semibold text-foreground mb-4">Visualização (Diagrama de Fases)</h2>
-                <div className="flex justify-center items-center min-h-[180px]">
-                  {isCalculating ? (
-                    <Skeleton className="w-full max-w-sm h-36 bg-muted/20" />
-                  ) : results && results.volume_solidos_norm !== null && results.volume_agua_norm !== null && results.volume_ar_norm !== null && !results.erro ? (
-                    <DiagramaFases
-                      volumeSolidosNorm={results.volume_solidos_norm}
-                      volumeAguaNorm={results.volume_agua_norm}
-                      volumeArNorm={results.volume_ar_norm}
-                      pesoSolidosNorm={results.peso_solidos_norm}
-                      pesoAguaNorm={results.peso_agua_norm}
-                      volumeSolidosCalc={results.volume_solidos_calc}
-                      volumeAguaCalc={results.volume_agua_calc}
-                      volumeArCalc={results.volume_ar_calc}
-                      massaSolidosCalc={results.massa_solidos_calc}
-                      massaAguaCalc={results.massa_agua_calc}
-                      volumeTotalCalc={results.volume_total_calc}
-                      massaTotalCalc={results.massa_total_calc}
-                      className="w-full max-w-sm"
-                    />
-                  ) : !error ? (
-                    <p className="text-muted-foreground text-center">
-                      O diagrama de fases será exibido aqui após o cálculo.
-                    </p>
-                  ) : null}
-                  {error && !isCalculating && (
-                    <div className="flex flex-col items-center justify-center h-full text-center text-destructive">
-                      <Info className="w-12 h-12 mb-4" />
-                      <p className="font-semibold">Erro</p>
-                      <p className="text-sm max-w-xs">{error}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Seção de Resultados Numéricos com Carrossel */}
-              <div data-tour="resultados">
-                <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
-                   <BarChart3 className="w-5 h-5 text-primary" />
-                   Resultados Numéricos
-                </h2>
+            {/* Seção do Diagrama de Fases */}
+            <div data-tour="diagrama-fases">
+              <h2 className="text-xl font-semibold text-foreground mb-4">Visualização (Diagrama de Fases)</h2>
+              <div className="flex justify-center items-center min-h-[180px]">
                 {isCalculating ? (
-                  <div className="relative">
-                    <div className="grid grid-cols-2 gap-4">
-                      {[...Array(4)].map((_, i) => (
-                        <Skeleton key={`sk-${i}`} className="h-[56px] w-full bg-muted/20" />
-                      ))}
-                    </div>
-                  </div>
-                ) : results && !results.erro && resultItems.length > 0 ? (
-                  <Carousel opts={{ align: "start" }} className="w-full px-10">
-                    <CarouselContent className="-ml-4">
-                      {resultItems.map((chunk, index) => (
-                        <CarouselItem key={index} className="pl-4 basis-full">
-                          <div className="grid grid-cols-2 gap-4">
-                            {chunk}
-                          </div>
-                        </CarouselItem>
-                      ))}
-                    </CarouselContent>
-                    {resultItems.length > 1 && (
-                      <>
-                        <CarouselPrevious className="absolute left-0 top-1/2 -translate-y-1/2" />
-                        <CarouselNext className="absolute right-0 top-1/2 -translate-y-1/2" />
-                      </>
-                    )}
-                  </Carousel>
-                ) : (
-                   <div className="flex flex-col items-center justify-center min-h-[150px] text-center">
-                    <Beaker className="w-16 h-16 text-muted-foreground/30 mb-4" />
-                    <p className="text-muted-foreground">
-                      {error ? "Corrija o erro para ver os resultados" : "Os resultados serão exibidos aqui"}
-                    </p>
+                  <Skeleton className="w-full max-w-sm h-36 bg-muted/20" />
+                ) : results && results.volume_solidos_norm !== null && results.volume_agua_norm !== null && results.volume_ar_norm !== null && !results.erro ? (
+                  <DiagramaFases
+                    volumeSolidosNorm={results.volume_solidos_norm}
+                    volumeAguaNorm={results.volume_agua_norm}
+                    volumeArNorm={results.volume_ar_norm}
+                    pesoSolidosNorm={results.peso_solidos_norm}
+                    pesoAguaNorm={results.peso_agua_norm}
+                    volumeSolidosCalc={results.volume_solidos_calc}
+                    volumeAguaCalc={results.volume_agua_calc}
+                    volumeArCalc={results.volume_ar_calc}
+                    massaSolidosCalc={results.massa_solidos_calc}
+                    massaAguaCalc={results.massa_agua_calc}
+                    volumeTotalCalc={results.volume_total_calc}
+                    massaTotalCalc={results.massa_total_calc}
+                    className="w-full max-w-sm"
+                  />
+                ) : !error ? (
+                  <p className="text-muted-foreground text-center">
+                    O diagrama de fases será exibido aqui após o cálculo.
+                  </p>
+                ) : null}
+                {error && !isCalculating && (
+                  <div className="flex flex-col items-center justify-center h-full text-center text-destructive">
+                    <Info className="w-12 h-12 mb-4" />
+                    <p className="font-semibold">Erro</p>
+                    <p className="text-sm max-w-xs">{error}</p>
                   </div>
                 )}
-             </div>
+              </div>
+            </div>
+
+            {/* Seção de Resultados Numéricos com Carrossel */}
+            <div data-tour="resultados">
+              <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-primary" />
+                Resultados Numéricos
+              </h2>
+              {isCalculating ? (
+                <div className="relative">
+                  <div className="grid grid-cols-2 gap-4">
+                    {[...Array(4)].map((_, i) => (
+                      <Skeleton key={`sk-${i}`} className="h-[56px] w-full bg-muted/20" />
+                    ))}
+                  </div>
+                </div>
+              ) : results && !results.erro && resultItems.length > 0 ? (
+                <Carousel opts={{ align: "start" }} className="w-full px-10">
+                  <CarouselContent className="-ml-4">
+                    {resultItems.map((chunk, index) => (
+                      <CarouselItem key={index} className="pl-4 basis-full">
+                        <div className="grid grid-cols-2 gap-4">
+                          {chunk}
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  {resultItems.length > 1 && (
+                    <>
+                      <CarouselPrevious className="absolute left-0 top-1/2 -translate-y-1/2" />
+                      <CarouselNext className="absolute right-0 top-1/2 -translate-y-1/2" />
+                    </>
+                  )}
+                </Carousel>
+              ) : (
+                <div className="flex flex-col items-center justify-center min-h-[150px] text-center">
+                  <Beaker className="w-16 h-16 text-muted-foreground/30 mb-4" />
+                  <p className="text-muted-foreground">
+                    {error ? "Corrija o erro para ver os resultados" : "Os resultados serão exibidos aqui"}
+                  </p>
+                </div>
+              )}
+            </div>
           </Card>
         </div>
 
@@ -1281,13 +1281,13 @@ function IndicesFisicosDesktop() {
 
         {/* Card de Estatísticas (múltiplas amostras) */}
         {results && results.num_amostras && results.num_amostras > 1 && results.estatisticas && !isCalculating && (
-          <Card className="glass p-4 sm:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500" 
-                style={{ animationDelay: '350ms', animationFillMode: 'backwards' }}>
+          <Card className="glass p-4 sm:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500"
+            style={{ animationDelay: '350ms', animationFillMode: 'backwards' }}>
             <h2 className="text-xl font-semibold text-foreground mb-4 flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-primary" />
               Estatísticas ({results.num_amostras} amostras)
             </h2>
-            
+
             <div className="overflow-x-auto max-h-80 overflow-y-auto rounded-md border">
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-background z-10">
@@ -1322,9 +1322,9 @@ function IndicesFisicosDesktop() {
                       <td className={cn(
                         "text-right py-2 px-2 font-semibold",
                         results.estatisticas.peso_especifico_natural.coeficiente_variacao < 5 ? "text-green-600" :
-                        results.estatisticas.peso_especifico_natural.coeficiente_variacao < 10 ? "text-blue-600" :
-                        results.estatisticas.peso_especifico_natural.coeficiente_variacao < 15 ? "text-yellow-600" :
-                        "text-red-600"
+                          results.estatisticas.peso_especifico_natural.coeficiente_variacao < 10 ? "text-blue-600" :
+                            results.estatisticas.peso_especifico_natural.coeficiente_variacao < 15 ? "text-yellow-600" :
+                              "text-red-600"
                       )}>
                         {results.estatisticas.peso_especifico_natural.coeficiente_variacao.toFixed(1)}%
                       </td>
@@ -1332,7 +1332,7 @@ function IndicesFisicosDesktop() {
                       <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.peso_especifico_natural.maximo.toFixed(2)}</td>
                     </tr>
                   )}
-                  
+
                   {results.estatisticas.peso_especifico_seco && (
                     <tr className="border-b hover:bg-muted/50">
                       <td className="py-2 px-2 font-medium">γd (kN/m³)</td>
@@ -1341,9 +1341,9 @@ function IndicesFisicosDesktop() {
                       <td className={cn(
                         "text-right py-2 px-2 font-semibold",
                         results.estatisticas.peso_especifico_seco.coeficiente_variacao < 5 ? "text-green-600" :
-                        results.estatisticas.peso_especifico_seco.coeficiente_variacao < 10 ? "text-blue-600" :
-                        results.estatisticas.peso_especifico_seco.coeficiente_variacao < 15 ? "text-yellow-600" :
-                        "text-red-600"
+                          results.estatisticas.peso_especifico_seco.coeficiente_variacao < 10 ? "text-blue-600" :
+                            results.estatisticas.peso_especifico_seco.coeficiente_variacao < 15 ? "text-yellow-600" :
+                              "text-red-600"
                       )}>
                         {results.estatisticas.peso_especifico_seco.coeficiente_variacao.toFixed(1)}%
                       </td>
@@ -1351,7 +1351,7 @@ function IndicesFisicosDesktop() {
                       <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.peso_especifico_seco.maximo.toFixed(2)}</td>
                     </tr>
                   )}
-                  
+
                   {results.estatisticas.umidade && (
                     <tr className="border-b hover:bg-muted/50">
                       <td className="py-2 px-2 font-medium">Umidade (%)</td>
@@ -1360,9 +1360,9 @@ function IndicesFisicosDesktop() {
                       <td className={cn(
                         "text-right py-2 px-2 font-semibold",
                         results.estatisticas.umidade.coeficiente_variacao < 5 ? "text-green-600" :
-                        results.estatisticas.umidade.coeficiente_variacao < 10 ? "text-blue-600" :
-                        results.estatisticas.umidade.coeficiente_variacao < 15 ? "text-yellow-600" :
-                        "text-red-600"
+                          results.estatisticas.umidade.coeficiente_variacao < 10 ? "text-blue-600" :
+                            results.estatisticas.umidade.coeficiente_variacao < 15 ? "text-yellow-600" :
+                              "text-red-600"
                       )}>
                         {results.estatisticas.umidade.coeficiente_variacao.toFixed(1)}%
                       </td>
@@ -1370,7 +1370,7 @@ function IndicesFisicosDesktop() {
                       <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.umidade.maximo.toFixed(2)}</td>
                     </tr>
                   )}
-                  
+
                   {results.estatisticas.indice_vazios && (
                     <tr className="border-b hover:bg-muted/50">
                       <td className="py-2 px-2 font-medium">Índice de Vazios</td>
@@ -1379,9 +1379,9 @@ function IndicesFisicosDesktop() {
                       <td className={cn(
                         "text-right py-2 px-2 font-semibold",
                         results.estatisticas.indice_vazios.coeficiente_variacao < 5 ? "text-green-600" :
-                        results.estatisticas.indice_vazios.coeficiente_variacao < 10 ? "text-blue-600" :
-                        results.estatisticas.indice_vazios.coeficiente_variacao < 15 ? "text-yellow-600" :
-                        "text-red-600"
+                          results.estatisticas.indice_vazios.coeficiente_variacao < 10 ? "text-blue-600" :
+                            results.estatisticas.indice_vazios.coeficiente_variacao < 15 ? "text-yellow-600" :
+                              "text-red-600"
                       )}>
                         {results.estatisticas.indice_vazios.coeficiente_variacao.toFixed(1)}%
                       </td>
@@ -1389,7 +1389,7 @@ function IndicesFisicosDesktop() {
                       <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.indice_vazios.maximo.toFixed(3)}</td>
                     </tr>
                   )}
-                  
+
                   {results.estatisticas.porosidade && (
                     <tr className="border-b hover:bg-muted/50">
                       <td className="py-2 px-2 font-medium">Porosidade (%)</td>
@@ -1398,9 +1398,9 @@ function IndicesFisicosDesktop() {
                       <td className={cn(
                         "text-right py-2 px-2 font-semibold",
                         results.estatisticas.porosidade.coeficiente_variacao < 5 ? "text-green-600" :
-                        results.estatisticas.porosidade.coeficiente_variacao < 10 ? "text-blue-600" :
-                        results.estatisticas.porosidade.coeficiente_variacao < 15 ? "text-yellow-600" :
-                        "text-red-600"
+                          results.estatisticas.porosidade.coeficiente_variacao < 10 ? "text-blue-600" :
+                            results.estatisticas.porosidade.coeficiente_variacao < 15 ? "text-yellow-600" :
+                              "text-red-600"
                       )}>
                         {results.estatisticas.porosidade.coeficiente_variacao.toFixed(1)}%
                       </td>
@@ -1408,7 +1408,7 @@ function IndicesFisicosDesktop() {
                       <td className="text-right py-2 px-2 text-muted-foreground">{results.estatisticas.porosidade.maximo.toFixed(2)}</td>
                     </tr>
                   )}
-                  
+
                   {results.estatisticas.grau_saturacao && (
                     <tr className="border-b hover:bg-muted/50">
                       <td className="py-2 px-2 font-medium">Saturação (%)</td>
@@ -1417,9 +1417,9 @@ function IndicesFisicosDesktop() {
                       <td className={cn(
                         "text-right py-2 px-2 font-semibold",
                         results.estatisticas.grau_saturacao.coeficiente_variacao < 5 ? "text-green-600" :
-                        results.estatisticas.grau_saturacao.coeficiente_variacao < 10 ? "text-blue-600" :
-                        results.estatisticas.grau_saturacao.coeficiente_variacao < 15 ? "text-yellow-600" :
-                        "text-red-600"
+                          results.estatisticas.grau_saturacao.coeficiente_variacao < 10 ? "text-blue-600" :
+                            results.estatisticas.grau_saturacao.coeficiente_variacao < 15 ? "text-yellow-600" :
+                              "text-red-600"
                       )}>
                         {results.estatisticas.grau_saturacao.coeficiente_variacao.toFixed(1)}%
                       </td>
@@ -1430,7 +1430,7 @@ function IndicesFisicosDesktop() {
                 </tbody>
               </table>
             </div>
-            
+
             {/* Legenda CV */}
             <div className="mt-4 flex flex-wrap gap-3 text-xs">
               <div className="flex items-center gap-1">
@@ -1547,11 +1547,11 @@ export default function IndicesFisicos() {
 
 // Componente ResultItem
 interface ResultItemProps {
-    label: string;
-    value: number | string | null;
-    unit: string;
-    infoKey: keyof typeof conteudoIndicesFisicos;
-    settings: AppSettings;
+  label: string;
+  value: number | string | null;
+  unit: string;
+  infoKey: keyof typeof conteudoIndicesFisicos;
+  settings: AppSettings;
 }
 function ResultItem({ label, value, unit, infoKey, settings }: ResultItemProps) {
   const content = conteudoIndicesFisicos[infoKey];
@@ -1579,11 +1579,11 @@ function ResultItem({ label, value, unit, infoKey, settings }: ResultItemProps) 
                 <p className="text-sm text-muted-foreground">{content?.descricao}</p>
                 {content?.valoresTipicos && <p className="text-xs text-muted-foreground italic pt-1"><strong>Valores Típicos:</strong> {content.valoresTipicos}</p>}
                 {content?.paginaPDF && (
-                   <p className="text-xs text-muted-foreground pt-1">
-                      <a href="#" onClick={(e) => { e.preventDefault(); alert(`Consultar página ${content.paginaPDF} do PDF "4. Indices_Fisicos_2022-Maro.pdf" para mais detalhes.`); }} className="underline hover:text-primary">
-                        Ref. PDF pág. {content.paginaPDF}
-                      </a>
-                   </p>
+                  <p className="text-xs text-muted-foreground pt-1">
+                    <a href="#" onClick={(e) => { e.preventDefault(); alert(`Consultar página ${content.paginaPDF} do PDF "4. Indices_Fisicos_2022-Maro.pdf" para mais detalhes.`); }} className="underline hover:text-primary">
+                      Ref. PDF pág. {content.paginaPDF}
+                    </a>
+                  </p>
                 )}
               </div>
             </PopoverContent>

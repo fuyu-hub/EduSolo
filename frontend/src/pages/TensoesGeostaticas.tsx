@@ -119,7 +119,7 @@ function TensoesGeostaticasDesktop() {
   const { toast: toastFn } = { toast };
   const { settings } = useSettings();
   const { theme } = useTheme();
-  const { startTour } = useTour();
+  const { startTour, suggestTour } = useTour();
   const toursEnabled = useToursEnabled();
   const [currentCamadaIndex, setCurrentCamadaIndex] = useState(0);
   const [config, setConfig] = useState<ConfigData>({
@@ -223,78 +223,45 @@ function TensoesGeostaticasDesktop() {
     },
   ];
 
-  // Iniciar tour automaticamente na primeira visita
+  // Sugerir tour via toast na primeira visita
   useEffect(() => {
     // Verificar se tours estão globalmente desabilitados
     if (!toursEnabled) return;
 
-    const initTour = async () => {
-      const hasSeenTour = localStorage.getItem('tour-seen-tensoes-geostaticas');
-      if (hasSeenTour === 'true') return;
+    let toastId: string | number | undefined;
 
-      // Carregar exemplo de perfil de 3 camadas para demonstração
-      const exemploParaTour = {
-        icon: "🏗️",
-        nome: "Perfil Estratificado com NA",
-        descricao: "Perfil típico com 3 camadas e nível d'água",
-        profundidadeNA: "2.0",
-        alturaCapilar: "0.5",
-        pesoEspecificoAgua: "10.0",
-        camadas: [
-          {
-            id: generateId(),
-            nome: "Areia Fina",
-            espessura: "3.0",
-            profundidadeNA: "2.0",
-            capilaridade: "0.5",
-            gamaNat: "17.0",
-            gamaSat: "19.5",
-            Ko: "",
-            impermeavel: false
-          },
-          {
-            id: generateId(),
-            nome: "Argila Mole",
-            espessura: "5.0",
-            profundidadeNA: "",
-            capilaridade: "",
-            gamaNat: "",
-            gamaSat: "17.0",
-            Ko: "",
-            impermeavel: false
-          },
-          {
-            id: generateId(),
-            nome: "Areia Média",
-            espessura: "5.0",
-            profundidadeNA: "",
-            capilaridade: "",
-            gamaNat: "",
-            gamaSat: "20.0",
-            Ko: "",
-            impermeavel: false
-          },
-        ],
+    const timer = setTimeout(() => {
+      // Preparação: carregar exemplo e calcular
+      const prepareForTour = async () => {
+        const exemploParaTour = {
+          icon: "🏗️",
+          nome: "Perfil Estratificado com NA",
+          descricao: "Perfil típico com 3 camadas e nível d'água",
+          profundidadeNA: "2.0",
+          alturaCapilar: "0.5",
+          pesoEspecificoAgua: "10.0",
+          camadas: [
+            { id: generateId(), nome: "Areia Fina", espessura: "3.0", profundidadeNA: "2.0", capilaridade: "0.5", gamaNat: "17.0", gamaSat: "19.5", Ko: "", impermeavel: false },
+            { id: generateId(), nome: "Argila Mole", espessura: "5.0", profundidadeNA: "", capilaridade: "", gamaNat: "", gamaSat: "17.0", Ko: "", impermeavel: false },
+            { id: generateId(), nome: "Areia Média", espessura: "5.0", profundidadeNA: "", capilaridade: "", gamaNat: "", gamaSat: "20.0", Ko: "", impermeavel: false },
+          ],
+        };
+        handleSelectExample(exemploParaTour as any);
+        await new Promise(resolve => setTimeout(resolve, 500));
+        form.handleSubmit(onSubmit)();
+        await new Promise(resolve => setTimeout(resolve, 800));
       };
 
-      // Carregar exemplo no formulário
-      handleSelectExample(exemploParaTour as any);
+      // Sugerir tour com toast
+      toastId = suggestTour(tourSteps, "tensoes-geostaticas", "Tensões Geostáticas", prepareForTour);
+    }, 1000);
 
-      // Aguardar formulário ser preenchido
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Calcular automaticamente
-      form.handleSubmit(onSubmit)();
-
-      // Aguardar cálculo completar
-      await new Promise(resolve => setTimeout(resolve, 1200));
-
-      // Iniciar tour
-      startTour(tourSteps, "tensoes-geostaticas");
+    return () => {
+      clearTimeout(timer);
+      if (toastId) {
+        toast.dismiss(toastId);
+      }
     };
-
-    const timer = setTimeout(initTour, 800);
-    return () => clearTimeout(timer);
   }, [toursEnabled]);
 
   useEffect(() => {

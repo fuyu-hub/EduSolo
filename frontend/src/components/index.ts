@@ -18,7 +18,6 @@ export * from './shared/UndoRedoToolbar';
 export * from './shared/CalculationActions';
 export * from './shared/FeedbackMessage';
 export * from './shared/OptimizedCard';
-export * from './shared/PWAUpdateNotification';
 export * from './shared/RoutePreloader';
 export * from './shared/SavedCalculations';
 export * from './shared/RecentCalculations';
