@@ -66,6 +66,48 @@ const AppContent = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Mostrar notificação se o app foi atualizado
+  useEffect(() => {
+    const wasUpdated = sessionStorage.getItem("edusolo-app-updated");
+    if (wasUpdated) {
+      // Importar toast dinamicamente para evitar problemas de circular dependency
+      import("sonner").then(({ toast }) => {
+        toast.info("App atualizado!", {
+          description: "Algumas configurações foram resetadas para garantir compatibilidade.",
+          duration: 5000,
+        });
+      });
+      // Remover flag para não mostrar novamente
+      sessionStorage.removeItem("edusolo-app-updated");
+    }
+  }, []);
+
+  // Limpar overlays órfãos de dialogs/sheets que podem ter ficado presos
+  useEffect(() => {
+    const cleanupOrphanOverlays = () => {
+      // Remover portais Radix órfãos
+      const portals = document.querySelectorAll('[data-radix-portal]');
+      portals.forEach((portal) => {
+        // Se o portal não tem conteúdo visível ou está em estado fechado
+        if (!portal.querySelector('[data-state="open"]')) {
+          portal.remove();
+        }
+      });
+
+      // Remover overlays fixos escuros sem conteúdo
+      const overlays = document.querySelectorAll('.fixed.inset-0.bg-black\\/80');
+      overlays.forEach((overlay) => {
+        if (overlay.getAttribute('data-state') === 'closed') {
+          overlay.remove();
+        }
+      });
+    };
+
+    // Limpar após renderização inicial
+    const timer = setTimeout(cleanupOrphanOverlays, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
