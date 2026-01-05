@@ -640,16 +640,28 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
-    /* Ocultar scrollbar globalmente */
-    -ms-overflow-style: none;
-    /* IE and Edge */
-    scrollbar-width: none;
-    /* Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary)) transparent;
   }
 
-  *::-webkit-scrollbar {
-    display: none;
-    /* Chrome, Safari and Opera */
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary) / 0.6);
+    border-radius: 9999px;
+    transition: background 0.3s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary));
   }
 
   body {
