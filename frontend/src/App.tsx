@@ -24,6 +24,7 @@ const Compactacao = lazy(() => import("./pages/Compactacao"));
 const TensoesGeostaticas = lazy(() => import("./pages/TensoesGeostaticas"));
 const AcrescimoTensoes = lazy(() => import("./pages/AcrescimoTensoes"));
 const RecalqueAdensamento = lazy(() => import("./pages/RecalqueAdensamento"));
+const Caracterizacao = lazy(() => import("./modules/caracterizacao"));
 
 // Páginas de Acréscimo de Tensões (lazy loading)
 const Boussinesq = lazy(() => import("./pages/acrescimo-tensoes/Boussinesq"));
@@ -156,6 +157,16 @@ const AppContent = () => {
             <Layout>
               <Suspense fallback={<PageLoader />}>
                 <LimitesConsistencia />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/caracterizacao"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Caracterizacao />
               </Suspense>
             </Layout>
           }

@@ -22,6 +22,14 @@ const modules = [
     preload: () => import("./LimitesConsistencia"),
   },
   {
+    icon: Beaker,
+    title: "Caracterização Física",
+    description: "Módulo unificado: Índices Físicos e Limites com Modo Laboratório",
+    path: "/caracterizacao",
+    color: "from-blue-600 via-indigo-600 to-violet-600",
+    preload: () => import("./../modules/caracterizacao"),
+  },
+  {
     icon: Filter,
     title: "Granulometria e Classificação",
     description: "Análise granulométrica e classificação USCS/AASHTO",

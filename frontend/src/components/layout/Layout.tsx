@@ -20,6 +20,7 @@ const menuItems = [
     title: "Análise Geotécnica",
     items: [
       { icon: LayoutGrid, label: "Dashboard", path: "/", tourId: "" },
+      { icon: Beaker, label: "Caracterização Física", path: "/caracterizacao", tourId: "" },
     ],
   },
   {
@@ -39,6 +40,7 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
   const location = useLocation();
   // Lista resumida de módulos para o menu expansível
   const modulesBrief = [
+    { icon: Beaker, label: "Caracterização Física", path: "/caracterizacao" },
     { icon: Beaker, label: "Índices Físicos", path: "/indices-fisicos" },
     { icon: Droplet, label: "Limites de Consistência", path: "/limites-consistencia" },
     { icon: Filter, label: "Granulometria", path: "/granulometria" },
