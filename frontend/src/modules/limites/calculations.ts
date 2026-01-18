@@ -10,8 +10,13 @@
 import type {
   LimitesConsistenciaInput,
   LimitesConsistenciaOutput,
-  PontoCurva,
-} from '../schemas';
+} from './schemas';
+
+// Interface local para pontos do gráfico
+interface PontoCurva {
+  x: number;
+  y: number;
+}
 
 const EPSILON = 1e-9;
 const LOG10_25 = Math.log10(25);
@@ -95,10 +100,10 @@ export function calcularLimitesConsistencia(
     }
 
     const lps_calculados: number[] = [];
-    
+
     for (let i = 0; i < dados.pontos_lp.length; i++) {
       const ponto_lp = dados.pontos_lp[i];
-      
+
       if (ponto_lp.massa_umida_recipiente < ponto_lp.massa_seca_recipiente) {
         throw new Error(
           `Ensaio LP ${i + 1}: Massa úmida (${ponto_lp.massa_umida_recipiente}g) menor que massa seca (${ponto_lp.massa_seca_recipiente}g).`

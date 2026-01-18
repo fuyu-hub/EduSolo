@@ -32,3 +32,5 @@ export type PontoEnsaioCompactacao = z.infer<typeof PontoEnsaioCompactacaoSchema
 export type CompactacaoInput = z.infer<typeof CompactacaoInputSchema>;
 export type CompactacaoOutput = z.infer<typeof CompactacaoOutputSchema>;
 
+// Re-export do common
+export type { PontoCurvaCompactacao } from './common';

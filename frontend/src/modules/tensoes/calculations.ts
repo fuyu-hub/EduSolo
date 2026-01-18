@@ -10,284 +10,235 @@ import type {
   TensoesGeostaticasInput,
   TensoesGeostaticasOutput,
   TensaoPonto,
-  CamadaSolo,
-} from '../schemas';
+} from './schemas';
 
-const EPSILON = 1e-9;
+const EPSILON = 1e-4; // Precisão para comparações de profundidade
 
 export function calcularTensoesGeostaticas(
   dados: TensoesGeostaticasInput
 ): TensoesGeostaticasOutput {
-  const pontos_calculo: TensaoPonto[] = [];
-  let profundidade_atual = 0.0;
-  let tensao_total_atual = 0.0;
-  const gama_w = dados.peso_especifico_agua;
-
   try {
     if (!dados.camadas || dados.camadas.length === 0) {
       throw new Error('A lista de camadas não pode estar vazia.');
     }
 
-    // Constrói lista de NAs por camada
-    const nas_camadas = dados.camadas.map((c) => c.profundidade_na_camada ?? null);
+    const pontos_calculo: TensaoPonto[] = [];
+    const gama_w = dados.peso_especifico_agua;
 
-    const tem_na_especifico = nas_camadas.some((na) => na !== null);
+    // Função auxiliar para encontrar o NA e Altura Capilar aplicáveis a uma determinada camada
+    // Baseado na lógica de herança (aquíferos suspensos vs global)
+    const getHidrologiaCamada = (index: number) => {
+      const camada = dados.camadas[index];
 
-    const profundidade_total = dados.camadas.reduce((sum, c) => sum + c.espessura, 0);
-    const na_global_valido =
-      dados.profundidade_na !== undefined &&
-      dados.profundidade_na >= 0 &&
-      dados.profundidade_na <= profundidade_total * 1.5;
+      // 1. Se a camada define explicitamente, usa ela
+      if (camada.profundidade_na_camada !== undefined) {
+        return {
+          na: camada.profundidade_na_camada,
+          hc: camada.altura_capilar_camada ?? 0.0
+        };
+      }
 
-    // Ponto inicial na superfície
-    let u_inicial = 0.0;
-    if (dados.profundidade_na !== undefined && dados.profundidade_na <= 0 && dados.altura_capilar > 0) {
-      u_inicial = -dados.altura_capilar * gama_w;
+      // 2. Se a camada é impermeável (e não definiu NA), ela bloqueia a hidrologia de cima
+      // Para fins de poro-pressão, ela "corta" a coluna d'água vinda de baixo? 
+      // Ou vinda de cima?
+      // Se impermeável, u=0 (ou indefinido/irrelevante) a menos que tenha seu próprio NA.
+      if (camada.impermeavel) {
+        return { na: undefined, hc: 0.0 };
+      }
+
+      // 3. Procura nas camadas acima (aquífero superior comunicante)
+      // Imagina-se que a camada atual é permeável e está conectada hidraulicamente às de cima
+      for (let j = index - 1; j >= 0; j--) {
+        const camada_j = dados.camadas[j];
+        if (camada_j.impermeavel) {
+          // Bloqueio encontrado (aquiclude acima)
+          return { na: undefined, hc: 0.0 };
+        }
+        if (camada_j.profundidade_na_camada !== undefined) {
+          // Encontrou um NA definido num aquífero acima conectado
+          return {
+            na: camada_j.profundidade_na_camada,
+            hc: camada_j.altura_capilar_camada ?? 0.0
+          };
+        }
+      }
+
+      // 4. Se não achou barreiras impermeáveis acima, tenta o NA global
+      // Verifica se existe alguma camada impermeável acima cortando a conexão com a superfície/global
+      const tem_impermeavel_acima = dados.camadas.slice(0, index).some(c => c.impermeavel);
+
+      const profundidade_total = dados.camadas.reduce((acc, c) => acc + c.espessura, 0);
+      const na_global_valido =
+        dados.profundidade_na !== undefined &&
+        dados.profundidade_na <= profundidade_total * 1.5; // Validação frouxa para permitir NAs profundos ou superficiais
+
+      if (!tem_impermeavel_acima && na_global_valido && dados.profundidade_na !== undefined) {
+        return {
+          na: dados.profundidade_na,
+          hc: dados.altura_capilar
+        };
+      }
+
+      return { na: undefined, hc: 0.0 };
+    };
+
+    let profundidade_acumulada = 0.0;
+    let tensao_total_acumulada = 0.0;
+
+    // Adiciona ponto inicial (superfície)
+    const hidro_surf = getHidrologiaCamada(0);
+    let u_surf = 0.0;
+    if (hidro_surf.na !== undefined) {
+      const dist_surf = 0.0 - hidro_surf.na; // Profundidade 0 - NA
+      // Se NA=2, dist = -2. Se NA=-1 (enchente?), dist = 1.
+
+      if (dist_surf >= 0) {
+        u_surf = dist_surf * gama_w; // NA acima da superfície (enchente)
+      } else if (Math.abs(dist_surf) <= hidro_surf.hc + EPSILON) {
+        u_surf = dist_surf * gama_w; // Sucção Capilar
+      }
     }
-
-    const sigma_ef_v_inicial = 0.0 - u_inicial;
-    const sigma_ef_h_inicial =
-      dados.camadas[0].Ko !== undefined ? sigma_ef_v_inicial * dados.camadas[0].Ko : undefined;
 
     pontos_calculo.push({
       profundidade: 0.0,
       tensao_total_vertical: 0.0,
-      pressao_neutra: u_inicial,
-      tensao_efetiva_vertical: sigma_ef_v_inicial,
-      tensao_efetiva_horizontal: sigma_ef_h_inicial,
+      pressao_neutra: Number(u_surf.toFixed(4)),
+      tensao_efetiva_vertical: Number((0.0 - u_surf).toFixed(4)),
+      tensao_efetiva_horizontal:
+        dados.camadas[0].Ko !== undefined
+          ? Number(((0.0 - u_surf) * dados.camadas[0].Ko).toFixed(4))
+          : undefined
     });
 
+
+    // Loop pelas camadas
     for (let i = 0; i < dados.camadas.length; i++) {
       const camada = dados.camadas[i];
-      const profundidade_base_camada = profundidade_atual + camada.espessura;
-      const z_topo = profundidade_atual;
-      const z_base = profundidade_base_camada;
+      const z_topo = profundidade_acumulada;
+      const z_base = profundidade_acumulada + camada.espessura;
 
-      // Adicionar ponto no NA específico da camada
-      if (camada.profundidade_na_camada !== undefined) {
-        const na_camada_val = camada.profundidade_na_camada;
-        if (z_topo <= na_camada_val && na_camada_val <= z_base) {
-          const espessura_ate_na = na_camada_val - z_topo;
-          const gama_ate_na = camada.gama_nat ?? camada.gama_sat;
+      const { na, hc } = getHidrologiaCamada(i);
 
-          if (gama_ate_na !== undefined) {
-            const sigma_v_na_camada = tensao_total_atual + gama_ate_na * espessura_ate_na;
-            const u_na_camada = 0.0;
-            const sigma_ef_v_na_camada = sigma_v_na_camada - u_na_camada;
-            const sigma_ef_h_na_camada =
-              camada.Ko !== undefined ? sigma_ef_v_na_camada * camada.Ko : undefined;
+      // Definir pontos de interesse dentro desta camada
+      const depths = new Set<number>();
+      depths.add(z_topo);
+      depths.add(z_base);
 
-            if (!pontos_calculo.some((p) => Math.abs(p.profundidade - na_camada_val) < 0.01)) {
-              pontos_calculo.push({
-                profundidade: Number(na_camada_val.toFixed(4)),
-                tensao_total_vertical: Number(sigma_v_na_camada.toFixed(4)),
-                pressao_neutra: Number(u_na_camada.toFixed(4)),
-                tensao_efetiva_vertical: Number(sigma_ef_v_na_camada.toFixed(4)),
-                tensao_efetiva_horizontal:
-                  sigma_ef_h_na_camada !== undefined ? Number(sigma_ef_h_na_camada.toFixed(4)) : undefined,
-              });
-            }
-          }
+      if (na !== undefined) {
+        // Adiciona NA se estiver dentro da camada (com tolerância)
+        // Se NA == z_topo, já está lá. Se NA == z_base, já está lá.
+        if (na >= z_topo - EPSILON && na <= z_base + EPSILON) {
+          // Ajustar para os limites exatos se estiver muito perto
+          const val = Math.abs(na - z_topo) < EPSILON ? z_topo : (Math.abs(na - z_base) < EPSILON ? z_base : na);
+          depths.add(val);
+        }
+
+        // Adiciona Topo Capilar se estiver dentro
+        const cap_topo = na - hc;
+        if (cap_topo >= z_topo - EPSILON && cap_topo <= z_base + EPSILON) {
+          const val = Math.abs(cap_topo - z_topo) < EPSILON ? z_topo : (Math.abs(cap_topo - z_base) < EPSILON ? z_base : cap_topo);
+          depths.add(val);
         }
       }
 
-      // Adicionar ponto no início da capilaridade
-      const altura_cap_usar = camada.altura_capilar_camada ?? dados.altura_capilar;
-      const na_usar = camada.profundidade_na_camada ?? dados.profundidade_na;
+      // Ordenar pontos para criar segmentos
+      const sortedDepths = Array.from(depths).sort((a, b) => a - b);
 
-      let prof_inicio_capilaridade_camada: number | undefined;
-      if (na_usar !== undefined && altura_cap_usar > 0) {
-        prof_inicio_capilaridade_camada = Math.max(0, na_usar - altura_cap_usar);
-      }
+      // Iterar pelos segmentos da camada
+      for (let j = 0; j < sortedDepths.length - 1; j++) {
+        const d_start = sortedDepths[j];
+        const d_end = sortedDepths[j + 1];
 
-      if (prof_inicio_capilaridade_camada !== undefined && prof_inicio_capilaridade_camada > 0) {
-        if (z_topo < prof_inicio_capilaridade_camada && prof_inicio_capilaridade_camada <= z_base) {
-          const espessura_ate_capilar = prof_inicio_capilaridade_camada - z_topo;
-          const gama_ate_capilar = camada.gama_nat ?? camada.gama_sat;
+        if (Math.abs(d_end - d_start) < EPSILON) continue; // Segmento nulo
 
-          if (gama_ate_capilar !== undefined) {
-            const sigma_v_capilar = tensao_total_atual + gama_ate_capilar * espessura_ate_capilar;
-            const u_capilar = -altura_cap_usar * gama_w;
-            const sigma_ef_v_capilar = sigma_v_capilar - u_capilar;
-            const sigma_ef_h_capilar =
-              camada.Ko !== undefined ? sigma_ef_v_capilar * camada.Ko : undefined;
+        const dz = d_end - d_start;
+        const d_mid = (d_start + d_end) / 2;
 
-            if (!pontos_calculo.some((p) => Math.abs(p.profundidade - prof_inicio_capilaridade_camada!) < 0.01)) {
-              pontos_calculo.push({
-                profundidade: Number(prof_inicio_capilaridade_camada.toFixed(4)),
-                tensao_total_vertical: Number(sigma_v_capilar.toFixed(4)),
-                pressao_neutra: Number(u_capilar.toFixed(4)),
-                tensao_efetiva_vertical: Number(sigma_ef_v_capilar.toFixed(4)),
-                tensao_efetiva_horizontal:
-                  sigma_ef_h_capilar !== undefined ? Number(sigma_ef_h_capilar.toFixed(4)) : undefined,
-              });
-            }
-          }
-        }
-      }
+        // Determinar estado no meio do segmento
+        let gama_segmento: number | undefined;
+        let is_saturated_zone = false;
 
-      // Calcular tensão total na base da camada
-      let na_para_tensao: number | undefined;
-      if (camada.profundidade_na_camada !== undefined) {
-        na_para_tensao = camada.profundidade_na_camada;
-      } else if (dados.profundidade_na !== undefined) {
-        na_para_tensao = dados.profundidade_na;
-      }
-
-      if (na_para_tensao === undefined) {
-        const gama_camada = camada.gama_nat ?? camada.gama_sat;
-        if (gama_camada === undefined) {
-          throw new Error(
-            `Peso específico (γnat ou γsat) não definido para a camada ${i + 1}. Defina pelo menos um deles.`
-          );
-        }
-        tensao_total_atual += gama_camada * camada.espessura;
-      } else if (z_base <= na_para_tensao) {
-        // Camada inteira acima do NA
-        const gama_camada = camada.gama_nat;
-        if (gama_camada === undefined) {
-          throw new Error(
-            `Peso específico natural (γnat) não definido para a camada ${i + 1} que está acima do NA.`
-          );
-        }
-        tensao_total_atual += gama_camada * camada.espessura;
-      } else if (z_topo >= na_para_tensao) {
-        // Camada inteira abaixo do NA
-        const gama_camada = camada.gama_sat;
-        if (gama_camada === undefined) {
-          throw new Error(
-            `Peso específico saturado (γsat) não definido para a camada ${i + 1} que está abaixo do NA.`
-          );
-        }
-        tensao_total_atual += gama_camada * camada.espessura;
-      } else {
-        // Camada atravessada pelo NA
-        const espessura_acima_na = na_para_tensao - z_topo;
-        const espessura_abaixo_na = z_base - na_para_tensao;
-
-        const gama_nat_camada = camada.gama_nat;
-        const gama_sat_camada = camada.gama_sat;
-
-        if (gama_nat_camada === undefined) {
-          throw new Error(
-            `Peso específico natural (γnat) não definido para a camada ${i + 1} que é atravessada pelo NA.`
-          );
-        }
-        if (gama_sat_camada === undefined) {
-          throw new Error(
-            `Peso específico saturado (γsat) não definido para a camada ${i + 1} que é atravessada pelo NA.`
-          );
-        }
-
-        const tensao_total_na_interface = tensao_total_atual + gama_nat_camada * espessura_acima_na;
-
-        // Ponto no NA
-        const u_no_na = 0.0;
-        const sigma_v_no_na = tensao_total_na_interface;
-        const sigma_ef_v_no_na = sigma_v_no_na - u_no_na;
-        const sigma_ef_h_no_na = camada.Ko !== undefined ? sigma_ef_v_no_na * camada.Ko : undefined;
-
-        if (!pontos_calculo.some((p) => Math.abs(p.profundidade - na_para_tensao) < EPSILON)) {
-          pontos_calculo.push({
-            profundidade: na_para_tensao,
-            tensao_total_vertical: Number(sigma_v_no_na.toFixed(4)),
-            pressao_neutra: Number(u_no_na.toFixed(4)),
-            tensao_efetiva_vertical: Number(sigma_ef_v_no_na.toFixed(4)),
-            tensao_efetiva_horizontal:
-              sigma_ef_h_no_na !== undefined ? Number(sigma_ef_h_no_na.toFixed(4)) : undefined,
-          });
-        }
-
-        tensao_total_atual = tensao_total_na_interface + gama_sat_camada * espessura_abaixo_na;
-      }
-
-      // Calcular pressão neutra e tensão efetiva na base da camada
-      let na_relevante: number | undefined;
-      let altura_capilar_relevante = 0.0;
-
-      if (camada.impermeavel && camada.profundidade_na_camada === undefined) {
-        na_relevante = undefined;
-      } else if (camada.profundidade_na_camada !== undefined) {
-        na_relevante = camada.profundidade_na_camada;
-        altura_capilar_relevante = camada.altura_capilar_camada ?? 0.0;
-      } else if (!tem_na_especifico && na_global_valido && dados.profundidade_na !== undefined) {
-        na_relevante = dados.profundidade_na;
-        altura_capilar_relevante = dados.altura_capilar;
-      } else {
-        let na_candidato: number | undefined;
-        let altura_cap_candidato = 0.0;
-
-        for (let j = i - 1; j >= 0; j--) {
-          const camada_j = dados.camadas[j];
-          if (camada_j.impermeavel) break;
-
-          if (camada_j.profundidade_na_camada !== undefined) {
-            na_candidato = camada_j.profundidade_na_camada;
-            altura_cap_candidato = camada_j.altura_capilar_camada ?? 0.0;
-            break;
+        if (na !== undefined) {
+          if (d_mid >= na) {
+            is_saturated_zone = true; // Abaixo do NA
+          } else if (d_mid >= (na - hc)) {
+            is_saturated_zone = true; // Zona capilar (saturada)
           }
         }
 
-        if (na_candidato === undefined && na_global_valido && dados.profundidade_na !== undefined) {
-          const tem_impermeavel = dados.camadas.slice(0, i).some((c) => c.impermeavel);
-          if (!tem_impermeavel) {
-            na_candidato = dados.profundidade_na;
-            altura_cap_candidato = dados.altura_capilar;
+        if (is_saturated_zone) {
+          gama_segmento = camada.gama_sat ?? camada.gama_nat;
+          if (gama_segmento === undefined) {
+            throw new Error(`Peso específico saturado (γsat) (ou natural) não definido para camada ${i + 1} em zona saturada.`);
           }
-        }
-
-        na_relevante = na_candidato;
-        altura_capilar_relevante = altura_cap_candidato;
-      }
-
-      let pressao_neutra = 0.0;
-      if (na_relevante !== undefined) {
-        const distancia_vertical_na = z_base - na_relevante;
-
-        if (distancia_vertical_na >= 0) {
-          pressao_neutra = distancia_vertical_na * gama_w;
-        } else if (Math.abs(distancia_vertical_na) <= altura_capilar_relevante) {
-          pressao_neutra = distancia_vertical_na * gama_w;
         } else {
-          pressao_neutra = 0.0;
+          gama_segmento = camada.gama_nat ?? camada.gama_sat;
+          if (gama_segmento === undefined) {
+            throw new Error(`Peso específico natural (γnat) (ou saturado) não definido para camada ${i + 1} em zona não saturada.`);
+          }
         }
+
+        // Acumular Tensão Total
+        tensao_total_acumulada += gama_segmento * dz;
+
+        // Calcular Pressão Neutra no final do segmento
+        let u_end = 0.0;
+        if (na !== undefined) {
+          const dist = d_end - na;
+          if (dist >= 0) {
+            u_end = dist * gama_w; // Hidrostática positiva
+          } else if (Math.abs(dist) <= hc + EPSILON) {
+            u_end = dist * gama_w; // Sucção capilar
+          } else {
+            u_end = 0.0;
+          }
+        }
+
+        // Calcular Efetiva
+        let sigma_eff_v = tensao_total_acumulada - u_end;
+
+        // Correção de sanidade para evitar valores negativos microscópicos ou -0
+        if (sigma_eff_v < 0 && Math.abs(sigma_eff_v) < 1e-3) sigma_eff_v = 0.0;
+
+        const sigma_eff_h = camada.Ko !== undefined ? sigma_eff_v * camada.Ko : undefined;
+
+        pontos_calculo.push({
+          profundidade: Number(d_end.toFixed(4)),
+          tensao_total_vertical: Number(tensao_total_acumulada.toFixed(4)),
+          pressao_neutra: Number(u_end.toFixed(4)),
+          tensao_efetiva_vertical: Number(sigma_eff_v.toFixed(4)),
+          tensao_efetiva_horizontal: sigma_eff_h !== undefined ? Number(sigma_eff_h.toFixed(4)) : undefined
+        });
       }
 
-      let tensao_efetiva_vertical = tensao_total_atual - pressao_neutra;
-      if (tensao_efetiva_vertical < -1e-9) {
-        tensao_efetiva_vertical = 0.0;
-      }
-
-      const tensao_efetiva_horizontal =
-        camada.Ko !== undefined ? tensao_efetiva_vertical * camada.Ko : undefined;
-
-      pontos_calculo.push({
-        profundidade: Number(profundidade_base_camada.toFixed(4)),
-        tensao_total_vertical: Number(tensao_total_atual.toFixed(4)),
-        pressao_neutra: Number(pressao_neutra.toFixed(4)),
-        tensao_efetiva_vertical: Number(tensao_efetiva_vertical.toFixed(4)),
-        tensao_efetiva_horizontal:
-          tensao_efetiva_horizontal !== undefined ? Number(tensao_efetiva_horizontal.toFixed(4)) : undefined,
-      });
-
-      profundidade_atual = profundidade_base_camada;
+      profundidade_acumulada = z_base;
     }
 
-    // Ordenar e remover duplicados
-    pontos_calculo.sort((a, b) => a.profundidade - b.profundidade);
-
+    // Remover duplicatas exatas de profundidade
     const pontos_unicos: TensaoPonto[] = [];
-    const profundidades_vistas = new Set<number>();
+    const profs_vistas = new Set<string>();
 
-    for (const ponto of pontos_calculo) {
-      const prof_rounded = Number(ponto.profundidade.toFixed(4));
-      if (!profundidades_vistas.has(prof_rounded)) {
-        pontos_unicos.push(ponto);
-        profundidades_vistas.add(prof_rounded);
+    for (const p of pontos_calculo) {
+      // Usa string com 4 casas para chave única
+      const k = p.profundidade.toFixed(4);
+      if (!profs_vistas.has(k)) {
+        profs_vistas.add(k);
+        pontos_unicos.push(p);
+      } else {
+        // Se já existe, atualiza com o valor mais recente (geralmente mais preciso ou acumulado corretamente nos loops)
+        // No nosso loop, o último valor para uma profundidade é o "final" daquele segmento.
+        // Mas se tivermos segmentos adjacentes, o "Start" do próximo é igual ao "End" do anterior.
+        // Nossos loops só dão push no "End".
+        // Então duplicações só ocorrem se houver sobreposição estranha ou pontos artificiais.
+        // O algoritmo de POIs evita overlaps.
+        // MAS, se tivermos camada de espessura 0 ou algo assim?
+        // Melhor garantir. Vamos substituir o anterior se for exatamente igual? 
+        // Não, o primeiro push (do loop anterior) é o correto.
       }
     }
 
     return { pontos_calculo: pontos_unicos };
+
   } catch (error) {
     return {
       pontos_calculo: [],
@@ -295,4 +246,3 @@ export function calcularTensoesGeostaticas(
     };
   }
 }
-

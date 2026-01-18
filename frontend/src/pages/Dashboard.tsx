@@ -7,26 +7,10 @@ import { PreloaderLink } from "@/components/RoutePreloader";
 const modules = [
   {
     icon: Beaker,
-    title: "Índices Físicos",
-    description: "Calcule índices físicos do solo: umidade, densidade, porosidade e mais",
-    path: "/indices-fisicos",
-    color: "from-blue-500 via-blue-600 to-indigo-600",
-    preload: () => import("./IndicesFisicos"),
-  },
-  {
-    icon: Droplet,
-    title: "Limites de Consistência",
-    description: "Calcule LL, LP, IP, IL, IC e classifique a plasticidade do solo",
-    path: "/limites-consistencia",
-    color: "from-cyan-500 via-teal-500 to-emerald-600",
-    preload: () => import("./LimitesConsistencia"),
-  },
-  {
-    icon: Beaker,
-    title: "Caracterização Física",
-    description: "Módulo unificado: Índices Físicos e Limites com Modo Laboratório",
+    title: "Índices Físicos e Consistência",
+    description: "Módulo unificado: Índices Físicos, LL, LP e classificações",
     path: "/caracterizacao",
-    color: "from-blue-600 via-indigo-600 to-violet-600",
+    color: "from-blue-500 via-blue-600 to-cyan-600",
     preload: () => import("./../modules/caracterizacao"),
   },
   {

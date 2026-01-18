@@ -3,7 +3,7 @@
  * Calcula curva de compactação e determina umidade ótima e γd,max
  */
 
-import type { CompactacaoInput, CompactacaoOutput, PontoCurvaCompactacao } from '../schemas';
+import type { CompactacaoInput, CompactacaoOutput, PontoCurvaCompactacao } from './schemas';
 
 const EPSILON = 1e-9;
 
@@ -14,7 +14,7 @@ const EPSILON = 1e-9;
 function polyfit(x: number[], y: number[], degree: number): number[] {
   const n = x.length;
   const X: number[][] = [];
-  
+
   // Construir matriz de Vandermonde
   for (let i = 0; i < n; i++) {
     const row: number[] = [];
@@ -28,7 +28,7 @@ function polyfit(x: number[], y: number[], degree: number): number[] {
   const XT = transpose(X);
   const XTX = matrixMultiply(XT, X);
   const XTy = matrixVectorMultiply(XT, y);
-  
+
   const coeffs = gaussianElimination(XTX, XTy);
   return coeffs.reverse(); // Retorna em ordem decrescente de potência
 }
@@ -122,7 +122,7 @@ function findPolynomialMaximum(coeffs: number[], xMin: number, xMax: number): [n
       secondDerivCoeffs.push(derivCoeffs[i] * (derivCoeffs.length - 1 - i));
     }
     const dfx = evaluatePolynomial(secondDerivCoeffs, x);
-    
+
     if (Math.abs(dfx) < EPSILON) break;
     x = x - fx / dfx;
   }

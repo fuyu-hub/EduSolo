@@ -36,9 +36,6 @@ export interface AmostraUnificada {
 
     // Dados de Indices Fisicos
     indices: IndicesFisicosInput;
-
-    // Dados de Limites
-    limites: LimitesInput;
 }
 
 export interface CaracterizacaoSettings {
