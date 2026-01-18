@@ -664,6 +664,10 @@ All colors MUST be HSL.
     background: hsl(var(--primary));
   }
 
+  html {
+    zoom: 1.1;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     background-image: var(--gradient-radial);
