@@ -879,9 +879,9 @@ function ResultRow({ label, value, unit, precision = 2, highlight = false }: { l
     return (
         <div className={cn(
             "flex justify-between items-center text-sm py-1.5 px-2 rounded-md -mx-2 transition-colors",
-            highlight ? "font-bold text-white bg-white/10" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+            highlight ? "font-bold dark:text-white text-foreground dark:bg-white/10 bg-muted/20" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
         )}>
-            <span className={cn("text-muted-foreground", highlight && "text-white/70")}>{label}</span>
+            <span className={cn("text-muted-foreground", highlight && "dark:text-white/70 text-foreground")}>{label}</span>
             <span className="font-medium font-mono">{value.toFixed(precision)} {unit}</span>
         </div>
     );

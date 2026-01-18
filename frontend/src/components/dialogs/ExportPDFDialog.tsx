@@ -35,12 +35,8 @@ export default function ExportPDFDialog({
   isExporting = false,
 }: ExportPDFDialogProps) {
   const handleOpenChange = (newOpen: boolean) => {
-    // Se está fechando o diálogo e há um nome de arquivo válido, confirma a exportação
-    if (!newOpen && fileName.trim() && !isExporting) {
-      onConfirm();
-    } else {
-      onOpenChange(newOpen);
-    }
+    // Apenas fecha o diálogo, não confirma automaticamente
+    onOpenChange(newOpen);
   };
 
   return (
@@ -49,10 +45,10 @@ export default function ExportPDFDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileDown className="w-5 h-5 text-primary" />
-            Exportar para PDF
+            Salvar Relatório
           </DialogTitle>
           <DialogDescription>
-            Personalize o nome do arquivo PDF antes de exportar.
+            Personalize o nome do relatório antes de salvar.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -92,8 +88,8 @@ export default function ExportPDFDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => {
               // Cancelar sem salvar - fecha diretamente
               onOpenChange(false);
@@ -102,11 +98,11 @@ export default function ExportPDFDialog({
           >
             Cancelar
           </Button>
-          <Button 
-            onClick={onConfirm} 
+          <Button
+            onClick={onConfirm}
             disabled={!fileName.trim() || isExporting}
           >
-            {isExporting ? "Exportando..." : "Exportar PDF"}
+            {isExporting ? "Salvando..." : "Salvar Relatório"}
           </Button>
         </DialogFooter>
       </DialogContent>
