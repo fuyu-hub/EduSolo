@@ -20,7 +20,6 @@ const menuItems = [
     title: "Análise Geotécnica",
     items: [
       { icon: LayoutGrid, label: "Dashboard", path: "/", tourId: "" },
-      { icon: Beaker, label: "Índices Físicos e Consistência", path: "/caracterizacao", tourId: "" },
     ],
   },
   {

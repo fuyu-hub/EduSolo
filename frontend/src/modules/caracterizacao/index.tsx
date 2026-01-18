@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import {
     Beaker, Calculator, RefreshCw, Trash2, Plus, GraduationCap, Download,
     Droplet, AlertCircle, Info, BarChart3, LayoutGrid,
-    ChevronDown, Users
+    ChevronDown, Users, Save
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -25,6 +25,11 @@ import { CaracterizacaoOutput } from "./types";
 import DiagramaFases from "@/components/visualizations/DiagramaFases";
 import LimiteLiquidezChart from "@/components/limites/LimiteLiquidezChart";
 import { exportToPDF, ExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
+import { useNavigate } from "react-router-dom";
+import { useRecentReports } from "@/hooks/useRecentReports";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CheckCircle } from "lucide-react";
+import ExportPDFDialog from "@/components/ExportPDFDialog";
 
 // Tooltips
 const tooltips = {
@@ -56,6 +61,53 @@ export default function CaracterizacaoPage() {
     const [isCalculating, setIsCalculating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isExportingPDF, setIsExportingPDF] = useState(false);
+    const [savedBlob, setSavedBlob] = useState<Blob | null>(null);
+    const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
+
+    // PDF Export State
+    const [isExportPDFDialogOpen, setIsExportPDFDialogOpen] = useState(false);
+    const [pdfFileName, setPdfFileName] = useState("");
+    const [customReportTitle, setCustomReportTitle] = useState("");
+
+    const navigate = useNavigate();
+    const { addReport } = useRecentReports();
+
+    useEffect(() => {
+        const storedData = sessionStorage.getItem('caracterizacao_lastData');
+        if (storedData) {
+            try {
+                const data = JSON.parse(storedData);
+                // Restore samples
+                if (data.amostras && Array.isArray(data.amostras)) {
+                    // Reset first to clear default
+                    resetAmostras();
+                    // Add remaining samples
+                    for (let i = 0; i < data.amostras.length; i++) {
+                        if (i > 0) addAmostra();
+                        updateIndices(i, data.amostras[i].indices);
+                    }
+                }
+                // Restore settings
+                if (data.settings) {
+                    updateSettings(data.settings);
+                }
+                // Restore limits
+                if (data.limites) {
+                    updateGlobalLimites(data.limites);
+                }
+                // Restore computed results if present
+                if (data.resultadoCombinado) {
+                    setResultadoCombinado(data.resultadoCombinado);
+                }
+
+                toast.info("Dados restaurados do relatório.");
+            } catch (e) {
+                console.error("Erro ao restaurar dados", e);
+            } finally {
+                sessionStorage.removeItem('caracterizacao_lastData');
+            }
+        }
+    }, []);
 
 
 
@@ -216,14 +268,25 @@ export default function CaracterizacaoPage() {
         toast.success(`${exemplo.nome} carregado!`);
     };
 
-    // PDF Export
-    const handleExportPDF = async () => {
+    // PDF Export Initialization
+    const handleExportPDF = () => {
         if (!resultadoCombinado || resultadoCombinado.erro) {
             toast.error("Calcule os resultados antes de exportar.");
             return;
         }
 
+        const defaultName = generateDefaultPDFFileName("Caracterização Física");
+        setPdfFileName(defaultName);
+        setIsExportPDFDialogOpen(true);
+    };
+
+    // Actual PDF Export Logic
+    const handleConfirmExportPDF = async () => {
+        if (!resultadoCombinado || resultadoCombinado.erro) return;
+
         setIsExportingPDF(true);
+        setIsExportPDFDialogOpen(false); // Close first
+
         try {
             const inputs: { label: string; value: string }[] = [
                 { label: "Número de Amostras", value: `${amostras.length}` },
@@ -248,16 +311,63 @@ export default function CaracterizacaoPage() {
                 moduleTitle: "Caracterização Física do Solo",
                 inputs,
                 results: resultsList,
+                customFileName: pdfFileName,
+                customTitle: customReportTitle
             };
 
-            await exportToPDF(exportData, false);
-            toast.success("PDF salvo com sucesso!");
+
+            const pdfResult = await exportToPDF(exportData, true);
+
+            if (pdfResult instanceof Blob) {
+                setSavedBlob(pdfResult);
+
+                // Convert Blob to Base64 for storage
+                const reader = new FileReader();
+                reader.readAsDataURL(pdfResult);
+                reader.onloadend = () => {
+                    const result = reader.result as string;
+                    const base64data = result.split(',')[1] || ''; // Extract pure base64
+
+                    // Use custom file name for report name, removing .pdf extension if present
+                    const reportName = pdfFileName.replace(/\.pdf$/i, '');
+
+                    addReport({
+                        name: reportName,
+                        moduleType: "caracterizacao",
+                        moduleName: "Índices Físicos e Consistência",
+                        pdfUrl: "", // Blob URL is temporary, we use pdfData
+                        pdfData: base64data,
+                        calculationData: {
+                            amostras,
+                            settings,
+                            limites: globalLimites,
+                            resultadoCombinado
+                        }
+                    });
+
+                    setIsSaveDialogOpen(true);
+                    toast.success("Relatório salvo com sucesso!");
+                };
+            }
 
         } catch (err) {
             console.error(err);
             toast.error("Erro ao exportar PDF.");
         } finally {
             setIsExportingPDF(false);
+        }
+    };
+
+    const handleDownloadLocal = () => {
+        if (savedBlob) {
+            const url = URL.createObjectURL(savedBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `caracterizacao_${new Date().getTime()}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
     };
 
@@ -289,36 +399,10 @@ export default function CaracterizacaoPage() {
                     {/* Botão de Exemplos */}
                     <DialogExemplos onSelectExample={handleLoadExample} />
 
-                    <div className="flex items-center gap-1 border rounded-md p-1 bg-background/50">
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" onClick={() => { }} className="h-7 w-7 text-muted-foreground hover:text-foreground">
-                                        <Plus className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Novo Ensaio</TooltipContent>
-                            </Tooltip>
-
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" onClick={() => { }} className="h-7 w-7 text-muted-foreground hover:text-foreground">
-                                        <Download className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Salvar/Carregar</TooltipContent>
-                            </Tooltip>
-
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" onClick={handleExportPDF} className="h-7 w-7 text-muted-foreground hover:text-foreground">
-                                        <BarChart3 className="h-4 w-4" />
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Relatório PDF</TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    </div>
+                    <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-2">
+                        <Save className="w-4 h-4" />
+                        Salvar
+                    </Button>
 
                     <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
 
@@ -341,7 +425,46 @@ export default function CaracterizacaoPage() {
                 <EntradaDados />
                 <ResultadosView resultadoCombinado={resultadoCombinado} />
             </div>
-        </div>
+            {/* Save Success Dialog */}
+            <Dialog open={isSaveDialogOpen} onOpenChange={setIsSaveDialogOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <div className="flex items-center gap-2 text-green-600 mb-2">
+                            <CheckCircle className="h-6 w-6" />
+                            <DialogTitle>Sucesso!</DialogTitle>
+                        </div>
+                        <DialogDescription>
+                            O relatório foi salvo corretamente na sua lista de relatórios. O que deseja fazer agora?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+                        <Button variant="outline" onClick={() => setIsSaveDialogOpen(false)}>
+                            Fechar
+                        </Button>
+                        <Button variant="secondary" onClick={handleDownloadLocal} className="gap-2">
+                            <Download className="h-4 w-4" />
+                            Salvar Localmente
+                        </Button>
+                        <Button onClick={() => navigate("/relatorios")} className="gap-2">
+                            Ir para Relatórios
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Export PDF Dialog */}
+            <ExportPDFDialog
+                open={isExportPDFDialogOpen}
+                onOpenChange={setIsExportPDFDialogOpen}
+                fileName={pdfFileName}
+                onFileNameChange={setPdfFileName}
+                customTitle={customReportTitle}
+                onCustomTitleChange={setCustomReportTitle}
+                showCustomTitle={true}
+                onConfirm={handleConfirmExportPDF}
+                isExporting={isExportingPDF}
+            />
+        </div >
     );
 }
 
@@ -367,9 +490,21 @@ const EntradaDados = () => {
     };
 
     const removePontoLL = (index: number) => {
-        if (limites.pontosLL.length <= 2) return;
-        const newPontos = limites.pontosLL.filter((_, i) => i !== index);
+        const newPontos = [...limites.pontosLL];
+        newPontos.splice(index, 1);
         updateLimites({ pontosLL: newPontos });
+    };
+
+    const addPontoLP = () => {
+        updateLimites({
+            pontosLP: [...limites.pontosLP, { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }]
+        });
+    };
+
+    const removePontoLP = (index: number) => {
+        const newPontos = [...limites.pontosLP];
+        newPontos.splice(index, 1);
+        updateLimites({ pontosLP: newPontos });
     };
 
     // Handlers para LP
@@ -555,20 +690,32 @@ const EntradaDados = () => {
 
                     {/* LP */}
                     <div>
-                        <Label className="text-sm font-medium mb-2 block">Limite de Plasticidade (LP)</Label>
-                        <div className="grid grid-cols-3 gap-3">
-                            <div>
-                                <Label className="text-[10px] text-muted-foreground">M.Ú+T (g)</Label>
-                                <Input className="h-9 text-xs" placeholder="g" value={limites.pontosLP[0]?.massaUmidaRecipiente || ""} onChange={e => handleUpdateLP(0, 'massaUmidaRecipiente', e.target.value)} />
-                            </div>
-                            <div>
-                                <Label className="text-[10px] text-muted-foreground">M.S+T (g)</Label>
-                                <Input className="h-9 text-xs" placeholder="g" value={limites.pontosLP[0]?.massaSecaRecipiente || ""} onChange={e => handleUpdateLP(0, 'massaSecaRecipiente', e.target.value)} />
-                            </div>
-                            <div>
-                                <Label className="text-[10px] text-muted-foreground">Tara (g)</Label>
-                                <Input className="h-9 text-xs" placeholder="g" value={limites.pontosLP[0]?.massaRecipiente || ""} onChange={e => handleUpdateLP(0, 'massaRecipiente', e.target.value)} />
-                            </div>
+                        <div className="flex items-center justify-between mb-2">
+                            <Label className="text-sm font-medium">Limite de Plasticidade (LP)</Label>
+                            <Button size="sm" variant="ghost" onClick={addPontoLP} className="h-7 px-2 text-xs gap-1">
+                                <Plus className="w-3 h-3" /> Ponto
+                            </Button>
+                        </div>
+
+                        {/* Header Row */}
+                        <div className="grid grid-cols-[1fr,1fr,1fr,32px] gap-1.5 px-2 mb-1 text-[10px] text-muted-foreground font-medium text-center">
+                            <div>M.Ú+T (g)</div>
+                            <div>M.S+T (g)</div>
+                            <div>Tara (g)</div>
+                            <div></div>
+                        </div>
+
+                        <div className="space-y-1 max-h-[220px] overflow-y-auto pr-1">
+                            {limites.pontosLP.map((ponto, i) => (
+                                <div key={ponto.id || i} className="grid grid-cols-[1fr,1fr,1fr,auto] gap-1.5 items-center p-1.5 rounded-md border bg-muted/5 hover:bg-muted/10 transition-colors">
+                                    <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaUmidaRecipiente || ""} onChange={e => handleUpdateLP(i, 'massaUmidaRecipiente', e.target.value)} />
+                                    <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaSecaRecipiente || ""} onChange={e => handleUpdateLP(i, 'massaSecaRecipiente', e.target.value)} />
+                                    <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaRecipiente || ""} onChange={e => handleUpdateLP(i, 'massaRecipiente', e.target.value)} />
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive shrink-0" onClick={() => removePontoLP(i)} disabled={limites.pontosLP.length <= 1}>
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                </div>
+                            ))}
                         </div>
                     </div>
 

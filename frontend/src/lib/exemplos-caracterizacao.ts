@@ -43,7 +43,12 @@ export const exemplosCaracterizacao: ExemploCaracterizacao[] = [
                 { numGolpes: "15", massaUmidaRecipiente: "36.8", massaSecaRecipiente: "26.4", massaRecipiente: "10.0" },
                 { numGolpes: "10", massaUmidaRecipiente: "39.5", massaSecaRecipiente: "27.8", massaRecipiente: "10.0" },
             ],
-            pontosLP: [{ massaUmidaRecipiente: "15.2", massaSecaRecipiente: "13.8", massaRecipiente: "5.0" }],
+            pontosLP: [
+                { massaUmidaRecipiente: "15.2", massaSecaRecipiente: "13.8", massaRecipiente: "5.0" },
+                { massaUmidaRecipiente: "16.0", massaSecaRecipiente: "14.5", massaRecipiente: "5.0" },
+                { massaUmidaRecipiente: "14.8", massaSecaRecipiente: "13.5", massaRecipiente: "5.0" },
+                { massaUmidaRecipiente: "15.5", massaSecaRecipiente: "14.1", massaRecipiente: "5.0" }
+            ],
             umidadeNatural: "25.2",
             percentualArgila: "55",
         }
@@ -62,7 +67,11 @@ export const exemplosCaracterizacao: ExemploCaracterizacao[] = [
                 { numGolpes: "17", massaUmidaRecipiente: "27.1", massaSecaRecipiente: "23.0", massaRecipiente: "10.0" },
                 { numGolpes: "12", massaUmidaRecipiente: "28.5", massaSecaRecipiente: "23.4", massaRecipiente: "10.0" },
             ],
-            pontosLP: [{ massaUmidaRecipiente: "14.8", massaSecaRecipiente: "13.9", massaRecipiente: "5.0" }],
+            pontosLP: [
+                { massaUmidaRecipiente: "14.8", massaSecaRecipiente: "13.9", massaRecipiente: "5.0" },
+                { massaUmidaRecipiente: "15.2", massaSecaRecipiente: "14.2", massaRecipiente: "5.0" },
+                { massaUmidaRecipiente: "14.5", massaSecaRecipiente: "13.6", massaRecipiente: "5.0" }
+            ],
             umidadeNatural: "11.4",
             percentualArgila: "15",
         }
@@ -81,7 +90,12 @@ export const exemplosCaracterizacao: ExemploCaracterizacao[] = [
                 { numGolpes: "15", massaUmidaRecipiente: "32.2", massaSecaRecipiente: "25.4", massaRecipiente: "10.0" },
                 { numGolpes: "9", massaUmidaRecipiente: "34.5", massaSecaRecipiente: "26.5", massaRecipiente: "10.0" },
             ],
-            pontosLP: [{ massaUmidaRecipiente: "16.5", massaSecaRecipiente: "15.0", massaRecipiente: "5.0" }],
+            pontosLP: [
+                { massaUmidaRecipiente: "16.5", massaSecaRecipiente: "15.0", massaRecipiente: "5.0" },
+                { massaUmidaRecipiente: "17.0", massaSecaRecipiente: "15.4", massaRecipiente: "5.0" },
+                { massaUmidaRecipiente: "15.8", massaSecaRecipiente: "14.4", massaRecipiente: "5.0" },
+                { massaUmidaRecipiente: "16.2", massaSecaRecipiente: "14.8", massaRecipiente: "5.0" }
+            ],
             umidadeNatural: "15.6",
             percentualArgila: "25",
         }
@@ -100,7 +114,11 @@ export const exemplosCaracterizacao: ExemploCaracterizacao[] = [
                 { numGolpes: "18", massaUmidaRecipiente: "44.5", massaSecaRecipiente: "32.9", massaRecipiente: "10.0" },
                 { numGolpes: "11", massaUmidaRecipiente: "47.8", massaSecaRecipiente: "34.1", massaRecipiente: "10.0" },
             ],
-            pontosLP: [{ massaUmidaRecipiente: "20.5", massaSecaRecipiente: "18.2", massaRecipiente: "5.0" }],
+            pontosLP: [
+                { massaUmidaRecipiente: "20.5", massaSecaRecipiente: "18.2", massaRecipiente: "5.0" },
+                { massaUmidaRecipiente: "21.0", massaSecaRecipiente: "18.6", massaRecipiente: "5.0" },
+                { massaUmidaRecipiente: "19.8", massaSecaRecipiente: "17.6", massaRecipiente: "5.0" }
+            ],
             umidadeNatural: "13.5",
             percentualArgila: "60",
         }
@@ -119,7 +137,11 @@ export const exemplosCaracterizacao: ExemploCaracterizacao[] = [
                 { numGolpes: "16", massaUmidaRecipiente: "62.0", massaSecaRecipiente: "34.5", massaRecipiente: "10.0" },
                 { numGolpes: "10", massaUmidaRecipiente: "67.0", massaSecaRecipiente: "36.0", massaRecipiente: "10.0" },
             ],
-            pontosLP: [{ massaUmidaRecipiente: "28.0", massaSecaRecipiente: "20.5", massaRecipiente: "5.0" }],
+            pontosLP: [
+                { massaUmidaRecipiente: "15.2", massaSecaRecipiente: "13.8", massaRecipiente: "5.0" },
+                { massaUmidaRecipiente: "15.0", massaSecaRecipiente: "13.7", massaRecipiente: "5.0" },
+                { massaUmidaRecipiente: "15.5", massaSecaRecipiente: "14.1", massaRecipiente: "5.0" }
+            ],
             umidadeNatural: "47.6",
             percentualArgila: "20",
         }
