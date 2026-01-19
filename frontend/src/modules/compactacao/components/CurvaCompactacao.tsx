@@ -2,9 +2,10 @@ import { memo, useState, useRef, forwardRef, useImperativeHandle } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Maximize2, Download } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Scatter, ReferenceDot } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Scatter, ReferenceDot, Label, Legend } from "recharts";
 import html2canvas from "html2canvas";
 import { toast } from "@/components/ui/sonner";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 interface PontoCurva {
   umidade: number;
@@ -71,24 +72,27 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
 
     // Função para exportar como JPG
     const handleExportJPG = async () => {
-      if (!chartRef.current) return;
-      
+      // Capturar o elemento específico com fundo branco (id="chart-container")
+      // Se estiver no dialog, usa o ref do dialog, senão o ref principal
+      const element = document.getElementById('chart-capture-container');
+      if (!element) return;
+
       try {
         toast.info("Capturando gráfico...");
-        
-        const canvas = await html2canvas(chartRef.current, {
-          backgroundColor: '#ffffff',
+
+        const canvas = await html2canvas(element, {
+          backgroundColor: '#ffffff', // Força fundo branco na exportação
           scale: 2,
           logging: false,
         });
-        
+
         const image = canvas.toDataURL('image/jpeg', 0.95);
-        
+
         const link = document.createElement('a');
         link.href = image;
         link.download = `curva-compactacao-${Date.now()}.jpg`;
         link.click();
-        
+
         toast.success("Gráfico exportado com sucesso!");
       } catch (error) {
         console.error('Erro ao exportar imagem:', error);
@@ -98,15 +102,16 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
 
     // Função para obter imagem para exportação (sem download)
     const getImageForExport = async (): Promise<string | null> => {
-      if (!chartRef.current) return null;
-      
+      const element = document.getElementById('chart-capture-container');
+      if (!element) return null;
+
       try {
-        const canvas = await html2canvas(chartRef.current, {
+        const canvas = await html2canvas(element, {
           backgroundColor: '#ffffff',
           scale: 2,
           logging: false,
         });
-        
+
         return canvas.toDataURL('image/png');
       } catch (error) {
         console.error('Erro ao capturar imagem:', error);
@@ -120,227 +125,197 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
       getImageForExport: getImageForExport
     }));
 
-    // Componente do gráfico reutilizável
-    const ChartComponent = ({ height = 320, showActions = false }: { height?: number; showActions?: boolean }) => (
-      <div className="space-y-3">
-        {showActions && (
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportJPG}
-              className="gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Exportar JPG
-            </Button>
-          </div>
-        )}
-        
-        <ResponsiveContainer width="100%" height={height}>
-          <LineChart margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
-            <defs>
-              <linearGradient id="colorEnsaio" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            
-            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" opacity={0.5} />
-            
-            <XAxis 
-              type="number" 
-              dataKey="umidade" 
-              domain={dominioX}
-              label={{ 
-                value: 'Umidade (%)', 
-                position: 'bottom',
-                offset: 0,
-                style: { fontSize: '13px', fontWeight: 'bold', fill: '#666' }
-              }}
-              tick={{ fontSize: 11, fill: '#666' }}
-              tickLine={{ stroke: '#999' }}
-              axisLine={{ stroke: '#999', strokeWidth: 1.5 }}
-            />
-            
-            <YAxis 
-              type="number"
-              domain={dominioY}
-              label={{ 
-                value: 'γd (g/cm³)', 
-                angle: -90, 
-                position: 'left',
-                offset: 0,
-                style: { fontSize: '13px', fontWeight: 'bold', fill: '#666' }
-              }}
-              tick={{ fontSize: 11, fill: '#666' }}
-              tickLine={{ stroke: '#999' }}
-              axisLine={{ stroke: '#999', strokeWidth: 1.5 }}
-            />
-            
-            <Tooltip 
-              contentStyle={{
-                backgroundColor: 'rgba(255, 255, 255, 0.98)',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                padding: '12px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-              }}
-              content={({ active, payload }) => {
-                if (!active || !payload || payload.length === 0) return null;
-                const data = payload[0]?.payload;
-                return (
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-gray-700">
-                      Umidade: <span className="text-violet-600">{data?.umidade}%</span>
-                    </p>
-                    <p className="text-sm font-semibold text-gray-700">
-                      γd: <span className="text-violet-600">{data?.gamaSeco} g/cm³</span>
-                    </p>
-                  </div>
-                );
-              }}
-            />
-            
-            {/* Linha de interpolação entre pontos */}
-            <Line
-              name="Curva de Compactação"
-              data={pontosConvertidos}
-              type="monotone"
-              dataKey="gamaSeco"
-              stroke="#8b5cf6"
-              strokeWidth={3}
-              dot={false}
-              activeDot={false}
-            />
-
-            {/* Pontos do ensaio */}
-            <Scatter 
-              name="Pontos do Ensaio" 
-              data={pontosConvertidos} 
-              fill="#8b5cf6"
-              shape="circle"
-              r={7}
-            />
-
-            {/* Curva de saturação S=100% */}
-            {pontosSaturacaoConvertidos.length > 0 && (
-              <Line
-                name="Saturação (S=100%)"
-                data={pontosSaturacaoConvertidos}
-                type="monotone"
-                dataKey="gamaSeco"
-                stroke="#f59e0b"
-                strokeWidth={2.5}
-                strokeDasharray="6 4"
-                dot={false}
-                activeDot={false}
-              />
-            )}
-
-            {/* Ponto ótimo */}
-            {pontoOtimo && (
-              <ReferenceDot
-                x={pontoOtimo.umidade}
-                y={pontoOtimo.gamaSeco}
-                r={9}
-                fill="#10b981"
-                stroke="#ffffff"
-                strokeWidth={3}
-                label={{
-                  value: `wót = ${pontoOtimo.umidade}%`,
-                  position: 'top',
-                  fill: '#10b981',
-                  fontSize: 12,
-                  fontWeight: 'bold',
-                  offset: 15
-                }}
-              />
-            )}
-          </LineChart>
-        </ResponsiveContainer>
-
-        {/* Legenda de informações */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-4">
-          <div className="flex items-center gap-2 text-xs">
-            <div className="w-3 h-3 rounded-full bg-violet-600"></div>
-            <span className="text-muted-foreground">Pontos do Ensaio</span>
-          </div>
-          
-          {pontosSaturacaoConvertidos.length > 0 && (
-            <div className="flex items-center gap-2 text-xs">
-              <div className="w-6 h-0.5 bg-amber-500" style={{ borderTop: '2px dashed #f59e0b' }}></div>
-              <span className="text-muted-foreground">Saturação (S=100%)</span>
-            </div>
-          )}
-          
-          {pontoOtimo && (
-            <div className="flex items-center gap-2 text-xs">
-              <div className="w-3 h-3 rounded-full bg-green-500 border-2 border-white"></div>
-              <span className="text-muted-foreground">Ponto Ótimo</span>
-            </div>
-          )}
-        </div>
-
-        {/* Card com resultados principais */}
-        {pontoOtimo && (
-          <div className="mt-4 p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 rounded-lg border border-green-200 dark:border-green-800">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">Umidade Ótima</p>
-                <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                  {pontoOtimo.umidade}%
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground mb-1">γd,máx</p>
-                <p className="text-xl font-bold text-green-600 dark:text-green-400">
-                  {pontoOtimo.gamaSeco} g/cm³
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-
     if (pontosConvertidos.length === 0) {
       return (
-        <div className="flex items-center justify-center h-64 text-muted-foreground">
-          O gráfico será exibido após o cálculo
-        </div>
+        <Card>
+          <CardHeader className="pb-2 pt-3">
+            <CardTitle className="text-sm">Gráfico - Curva de Compactação</CardTitle>
+            <CardDescription className="text-xs">
+              Relação entre umidade e densidade do solo
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col items-center justify-center h-[300px] p-8 text-center border-2 border-dashed rounded-lg bg-muted/5">
+              <p className="text-sm font-medium text-muted-foreground mb-2">
+                Dados Insuficientes
+              </p>
+              <p className="text-xs text-muted-foreground/70 max-w-sm">
+                Preencha os dados do ensaio para visualizar a curva.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       );
     }
 
+    // Componente do gráfico reutilizável
+    const ChartContent = ({ isDialog = false }: { isDialog?: boolean }) => {
+      const height = isDialog ? 500 : 320;
+      const fontSize = isDialog ? 14 : 12;
+      const labelFontSize = isDialog ? 16 : 14;
+
+      return (
+        <div
+          id={isDialog || !dialogOpen ? "chart-capture-container" : undefined}
+          className="bg-white p-4 rounded-xl border border-border shadow-sm w-full"
+        >
+          <ResponsiveContainer width="100%" height={height}>
+            <LineChart margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#000000" opacity={0.1} />
+
+              <XAxis
+                type="number"
+                dataKey="umidade"
+                domain={dominioX}
+                stroke="#000000"
+                tick={{ fontSize, fill: '#000000' }}
+                tickFormatter={(val) => val.toFixed(1)}
+              >
+                <Label
+                  value="Teor de Umidade (%)"
+                  position="bottom"
+                  offset={isDialog ? 20 : 10}
+                  style={{ fontSize: labelFontSize, fontWeight: 'bold', fill: '#000000' }}
+                />
+              </XAxis>
+
+              <YAxis
+                type="number"
+                domain={dominioY}
+                stroke="#000000"
+                tick={{ fontSize, fill: '#000000' }}
+                tickFormatter={(val) => val.toFixed(3)}
+              >
+                <Label
+                  value="Densidade Seca (g/cm³)"
+                  angle={-90}
+                  position="insideLeft"
+                  offset={10}
+                  style={{ fontSize: labelFontSize, fontWeight: 'bold', fill: '#000000', textAnchor: 'middle' }}
+                />
+              </YAxis>
+
+              {/* Tooltip e Legend removidos para gráfico não-interativo */}
+
+              {/* Curva de Compactação */}
+              <Line
+                name="Curva de Compactação"
+                data={pontosConvertidos}
+                type="monotone"
+                dataKey="gamaSeco"
+                stroke="#2563eb"
+                strokeWidth={2.5}
+                dot={{ r: 5, fill: "#dc2626", stroke: "#fff", strokeWidth: 1 }}
+                activeDot={false}
+                isAnimationActive={false}
+                connectNulls
+              />
+
+              {/* Saturação */}
+              {pontosSaturacaoConvertidos.length > 0 && (
+                <Line
+                  name="Saturação (S=100%)"
+                  data={pontosSaturacaoConvertidos}
+                  type="monotone"
+                  dataKey="gamaSeco"
+                  stroke="#f59e0b"
+                  strokeWidth={2}
+                  strokeDasharray="5 5"
+                  dot={false}
+                  activeDot={false}
+                />
+              )}
+
+              {/* Pontos do Ensaio - removido pois já estão na Line com dot */}
+
+              {/* Ponto Ótimo */}
+              {pontoOtimo && (
+                <ReferenceDot
+                  x={pontoOtimo.umidade}
+                  y={pontoOtimo.gamaSeco}
+                  r={isDialog ? 6 : 5}
+                  fill="#10b981"
+                  stroke="#ffffff"
+                  strokeWidth={2}
+                  label={{
+                    value: `wót=${pontoOtimo.umidade}% γd=${pontoOtimo.gamaSeco}`,
+                    position: 'top',
+                    fill: '#10b981',
+                    fontSize: fontSize - 2,
+                    fontWeight: 'bold'
+                  }}
+                />
+              )}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      );
+    };
+
     return (
-      <div className="space-y-2">
-        {/* Versão compacta com botão de ampliar */}
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold text-sm text-foreground">
-            Curva de Compactação
-          </h3>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Maximize2 className="w-4 h-4" />
-                Ampliar
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
-              <DialogHeader>
-                <DialogTitle>Curva de Compactação - Visualização Ampliada</DialogTitle>
-              </DialogHeader>
-              <div id="curva-compactacao-ampliada" ref={chartRef} className="p-4 bg-white rounded-lg">
-                <ChartComponent height={500} showActions={true} />
-              </div>
-            </DialogContent>
-          </Dialog>
+      <div className="space-y-2 relative">
+        {/* Botões Ampliar e Exportar */}
+        <div className="flex justify-between items-center mb-2">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Gráfico Curva de Compactação</h3>
+            <p className="text-xs text-muted-foreground">Curva de compactação</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleExportJPG}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Salvar JPG
+            </Button>
+
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Maximize2 className="w-4 h-4" />
+                  Ampliar
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-[95vw] max-h-[95vh] w-full">
+                <DialogHeader>
+                  <DialogTitle>Gráfico - Curva de Compactação (Ampliado)</DialogTitle>
+                </DialogHeader>
+                <div className="w-full flex justify-center items-center p-2 bg-muted/10 rounded-lg">
+                  <div className="w-full max-w-[1200px]">
+                    <ChartContent isDialog={true} />
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
-        {/* Gráfico normal (versão compacta) */}
-        <div id="curva-compactacao-chart">
-          <ChartComponent height={320} />
+        {/* Gráfico Principal */}
+        <div ref={chartRef} className="w-full">
+          <ChartContent isDialog={false} />
         </div>
+
+        {/* Sobre o Gráfico */}
+        <Card className="bg-muted/30 border-none shadow-inner">
+          <CardContent className="p-4 space-y-2 text-xs text-muted-foreground">
+            <p>
+              <strong>Curva de Compactação:</strong> A linha azul representa a relação entre a densidade seca do solo e seu teor de umidade para uma energia de compactação específica.
+            </p>
+            <p>
+              <strong>Ponto Ótimo:</strong> O ponto verde indica a umidade ótima ({pontoOtimo?.umidade || '-'}%) e a densidade seca máxima ({pontoOtimo?.gamaSeco || '-'} g/cm³).
+            </p>
+            {pontosSaturacaoConvertidos.length > 0 && (
+              <p>
+                <strong>Linha de Saturação:</strong> A linha tracejada laranja indica a relação teórica para o solo com 100% de saturação.
+              </p>
+            )}
+            <p>
+              <strong>Norma:</strong> NBR 7182 - Solo - Ensaio de Compactação.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }

@@ -5,7 +5,7 @@ import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { calcularCompactacao } from "@/lib/calculations/compactacao";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Database, Info, Calculator as CalcIcon, Plus, Trash2, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, GraduationCap } from "lucide-react";
+import { RotateCcw, Database, Info, Calculator as CalcIcon, Plus, Trash2, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, GraduationCap, LayoutGrid, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,8 @@ import { toast } from "@/components/ui/sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { useRecentReports } from "@/hooks/useRecentReports";
@@ -37,6 +39,7 @@ import DialogExemplos from "@/components/compactacao/DialogExemplos";
 import { ExemploCompactacao } from "@/lib/exemplos-compactacao";
 import { MobileModuleWrapper } from "@/components/mobile";
 import CompactacaoMobile from "./mobile/CompactacaoMobile";
+import { useCompactacaoStore } from "@/modules/compactacao/store";
 
 // Schema de validação
 const pontoCompactacaoSchema = z.object({
@@ -126,22 +129,31 @@ function CompactacaoDesktop() {
   const { addReport } = useRecentReports();
   const navigate = useNavigate();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
+  // Zustand store para persistir dados entre navegações
+  const { formData, updateFormData } = useCompactacaoStore();
 
   const form = useForm<FormInputValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      volumeCilindro: "982",
-      pesoCilindro: "4100",
-      Gs: "",
-      pesoEspecificoAgua: "10.0",
-      pontos: [
-        { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
-        { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
-        { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
-      ],
-    },
+    defaultValues: formData, // Usar dados do store
     mode: "onBlur",
   });
+
+  const { reset, watch } = form;
+
+  // Sync form with store on mount (restore data from store)
+  useEffect(() => {
+    reset(formData);
+  }, []); // Only on mount
+
+  // Auto-sync form changes to store (sem localStorage, sem popup)
+  useEffect(() => {
+    const subscription = watch((value) => {
+      if (value) {
+        updateFormData(value as any);
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, updateFormData]);
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "pontos", keyName: "fieldId" });
 
@@ -160,6 +172,8 @@ function CompactacaoDesktop() {
   const [pdfFileName, setPdfFileName] = useState("");
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [pdfSavedDialogOpen, setPdfSavedDialogOpen] = useState(false);
+
+  const [resultTab, setResultTab] = useState("resultados");
 
   // Ref para o gráfico de compactação
   const curvaCompactacaoRef = useRef<CurvaCompactacaoRef>(null);
@@ -633,62 +647,66 @@ function CompactacaoDesktop() {
   }, 0);
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="container mx-auto p-4 md:p-6 space-y-5 max-w-7xl animate-in fade-in duration-500">
       <PrintHeader moduleTitle="Compactação (Proctor)" moduleName="compactacao" />
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
+      {/* Top Header Section */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
-            <Database className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
+            <Database className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Ensaio de Compactação</h1>
-            <p className="text-muted-foreground text-xs sm:text-sm">Determinação da curva de compactação (Proctor)</p>
+            <h1 className="text-3xl font-bold text-foreground">Ensaio de Compactação</h1>
+            <p className="text-muted-foreground text-sm">Determinação da curva de compactação (Proctor)</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2" data-tour="actions">
-          <DialogExemplos onSelectExample={handleSelectExample} disabled={isCalculating} />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleStartTour}
-                className="h-10 w-10"
-              >
-                <GraduationCap className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Iniciar tour guiado</p>
-            </TooltipContent>
-          </Tooltip>
           <TooltipProvider>
-            <CalculationActions
-              onSave={handleSaveClick}
-              onLoad={() => setLoadDialogOpen(true)}
-              onExportPDF={handleExportPDF}
-              onExportExcel={handleExportExcel}
-              hasResults={!!results}
-              isCalculating={isCalculating}
-            />
+            {/* Exemplos */}
+            <DialogExemplos onSelectExample={handleSelectExample} disabled={isCalculating} />
+
+            <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
+
+            {/* Salvar */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-2">
+                  <Save className="w-4 h-4" />
+                  Salvar
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Salvar e Exportar Relatório</TooltipContent>
+            </Tooltip>
+
+
+            <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
+
+            <Button variant="ghost" size="sm" onClick={handleClear} className="text-muted-foreground hover:text-destructive gap-1.5">
+              <Trash2 className="w-4 h-4" />
+              Limpar
+            </Button>
+
+            <Button size="sm" onClick={form.handleSubmit(onSubmit)} disabled={isCalculating} className="gap-1.5 shadow-md bg-primary hover:bg-primary/90" data-tour="btn-calcular">
+              {isCalculating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CalcIcon className="w-4 h-4" />}
+              Calcular
+            </Button>
           </TooltipProvider>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-        {/* Formulário */}
-        <Card className="glass flex flex-col p-4 sm:p-6 animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Formulário - Input */}
+        <Card className="glass border-primary/20 flex flex-col animate-in fade-in slide-in-from-left-4 duration-700">
           <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
-            <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Info className="w-5 h-5" />
+            <CardHeader className="pb-3 bg-gradient-to-r from-primary/5 to-transparent flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Info className="w-5 h-5 text-primary" />
                 Dados do Ensaio
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 p-4 pt-0 flex-1">
+            <CardContent className="space-y-3 p-4 pt-3 flex-1">
               <TooltipProvider>
                 {/* Dados Fixos */}
                 <div className="space-y-3 p-3 rounded-lg bg-accent/5 border border-accent/20" data-tour="config-gerais">
@@ -704,7 +722,7 @@ function CompactacaoDesktop() {
                         </Label>
                         <Tooltip>
                           <TooltipTrigger>
-                            <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                            <Info className="w-3 h-3 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent className="max-w-xs">
                             <p>{tooltips.volumeCilindro}</p>
@@ -725,7 +743,6 @@ function CompactacaoDesktop() {
                           />
                         )}
                       />
-                      {errors.volumeCilindro && <p className="text-xs text-destructive mt-0.5">{errors.volumeCilindro.message}</p>}
                     </div>
 
                     <div className="space-y-0.5">
@@ -735,7 +752,7 @@ function CompactacaoDesktop() {
                         </Label>
                         <Tooltip>
                           <TooltipTrigger>
-                            <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                            <Info className="w-3 h-3 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent className="max-w-xs">
                             <p>{tooltips.pesoCilindro}</p>
@@ -756,7 +773,6 @@ function CompactacaoDesktop() {
                           />
                         )}
                       />
-                      {errors.pesoCilindro && <p className="text-xs text-destructive mt-0.5">{errors.pesoCilindro.message}</p>}
                     </div>
 
                     <div className="space-y-0.5">
@@ -766,7 +782,7 @@ function CompactacaoDesktop() {
                         </Label>
                         <Tooltip>
                           <TooltipTrigger>
-                            <Info className="w-4 h-4 text-muted-foreground cursor-help" />
+                            <Info className="w-3 h-3 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
                           <TooltipContent className="max-w-xs">
                             <p>{tooltips.Gs}</p>
@@ -788,7 +804,6 @@ function CompactacaoDesktop() {
                           />
                         )}
                       />
-                      {errors.Gs && <p className="text-xs text-destructive mt-0.5">{errors.Gs.message}</p>}
                     </div>
 
                     <div className="space-y-0.5">
@@ -811,199 +826,135 @@ function CompactacaoDesktop() {
                 </div>
 
                 {/* Pontos do Ensaio */}
-                <Accordion type="single" collapsible defaultValue="pontos" className="w-full" data-tour="pontos-ensaio">
-                  <AccordionItem value="pontos" className="border-0">
-                    <AccordionTrigger className="text-sm font-semibold text-foreground bg-accent/5 hover:bg-accent/10 px-3 py-2 rounded-lg border border-accent/20 [&[data-state=open]]:rounded-b-none">
-                      <div className="flex items-center gap-1.5">
-                        <Database className="w-4 h-4 text-violet-500" />
-                        Pontos de Compactação
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="p-0 pt-2">
-                      <div className="space-y-2 rounded-lg bg-background/30 border border-accent/20 border-t-0 rounded-t-none p-3" data-tour="navegacao-pontos">
-                        <div className="flex items-center justify-between mb-1">
-                          <h4 className="font-medium text-xs text-muted-foreground">
-                            Ponto {currentPointIndex + 1} / {fields.length}
-                          </h4>
-                          <div className="flex items-center gap-1">
-                            <Button type="button" onClick={goToPreviousPoint} size="icon" variant="outline" className="h-6 w-6" disabled={currentPointIndex === 0}>
-                              <ChevronLeft className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button type="button" onClick={goToNextPoint} size="icon" variant="outline" className="h-6 w-6" disabled={currentPointIndex === fields.length - 1}>
-                              <ChevronRight className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button type="button" onClick={addPonto} size="icon" variant="outline" className="h-6 w-6 ml-1.5">
-                              <Plus className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button type="button" onClick={removePonto} size="icon" variant="destructive" className="h-6 w-6" disabled={fields.length <= 3}>
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
+                <div className="space-y-2 rounded-lg bg-background/30 border border-accent/20 p-3" data-tour="pontos-ensaio">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                      <Database className="w-4 h-4 text-violet-500" />
+                      Pontos de Compactação
+                    </h3>
+                    <div className="flex items-center gap-1" data-tour="navegacao-pontos">
+                      <span className="text-xs text-muted-foreground mr-2">Ponto {currentPointIndex + 1} / {fields.length}</span>
+                      <Button type="button" onClick={goToPreviousPoint} size="icon" variant="outline" className="h-7 w-7" disabled={currentPointIndex === 0}>
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button type="button" onClick={goToNextPoint} size="icon" variant="outline" className="h-7 w-7" disabled={currentPointIndex === fields.length - 1}>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button type="button" onClick={addPonto} size="icon" variant="outline" className="h-7 w-7 ml-1.5" title="Adicionar Ponto">
+                        <Plus className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button type="button" onClick={removePonto} size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:bg-destructive/10" disabled={fields.length <= 3} title="Remover Ponto">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {currentPointField && (
+                    <div key={currentPointField.id} className="space-y-3 animate-in fade-in duration-300">
+                      <div className="grid grid-cols-2 gap-3">
+                        {/* Peso Amostra + Cilindro */}
+                        <div className="space-y-0.5 col-span-2">
+                          <Label htmlFor={`pontos.${currentPointIndex}.pesoAmostaCilindro`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.pesoAmostaCilindro && "text-destructive")}>
+                            Peso Amostra + Cilindro (g)
+                          </Label>
+                          <Controller
+                            name={`pontos.${currentPointIndex}.pesoAmostaCilindro`}
+                            control={form.control}
+                            render={({ field }) => (
+                              <Input
+                                id={`pontos.${currentPointIndex}.pesoAmostaCilindro`}
+                                type="number"
+                                step="0.01"
+                                placeholder="Ex: 6050.00"
+                                {...field}
+                                className={cn("bg-background/50 h-9", errors.pontos?.[currentPointIndex]?.pesoAmostaCilindro && "border-destructive")}
+                              />
+                            )}
+                          />
+                          {errors.pontos?.[currentPointIndex]?.pesoAmostaCilindro && (
+                            <p className="text-xs text-destructive mt-0.5">{errors.pontos[currentPointIndex]?.pesoAmostaCilindro?.message}</p>
+                          )}
                         </div>
 
-                        {currentPointField && (
-                          <div key={currentPointField.id} className="space-y-2">
-                            <div className="grid grid-cols-2 gap-3">
-                              {/* Peso Amostra + Cilindro */}
-                              <div className="space-y-0.5 col-span-2">
-                                <div className="flex items-center gap-2">
-                                  <Label htmlFor={`pontos.${currentPointIndex}.pesoAmostaCilindro`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.pesoAmostaCilindro && "text-destructive")}>
-                                    Peso Amostra + Cilindro (g)
-                                  </Label>
-                                  <Tooltip>
-                                    <TooltipTrigger>
-                                      <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                                    </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs">
-                                      <p>{tooltips.pesoAmostaCilindro}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </div>
-                                <Controller
-                                  name={`pontos.${currentPointIndex}.pesoAmostaCilindro`}
-                                  control={form.control}
-                                  render={({ field }) => (
-                                    <Input
-                                      id={`pontos.${currentPointIndex}.pesoAmostaCilindro`}
-                                      type="number"
-                                      step="0.01"
-                                      placeholder="Ex: 6050.00"
-                                      {...field}
-                                      className={cn("bg-background/50 h-9", errors.pontos?.[currentPointIndex]?.pesoAmostaCilindro && "border-destructive")}
-                                    />
-                                  )}
-                                />
-                                {errors.pontos?.[currentPointIndex]?.pesoAmostaCilindro && (
-                                  <p className="text-xs text-destructive mt-0.5">{errors.pontos[currentPointIndex]?.pesoAmostaCilindro?.message}</p>
-                                )}
-                              </div>
-
-                              {/* Peso Bruto Úmido */}
-                              <div className="space-y-0.5">
-                                <div className="flex items-center gap-2">
-                                  <Label htmlFor={`pontos.${currentPointIndex}.pesoBrutoUmido`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.pesoBrutoUmido && "text-destructive")}>
-                                    Peso Bruto Úmido (g)
-                                  </Label>
-                                  <Tooltip>
-                                    <TooltipTrigger>
-                                      <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                                    </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs">
-                                      <p>{tooltips.pesoBrutoUmido}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </div>
-                                <Controller
-                                  name={`pontos.${currentPointIndex}.pesoBrutoUmido`}
-                                  control={form.control}
-                                  render={({ field }) => (
-                                    <Input
-                                      id={`pontos.${currentPointIndex}.pesoBrutoUmido`}
-                                      type="number"
-                                      step="0.01"
-                                      placeholder="Ex: 106.56"
-                                      {...field}
-                                      className={cn("bg-background/50 h-9", errors.pontos?.[currentPointIndex]?.pesoBrutoUmido && "border-destructive")}
-                                    />
-                                  )}
-                                />
-                                {errors.pontos?.[currentPointIndex]?.pesoBrutoUmido && (
-                                  <p className="text-xs text-destructive mt-0.5">{errors.pontos[currentPointIndex]?.pesoBrutoUmido?.message}</p>
-                                )}
-                              </div>
-
-                              {/* Peso Bruto Seco */}
-                              <div className="space-y-0.5">
-                                <div className="flex items-center gap-2">
-                                  <Label htmlFor={`pontos.${currentPointIndex}.pesoBrutoSeco`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.pesoBrutoSeco && "text-destructive")}>
-                                    Peso Bruto Seco (g)
-                                  </Label>
-                                  <Tooltip>
-                                    <TooltipTrigger>
-                                      <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                                    </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs">
-                                      <p>{tooltips.pesoBrutoSeco}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </div>
-                                <Controller
-                                  name={`pontos.${currentPointIndex}.pesoBrutoSeco`}
-                                  control={form.control}
-                                  render={({ field }) => (
-                                    <Input
-                                      id={`pontos.${currentPointIndex}.pesoBrutoSeco`}
-                                      type="number"
-                                      step="0.01"
-                                      placeholder="Ex: 93.69"
-                                      {...field}
-                                      className={cn("bg-background/50 h-9", errors.pontos?.[currentPointIndex]?.pesoBrutoSeco && "border-destructive")}
-                                    />
-                                  )}
-                                />
-                                {errors.pontos?.[currentPointIndex]?.pesoBrutoSeco && (
-                                  <p className="text-xs text-destructive mt-0.5">{errors.pontos[currentPointIndex]?.pesoBrutoSeco?.message}</p>
-                                )}
-                              </div>
-
-                              {/* Tara */}
-                              <div className="space-y-0.5 col-span-2">
-                                <div className="flex items-center gap-2">
-                                  <Label htmlFor={`pontos.${currentPointIndex}.tara`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.tara && "text-destructive")}>
-                                    Tara (g)
-                                  </Label>
-                                  <Tooltip>
-                                    <TooltipTrigger>
-                                      <Info className="w-4 h-4 text-muted-foreground cursor-help" />
-                                    </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs">
-                                      <p>{tooltips.tara}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </div>
-                                <Controller
-                                  name={`pontos.${currentPointIndex}.tara`}
-                                  control={form.control}
-                                  render={({ field }) => (
-                                    <Input
-                                      id={`pontos.${currentPointIndex}.tara`}
-                                      type="number"
-                                      step="0.01"
-                                      placeholder="Ex: 24.72"
-                                      {...field}
-                                      className={cn("bg-background/50 h-9", errors.pontos?.[currentPointIndex]?.tara && "border-destructive")}
-                                    />
-                                  )}
-                                />
-                                {errors.pontos?.[currentPointIndex]?.tara && (
-                                  <p className="text-xs text-destructive mt-0.5">{errors.pontos[currentPointIndex]?.tara?.message}</p>
-                                )}
-                              </div>
-                            </div>
-                            {errors.pontos?.[currentPointIndex]?.root && (
-                              <p className="text-xs text-destructive mt-1">{errors.pontos[currentPointIndex]?.root?.message}</p>
+                        {/* Peso Bruto Úmido */}
+                        <div className="space-y-0.5">
+                          <Label htmlFor={`pontos.${currentPointIndex}.pesoBrutoUmido`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.pesoBrutoUmido && "text-destructive")}>
+                            Peso Bruto Úmido (g)
+                          </Label>
+                          <Controller
+                            name={`pontos.${currentPointIndex}.pesoBrutoUmido`}
+                            control={form.control}
+                            render={({ field }) => (
+                              <Input
+                                id={`pontos.${currentPointIndex}.pesoBrutoUmido`}
+                                type="number"
+                                step="0.01"
+                                placeholder="Ex: 106.56"
+                                {...field}
+                                className={cn("bg-background/50 h-9", errors.pontos?.[currentPointIndex]?.pesoBrutoUmido && "border-destructive")}
+                              />
                             )}
-                          </div>
-                        )}
-                        {errors.pontos && typeof errors.pontos === 'object' && 'message' in errors.pontos && typeof errors.pontos.message === 'string' && (
-                          <p className="text-xs text-destructive mt-1">{errors.pontos.message}</p>
-                        )}
+                          />
+                          {errors.pontos?.[currentPointIndex]?.pesoBrutoUmido && (
+                            <p className="text-xs text-destructive mt-0.5">{errors.pontos[currentPointIndex]?.pesoBrutoUmido?.message}</p>
+                          )}
+                        </div>
+
+                        {/* Peso Bruto Seco */}
+                        <div className="space-y-0.5">
+                          <Label htmlFor={`pontos.${currentPointIndex}.pesoBrutoSeco`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.pesoBrutoSeco && "text-destructive")}>
+                            Peso Bruto Seco (g)
+                          </Label>
+                          <Controller
+                            name={`pontos.${currentPointIndex}.pesoBrutoSeco`}
+                            control={form.control}
+                            render={({ field }) => (
+                              <Input
+                                id={`pontos.${currentPointIndex}.pesoBrutoSeco`}
+                                type="number"
+                                step="0.01"
+                                placeholder="Ex: 93.69"
+                                {...field}
+                                className={cn("bg-background/50 h-9", errors.pontos?.[currentPointIndex]?.pesoBrutoSeco && "border-destructive")}
+                              />
+                            )}
+                          />
+                          {errors.pontos?.[currentPointIndex]?.pesoBrutoSeco && (
+                            <p className="text-xs text-destructive mt-0.5">{errors.pontos[currentPointIndex]?.pesoBrutoSeco?.message}</p>
+                          )}
+                        </div>
+
+                        {/* Tara */}
+                        <div className="space-y-0.5 col-span-2">
+                          <Label htmlFor={`pontos.${currentPointIndex}.tara`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.tara && "text-destructive")}>
+                            Tara (g)
+                          </Label>
+                          <Controller
+                            name={`pontos.${currentPointIndex}.tara`}
+                            control={form.control}
+                            render={({ field }) => (
+                              <Input
+                                id={`pontos.${currentPointIndex}.tara`}
+                                type="number"
+                                step="0.01"
+                                placeholder="Ex: 24.72"
+                                {...field}
+                                className={cn("bg-background/50 h-9", errors.pontos?.[currentPointIndex]?.tara && "border-destructive")}
+                              />
+                            )}
+                          />
+                          {errors.pontos?.[currentPointIndex]?.tara && (
+                            <p className="text-xs text-destructive mt-0.5">{errors.pontos[currentPointIndex]?.tara?.message}</p>
+                          )}
+                        </div>
                       </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
+                    </div>
+                  )}
+                </div>
               </TooltipProvider>
             </CardContent>
 
-            <CardFooter className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 border-t border-border/50 mt-auto">
-              <Button type="submit" disabled={!canSubmit} className="flex-1 h-10" data-tour="btn-calcular">
-                <CalcIcon className="w-4 h-4 mr-1.5" />
-                {isCalculating ? "Calculando..." : "Calcular"}
-              </Button>
-              <Button type="button" onClick={handleClear} variant="outline" disabled={isCalculating} className="h-10 w-full sm:w-auto">
-                Limpar
-              </Button>
-            </CardFooter>
+            {/* Error Alert inside Card if API Error */}
             {apiError && !isCalculating && (
               <div className="px-4 pb-3">
                 <Alert variant="destructive" className="p-2">
@@ -1017,72 +968,123 @@ function CompactacaoDesktop() {
         </Card>
 
         {/* Resultados */}
-        <Card className="glass p-4 sm:p-6 animate-in fade-in slide-in-from-right-4 duration-700" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
-          <CardHeader className="pb-3 px-0">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <BarChart3 className="w-5 h-5 text-primary" />
-              Resultados
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 px-0">
-            {isCalculating ? (
-              <div className="space-y-2">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-[280px] w-full mt-2" />
+        <div className="space-y-4 animate-in slide-in-from-right-4 duration-700">
+          {!results ? (
+            <Card className="glass flex items-center justify-center p-12 text-center text-muted-foreground border-dashed min-h-[400px]">
+              <div>
+                <CalcIcon className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                <p className="text-lg font-medium mb-2">Nenhum resultado ainda</p>
+                <p className="text-sm">Preencha os dados e clique em <strong>Calcular</strong>.</p>
               </div>
-            ) : results && !results.erro && results.pontos_curva_compactacao ? (
-              <Carousel className="w-full px-8 relative" data-tour="resultados">
-                <CarouselContent>
-                  {/* Slide 1: Tabela de Resultados */}
-                  <CarouselItem>
-                    <div className="space-y-2">
-                      <TabelaResultados pontos={results.pontos_curva_compactacao} indiceMaximo={indiceMaximo} />
-                      {/* Cards com valores principais */}
-                      <div className="grid grid-cols-2 gap-2 mt-3" data-tour="parametros-otimos">
-                        {results.umidade_otima !== null && (
-                          <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20">
-                            <p className="text-xs text-muted-foreground mb-0.5">Umidade Ótima</p>
-                            <p className="text-base font-bold text-primary">{results.umidade_otima.toFixed(2)}%</p>
-                          </div>
-                        )}
-                        {results.peso_especifico_seco_max !== null && (
-                          <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20">
-                            <p className="text-xs text-muted-foreground mb-0.5">Peso Específico Seco Máximo</p>
-                            <p className="text-base font-bold text-primary">{(results.peso_especifico_seco_max / 10).toFixed(3)} g/cm³</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </CarouselItem>
+            </Card>
+          ) : results.erro ? (
+            <Alert variant="destructive" className="min-h-[200px] flex items-center">
+              <AlertCircle className="h-5 w-5" />
+              <AlertDescription className="text-base ml-2">{results.erro}</AlertDescription>
+            </Alert>
+          ) : (
+            <Tabs value={resultTab} onValueChange={setResultTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
+                <TabsTrigger value="resultados" className="gap-1.5">
+                  <BarChart3 className="w-4 h-4" />
+                  Resultados
+                </TabsTrigger>
+                <TabsTrigger value="graficos" className="gap-1.5">
+                  <LayoutGrid className="w-4 h-4" />
+                  Gráficos
+                </TabsTrigger>
+              </TabsList>
 
-                  {/* Slide 2: Curva de Compactação */}
-                  <CarouselItem>
+              {/* Tab Resultados */}
+              <TabsContent value="resultados" className="mt-2 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Coluna 1: Parâmetros de Entrada */}
+                  <Card className="glass overflow-hidden h-full">
+                    <CardHeader className="pb-2 pt-4 px-5">
+                      <CardTitle className="text-sm font-semibold flex items-center gap-2 text-violet-500">
+                        <Info className="w-4 h-4" />
+                        Parâmetros do Ensaio
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-5 pb-5">
+                      <div className="space-y-1.5">
+                        <ResultRow label="Volume do Cilindro" value={parseFloat(form.getValues().volumeCilindro)} unit="cm³" />
+                        <ResultRow label="Peso do Cilindro" value={parseFloat(form.getValues().pesoCilindro)} unit="g" />
+                        <ResultRow label="Densidade dos Grãos (Gs)" value={form.getValues().Gs ? parseFloat(form.getValues().Gs!) : null} unit="" precision={3} />
+                        <ResultRow label="Peso Esp. da Água" value={parseFloat(form.getValues().pesoEspecificoAgua)} unit="kN/m³" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Coluna 2: Resultados Ótimos */}
+                  <Card className="glass overflow-hidden h-full">
+                    <CardHeader className="pb-2 pt-4 px-5">
+                      <CardTitle className="text-sm font-semibold flex items-center gap-2 text-emerald-500">
+                        <BarChart3 className="w-4 h-4" />
+                        Resultados da Compactação
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-5 pb-5">
+                      <div className="space-y-1.5">
+                        <ResultRow
+                          label="Umidade Ótima (w)"
+                          value={results.umidade_otima}
+                          unit="%"
+                          highlight
+                        />
+                        <ResultRow
+                          label="Peso Esp. Seco Máx (γd)"
+                          value={results.peso_especifico_seco_max !== null ? results.peso_especifico_seco_max / 10 : null}
+                          unit="g/cm³"
+                          precision={3}
+                          highlight
+                        />
+                        <ResultRow
+                          label="Peso Esp. Seco Máx (γd)"
+                          value={results.peso_especifico_seco_max}
+                          unit="kN/m³"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Tabela de Pontos */}
+                <Card className="glass">
+                  <CardHeader className="pb-2 pt-4 px-5">
+                    <CardTitle className="text-sm font-semibold text-muted-foreground">
+                      Pontos Calculados
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="px-5 pb-5">
+                    {results.pontos_curva_compactacao && (
+                      <div className="rounded-md border">
+                        <TabelaResultados pontos={results.pontos_curva_compactacao} indiceMaximo={indiceMaximo} />
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Tab Gráficos */}
+              <TabsContent value="graficos" className="mt-0">
+                <Card className="glass overflow-hidden" data-tour="resultados">
+                  <CardContent className="p-4">
                     <div id="curva-compactacao-chart">
                       <CurvaCompactacao
                         ref={curvaCompactacaoRef}
-                        pontosEnsaio={results.pontos_curva_compactacao}
+                        pontosEnsaio={results.pontos_curva_compactacao || []}
                         umidadeOtima={results.umidade_otima ?? undefined}
                         gamaSecoMax={results.peso_especifico_seco_max ?? undefined}
                         pontosSaturacao={results.pontos_curva_saturacao_100 ?? undefined}
                       />
                     </div>
-                  </CarouselItem>
-                </CarouselContent>
-                <CarouselPrevious className="absolute left-[-8px] top-1/2 -translate-y-1/2 h-8 w-8" />
-                <CarouselNext className="absolute right-[-8px] top-1/2 -translate-y-1/2 h-8 w-8" />
-              </Carousel>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-56 text-center">
-                <Database className="w-12 h-12 text-violet-500/30 mb-3" />
-                <p className="text-muted-foreground text-sm">
-                  {apiError ? "Corrija os erros para calcular" : "Preencha os dados do ensaio para calcular"}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          )}
+        </div>
       </div>
 
       {/* Dialogs */}
@@ -1147,5 +1149,21 @@ export default function Compactacao() {
     <MobileModuleWrapper mobileVersion={<CompactacaoMobile />}>
       <CompactacaoDesktop />
     </MobileModuleWrapper>
+  );
+}
+// Função auxiliar para linhas de resultado
+// Função auxiliar para linhas de resultado
+function ResultRow({ label, value, unit, precision = 2, highlight = false }: { label: string, value: number | null | undefined, unit: string, precision?: number, highlight?: boolean }) {
+  if (value === undefined || value === null || isNaN(value)) return null;
+  return (
+    <div className={cn(
+      "flex justify-between items-center text-sm py-2 px-3 rounded-md transition-colors",
+      highlight ? "font-semibold bg-primary/5 text-primary" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+    )}>
+      <span className={cn(highlight && "text-foreground")}>{label}</span>
+      <span className={cn("font-mono font-medium", highlight ? "text-primary dark:text-primary-foreground" : "text-foreground dark:text-white")}>
+        {value.toFixed(precision)} {unit}
+      </span>
+    </div>
   );
 }

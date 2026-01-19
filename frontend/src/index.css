@@ -1259,19 +1259,30 @@ html {
   -webkit-backdrop-filter: none !important;
 }
 
-/* ========== LARGE SCREEN OPTIMIZATIONS ========== */
-@media (min-width: 1800px) {
+/* ========== DESKTOP SCREEN OPTIMIZATIONS ========== */
+/* Applies to standard laptops (approx 1280px) and larger screens */
+@media (min-width: 1280px) {
 
-  /* Limit the main content width to keep it readable and centered on very large screens */
+  /* Limit the main content width to prevent stretching and improve readability on desktops */
   main {
-    max-width: 1600px;
+    max-width: 1500px;
+    /* Optimal width for dashboard views */
     margin-left: auto;
     margin-right: auto;
     width: 100%;
   }
 
-  /* Ensure grids scale better if they are using auto-fit/fill or percentage */
+  /* Ensure standard containers align with the main content max-width */
   .container {
-    max-width: 1600px;
+    max-width: 1500px;
+  }
+}
+
+/* For very large screens (Ultrawide), we can be slightly more permissive or keep the same */
+@media (min-width: 1921px) {
+
+  main,
+  .container {
+    max-width: 1800px;
   }
 }
