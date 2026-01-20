@@ -19,9 +19,9 @@ import { classificarHRB } from '@/lib/calculations/classificacao-hrb';
 
 const EPSILON = 1e-9;
 
-// Limites de tamanho de partículas (mm)
-const LIMITE_PENEIRA_4 = 4.76; // Separação pedregulho/areia
-const LIMITE_PENEIRA_200 = 0.075; // Separação areia/finos
+// Limites de tamanho de partículas (mm) - ABNT NBR 7181
+const LIMITE_PENEIRA_4 = 4.8; // Separação pedregulho/areia (Nº 4)
+const LIMITE_PENEIRA_200 = 0.075; // Separação areia/finos (Nº 200)
 
 /**
  * Calcula os resultados do peneiramento grosso
@@ -203,8 +203,13 @@ export function calcularGranulometria(dados: GranulometriaInput): GranulometriaO
       // Calcular IP se LL e LP foram fornecidos
       let ip: number | undefined;
       if (dados.ll !== undefined && dados.lp !== undefined) {
-        ip = dados.ll - dados.lp;
-        if (ip < 0) ip = 0;
+        // Sanitização: Se LP = 0 (usuário indica NP) ou LP > LL (impossível fisicamente), IP = 0
+        if (dados.lp === 0 || dados.lp > dados.ll) {
+          ip = 0;
+        } else {
+          ip = dados.ll - dados.lp;
+          if (ip < 0) ip = 0;
+        }
       }
 
       // Classificação USCS

@@ -15,17 +15,20 @@ export function classificarHRB(dados: ClassificacaoHRBInput): ClassificacaoHRBOu
     const p200 = dados.pass_peneira_200;
     const p40 = dados.pass_peneira_40;
     const p10 = dados.pass_peneira_10;
-    const ll = dados.ll;
-    const ip = dados.ip;
+    // Tratar campos vazios de LL/LP como 0 automaticamente
+    // para evitar classificação imprecisa (A-2 sem subgrupo) quando o usuário
+    // esquece de digitar "0" em um solo não plástico
+    const ll = dados.ll ?? 0;
+    const ip = dados.ip ?? 0;
 
     // Validações
     if (p200 < 0 || p200 > 100) {
       throw new Error('% passando na #200 deve estar entre 0 e 100.');
     }
-    if (ll !== undefined && ll < 0) {
+    if (ll < 0) {
       throw new Error('LL não pode ser negativo.');
     }
-    if (ip !== undefined && ip < 0) {
+    if (ip < 0) {
       throw new Error('IP não pode ser negativo.');
     }
 
@@ -68,14 +71,14 @@ function determinarGrupoHRB(
   p200: number,
   p40: number | undefined,
   p10: number | undefined,
-  ll: number | undefined,
-  ip: number | undefined
+  ll: number,
+  ip: number
 ): [string, string | undefined] {
   // MATERIAIS GRANULARES (≤ 35% passando na #200)
   if (p200 <= 35) {
     // A-1-a
     if (
-      ip !== undefined && ip <= 6 &&
+      ip <= 6 &&
       p200 <= 15 &&
       p40 !== undefined && p40 <= 30 &&
       p10 !== undefined && p10 <= 50
@@ -84,7 +87,7 @@ function determinarGrupoHRB(
     }
     // A-1-b (sem requisito de P#10)
     else if (
-      ip !== undefined && ip <= 6 &&
+      ip <= 6 &&
       p200 <= 25 &&
       p40 !== undefined && p40 <= 50
     ) {
@@ -100,22 +103,18 @@ function determinarGrupoHRB(
     }
     // A-2
     else {
-      if (ll !== undefined && ip !== undefined) {
-        if (ll <= 40) {
-          return ip <= 10 ? ['A-2', '4'] : ['A-2', '6'];
-        } else {
-          return ip <= 10 ? ['A-2', '5'] : ['A-2', '7'];
-        }
+      // LL e IP agora são sempre definidos (0 se vazios)
+      if (ll <= 40) {
+        return ip <= 10 ? ['A-2', '4'] : ['A-2', '6'];
+      } else {
+        return ip <= 10 ? ['A-2', '5'] : ['A-2', '7'];
       }
-      return ['A-2', undefined];
     }
   }
 
   // MATERIAIS SILTO-ARGILOSOS (> 35% passando na #200)
+  // LL e IP agora são sempre definidos (0 se vazios)
   else {
-    if (ll === undefined || ip === undefined) {
-      throw new Error('LL e IP são necessários para classificar solos com mais de 35% de finos.');
-    }
     if (ll <= 40 && ip <= 10) {
       return ['A-4', undefined];
     } else if (ll > 40 && ip <= 10) {
@@ -132,15 +131,11 @@ function calcularIndiceGrupo(
   grupo: string,
   subgrupo: string | undefined,
   p200: number,
-  ll: number | undefined,
-  ip: number | undefined
+  ll: number,
+  ip: number
 ): number {
   // IG é sempre 0 para A-1-a, A-1-b e A-3
   if (grupo === 'A-1' || grupo === 'A-3') {
-    return 0;
-  }
-  // Se não temos LL ou IP, IG = 0
-  if (ll === undefined || ip === undefined) {
     return 0;
   }
 

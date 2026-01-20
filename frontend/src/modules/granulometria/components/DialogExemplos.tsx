@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Lightbulb, Info } from "lucide-react";
+import { FileText, Info } from "lucide-react";
 import { EXEMPLOS_GRANULOMETRIA, ExemploGranulometria } from "@/lib/exemplos-granulometria";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -38,7 +38,7 @@ export default function DialogExemplos({ onCarregarExemplo }: DialogExemplosProp
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Lightbulb className="w-4 h-4 mr-2" />
+          <FileText className="w-4 h-4 mr-2" />
           Exemplos
         </Button>
       </DialogTrigger>
@@ -51,52 +51,64 @@ export default function DialogExemplos({ onCarregarExemplo }: DialogExemplosProp
         </DialogHeader>
 
         {!exemploSelecionado ? (
-          // Lista de exemplos
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            {EXEMPLOS_GRANULOMETRIA.map((exemplo) => (
-              <Card
-                key={exemplo.id}
-                className="p-4 cursor-pointer hover:bg-accent/50 transition-colors"
-                onClick={() => handleCarregar(exemplo)}
-              >
-                <div className="space-y-3">
-                  <div>
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h4 className="font-semibold text-sm leading-tight">
-                        {exemplo.nome}
-                      </h4>
-                      <Badge variant="outline" className="shrink-0">
-                        {exemplo.classificacaoEsperada}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {exemplo.descricao}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          // Lista de exemplos ou mensagem de vazio
+          EXEMPLOS_GRANULOMETRIA.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <FileText className="w-16 h-16 text-muted-foreground/30 mb-4" />
+              <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                Ainda não há exemplos
+              </h3>
+              <p className="text-sm text-muted-foreground/70 max-w-sm">
+                Os exemplos de análises granulométricas serão adicionados em breve.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              {EXEMPLOS_GRANULOMETRIA.map((exemplo) => (
+                <Card
+                  key={exemplo.id}
+                  className="p-4 cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={() => handleCarregar(exemplo)}
+                >
+                  <div className="space-y-3">
                     <div>
-                      <span className="font-medium">Massa:</span> {exemplo.massaTotal}g
-                    </div>
-                    <div>
-                      <span className="font-medium">Peneiras:</span> {exemplo.peneiras.length}
-                    </div>
-                    {exemplo.ll && (
-                      <div>
-                        <span className="font-medium">LL:</span> {exemplo.ll}%
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h4 className="font-semibold text-sm leading-tight">
+                          {exemplo.nome}
+                        </h4>
+                        <Badge variant="outline" className="shrink-0">
+                          {exemplo.classificacaoEsperada}
+                        </Badge>
                       </div>
+                      <p className="text-xs text-muted-foreground">
+                        {exemplo.descricao}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      <div>
+                        <span className="font-medium">Massa:</span> {exemplo.massaTotal}g
+                      </div>
+                      <div>
+                        <span className="font-medium">Peneiras:</span> {exemplo.peneiras.length}
+                      </div>
+                      {exemplo.ll && (
+                        <div>
+                          <span className="font-medium">LL:</span> {exemplo.ll}%
+                        </div>
+                      )}
+                    </div>
+
+                    {exemplo.observacoes && (
+                      <p className="text-xs italic text-muted-foreground border-l-2 border-primary/30 pl-2">
+                        {exemplo.observacoes}
+                      </p>
                     )}
                   </div>
-
-                  {exemplo.observacoes && (
-                    <p className="text-xs italic text-muted-foreground border-l-2 border-primary/30 pl-2">
-                      {exemplo.observacoes}
-                    </p>
-                  )}
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          )
         ) : (
           // Detalhes do exemplo selecionado
           <div className="space-y-2 mt-2">
@@ -144,8 +156,8 @@ export default function DialogExemplos({ onCarregarExemplo }: DialogExemplosProp
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">IP:</span>
                         <span className="font-medium">
-                          {exemploSelecionado.ll && exemploSelecionado.lp 
-                            ? (exemploSelecionado.ll - exemploSelecionado.lp) 
+                          {exemploSelecionado.ll && exemploSelecionado.lp
+                            ? (exemploSelecionado.ll - exemploSelecionado.lp)
                             : 'N/A'}%
                         </span>
                       </div>
@@ -194,14 +206,14 @@ export default function DialogExemplos({ onCarregarExemplo }: DialogExemplosProp
             )}
 
             <div className="flex gap-2 pt-2">
-              <Button 
-                onClick={confirmarCarregamento} 
+              <Button
+                onClick={confirmarCarregamento}
                 className="flex-1 h-9 text-sm"
               >
                 Carregar Este Exemplo
               </Button>
-              <Button 
-                onClick={() => setExemploSelecionado(null)} 
+              <Button
+                onClick={() => setExemploSelecionado(null)}
                 variant="outline"
                 className="h-9 text-sm"
               >

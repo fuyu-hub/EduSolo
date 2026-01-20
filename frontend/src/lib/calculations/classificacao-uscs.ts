@@ -92,15 +92,12 @@ function classificarSoloGrosso(
           ? Cu >= 4.0 && Cc >= 1.0 && Cc <= 3.0
           : Cu >= 6.0 && Cc >= 1.0 && Cc <= 3.0;
 
-      // Para classificar o tipo de finos (M/C/C-M) nesta faixa, LL e IP são necessários
-      if (dados.ll === undefined || dados.ip === undefined) {
-        return {
-          erro:
-            'Para solos grossos com 5-12% de finos, LL e IP são obrigatórios para classificar os finos (M/C/C-M).',
-        };
-      }
+      // Tratar campos vazios de LL/LP como 0 automaticamente
+      const ll = dados.ll ?? 0;
+      const ip = dados.ip ?? 0;
 
-      const sufixo_finos = determinarSufixoFinos(dados);
+      // Para classificar o tipo de finos (M/C/C-M), usamos LL e IP (0 se vazios)
+      const sufixo_finos = determinarSufixoFinos(ll, ip);
 
       if (bem_graduado) {
         const classificacao =
@@ -122,14 +119,34 @@ function classificarSoloGrosso(
         };
       }
     } else {
-      // Sem Cu e Cc para 5-12% de finos: não é possível definir W/P; exigir parâmetros
+      // Fallback: Sem Cu e Cc (provavelmente D10 < #200 e sem sedimentação)
+      // Assumir Mal Graduado (P) por segurança e seguir com a classificação dupla
+
+      const ll = dados.ll ?? 0;
+      const ip = dados.ip ?? 0;
+
+      // Para classificar o tipo de finos (M/C/C-M)
+      const sufixo_finos = determinarSufixoFinos(ll, ip);
+
+      // Assumir P (mal graduado) na parte grossa
+      let classificacao: string;
+      if (sufixo_finos === 'C-M') {
+        classificacao = `${prefixo}P-${prefixo}C/${prefixo}P-${prefixo}M`;
+      } else {
+        classificacao = `${prefixo}P-${prefixo}${sufixo_finos}`;
+      }
+
       return {
-        erro: 'Para solos grossos com 5-12% de finos, Cu e Cc são obrigatórios para a classificação dupla.',
+        classificacao,
+        descricao: `${tipo_solo} mal graduado com finos (Assumido P por falta de D10)`,
       };
     }
   } else {
     // finos > 12%
-    const sufixo_finos = determinarSufixoFinos(dados);
+    // Tratar campos vazios de LL/LP como 0 automaticamente
+    const ll = dados.ll ?? 0;
+    const ip = dados.ip ?? 0;
+    const sufixo_finos = determinarSufixoFinos(ll, ip);
     let classificacao: string;
     let descricao: string;
 
@@ -153,15 +170,9 @@ function classificarSoloGrosso(
 }
 
 function classificarSoloFino(dados: ClassificacaoUSCSInput): ClassificacaoUSCSOutput {
-  // Requer limites de Atterberg
-  if (dados.ll === undefined) {
-    return {
-      erro: 'Para solos finos (>=50% finos), o Limite de Liquidez (LL) é obrigatório',
-    };
-  }
-
-  const LL = dados.ll;
-  const IP = dados.ip !== undefined ? dados.ip : 0.0;
+  // Tratar campos vazios de LL/LP como 0 automaticamente
+  const LL = dados.ll ?? 0;
+  const IP = dados.ip ?? 0;
 
   // Calcular IP na Linha A para o LL do solo
   const ip_linha_a = 0.73 * (LL - 20.0);
@@ -196,14 +207,7 @@ function classificarSoloFino(dados: ClassificacaoUSCSInput): ClassificacaoUSCSOu
   }
 }
 
-function determinarSufixoFinos(dados: ClassificacaoUSCSInput): string {
-  // Sem LL/IP não é possível avaliar plasticidade dos finos. Mantém 'M' como padrão conservador.
-  if (dados.ll === undefined || dados.ip === undefined) {
-    return 'M';
-  }
-
-  const LL = dados.ll;
-  const IP = dados.ip;
+function determinarSufixoFinos(LL: number, IP: number): string {
   const ip_linha_a = 0.73 * (LL - 20.0);
   const acima_linha_a = IP >= ip_linha_a;
 
@@ -216,4 +220,3 @@ function determinarSufixoFinos(dados: ClassificacaoUSCSInput): string {
   // 4 ≤ IP < 7 e acima da Linha A
   return 'C-M';
 }
-

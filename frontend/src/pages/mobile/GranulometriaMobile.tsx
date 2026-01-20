@@ -102,17 +102,17 @@ export default function GranulometriaMobile() {
   const { theme } = useTheme();
   const { addReport } = useRecentReports();
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState<FormData>({
     massaTotal: "",
     peneiras: [
-      { id: generateId(), abertura: "4.76", massaRetida: "" },
+      { id: generateId(), abertura: "4.8", massaRetida: "" },
       { id: generateId(), abertura: "0.075", massaRetida: "" },
     ],
     limitePercent: "",
     limitePlasticidade: "",
   });
-  
+
   const [results, setResults] = useState<Results | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -139,7 +139,7 @@ export default function GranulometriaMobile() {
   // Sincronizar carousel com índice atual
   useEffect(() => {
     if (!carouselApi) return;
-    
+
     carouselApi.on("select", () => {
       setCurrentPeneiraIndex(carouselApi.selectedScrollSnap());
     });
@@ -207,12 +207,12 @@ export default function GranulometriaMobile() {
       return;
     }
 
-    const peneirasValidas = formData.peneiras.filter(p => 
-      p.abertura && 
-      p.massaRetida && 
-      !isNaN(parseFloat(p.abertura)) && 
-      !isNaN(parseFloat(p.massaRetida)) && 
-      parseFloat(p.abertura) > 0 && 
+    const peneirasValidas = formData.peneiras.filter(p =>
+      p.abertura &&
+      p.massaRetida &&
+      !isNaN(parseFloat(p.abertura)) &&
+      !isNaN(parseFloat(p.massaRetida)) &&
+      parseFloat(p.abertura) > 0 &&
       parseFloat(p.massaRetida) >= 0
     );
 
@@ -242,7 +242,7 @@ export default function GranulometriaMobile() {
 
       // Calcular localmente no frontend
       const resultado = calcularGranulometria(payload);
-      
+
       if (resultado.erro) {
         setError(resultado.erro);
         toast({
@@ -260,7 +260,7 @@ export default function GranulometriaMobile() {
     } catch (err: any) {
       const errorMsg = err.message || "Erro ao calcular";
       setError(errorMsg);
-      
+
       toast({
         title: "❌ Erro",
         description: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg),
@@ -275,7 +275,7 @@ export default function GranulometriaMobile() {
     setFormData({
       massaTotal: "",
       peneiras: [
-        { id: generateId(), abertura: "4.76", massaRetida: "" },
+        { id: generateId(), abertura: "4.8", massaRetida: "" },
         { id: generateId(), abertura: "0.075", massaRetida: "" },
       ],
       limitePercent: "",
@@ -316,7 +316,7 @@ export default function GranulometriaMobile() {
 
   const handleConfirmSave = () => {
     if (!results || !saveName.trim()) return;
-    
+
     const success = saveCalculation(saveName.trim(), formData, results);
     if (success) {
       toast({
@@ -361,7 +361,7 @@ export default function GranulometriaMobile() {
       description: "Aguarde enquanto geramos a imagem em alta qualidade",
     });
     const chartImage = await captureChartAsImage('curva-mobile-export');
-    
+
     if (!chartImage) {
       console.warn("Gráfico não foi capturado corretamente");
       toast({
@@ -395,7 +395,7 @@ export default function GranulometriaMobile() {
         p.abertura,
         p.massaRetida
       ]);
-    
+
     if (peneirasRows.length > 0) {
       tables.push({
         title: "Dados de Entrada - Peneiras",
@@ -408,7 +408,7 @@ export default function GranulometriaMobile() {
     if (results.classificacao_uscs || results.classificacao_hrb) {
       const classificacoesHeaders = ["Sistema", "Classificação", "Descrição"];
       const classificacoesRows = [];
-      
+
       if (results.classificacao_uscs) {
         classificacoesRows.push([
           "USCS",
@@ -416,9 +416,9 @@ export default function GranulometriaMobile() {
           results.descricao_uscs || "-"
         ]);
       }
-      
+
       if (results.classificacao_hrb) {
-        const hrb = results.classificacao_hrb + 
+        const hrb = results.classificacao_hrb +
           (results.indice_grupo_hrb !== null && results.indice_grupo_hrb > 0 ? ` (IG: ${results.indice_grupo_hrb})` : '');
         classificacoesRows.push([
           "HRB/AASHTO",
@@ -426,7 +426,7 @@ export default function GranulometriaMobile() {
           results.descricao_hrb || "-"
         ]);
       }
-      
+
       tables.push({
         title: "Classificação do Solo",
         headers: classificacoesHeaders,
@@ -438,7 +438,7 @@ export default function GranulometriaMobile() {
     if (results.percentagem_pedregulho !== null || results.percentagem_areia !== null || results.percentagem_finos !== null) {
       const composicaoHeaders = ["Fração", "Faixa de Tamanho", "Percentual (%)"];
       const composicaoRows = [];
-      
+
       if (results.percentagem_pedregulho !== null) {
         composicaoRows.push(["Pedregulho", "> 2.0 mm", formatNumberForExport(results.percentagem_pedregulho, 1)]);
       }
@@ -448,7 +448,7 @@ export default function GranulometriaMobile() {
       if (results.percentagem_finos !== null) {
         composicaoRows.push(["Finos (Silte + Argila)", "< 0.075 mm", formatNumberForExport(results.percentagem_finos, 1)]);
       }
-      
+
       tables.push({
         title: "Composição Granulométrica",
         headers: composicaoHeaders,
@@ -460,13 +460,13 @@ export default function GranulometriaMobile() {
     if (results.d10 || results.d30 || results.d60 || results.coef_uniformidade || results.coef_curvatura) {
       const diametrosHeaders = ["Parâmetro", "Valor", "Unidade"];
       const diametrosRows = [];
-      
+
       if (results.d10) diametrosRows.push(["D10 (Diâmetro Efetivo)", formatNumberForExport(results.d10, 4), "mm"]);
       if (results.d30) diametrosRows.push(["D30", formatNumberForExport(results.d30, 4), "mm"]);
       if (results.d60) diametrosRows.push(["D60", formatNumberForExport(results.d60, 4), "mm"]);
       if (results.coef_uniformidade) diametrosRows.push(["Cu (Coef. Uniformidade)", formatNumberForExport(results.coef_uniformidade, 2), "-"]);
       if (results.coef_curvatura) diametrosRows.push(["Cc (Coef. Curvatura)", formatNumberForExport(results.coef_curvatura, 2), "-"]);
-      
+
       tables.push({
         title: "Diâmetros Característicos e Coeficientes",
         headers: diametrosHeaders,
@@ -577,7 +577,7 @@ export default function GranulometriaMobile() {
     return formatNumber(value, settings);
   };
 
-  const isFormValid = 
+  const isFormValid =
     formData.massaTotal &&
     formData.peneiras.filter(p => p.abertura && p.massaRetida).length >= 2;
 
@@ -595,7 +595,7 @@ export default function GranulometriaMobile() {
               <p className="text-xs text-muted-foreground">Análise e classificação de solos</p>
             </div>
           </div>
-          
+
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -764,10 +764,10 @@ export default function GranulometriaMobile() {
                           </div>
                         </SelectContent>
                       </Select>
-                      
+
                       {/* Mostrar peneira selecionada */}
                       {peneira.abertura && (() => {
-                        const peneiraInfo = PENEIRAS_PADRAO.find(p => 
+                        const peneiraInfo = PENEIRAS_PADRAO.find(p =>
                           Math.abs(p.aberturaMM - parseFloat(peneira.abertura)) < 0.01
                         );
                         return peneiraInfo ? (
@@ -776,7 +776,7 @@ export default function GranulometriaMobile() {
                           </div>
                         ) : null;
                       })()}
-                      
+
                       {/* Atalhos para peneiras mais comuns */}
                       <div className="space-y-1.5">
                         <Label className="text-xs text-muted-foreground">Atalhos Rápidos:</Label>
@@ -874,7 +874,7 @@ export default function GranulometriaMobile() {
           <Calculator className="w-4 h-4 mr-2" />
           {isCalculating ? "Calculando..." : "Analisar"}
         </Button>
-        
+
         <Button
           onClick={handleClear}
           variant="outline"
@@ -1057,7 +1057,7 @@ export default function GranulometriaMobile() {
                       <Download className="w-4 h-4 text-purple-500" />
                       Exportar Gráficos
                     </h3>
-                    
+
                     {/* Hidden charts for download */}
                     <div className="fixed pointer-events-none" style={{ left: '-9999px', top: 0, zIndex: -9999 }}>
                       <div id="curva-mobile-export" className="bg-white p-4" style={{ width: '1240px' }}>

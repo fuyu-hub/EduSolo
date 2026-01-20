@@ -1,7 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileSpreadsheet } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import * as XLSX from 'xlsx';
+
 
 import { PontoGranulometrico } from "../schemas";
 
@@ -17,69 +15,7 @@ export default function TabelaDadosGranulometricos({
   showComposicao = true
 }: TabelaDadosGranulometricosProps) {
 
-  const exportarExcel = () => {
-    // Sheet 1: Dados Granulométricos Detalhados
-    const wsData1 = [
-      // Cabeçalhos
-      ["Peneira", "Abertura (mm)", "Massa Retida (g)", "% Retida", "% Retida Acumulada", "% Passante"],
-      // Dados
-      ...dados.map(ponto => [
-        getNomePeneira(ponto.abertura),
-        parseFloat(ponto.abertura.toFixed(3)),
-        parseFloat(ponto.massa_retida.toFixed(2)),
-        parseFloat(ponto.porc_retida.toFixed(2)),
-        parseFloat(ponto.porc_retida_acum.toFixed(2)),
-        parseFloat(ponto.porc_passante.toFixed(2))
-      ]),
-      // Total
-      ["TOTAL", "", parseFloat(dados.reduce((sum, p) => sum + p.massa_retida, 0).toFixed(2)), 100.00, "-", "-"]
-    ];
 
-    // Sheet 2: Composição por Tipo
-    const porcentagens = calcularPorcentagensPorTipo();
-    const wsData2 = [
-      ["Composição por Tipo de Material"],
-      [],
-      ["Tipo", "Faixa (mm)", "% da Amostra"],
-      ["Pedregulho", "≥ 2.0", parseFloat(porcentagens.pedregulho.toFixed(2))],
-      ["Areia Grossa", "0.6 - 2.0", parseFloat(porcentagens.areiaGrossa.toFixed(2))],
-      ["Areia Média", "0.2 - 0.6", parseFloat(porcentagens.areiaMedia.toFixed(2))],
-      ["Areia Fina", "0.06 - 0.2", parseFloat(porcentagens.areiaFina.toFixed(2))],
-      ["Silte", "0.002 - 0.06", parseFloat(porcentagens.silte.toFixed(2))],
-      ["Argila", "< 0.002", parseFloat(porcentagens.argila.toFixed(2))],
-      [],
-      ["TOTAL", "", parseFloat((porcentagens.pedregulho + porcentagens.areiaGrossa +
-        porcentagens.areiaMedia + porcentagens.areiaFina +
-        porcentagens.silte + porcentagens.argila).toFixed(2))]
-    ];
-
-    // Criar workbook
-    const wb = XLSX.utils.book_new();
-
-    // Worksheet 1
-    const ws1 = XLSX.utils.aoa_to_sheet(wsData1);
-    ws1['!cols'] = [
-      { wch: 12 }, // Peneira
-      { wch: 15 }, // Abertura
-      { wch: 18 }, // Massa Retida
-      { wch: 12 }, // % Retida
-      { wch: 20 }, // % Retida Acumulada
-      { wch: 12 }  // % Passante
-    ];
-    XLSX.utils.book_append_sheet(wb, ws1, "Dados Detalhados");
-
-    // Worksheet 2
-    const ws2 = XLSX.utils.aoa_to_sheet(wsData2);
-    ws2['!cols'] = [
-      { wch: 18 }, // Tipo
-      { wch: 15 }, // Faixa
-      { wch: 15 }  // % da Amostra
-    ];
-    XLSX.utils.book_append_sheet(wb, ws2, "Composição por Tipo");
-
-    // Gerar arquivo e fazer download
-    XLSX.writeFile(wb, `analise_granulometrica_${new Date().toISOString().split('T')[0]}.xlsx`);
-  };
 
   // Calcular total para verificação (opcional, apenas interno se necessário)
   const massaTotalCalculada = dados.reduce((sum, ponto) => sum + ponto.massa_retida, 0);
@@ -110,11 +46,12 @@ export default function TabelaDadosGranulometricos({
 
       const aberturaAtual = pontoAtual.abertura;
 
-      // Classificar baseado na abertura da peneira atual
+      // Classificar baseado na abertura da peneira atual (ABNT NBR 7181)
       // Material retido NESTA peneira tem tamanho MAIOR que esta abertura
       if (aberturaAtual >= 2.0) {
         pedregulho += percNaFaixa;
       } else if (aberturaAtual >= 0.6) {
+        // Inclui peneira #30 (0.6mm ABNT) como Areia Grossa
         areiaGrossa += percNaFaixa;
       } else if (aberturaAtual >= 0.2) {
         areiaMedia += percNaFaixa;
@@ -158,13 +95,7 @@ export default function TabelaDadosGranulometricos({
 
   return (
     <div className="space-y-4">
-      {/* Botão Excel */}
-      <div className="flex justify-end">
-        <Button onClick={exportarExcel} variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
-          <FileSpreadsheet className="w-3.5 h-3.5" />
-          Exportar Excel
-        </Button>
-      </div>
+
 
       {/* Tabela de Dados Detalhados */}
       {showDadosDetalhados && (
@@ -283,31 +214,45 @@ export default function TabelaDadosGranulometricos({
   );
 }
 
-// Função auxiliar para identificar nome da peneira
+// Função auxiliar para identificar nome da peneira (ABNT NBR 7181)
 function getNomePeneira(abertura: number): string {
   const peneiras: { [key: number]: string } = {
-    50.8: '2"',
-    38.1: '1½"',
-    25.4: '1"',
-    19.1: '¾"',
-    9.52: '3/8"',
-    4.76: 'Nº 4',
+    // Valores ABNT NBR 7181
+    76.0: '3"',
+    63.0: '2½"',
+    50.0: '2"',
+    38.0: '1½"',
+    25.0: '1"',
+    19.0: '¾"',
+    12.5: '½"',
+    9.5: '3/8"',
+    6.3: '1/4"',
+    4.8: 'Nº 4',
+    2.36: 'Nº 8',
     2.0: 'Nº 10',
-    1.19: 'Nº 16',
-    0.59: 'Nº 30',
+    1.2: 'Nº 16',
+    0.85: 'Nº 20',
+    0.6: 'Nº 30',
     0.42: 'Nº 40',
     0.25: 'Nº 60',
-    0.149: 'Nº 100',
+    0.18: 'Nº 80',
+    0.15: 'Nº 100',
+    0.106: 'Nº 140',
     0.075: 'Nº 200',
+    0.053: 'Nº 270',
   };
 
-  // Procurar correspondência exata ou próxima
+  let bestMatch = '-';
+  let minDiff = 0.02; // Tolerância máxima rigorosa (0.02mm) para evitar matches errados vizinhos
+
   for (const [key, value] of Object.entries(peneiras)) {
-    if (Math.abs(parseFloat(key) - abertura) < 0.01) {
-      return value;
+    const diff = Math.abs(parseFloat(key) - abertura);
+    if (diff < minDiff) {
+      minDiff = diff;
+      bestMatch = value;
     }
   }
 
-  return '-';
+  return bestMatch;
 }
 
