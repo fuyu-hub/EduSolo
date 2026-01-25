@@ -105,7 +105,7 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
     const maxLogGolpes = Math.max(...pontos.map(p => p.x));
     const minUmidade = Math.min(...pontos.map(p => p.y));
     const maxUmidade = Math.max(...pontos.map(p => p.y));
-    
+
     // Criar pontos da linha de tendência limitados ao range dos dados
     const numPontosLinha = 50;
     const stepX = (maxLogGolpes - minLogGolpes) / numPontosLinha;
@@ -113,7 +113,7 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
     for (let i = 0; i <= numPontosLinha; i++) {
       const x = minLogGolpes + i * stepX;
       const y = slope * x + intercept;
-      
+
       // Adicionar apenas se estiver dentro do range de umidade
       if (y >= minUmidade - 1 && y <= maxUmidade + 1) {
         linhaRegressao.push({
@@ -158,13 +158,13 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
             width={chartWidth}
             height={chartHeight}
             data={linhaDados}
-            margin={isDialog 
+            margin={isDialog
               ? { top: 40, right: 40, bottom: 80, left: 80 }
               : { top: 20, right: 20, bottom: 60, left: 20 }
             }
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#000000" opacity={1} />
-            
+
             <XAxis
               dataKey="x"
               type="number"
@@ -289,13 +289,13 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
         </div>
 
         {/* Gráfico ampliado renderizado em background (invisível) para captura */}
-        <div 
-          className="fixed pointer-events-none" 
-          style={{ 
-            left: '-9999px', 
+        <div
+          className="fixed pointer-events-none"
+          style={{
+            left: '-9999px',
             top: 0,
             width: '1240px',
-            zIndex: -9999 
+            zIndex: -9999
           }}
         >
           <div id="limite-liquidez-ampliado" className="bg-white p-4">
@@ -317,6 +317,9 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
           </CardHeader>
           <CardContent className="pt-0 pb-3">
             <div className="space-y-2 text-xs text-muted-foreground">
+              <p>
+                <strong>Equação da Reta:</strong> h = {slope.toFixed(4)} ⋅ log(N) + {intercept.toFixed(4)}
+              </p>
               <p>
                 <strong>Regressão Linear:</strong> A linha azul representa a relação linear entre o teor de umidade e o logaritmo do número de golpes.
               </p>

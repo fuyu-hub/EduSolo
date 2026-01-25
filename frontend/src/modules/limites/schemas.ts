@@ -22,7 +22,6 @@ export const LimitesConsistenciaInputSchema = z.object({
   pontos_ll: z.array(PontoEnsaioLLSchema).min(2),
   pontos_lp: z.array(PontoEnsaioLPSchema).min(1),
   umidade_natural: z.number().optional(),
-  percentual_argila: z.number().min(0).max(100).optional(),
 });
 
 export const LimitesConsistenciaOutputSchema = z.object({
@@ -32,8 +31,6 @@ export const LimitesConsistenciaOutputSchema = z.object({
   ic: z.number().optional(),
   classificacao_plasticidade: z.string().optional(),
   classificacao_consistencia: z.string().optional(),
-  atividade_argila: z.number().optional(),
-  classificacao_atividade: z.string().optional(),
   pontos_grafico_ll: z.array(PontoCurvaSchema).optional(),
   erro: z.string().optional(),
 });

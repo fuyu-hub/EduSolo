@@ -31,12 +31,30 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { CheckCircle } from "lucide-react";
 import ExportPDFDialog from "@/components/ExportPDFDialog";
 
-// Tooltips
+// Tooltips para entradas
 const tooltips = {
-    massaUmida: "Massa total da amostra de solo incluindo a água (g)",
-    massaSeca: "Massa da amostra após secagem em estufa (g)",
-    volume: "Volume total da amostra incluindo vazios (cm³)",
-    Gs: "Densidade dos grãos (adimensional, ex: 2.65). Necessário para calcular todos os índices físicos.",
+    massaUmida: "Massa total da amostra de solo incluindo a água, obtida por pesagem direta (g).",
+    massaSeca: "Massa da amostra após secagem em estufa a 105-110°C até peso constante (g).",
+    volume: "Volume total da amostra de solo, incluindo sólidos e vazios (cm³).",
+    Gs: "Densidade relativa dos grãos sólidos (adimensional). Valores típicos: Areias 2.65, Argilas 2.60-2.80.",
+    emin: "Índice de vazios mínimo do solo, obtido em ensaio de compactação máxima (estado mais denso possível).",
+    emax: "Índice de vazios máximo do solo, obtido depositando o solo solto (estado mais fofo possível).",
+};
+
+// Tooltips para resultados com faixas típicas
+const resultTooltips: Record<string, { desc: string; range?: string }> = {
+    h: { desc: "Teor de umidade: relação entre massa de água e massa de sólidos.", range: "Típico: 5% a 50%" },
+    gamma: { desc: "Peso específico natural: peso do solo por unidade de volume no estado natural.", range: "Típico: 14 a 22 kN/m³" },
+    gamma_d: { desc: "Peso específico aparente seco: peso dos sólidos por unidade de volume total.", range: "Típico: 12 a 20 kN/m³" },
+    e: { desc: "Índice de vazios: relação entre volume de vazios e volume de sólidos.", range: "Areias: 0.4-0.9 | Argilas: 0.5-1.5" },
+    n: { desc: "Porosidade: relação entre volume de vazios e volume total (em %).", range: "Típico: 25% a 60%" },
+    Sr: { desc: "Grau de saturação: porcentagem dos vazios preenchidos por água.", range: "0% (seco) a 100% (saturado)" },
+    gamma_sat: { desc: "Peso específico saturado: peso do solo quando todos os vazios estão cheios de água.", range: "Típico: 18 a 23 kN/m³" },
+    LL: { desc: "Limite de Liquidez: teor de umidade onde o solo passa de plástico para líquido.", range: "Argilas: 30% a 100%" },
+    LP: { desc: "Limite de Plasticidade: teor de umidade onde o solo passa de semi-sólido para plástico.", range: "Argilas: 15% a 40%" },
+    IP: { desc: "Índice de Plasticidade: amplitude do estado plástico (LL - LP).", range: "Baixo: <7 | Médio: 7-15 | Alto: >15" },
+    IC: { desc: "Índice de Consistência: posição relativa da umidade natural entre LL e LP.", range: "<0: líquido | 0-1: plástico | >1: sólido" },
+    Dr: { desc: "Compacidade Relativa: indica o quão compacto está o solo em relação aos estados extremos.", range: "<15%: muito fofa | >85%: muito compacta" },
 };
 
 
@@ -78,14 +96,11 @@ export default function CaracterizacaoPage() {
             try {
                 const data = JSON.parse(storedData);
                 // Restore samples
-                if (data.amostras && Array.isArray(data.amostras)) {
-                    // Reset first to clear default
+                if (data.amostras && Array.isArray(data.amostras) && data.amostras.length > 0) {
+                    // Reset first to ensure clean state
                     resetAmostras();
-                    // Add remaining samples
-                    for (let i = 0; i < data.amostras.length; i++) {
-                        if (i > 0) addAmostra();
-                        updateIndices(i, data.amostras[i].indices);
-                    }
+                    // Load only the first sample
+                    updateIndices(0, data.amostras[0].indices);
                 }
                 // Restore settings
                 if (data.settings) {
@@ -120,13 +135,19 @@ export default function CaracterizacaoPage() {
         setError(null);
 
         try {
+            // Função auxiliar para parse seguro de números (aceita ponto e vírgula)
+            const parseNum = (val: string | undefined) => {
+                if (!val) return undefined;
+                return parseFloat(val.replace(',', '.'));
+            };
+
             // Preparar inputs de todas as amostras
             const inputsIndices = amostras.map(amostra => ({
-                peso_total: parseFloat(amostra.indices.massaUmida),
-                peso_solido: parseFloat(amostra.indices.massaSeca),
-                volume_total: amostra.indices.volume ? parseFloat(amostra.indices.volume) : undefined,
-                Gs: parseFloat(settings.Gs),
-                peso_especifico_agua: parseFloat(settings.pesoEspecificoAgua),
+                peso_total: parseNum(amostra.indices.massaUmida)!,
+                peso_solido: parseNum(amostra.indices.massaSeca)!,
+                volume_total: parseNum(amostra.indices.volume),
+                Gs: parseNum(settings.Gs)!,
+                peso_especifico_agua: parseNum(settings.pesoEspecificoAgua) || 10.0, // Fallback safe
             }));
 
             // Calcular índices físicos (já retorna média se múltiplas amostras)
@@ -136,24 +157,49 @@ export default function CaracterizacaoPage() {
             let resLimites: any = {};
             const pontosLL = globalLimites.pontosLL.map(p => ({
                 num_golpes: parseInt(p.numGolpes),
-                massa_umida_recipiente: parseFloat(p.massaUmidaRecipiente),
-                massa_seca_recipiente: parseFloat(p.massaSecaRecipiente),
-                massa_recipiente: parseFloat(p.massaRecipiente)
+                massa_umida_recipiente: parseNum(p.massaUmidaRecipiente)!,
+                massa_seca_recipiente: parseNum(p.massaSecaRecipiente)!,
+                massa_recipiente: parseNum(p.massaRecipiente)!
             })).filter(p => !isNaN(p.num_golpes) && !isNaN(p.massa_umida_recipiente));
 
             const pontosLP = globalLimites.pontosLP.map(p => ({
-                massa_umida_recipiente: parseFloat(p.massaUmidaRecipiente),
-                massa_seca_recipiente: parseFloat(p.massaSecaRecipiente),
-                massa_recipiente: parseFloat(p.massaRecipiente)
+                massa_umida_recipiente: parseNum(p.massaUmidaRecipiente)!,
+                massa_seca_recipiente: parseNum(p.massaSecaRecipiente)!,
+                massa_recipiente: parseNum(p.massaRecipiente)!
             })).filter(p => !isNaN(p.massa_umida_recipiente));
 
-            if (pontosLL.length >= 2 && pontosLP.length >= 1) {
+            if (pontosLL.length >= 2 || pontosLP.length >= 1) {
                 resLimites = calcularLimitesConsistencia({
                     pontos_ll: pontosLL,
                     pontos_lp: pontosLP,
-                    umidade_natural: globalLimites.umidadeNatural ? parseFloat(globalLimites.umidadeNatural) : undefined,
-                    percentual_argila: globalLimites.percentualArgila ? parseFloat(globalLimites.percentualArgila) : undefined
+                    umidade_natural: resIndices.umidade,
                 });
+            }
+
+            // Calcular Compacidade Relativa (solos não plásticos)
+            let compacidade_relativa: number | null = null;
+            let classificacao_compacidade: string | undefined;
+
+            const emax = parseNum(settings.indice_vazios_max);
+            const emin = parseNum(settings.indice_vazios_min);
+            const e_atual = resIndices.indice_vazios;
+
+            // Só calcula se não há LP (solo não plástico) e tem dados de emin/emax
+            if (!resLimites.lp && emax && emin && e_atual !== undefined && emax > emin) {
+                compacidade_relativa = ((emax - e_atual) / (emax - emin)) * 100;
+
+                // Classificação da compacidade
+                if (compacidade_relativa < 15) {
+                    classificacao_compacidade = 'Muito Fofa';
+                } else if (compacidade_relativa < 35) {
+                    classificacao_compacidade = 'Fofa';
+                } else if (compacidade_relativa < 65) {
+                    classificacao_compacidade = 'Medianamente Compacta';
+                } else if (compacidade_relativa < 85) {
+                    classificacao_compacidade = 'Compacta';
+                } else {
+                    classificacao_compacidade = 'Muito Compacta';
+                }
             }
 
             // Unificar Resultados
@@ -178,11 +224,12 @@ export default function CaracterizacaoPage() {
                 lp: resLimites.lp,
                 ip: resLimites.ip,
                 ic: resLimites.ic,
-                atividade: resLimites.atividade_argila,
                 classificacao_plasticidade: resLimites.classificacao_plasticidade,
                 classificacao_consistencia: resLimites.classificacao_consistencia,
-                classificacao_atividade: resLimites.classificacao_atividade,
                 pontos_grafico_ll: resLimites.pontos_grafico_ll,
+                // Compacidade
+                compacidade_relativa,
+                classificacao_compacidade,
                 erro: resIndices.erro || resLimites.erro
             };
 
@@ -193,21 +240,25 @@ export default function CaracterizacaoPage() {
                 setResult(amostra.id, combinedResult);
             });
 
-            if (!combinedResult.erro) {
-                toast.success(`Cálculos realizados! ${amostras.length > 1 ? `(Média de ${amostras.length} amostras)` : ''}`);
-            } else {
-                toast.error(combinedResult.erro);
-            }
+            // Silencioso - sem toast para cálculo automático
 
         } catch (err) {
             console.error(err);
-            const msg = err instanceof Error ? err.message : "Erro ao calcular.";
-            setError(msg);
-            toast.error(msg);
+            // Silencioso - sem toast para erro de cálculo automático
+            setResultadoCombinado(null);
         } finally {
             setIsCalculating(false);
         }
     };
+
+    // Auto-calculate with debounce (instant)
+    useEffect(() => {
+        const debounceTimer = setTimeout(() => {
+            handleCalculate();
+        }, 0);
+
+        return () => clearTimeout(debounceTimer);
+    }, [amostras, settings, globalLimites]);
 
     // Limpar Campos
     const handleClear = () => {
@@ -221,9 +272,7 @@ export default function CaracterizacaoPage() {
                 { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
                 { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }
             ],
-            pontosLP: [{ id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }],
-            umidadeNatural: "",
-            percentualArgila: ""
+            pontosLP: [{ id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }]
         });
         clearResults();
         setResultadoCombinado(null);
@@ -242,28 +291,17 @@ export default function CaracterizacaoPage() {
         updateGlobalLimites({
             pontosLL: exemplo.limites.pontosLL.map(p => ({ ...p, id: generateId() })),
             pontosLP: exemplo.limites.pontosLP.map(p => ({ ...p, id: generateId() })),
-            umidadeNatural: exemplo.limites.umidadeNatural,
-            percentualArgila: exemplo.limites.percentualArgila,
         });
 
-        // 3. Set Samples (Indices)
-        // Ensure we have the correct number of samples
+        // 3. Set Sample (Indices)
+        // Ensure we strictly use the first sample.
         // The handleClear() above resets to 1 sample.
-        // We need to add (exemplo.numAmostras - 1) more samples.
-        for (let i = 0; i < exemplo.numAmostras; i++) {
-            if (i > 0) {
-                addAmostra(); // Add new sample if not the first one
-            }
 
-            // Apply slight variation for multiple samples
-            const variation = () => (1 + (Math.random() * 0.04 - 0.02)); // +/- 2%
-
-            updateIndices(i, {
-                massaUmida: (parseFloat(exemplo.indices.massaUmida) * variation()).toFixed(2),
-                massaSeca: (parseFloat(exemplo.indices.massaSeca) * variation()).toFixed(2),
-                volume: exemplo.indices.volume // Volume usually constant or varies less
-            });
-        }
+        updateIndices(0, {
+            massaUmida: exemplo.indices.massaUmida,
+            massaSeca: exemplo.indices.massaSeca,
+            volume: exemplo.indices.volume
+        });
 
         toast.success(`${exemplo.nome} carregado!`);
     };
@@ -410,11 +448,6 @@ export default function CaracterizacaoPage() {
                         <Trash2 className="w-4 h-4" />
                         Limpar
                     </Button>
-
-                    <Button size="sm" onClick={handleCalculate} disabled={isCalculating} className="gap-1.5 shadow-md bg-primary hover:bg-primary/90">
-                        {isCalculating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Calculator className="w-4 h-4" />}
-                        Calcular
-                    </Button>
                 </div>
             </div>
 
@@ -491,7 +524,12 @@ const EntradaDados = () => {
 
     const removePontoLL = (index: number) => {
         const newPontos = [...limites.pontosLL];
-        newPontos.splice(index, 1);
+        if (newPontos.length > 2) {
+            newPontos.splice(index, 1);
+        } else {
+            // Limpar apenas os dados se estiver no limite mínimo
+            newPontos[index] = { ...newPontos[index], numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" };
+        }
         updateLimites({ pontosLL: newPontos });
     };
 
@@ -503,7 +541,12 @@ const EntradaDados = () => {
 
     const removePontoLP = (index: number) => {
         const newPontos = [...limites.pontosLP];
-        newPontos.splice(index, 1);
+        if (newPontos.length > 1) {
+            newPontos.splice(index, 1);
+        } else {
+            // Limpar apenas os dados se estiver no limite mínimo
+            newPontos[index] = { ...newPontos[index], massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" };
+        }
         updateLimites({ pontosLP: newPontos });
     };
 
@@ -512,6 +555,137 @@ const EntradaDados = () => {
         const newPontos = [...limites.pontosLP];
         newPontos[idx] = { ...newPontos[idx], [field]: value };
         updateLimites({ pontosLP: newPontos });
+    };
+
+    // Função para calcular umidade de um ponto
+    const calcularUmidadePonto = (mbu: string, mbs: string, tara: string): number | null => {
+        const massaUmida = parseFloat(mbu);
+        const massaSeca = parseFloat(mbs);
+        const massaTara = parseFloat(tara);
+
+        if (isNaN(massaUmida) || isNaN(massaSeca) || isNaN(massaTara)) return null;
+        if (massaSeca <= massaTara) return null;
+
+        const massaAgua = massaUmida - massaSeca;
+        const massaSolidos = massaSeca - massaTara;
+
+        if (massaSolidos <= 0) return null;
+
+        return (massaAgua / massaSolidos) * 100;
+    };
+
+    // Calcular umidades de todos os pontos LL
+    const umidadesLL = limites.pontosLL.map(p =>
+        calcularUmidadePonto(p.massaUmidaRecipiente, p.massaSecaRecipiente, p.massaRecipiente)
+    );
+
+    // Calcular umidades de todos os pontos LP
+    const umidadesLP = limites.pontosLP.map(p =>
+        calcularUmidadePonto(p.massaUmidaRecipiente, p.massaSecaRecipiente, p.massaRecipiente)
+    );
+
+    // Criar pares ordenados (golpes, umidade) para validação de monotonicidade
+    const pontosLLValidos = limites.pontosLL
+        .map((p, i) => ({
+            index: i,
+            golpes: parseInt(p.numGolpes),
+            umidade: umidadesLL[i]
+        }))
+        .filter(p => !isNaN(p.golpes) && p.umidade !== null)
+        .sort((a, b) => a.golpes - b.golpes);
+
+    // Validar ponto de LL: intervalo de golpes + monotonicidade (NBR 6459)
+    const validarPontoLL = (index: number): { status: 'ok' | 'warn' | 'error', msg?: string } => {
+        const ponto = limites.pontosLL[index];
+        const golpes = parseInt(ponto.numGolpes);
+        const umidade = umidadesLL[index];
+
+        if (isNaN(golpes) || !ponto.numGolpes) return { status: 'ok' };
+
+        // A. Verificar intervalo de golpes (15-35)
+        if (golpes < 15) {
+            return { status: 'error', msg: `${golpes} golpes: abaixo do intervalo ideal (15-35)` };
+        } else if (golpes > 35) {
+            return { status: 'warn', msg: `${golpes} golpes: acima do intervalo ideal (15-35)` };
+        }
+
+        // C. Verificar monotonicidade (mais golpes = menor umidade)
+        if (umidade !== null && pontosLLValidos.length >= 2) {
+            const pontoAtualOrdenado = pontosLLValidos.find(p => p.index === index);
+            if (pontoAtualOrdenado) {
+                const posicaoAtual = pontosLLValidos.indexOf(pontoAtualOrdenado);
+
+                // Verificar se umidade está invertida em relação aos vizinhos
+                if (posicaoAtual > 0) {
+                    const pontoAnterior = pontosLLValidos[posicaoAtual - 1];
+                    // Ponto anterior tem menos golpes, deve ter MAIS umidade
+                    if (pontoAnterior.umidade !== null && pontoAnterior.umidade < umidade) {
+                        return {
+                            status: 'error',
+                            msg: `Erro físico: ${golpes} golpes com ${umidade.toFixed(1)}% > ${pontoAnterior.golpes} golpes com ${pontoAnterior.umidade.toFixed(1)}%`
+                        };
+                    }
+                }
+                if (posicaoAtual < pontosLLValidos.length - 1) {
+                    const pontoProximo = pontosLLValidos[posicaoAtual + 1];
+                    // Próximo ponto tem mais golpes, deve ter MENOS umidade
+                    if (pontoProximo.umidade !== null && pontoProximo.umidade > umidade) {
+                        return {
+                            status: 'error',
+                            msg: `Erro físico: ${golpes} golpes com ${umidade.toFixed(1)}% < ${pontoProximo.golpes} golpes com ${pontoProximo.umidade.toFixed(1)}%`
+                        };
+                    }
+                }
+            }
+        }
+
+        return { status: 'ok' };
+    };
+
+    // B. Validar quantidade de pontos LL (mínimo 3, recomendado 5)
+    const pontosLLPreenchidos = limites.pontosLL.filter(p =>
+        p.numGolpes && p.massaUmidaRecipiente && p.massaSecaRecipiente && p.massaRecipiente
+    ).length;
+
+    const avisoQuantidadePontosLL = (): { status: 'ok' | 'warn' | 'error', msg?: string } => {
+        if (pontosLLPreenchidos > 0 && pontosLLPreenchidos < 3) {
+            return { status: 'error', msg: `Mínimo de 3 pontos necessário (atual: ${pontosLLPreenchidos})` };
+        } else if (pontosLLPreenchidos >= 3 && pontosLLPreenchidos < 5) {
+            return { status: 'warn', msg: `Recomendado pela NBR 6459: 5 pontos (atual: ${pontosLLPreenchidos})` };
+        }
+        return { status: 'ok' };
+    };
+
+    // Validar variação de umidade para LP (NBR 7180: valores não devem desviar mais que 5% da média)
+    const validarVariacaoLP = (index: number): { status: 'ok' | 'warn' | 'error', variacao?: number, msg?: string } => {
+        const umidadeAtual = umidadesLP[index];
+        if (umidadeAtual === null) return { status: 'ok' };
+
+        // Para LP, comparar com média de todos os pontos válidos
+        const umidadesValidas = umidadesLP.filter((u): u is number => u !== null);
+        if (umidadesValidas.length < 2) return { status: 'ok' };
+
+        const media = umidadesValidas.reduce((a, b) => a + b, 0) / umidadesValidas.length;
+        const variacaoPercentual = Math.abs((umidadeAtual - media) / media) * 100;
+
+        // Só mostrar erro se desviar mais de 5% (NBR 7180)
+        if (variacaoPercentual > 5) {
+            return { status: 'error', variacao: variacaoPercentual, msg: `Desvio de ${variacaoPercentual.toFixed(1)}% da média (max 5%, NBR 7180)` };
+        }
+
+        return { status: 'ok', variacao: variacaoPercentual };
+    };
+
+    // Validar quantidade de pontos LP (mínimo 3 recomendado pela NBR 7180)
+    const pontosLPPreenchidos = limites.pontosLP.filter(p =>
+        p.massaUmidaRecipiente && p.massaSecaRecipiente && p.massaRecipiente
+    ).length;
+
+    const avisoQuantidadePontosLP = (): { status: 'ok' | 'warn' | 'error', msg?: string } => {
+        if (pontosLPPreenchidos > 0 && pontosLPPreenchidos < 3) {
+            return { status: 'warn', msg: `Recomendado pela NBR 7180: mínimo 3 determinações (atual: ${pontosLPPreenchidos})` };
+        }
+        return { status: 'ok' };
     };
 
     // Navegação com setas do teclado
@@ -580,31 +754,7 @@ const EntradaDados = () => {
                     </CardTitle>
 
                     {/* Sample Management Inside Card Header */}
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1 rounded-md bg-background/50 border px-1 py-0.5 max-w-[250px] overflow-x-auto scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
-                            {amostras.map((amostra, idx) => (
-                                <Badge
-                                    key={amostra.id}
-                                    variant={idx === currentAmostraIndex ? "default" : "outline"}
-                                    className={cn(
-                                        "cursor-pointer px-2 py-0.5 text-[10px] h-5 transition-all min-w-[70px] justify-center hover:bg-primary/20 shrink-0",
-                                        idx === currentAmostraIndex && "shadow-sm ring-1 ring-primary/30"
-                                    )}
-                                    onClick={() => setCurrentAmostra(idx)}
-                                >
-                                    {amostra.nome}
-                                </Badge>
-                            ))}
-                        </div>
-                        {amostras.length > 1 && (
-                            <Button size="icon" variant="ghost" onClick={() => removeAmostra(currentAmostraIndex)} className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0">
-                                <Trash2 className="w-3 h-3" />
-                            </Button>
-                        )}
-                        <Button size="icon" variant="ghost" onClick={addAmostra} disabled={amostras.length >= 3} className="h-6 w-6 text-muted-foreground hover:text-primary shrink-0">
-                            <Plus className="w-3 h-3" />
-                        </Button>
-                    </div>
+
                 </CardHeader>
                 <CardContent className="space-y-3 pt-3">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -624,23 +774,83 @@ const EntradaDados = () => {
                         </div>
                         <div className="space-y-1.5">
                             <div className="flex items-center h-5">
-                                <Label htmlFor="massaUmida" className="text-xs">Massa Úmida (g)</Label>
+                                <Label htmlFor="massaUmida" className="text-xs flex items-center gap-1">
+                                    Massa Úmida (g)
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
+                                            <TooltipContent><p className="max-w-xs text-xs">{tooltips.massaUmida}</p></TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </Label>
                             </div>
                             <Input id="massaUmida" placeholder="0.00" value={currentAmostra.indices.massaUmida} onChange={(e) => updateIndices(currentAmostraIndex, { massaUmida: e.target.value })} className="h-9" />
                         </div>
                         <div className="space-y-1.5">
                             <div className="flex items-center h-5">
-                                <Label htmlFor="massaSeca" className="text-xs">Massa Seca (g)</Label>
+                                <Label htmlFor="massaSeca" className="text-xs flex items-center gap-1">
+                                    Massa Seca (g)
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
+                                            <TooltipContent><p className="max-w-xs text-xs">{tooltips.massaSeca}</p></TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </Label>
                             </div>
                             <Input id="massaSeca" placeholder="0.00" value={currentAmostra.indices.massaSeca} onChange={(e) => updateIndices(currentAmostraIndex, { massaSeca: e.target.value })} className="h-9" />
                         </div>
                         <div className="space-y-1.5">
                             <div className="flex items-center h-5">
-                                <Label htmlFor="volume" className="text-xs">Volume (cm³)</Label>
+                                <Label htmlFor="volume" className="text-xs flex items-center gap-1">
+                                    Volume (cm³)
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
+                                            <TooltipContent><p className="max-w-xs text-xs">{tooltips.volume}</p></TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </Label>
                             </div>
                             <Input id="volume" placeholder="Ex: 100" value={currentAmostra.indices.volume || ""} onChange={(e) => updateIndices(currentAmostraIndex, { volume: e.target.value })} className="h-9" />
                         </div>
+                        <div className="space-y-1.5">
+                            <div className="flex items-center h-5">
+                                <Label htmlFor="emin" className="text-xs flex items-center gap-1">
+                                    e<sub>mín</sub>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
+                                            <TooltipContent><p className="max-w-xs text-xs">{tooltips.emin}</p></TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </Label>
+                            </div>
+                            <Input id="emin" placeholder="Ex: 0.4" value={settings.indice_vazios_min} onChange={(e) => updateSettings({ indice_vazios_min: e.target.value })} className="h-9" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <div className="flex items-center h-5">
+                                <Label htmlFor="emax" className="text-xs flex items-center gap-1">
+                                    e<sub>máx</sub>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
+                                            <TooltipContent><p className="max-w-xs text-xs">{tooltips.emax}</p></TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </Label>
+                            </div>
+                            <Input id="emax" placeholder="Ex: 0.9" value={settings.indice_vazios_max} onChange={(e) => updateSettings({ indice_vazios_max: e.target.value })} className="h-9" />
+                        </div>
                     </div>
+                    {/* Aviso quando há dados de LP e emin/emax preenchidos */}
+                    {(settings.indice_vazios_min || settings.indice_vazios_max) &&
+                        limites.pontosLP.some(p => p.massaUmidaRecipiente || p.massaSecaRecipiente || p.massaRecipiente) && (
+                            <p className="text-xs text-amber-500/80 flex items-center gap-1.5 mt-2">
+                                <Info className="w-3 h-3" />
+                                Compacidade Relativa só é calculada para solos não plásticos (sem LP).
+                            </p>
+                        )}
                 </CardContent>
             </Card>
 
@@ -665,25 +875,58 @@ const EntradaDados = () => {
                         {/* Header Row */}
                         <div className="grid grid-cols-[50px,1fr,1fr,1fr,32px] gap-1.5 px-2 mb-1 text-[10px] text-muted-foreground font-medium text-center">
                             <div>Golpes</div>
-                            <div>M.Ú+T (g)</div>
-                            <div>M.S+T (g)</div>
+                            <div>MBU (g)</div>
+                            <div>MBS (g)</div>
                             <div>Tara (g)</div>
                             <div></div>
                         </div>
 
-                        <div className="space-y-1 max-h-[220px] overflow-y-auto pr-1">
-                            {limites.pontosLL.map((ponto, i) => (
-                                <div key={ponto.id} className="grid grid-cols-[50px,1fr,1fr,1fr,auto] gap-1.5 items-center p-1.5 rounded-md border bg-muted/5 hover:bg-muted/10 transition-colors">
-                                    <Input className="h-8 text-xs px-2 text-center" placeholder="N" value={ponto.numGolpes} onChange={e => handleUpdateLL(i, 'numGolpes', e.target.value)} />
-                                    <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaUmidaRecipiente} onChange={e => handleUpdateLL(i, 'massaUmidaRecipiente', e.target.value)} />
-                                    <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaSecaRecipiente} onChange={e => handleUpdateLL(i, 'massaSecaRecipiente', e.target.value)} />
-                                    <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaRecipiente} onChange={e => handleUpdateLL(i, 'massaRecipiente', e.target.value)} />
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive shrink-0" onClick={() => removePontoLL(i)} disabled={limites.pontosLL.length <= 2}>
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                    </Button>
-                                </div>
-                            ))}
+                        <div className="space-y-1">
+                            {limites.pontosLL.map((ponto, i) => {
+                                const validacao = validarPontoLL(i);
+                                const borderClass = validacao.status === 'error'
+                                    ? 'border-red-500/70 bg-red-500/5'
+                                    : validacao.status === 'warn'
+                                        ? 'border-amber-500/70 bg-amber-500/5'
+                                        : 'border bg-muted/5';
+
+                                return (
+                                    <div key={ponto.id} className="relative">
+                                        <div className={cn(
+                                            "grid grid-cols-[50px,1fr,1fr,1fr,auto] gap-1.5 items-center p-1.5 rounded-md transition-colors hover:bg-muted/10",
+                                            borderClass
+                                        )}>
+                                            <Input className="h-8 text-xs px-2 text-center" placeholder="N" value={ponto.numGolpes} onChange={e => handleUpdateLL(i, 'numGolpes', e.target.value)} />
+                                            <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaUmidaRecipiente} onChange={e => handleUpdateLL(i, 'massaUmidaRecipiente', e.target.value)} />
+                                            <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaSecaRecipiente} onChange={e => handleUpdateLL(i, 'massaSecaRecipiente', e.target.value)} />
+                                            <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaRecipiente} onChange={e => handleUpdateLL(i, 'massaRecipiente', e.target.value)} />
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive shrink-0" onClick={() => removePontoLL(i)}>
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </Button>
+                                        </div>
+                                        {validacao.msg && (
+                                            <p className={cn(
+                                                "text-[10px] mt-0.5 ml-1 flex items-center gap-1",
+                                                validacao.status === 'error' ? 'text-red-400' : 'text-amber-400'
+                                            )}>
+                                                <AlertCircle className="w-3 h-3" />
+                                                {validacao.msg}
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
+                        {/* Aviso de quantidade de pontos */}
+                        {avisoQuantidadePontosLL().msg && (
+                            <p className={cn(
+                                "text-[10px] mt-1 flex items-center gap-1 px-1",
+                                avisoQuantidadePontosLL().status === 'error' ? 'text-red-400' : 'text-amber-400'
+                            )}>
+                                <AlertCircle className="w-3 h-3" />
+                                {avisoQuantidadePontosLL().msg}
+                            </p>
+                        )}
                     </div>
 
                     <Separator />
@@ -699,39 +942,60 @@ const EntradaDados = () => {
 
                         {/* Header Row */}
                         <div className="grid grid-cols-[1fr,1fr,1fr,32px] gap-1.5 px-2 mb-1 text-[10px] text-muted-foreground font-medium text-center">
-                            <div>M.Ú+T (g)</div>
-                            <div>M.S+T (g)</div>
+                            <div>MBU (g)</div>
+                            <div>MBS (g)</div>
                             <div>Tara (g)</div>
                             <div></div>
                         </div>
 
                         <div className="space-y-1 max-h-[220px] overflow-y-auto pr-1">
-                            {limites.pontosLP.map((ponto, i) => (
-                                <div key={ponto.id || i} className="grid grid-cols-[1fr,1fr,1fr,auto] gap-1.5 items-center p-1.5 rounded-md border bg-muted/5 hover:bg-muted/10 transition-colors">
-                                    <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaUmidaRecipiente || ""} onChange={e => handleUpdateLP(i, 'massaUmidaRecipiente', e.target.value)} />
-                                    <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaSecaRecipiente || ""} onChange={e => handleUpdateLP(i, 'massaSecaRecipiente', e.target.value)} />
-                                    <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaRecipiente || ""} onChange={e => handleUpdateLP(i, 'massaRecipiente', e.target.value)} />
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive shrink-0" onClick={() => removePontoLP(i)} disabled={limites.pontosLP.length <= 1}>
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                    </Button>
-                                </div>
-                            ))}
+                            {limites.pontosLP.map((ponto, i) => {
+                                const validacao = validarVariacaoLP(i);
+                                const borderClass = validacao.status === 'error'
+                                    ? 'border-red-500/70 bg-red-500/5'
+                                    : validacao.status === 'warn'
+                                        ? 'border-amber-500/70 bg-amber-500/5'
+                                        : 'border bg-muted/5';
+
+                                return (
+                                    <div key={ponto.id || i} className="relative">
+                                        <div className={cn(
+                                            "grid grid-cols-[1fr,1fr,1fr,auto] gap-1.5 items-center p-1.5 rounded-md transition-colors hover:bg-muted/10",
+                                            borderClass
+                                        )}>
+                                            <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaUmidaRecipiente || ""} onChange={e => handleUpdateLP(i, 'massaUmidaRecipiente', e.target.value)} />
+                                            <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaSecaRecipiente || ""} onChange={e => handleUpdateLP(i, 'massaSecaRecipiente', e.target.value)} />
+                                            <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaRecipiente || ""} onChange={e => handleUpdateLP(i, 'massaRecipiente', e.target.value)} />
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive shrink-0" onClick={() => removePontoLP(i)}>
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </Button>
+                                        </div>
+                                        {validacao.msg && (
+                                            <p className={cn(
+                                                "text-[10px] mt-0.5 ml-1 flex items-center gap-1",
+                                                validacao.status === 'error' ? 'text-red-400' : 'text-amber-400'
+                                            )}>
+                                                <AlertCircle className="w-3 h-3" />
+                                                {validacao.msg}
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
+                        {/* Aviso de quantidade de pontos LP */}
+                        {avisoQuantidadePontosLP().msg && (
+                            <p className={cn(
+                                "text-[10px] mt-1 flex items-center gap-1 px-1",
+                                avisoQuantidadePontosLP().status === 'error' ? 'text-red-400' : 'text-amber-400'
+                            )}>
+                                <AlertCircle className="w-3 h-3" />
+                                {avisoQuantidadePontosLP().msg}
+                            </p>
+                        )}
                     </div>
 
-                    <Separator />
 
-                    {/* Dados Adicionais */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <Label htmlFor="umidadeNatural" className="text-xs">Umidade Natural (%)</Label>
-                            <Input id="umidadeNatural" placeholder="Opcional" value={limites.umidadeNatural || ""} onChange={e => updateLimites({ umidadeNatural: e.target.value })} className="h-9" />
-                        </div>
-                        <div>
-                            <Label htmlFor="argila" className="text-xs">Fração Argila (%)</Label>
-                            <Input id="argila" placeholder="Opcional" value={limites.percentualArgila || ""} onChange={e => updateLimites({ percentualArgila: e.target.value })} className="h-9" />
-                        </div>
-                    </div>
                 </CardContent>
             </Card>
         </div>
@@ -743,17 +1007,12 @@ const ResultadosView = ({ resultadoCombinado }: { resultadoCombinado: Caracteriz
     const [resultTab, setResultTab] = useState("resultados");
     const limiteLiquidezChartRef = useRef<HTMLDivElement>(null);
 
+    // Create an empty result object for display when no calculation yet
+    const displayResult = resultadoCombinado || {} as CaracterizacaoOutput;
+
     return (
         <div className="space-y-4 animate-in slide-in-from-right-5 duration-300">
-            {!resultadoCombinado ? (
-                <Card className="glass flex items-center justify-center p-12 text-center text-muted-foreground border-dashed min-h-[400px]">
-                    <div>
-                        <Calculator className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                        <p className="text-lg font-medium mb-2">Nenhum resultado ainda</p>
-                        <p className="text-sm">Preencha os dados e clique em <strong>Calcular</strong>.</p>
-                    </div>
-                </Card>
-            ) : resultadoCombinado.erro ? (
+            {resultadoCombinado?.erro ? (
                 <Alert variant="destructive" className="min-h-[200px] flex items-center">
                     <AlertCircle className="h-5 w-5" />
                     <AlertDescription className="text-base ml-2">{resultadoCombinado.erro}</AlertDescription>
@@ -775,53 +1034,64 @@ const ResultadosView = ({ resultadoCombinado }: { resultadoCombinado: Caracteriz
                         </TabsList>
 
                         {/* Tab Resultados */}
-                        <TabsContent value="resultados" className="mt-0">
-                            <Card className="glass overflow-hidden">
+                        <TabsContent value="resultados" className="mt-0 animate-in fade-in-50 slide-in-from-left-2 duration-300">
+                            <Card className="glass">
                                 <CardContent className="p-0">
                                     <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
                                         {/* Índices Físicos */}
-                                        <div className="p-5 space-y-3">
+                                        <div className="p-3 space-y-2">
                                             <h4 className="font-semibold text-sm flex items-center gap-2 text-primary">
                                                 <Beaker className="w-4 h-4" />
                                                 Índices Físicos
                                             </h4>
-                                            <div className="space-y-2.5">
-                                                <ResultRow label="Umidade (w)" value={resultadoCombinado.w} unit="%" />
-                                                <ResultRow label="γ natural" value={resultadoCombinado.gamma_nat} unit="kN/m³" />
-                                                <ResultRow label="γ seco" value={resultadoCombinado.gamma_d} unit="kN/m³" />
-                                                <ResultRow label="Índice de Vazios (e)" value={resultadoCombinado.e} unit="" precision={3} />
-                                                <ResultRow label="Porosidade (n)" value={resultadoCombinado.n} unit="%" />
-                                                <ResultRow label="Saturação (Sr)" value={resultadoCombinado.Sr} unit="%" />
-                                                <ResultRow label="γ saturado" value={resultadoCombinado.gamma_sat} unit="kN/m³" />
+                                            <div className="space-y-[1px]">
+                                                <ResultRow label={<span><span className="font-serif italic text-lg">h</span> <span className="text-[10px] font-normal opacity-70">(Umidade)</span></span>} value={displayResult.w} unit="%" precision={1} tooltipKey="h" statusRanges={{ ok: [5, 50], warn: [0, 80] }} />
+                                                <ResultRow label={<span><span className="font-serif italic text-lg">γ</span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Natural)</span></span>} value={displayResult.gamma_nat} unit="kN/m³" precision={2} tooltipKey="gamma" statusRanges={{ ok: [14, 22], warn: [10, 25] }} />
+                                                <ResultRow label={<span><span className="font-serif italic text-lg">γ<sub className="text-xs not-italic">s</sub></span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Seco)</span></span>} value={displayResult.gamma_d} unit="kN/m³" precision={2} tooltipKey="gamma_d" statusRanges={{ ok: [12, 20], warn: [8, 22] }} />
+                                                <ResultRow label={<span><span className="font-serif italic text-lg">e</span> <span className="text-[10px] font-normal opacity-70">(Índice de Vazios)</span></span>} value={displayResult.e} unit="" precision={2} tooltipKey="e" statusRanges={{ ok: [0.3, 1.2], warn: [0.1, 2.0] }} />
+                                                <ResultRow label={<span><span className="font-serif italic text-lg">n</span> <span className="text-[10px] font-normal opacity-70">(Porosidade)</span></span>} value={displayResult.n} unit="%" precision={0} tooltipKey="n" statusRanges={{ ok: [25, 60], warn: [15, 75] }} />
+                                                <ResultRow label={<span><span className="font-serif italic text-lg">S</span> <span className="text-[10px] font-normal opacity-70">(Grau de Saturação)</span></span>} value={displayResult.Sr} unit="%" precision={0} tooltipKey="Sr" statusRanges={{ ok: [0, 100], warn: [0, 100] }} />
+                                                <ResultRow label={<span><span className="font-serif italic text-lg">γ<sub className="text-xs not-italic">sat</sub></span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Saturado)</span></span>} value={displayResult.gamma_sat} unit="kN/m³" precision={2} tooltipKey="gamma_sat" statusRanges={{ ok: [18, 23], warn: [15, 25] }} />
                                             </div>
                                         </div>
 
                                         {/* Limites */}
-                                        <div className="p-5 space-y-3">
+                                        <div className="p-3 space-y-2">
                                             <h4 className="font-semibold text-sm flex items-center gap-2 text-blue-500">
                                                 <Droplet className="w-4 h-4" />
                                                 Limites de Consistência
                                             </h4>
-                                            <div className="space-y-2.5">
-                                                <ResultRow label="Limite de Liquidez (LL)" value={resultadoCombinado.ll} unit="%" />
-                                                <ResultRow label="Limite de Plasticidade (LP)" value={resultadoCombinado.lp} unit="%" />
-                                                <ResultRow label="Índice de Plasticidade (IP)" value={resultadoCombinado.ip} unit="%" highlight />
-                                                <ResultRow label="Índice de Consistência (IC)" value={resultadoCombinado.ic} unit="" precision={2} />
-                                                <ResultRow label="Atividade (Ia)" value={resultadoCombinado.atividade} unit="" precision={2} />
+                                            <div className="space-y-[1px]">
+                                                <ResultRow label={<span>LL <span className="text-[10px] font-normal opacity-70">(Limite de Liquidez)</span></span>} value={displayResult.ll} unit="%" tooltipKey="LL" />
+                                                <ResultRow label={<span>LP <span className="text-[10px] font-normal opacity-70">(Limite de Plasticidade)</span></span>} value={displayResult.lp} unit="%" tooltipKey="LP" />
+                                                <ResultRow label={<span>IP <span className="text-[10px] font-normal opacity-70">(Índice de Plasticidade)</span></span>} value={displayResult.ip} unit="%" tooltipKey="IP" statusRanges={{ ok: [7, 15], warn: [0, 30] }} />
+                                                <ResultRow label={<span>IC <span className="text-[10px] font-normal opacity-70">(Índice de Consistência)</span></span>} value={displayResult.ic} unit="" precision={2} tooltipKey="IC" statusRanges={{ ok: [0, 1], warn: [-0.5, 1.5] }} />
                                             </div>
                                             <Separator className="my-3" />
                                             <div className="space-y-1.5 text-sm">
-                                                {resultadoCombinado.classificacao_plasticidade && (
+                                                {displayResult.classificacao_plasticidade && (
                                                     <div className="flex items-center gap-2">
                                                         <Badge variant="outline" className="text-xs">Plasticidade</Badge>
-                                                        <span className="font-medium">{resultadoCombinado.classificacao_plasticidade}</span>
+                                                        <span className="font-medium">{displayResult.classificacao_plasticidade}</span>
                                                     </div>
                                                 )}
-                                                {resultadoCombinado.classificacao_consistencia && (
+                                                {displayResult.classificacao_consistencia && (
                                                     <div className="flex items-center gap-2">
                                                         <Badge variant="outline" className="text-xs">Consistência</Badge>
-                                                        <span className="font-medium">{resultadoCombinado.classificacao_consistencia}</span>
+                                                        <span className="font-medium">{displayResult.classificacao_consistencia}</span>
                                                     </div>
+                                                )}
+                                                {displayResult.compacidade_relativa !== null && displayResult.compacidade_relativa !== undefined && (
+                                                    <>
+                                                        <Separator className="my-2" />
+                                                        <ResultRow label={<span><span className="font-serif italic text-lg">D<sub className="text-xs not-italic">r</sub></span> <span className="text-[10px] font-normal opacity-70">(Compacidade Relativa)</span></span>} value={displayResult.compacidade_relativa} unit="%" precision={0} tooltipKey="Dr" statusRanges={{ ok: [35, 85], warn: [15, 100] }} />
+                                                        {displayResult.classificacao_compacidade && (
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                                <Badge variant="outline" className="text-xs">Compacidade</Badge>
+                                                                <span className="font-medium">{displayResult.classificacao_compacidade}</span>
+                                                            </div>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                         </div>
@@ -831,7 +1101,7 @@ const ResultadosView = ({ resultadoCombinado }: { resultadoCombinado: Caracteriz
                         </TabsContent>
 
                         {/* Tab Gráficos */}
-                        <TabsContent value="graficos" className="mt-0 space-y-4">
+                        <TabsContent value="graficos" className="mt-0 space-y-4 animate-in fade-in-50 slide-in-from-right-2 duration-300">
                             <Card className="glass">
                                 <CardHeader className="pb-2">
                                     <CardTitle className="text-sm">Diagrama de Fases</CardTitle>
@@ -840,15 +1110,15 @@ const ResultadosView = ({ resultadoCombinado }: { resultadoCombinado: Caracteriz
                                 <CardContent>
                                     <DiagramaFases
                                         volumeSolidosNorm={1}
-                                        volumeAguaNorm={resultadoCombinado.e && resultadoCombinado.Sr ? (resultadoCombinado.e * resultadoCombinado.Sr / 100) : 0}
-                                        volumeArNorm={resultadoCombinado.e ? resultadoCombinado.e * (1 - (resultadoCombinado.Sr || 0) / 100) : 0}
-                                        volumeSolidosCalc={resultadoCombinado.volume_solidos_calc}
-                                        volumeAguaCalc={resultadoCombinado.volume_agua_calc}
-                                        volumeArCalc={resultadoCombinado.volume_ar_calc}
-                                        volumeTotalCalc={resultadoCombinado.volume_total_calc}
-                                        massaSolidosCalc={resultadoCombinado.massa_solidos_calc}
-                                        massaAguaCalc={resultadoCombinado.massa_agua_calc}
-                                        massaTotalCalc={resultadoCombinado.massa_total_calc}
+                                        volumeAguaNorm={displayResult.e && displayResult.Sr ? (displayResult.e * displayResult.Sr / 100) : 0}
+                                        volumeArNorm={displayResult.e ? displayResult.e * (1 - (displayResult.Sr || 0) / 100) : 0}
+                                        volumeSolidosCalc={displayResult.volume_solidos_calc}
+                                        volumeAguaCalc={displayResult.volume_agua_calc}
+                                        volumeArCalc={displayResult.volume_ar_calc}
+                                        volumeTotalCalc={displayResult.volume_total_calc}
+                                        massaSolidosCalc={displayResult.massa_solidos_calc}
+                                        massaAguaCalc={displayResult.massa_agua_calc}
+                                        massaTotalCalc={displayResult.massa_total_calc}
                                     />
                                 </CardContent>
                             </Card>
@@ -861,28 +1131,103 @@ const ResultadosView = ({ resultadoCombinado }: { resultadoCombinado: Caracteriz
                                 <CardContent>
                                     <LimiteLiquidezChart
                                         ref={limiteLiquidezChartRef}
-                                        pontos={resultadoCombinado.pontos_grafico_ll || []}
-                                        ll={resultadoCombinado.ll || null}
+                                        pontos={displayResult.pontos_grafico_ll || []}
+                                        ll={displayResult.ll || null}
                                     />
                                 </CardContent>
                             </Card>
                         </TabsContent>
                     </Tabs>
                 </>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 };
 
-function ResultRow({ label, value, unit, precision = 2, highlight = false }: { label: string, value: number | null | undefined, unit: string, precision?: number, highlight?: boolean }) {
-    if (value === undefined || value === null) return null;
+function ResultRow({
+    label,
+    value,
+    unit,
+    precision = 2,
+    tooltipKey,
+    statusRanges
+}: {
+    label: React.ReactNode | string,
+    value: number | null | undefined,
+    unit: string,
+    precision?: number,
+    tooltipKey?: keyof typeof resultTooltips,
+    statusRanges?: { ok: [number, number], warn: [number, number] }
+}) {
+    // Check if value is valid (not null, undefined, NaN, or Infinity)
+    const isValidValue = value !== undefined && value !== null && !isNaN(value) && isFinite(value);
+
+    // Determine status color based on value ranges
+    let statusColor = "bg-muted-foreground/30"; // default: no status indicator
+    let statusLabel = "";
+    let showStatus = false;
+
+    if (isValidValue && statusRanges) {
+        showStatus = true;
+        const [okMin, okMax] = statusRanges.ok;
+        const [warnMin, warnMax] = statusRanges.warn;
+
+        if (value >= okMin && value <= okMax) {
+            statusColor = "bg-emerald-500";
+            statusLabel = "Normal";
+        } else if (value >= warnMin && value <= warnMax) {
+            statusColor = "bg-amber-500";
+            statusLabel = "Atenção";
+        } else {
+            statusColor = "bg-red-500";
+            statusLabel = "Revisar";
+        }
+    }
+
+    const tooltip = tooltipKey ? resultTooltips[tooltipKey] : null;
+
+    // Format display value
+    const displayValue = isValidValue ? `${value.toFixed(precision)} ${unit}` : "-";
+
     return (
-        <div className={cn(
-            "flex justify-between items-center text-sm py-1.5 px-2 rounded-md -mx-2 transition-colors",
-            highlight ? "font-bold dark:text-white text-foreground dark:bg-white/10 bg-muted/20" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-        )}>
-            <span className={cn("text-muted-foreground", highlight && "dark:text-white/70 text-foreground")}>{label}</span>
-            <span className="font-medium font-mono">{value.toFixed(precision)} {unit}</span>
+        <div className="flex justify-between items-center text-sm py-1.5 px-3 rounded-md bg-muted/5 hover:bg-muted/15 transition-all duration-200 border border-transparent hover:border-border/50 -mx-1 group hover:scale-[1.01]">
+            <span className="text-foreground font-semibold flex items-center gap-1.5">
+                {label}
+                {tooltip && (
+                    <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-xs z-50">
+                                <p className="text-xs font-normal">{tooltip.desc}</p>
+                                {tooltip.range && (
+                                    <p className="text-xs text-muted-foreground mt-1 border-t border-border/50 pt-1">{tooltip.range}</p>
+                                )}
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                )}
+            </span>
+            <div className="flex items-center gap-2">
+                {showStatus && (
+                    <TooltipProvider delayDuration={200}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span className={cn("w-2 h-2 rounded-full opacity-80 group-hover:opacity-100 transition-opacity", statusColor)} />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs z-50">
+                                {statusLabel}
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                )}
+                <span className={cn(
+                    "font-bold font-mono text-right",
+                    isValidValue ? "text-foreground" : "text-muted-foreground"
+                )}>{displayValue}</span>
+            </div>
         </div>
     );
 }

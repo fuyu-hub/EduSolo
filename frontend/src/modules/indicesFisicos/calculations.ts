@@ -40,21 +40,21 @@ export interface IndicesFisicosOutputComEstatisticas extends IndicesFisicosOutpu
  */
 function calcularEstatisticas(valores: (number | undefined | null)[]): EstatisticaParametro | undefined {
   const valoresValidos = valores.filter((v): v is number => v !== null && v !== undefined && !isNaN(v));
-  
+
   if (valoresValidos.length < 2) {
     return undefined;
   }
-  
+
   const n = valoresValidos.length;
   const media = valoresValidos.reduce((a, b) => a + b, 0) / n;
-  
+
   const variancia = valoresValidos.reduce((sum, v) => sum + Math.pow(v - media, 2), 0) / (n - 1);
   const desvio_padrao = Math.sqrt(variancia);
   const coeficiente_variacao = (desvio_padrao / media) * 100;
-  
+
   const minimo = Math.min(...valoresValidos);
   const maximo = Math.max(...valoresValidos);
-  
+
   return {
     media: Number(media.toFixed(3)),
     desvio_padrao: Number(desvio_padrao.toFixed(3)),
@@ -73,21 +73,21 @@ export function calcularIndicesFisicosMultiplasAmostras(
   if (amostras.length === 0) {
     return { erro: 'Nenhuma amostra fornecida' };
   }
-  
+
   // Calcular para cada amostra
   const resultados = amostras.map(amostra => calcularIndicesFisicos(amostra));
-  
+
   // Se houver erro em alguma, retornar o primeiro erro
   const erros = resultados.filter(r => r.erro);
   if (erros.length > 0) {
     return erros[0];
   }
-  
+
   // Se for apenas uma amostra, retornar o resultado direto
   if (amostras.length === 1) {
     return { ...resultados[0], num_amostras: 1 };
   }
-  
+
   // Calcular estatísticas para cada parâmetro
   const estatisticas = {
     peso_especifico_natural: calcularEstatisticas(resultados.map(r => r.peso_especifico_natural)),
@@ -98,7 +98,7 @@ export function calcularIndicesFisicosMultiplasAmostras(
     porosidade: calcularEstatisticas(resultados.map(r => r.porosidade)),
     grau_saturacao: calcularEstatisticas(resultados.map(r => r.grau_saturacao)),
   };
-  
+
   // Usar médias como valores principais
   const resultado: IndicesFisicosOutputComEstatisticas = {
     peso_especifico_natural: estatisticas.peso_especifico_natural?.media ?? resultados[0].peso_especifico_natural,
@@ -128,22 +128,22 @@ export function calcularIndicesFisicosMultiplasAmostras(
     estatisticas,
     num_amostras: amostras.length,
   };
-  
+
   // Adicionar aviso sobre CV se necessário
   const CVs = Object.values(estatisticas)
     .filter((e): e is EstatisticaParametro => e !== undefined)
     .map(e => e.coeficiente_variacao);
-  
+
   if (CVs.length > 0) {
     const CV_medio = CVs.reduce((a, b) => a + b, 0) / CVs.length;
-    
+
     if (CV_medio > 15) {
       resultado.aviso = `⚠️ Alta variabilidade detectada entre amostras (CV médio = ${CV_medio.toFixed(1)}%). Recomenda-se revisar os ensaios.`;
     } else if (CV_medio > 10) {
       resultado.aviso = `⚠️ Variação moderada entre amostras (CV médio = ${CV_medio.toFixed(1)}%). Resultados aceitáveis.`;
     }
   }
-  
+
   return resultado;
 }
 

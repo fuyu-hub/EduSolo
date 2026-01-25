@@ -42,8 +42,13 @@ const Salvos = lazy(() => import("./pages/Salvos"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 
+import { MobileBlocker } from "@/components/MobileBlocker";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 // Componente interno para preload
 const AppContent = () => {
+  const isMobile = useIsMobile();
+
   // Preload das rotas mais acessadas após 2 segundos de idle
   useRoutePreload({
     routes: {
@@ -108,6 +113,10 @@ const AppContent = () => {
     const timer = setTimeout(cleanupOrphanOverlays, 100);
     return () => clearTimeout(timer);
   }, []);
+
+  if (isMobile) {
+    return <MobileBlocker />;
+  }
 
   return (
     <Suspense fallback={<PageLoader />}>

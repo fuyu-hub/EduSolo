@@ -32,7 +32,7 @@ export const exemplosCaracterizacao: ExemploCaracterizacao[] = [
     {
         nome: "Argila Mole Alta Plasticidade",
         descricao: "Solo argiloso típico de regiões litorâneas, com alta plasticidade (CH) e consistência muito mole.",
-        numAmostras: 3,
+        numAmostras: 1,
         indices: { massaUmida: "180.5", massaSeca: "150.2", volume: "100" },
         settings: { Gs: "2.70", pesoEspecificoAgua: "10.0" },
         limites: {
@@ -79,7 +79,7 @@ export const exemplosCaracterizacao: ExemploCaracterizacao[] = [
     {
         nome: "Silte Argiloso Médio",
         descricao: "Solo siltoso com características intermediárias (ML/CL), plasticidade média.",
-        numAmostras: 2,
+        numAmostras: 1,
         indices: { massaUmida: "185.0", massaSeca: "160.0", volume: "100" },
         settings: { Gs: "2.68", pesoEspecificoAgua: "10.0" },
         limites: {
@@ -103,7 +103,7 @@ export const exemplosCaracterizacao: ExemploCaracterizacao[] = [
     {
         nome: "Argila Rija Pré-Adensada",
         descricao: "Argila muito consistente e densa, com alto peso específico seco.",
-        numAmostras: 3,
+        numAmostras: 1,
         indices: { massaUmida: "210.0", massaSeca: "185.0", volume: "100" },
         settings: { Gs: "2.75", pesoEspecificoAgua: "10.0" },
         limites: {
@@ -126,7 +126,7 @@ export const exemplosCaracterizacao: ExemploCaracterizacao[] = [
     {
         nome: "Solo Orgânico Mole",
         descricao: "Solo com presença de matéria orgânica, alta compressibilidade e baixa densidade.",
-        numAmostras: 2,
+        numAmostras: 1,
         indices: { massaUmida: "155.0", massaSeca: "105.0", volume: "100" },
         settings: { Gs: "2.40", pesoEspecificoAgua: "10.0" },
         limites: {

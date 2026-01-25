@@ -25,8 +25,6 @@ export interface PontoLP {
 export interface LimitesInput {
     pontosLL: PontoLL[];
     pontosLP: PontoLP[];
-    umidadeNatural?: string;
-    percentualArgila?: string;
 }
 
 // Estado unificado da Amostra
@@ -70,15 +68,16 @@ export interface CaracterizacaoOutput {
     lp?: number | null;
     ip?: number | null;
     ic?: number | null;
-    atividade?: number | null;
-
     // Gráfico LL
     pontos_grafico_ll?: { x: number; y: number }[] | null;
 
     // Classificações
     classificacao_plasticidade?: string;
     classificacao_consistencia?: string;
-    classificacao_atividade?: string;
+
+    // Compacidade (solos não plásticos)
+    compacidade_relativa?: number | null;
+    classificacao_compacidade?: string;
 
     erro?: string;
 }

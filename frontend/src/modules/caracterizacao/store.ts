@@ -57,8 +57,6 @@ export const useCaracterizacaoStore = create<CaracterizacaoState>((set) => ({
         pontosLP: [
             { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }
         ],
-        umidadeNatural: "",
-        percentualArgila: ""
     },
     updateLimites: (data) => set((state) => ({
         limites: { ...state.limites, ...data }
