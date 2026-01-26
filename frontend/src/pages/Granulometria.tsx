@@ -184,10 +184,8 @@ function GranulometriaDesktop() {
   };
 
   const handleCalculate = async () => {
+    // Validação silenciosa para cálculo automático
     if (!formData.peneiramento_grosso.massa_total_seca) {
-      toast.error("Massa total seca não informada", {
-        description: "Por favor, informe a massa total seca da amostra utilizada no ensaio."
-      });
       return;
     }
 
@@ -202,21 +200,11 @@ function GranulometriaDesktop() {
       massaRetida: p.massaRetida || "0"
     }));
 
-    // Atualizar a UI com os valores preenchidos
-    updateGrossoData({
-      ...formData.peneiramento_grosso,
-      peneiras: peneirasGrossoAtualizadas
-    });
-    updateFinoData({
-      ...formData.peneiramento_fino,
-      peneiras: peneirasFinoAtualizadas
-    });
+    // Não atualizar UI durante cálculo automático para evitar loop infinito
+    // updateGrossoData e updateFinoData removidos
 
     const peneirasValidas = peneirasGrossoAtualizadas.filter((p) => p.abertura && p.massaRetida);
     if (peneirasValidas.length === 0) {
-      toast.error("Peneiras não informadas", {
-        description: "Adicione pelo menos uma peneira com abertura e massa retida."
-      });
       return;
     }
 
@@ -254,21 +242,26 @@ function GranulometriaDesktop() {
       const resultado = calcularGranulometria(payload);
 
       if (resultado.erro) {
-        toast.error("Erro no cálculo", { description: resultado.erro });
+        // Silencioso para cálculo automático
       } else {
         setResults(resultado);
-        toast.success("Análise concluída com sucesso!", { description: "A granulometria foi calculada e as classificações estão disponíveis." });
       }
     } catch (error) {
-      if (error instanceof Error) {
-        toast.error("Erro no cálculo", { description: error.message });
-      } else {
-        toast.error("Erro ao calcular", { description: "Verifique se todos os dados estão corretos e tente novamente." });
-      }
+      // Silencioso para cálculo automático
+      setResults(null);
     } finally {
       setIsCalculating(false);
     }
   };
+
+  // Auto-calculate with instant update (0ms debounce)
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      handleCalculate();
+    }, 0);
+
+    return () => clearTimeout(debounceTimer);
+  }, [formData]);
 
   const handleClear = () => {
     resetForm();
@@ -814,11 +807,6 @@ function GranulometriaDesktop() {
             <Trash2 className="w-4 h-4" />
             Limpar
           </Button>
-
-          <Button size="sm" onClick={handleCalculate} disabled={isCalculating} className="gap-1.5 shadow-md bg-primary hover:bg-primary/90" data-tour="btn-analisar">
-            {isCalculating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CalcIcon className="w-4 h-4" />}
-            Calcular
-          </Button>
         </div>
       </div>
 
@@ -1262,7 +1250,12 @@ function ResultRow({
   highlight?: boolean,
   tooltip?: string
 }) {
-  if (value === undefined || value === null || isNaN(value)) return null;
+  // Check if value is valid (not null, undefined, NaN, or Infinity)
+  const isValidValue = value !== undefined && value !== null && !isNaN(value) && isFinite(value);
+
+  // Format display value
+  const displayValue = isValidValue ? `${value.toFixed(precision)} ${unit}` : "-";
+
   return (
     <div className={cn(
       "flex justify-between items-center text-sm py-2 px-3 rounded-md transition-colors",
@@ -1285,9 +1278,11 @@ function ResultRow({
       </div>
       <span className={cn(
         "font-mono font-medium",
-        highlight ? "text-primary dark:text-primary-foreground" : "text-foreground dark:text-white"
+        isValidValue
+          ? (highlight ? "text-primary dark:text-primary-foreground" : "text-foreground dark:text-white")
+          : "text-muted-foreground"
       )}>
-        {value.toFixed(precision)} {unit}
+        {displayValue}
       </span>
     </div>
   );
