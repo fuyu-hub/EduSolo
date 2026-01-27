@@ -29,8 +29,8 @@ interface CompactacaoState {
 }
 
 const defaultFormData: CompactacaoFormData = {
-    volumeCilindro: "982",
-    pesoCilindro: "4100",
+    volumeCilindro: "",
+    pesoCilindro: "",
     Gs: "",
     pesoEspecificoAgua: "10.0",
     pontos: [

@@ -765,7 +765,7 @@ const EntradaDados = () => {
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
-                                            <TooltipContent><p className="max-w-xs text-xs">{tooltips.Gs}</p></TooltipContent>
+                                            <TooltipContent side="left"><p className="max-w-xs text-xs">{tooltips.Gs}</p></TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
                                 </Label>
@@ -779,7 +779,7 @@ const EntradaDados = () => {
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
-                                            <TooltipContent><p className="max-w-xs text-xs">{tooltips.massaUmida}</p></TooltipContent>
+                                            <TooltipContent side="left"><p className="max-w-xs text-xs">{tooltips.massaUmida}</p></TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
                                 </Label>
@@ -1200,7 +1200,7 @@ function ResultRow({
                             <TooltipTrigger asChild>
                                 <Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
                             </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-xs z-50">
+                            <TooltipContent side="left" className="max-w-xs z-50">
                                 <p className="text-xs font-normal">{tooltip.desc}</p>
                                 {tooltip.range && (
                                     <p className="text-xs text-muted-foreground mt-1 border-t border-border/50 pt-1">{tooltip.range}</p>

@@ -98,10 +98,10 @@ interface PontoCurva {
 }
 
 interface Results {
-  umidade_otima: number | null;
-  peso_especifico_seco_max: number | null;
-  pontos_curva_compactacao: PontoCurva[] | null;
-  pontos_curva_saturacao_100: PontoCurva[] | null;
+  umidade_otima?: number | null;
+  peso_especifico_seco_max?: number | null;
+  pontos_curva_compactacao?: PontoCurva[] | null;
+  pontos_curva_saturacao_100?: PontoCurva[] | null;
   erro?: string | null;
 }
 
@@ -145,11 +145,14 @@ function CompactacaoDesktop() {
     reset(formData);
   }, []); // Only on mount
 
-  // Auto-sync form changes to store (sem localStorage, sem popup)
+  // Auto-sync form changes to store AND calculate
   useEffect(() => {
     const subscription = watch((value) => {
       if (value) {
         updateFormData(value as any);
+        // Auto Calculate
+        const currentData = form.getValues();
+        handleCalculate(currentData, true);
       }
     });
     return () => subscription.unsubscribe();
@@ -272,7 +275,9 @@ function CompactacaoDesktop() {
         };
         handleSelectExample(exemploParaTour as any);
         await new Promise(resolve => setTimeout(resolve, 500));
-        form.handleSubmit(onSubmit)();
+        // Force calculation for tour
+        const values = form.getValues();
+        handleCalculate(values, false); // false to show success toast if needed, or consistent with user action
         await new Promise(resolve => setTimeout(resolve, 800));
       };
 
@@ -314,8 +319,8 @@ function CompactacaoDesktop() {
 
   const handleClear = () => {
     form.reset({
-      volumeCilindro: "982",
-      pesoCilindro: "4100",
+      volumeCilindro: "",
+      pesoCilindro: "",
       Gs: "",
       pesoEspecificoAgua: "10.0",
       pontos: [
@@ -405,7 +410,8 @@ function CompactacaoDesktop() {
     handleSelectExample(exemploParaTour as any);
 
     await new Promise(resolve => setTimeout(resolve, 300));
-    form.handleSubmit(onSubmit)();
+    const values = form.getValues();
+    handleCalculate(values, false);
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     startTour(tourSteps, "compactacao", true);
@@ -584,15 +590,46 @@ function CompactacaoDesktop() {
     }
   };
 
-  const onSubmit = async (data: FormInputValues) => {
-    setIsCalculating(true);
+  const handleCalculate = async (data: FormInputValues, isAuto: boolean = false) => {
+    if (!isAuto) setIsCalculating(true);
     setApiError(null);
-    setResults(null);
+
+    // Se não for auto, limpamos para dar feedback visual de recálculo (opcional, aqui mantemos o anterior se possível para auto)
+    // Para auto, não limpamos para evitar piscar, a menos que haja erro novo.
 
     let apiInput: CompactacaoInputAPI;
     try {
       const volumeCil = parseFloat(data.volumeCilindro);
       const pesoCil = parseFloat(data.pesoCilindro);
+      const pesoEspAgua = parseFloat(data.pesoEspecificoAgua);
+
+      // Verificação básica de números válidos nos campos de configuração
+      if (isNaN(volumeCil) || volumeCil <= 0 || isNaN(pesoCil) || pesoCil < 0 || isNaN(pesoEspAgua) || pesoEspAgua <= 0) {
+        // Se for auto, apenas ignora e não calcula
+        if (!isAuto) {
+          setApiError("Verifique os parâmetros gerais (Volume, Peso Cilindro).");
+          toast.error("Erro de Validação", { description: "Parâmetros gerais inválidos." });
+          setIsCalculating(false);
+        }
+        return;
+      }
+
+      // Validar se há dados suficientes nos pontos (todos os campos numéricos preenchidos)
+      const pontosValidos = data.pontos.length >= 3 && data.pontos.every(p =>
+        p.pesoAmostaCilindro && !isNaN(parseFloat(p.pesoAmostaCilindro)) &&
+        p.pesoBrutoUmido && !isNaN(parseFloat(p.pesoBrutoUmido)) &&
+        p.pesoBrutoSeco && !isNaN(parseFloat(p.pesoBrutoSeco)) &&
+        p.tara && !isNaN(parseFloat(p.tara))
+      );
+
+      if (!pontosValidos) {
+        if (!isAuto) {
+          setApiError("Preencha todos os dados de pelo menos 3 pontos.");
+          toast.error("Dados Incompletos", { description: "Preencha todos os campos dos pontos do ensaio." });
+          setIsCalculating(false);
+        }
+        return;
+      }
 
       apiInput = {
         pontos_ensaio: data.pontos.map(p => ({
@@ -604,14 +641,15 @@ function CompactacaoDesktop() {
           massa_recipiente_w: parseFloat(p.tara),
         })),
         Gs: (data.Gs && data.Gs !== "") ? parseFloat(data.Gs) : undefined,
-        peso_especifico_agua: parseFloat(data.pesoEspecificoAgua),
+        peso_especifico_agua: pesoEspAgua,
       };
 
       if (apiInput.Gs === undefined) delete apiInput.Gs;
     } catch (parseError) {
-      setApiError("Erro ao processar os dados do formulário.");
-      toast("Erro de Formulário", { description: "Verifique se todos os campos numéricos contêm valores válidos." });
-      setIsCalculating(false);
+      if (!isAuto) {
+        setApiError("Erro ao processar os dados.");
+        setIsCalculating(false);
+      }
       return;
     }
 
@@ -620,10 +658,14 @@ function CompactacaoDesktop() {
       const resultado = calcularCompactacao(apiInput);
       if (resultado.erro) {
         setApiError(resultado.erro);
-        toast("Erro no Cálculo", { description: resultado.erro });
+        if (!isAuto) toast.error("Erro no Cálculo", { description: resultado.erro });
+        // Se erro explícito de cálculo, talvez limpar resultados antigos seja bom
+        // Mas se for só erro de "impossível calcular", mantemos o ultimo ou limpamos?
+        // Vamos limpar para não mostrar dados errados.
+        setResults(null);
       } else {
         setResults(resultado);
-        toast("Sucesso", { description: "Ensaio de compactação calculado com sucesso." });
+        if (!isAuto) toast.success("Sucesso", { description: "Ensaio calculado com sucesso." });
       }
     } catch (err) {
       let errorMessage = "Erro ao calcular compactação.";
@@ -631,9 +673,9 @@ function CompactacaoDesktop() {
         errorMessage = err.message;
       }
       setApiError(errorMessage);
-      toast("Erro na Requisição", { description: errorMessage });
+      if (!isAuto) toast.error("Erro na Requisição", { description: errorMessage });
     } finally {
-      setIsCalculating(false);
+      if (!isAuto) setIsCalculating(false);
     }
   };
 
@@ -647,7 +689,7 @@ function CompactacaoDesktop() {
   }, 0);
 
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-5 max-w-7xl animate-in fade-in duration-500">
+    <div className="container mx-auto px-4 md:px-6 pb-6 pt-0 space-y-5 max-w-7xl animate-in fade-in duration-500">
       <PrintHeader moduleTitle="Compactação (Proctor)" moduleName="compactacao" />
 
       {/* Top Header Section */}
@@ -687,11 +729,6 @@ function CompactacaoDesktop() {
               <Trash2 className="w-4 h-4" />
               Limpar
             </Button>
-
-            <Button size="sm" onClick={form.handleSubmit(onSubmit)} disabled={isCalculating} className="gap-1.5 shadow-md bg-primary hover:bg-primary/90" data-tour="btn-calcular">
-              {isCalculating ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CalcIcon className="w-4 h-4" />}
-              Calcular
-            </Button>
           </TooltipProvider>
         </div>
       </div>
@@ -699,7 +736,7 @@ function CompactacaoDesktop() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Formulário - Input */}
         <Card className="glass border-primary/20 flex flex-col animate-in fade-in slide-in-from-left-4 duration-700">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-1">
+          <form className="flex flex-col flex-1">
             <CardHeader className="pb-3 bg-gradient-to-r from-primary/5 to-transparent flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Info className="w-5 h-5 text-primary" />
@@ -724,7 +761,7 @@ function CompactacaoDesktop() {
                           <TooltipTrigger>
                             <Info className="w-3 h-3 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
+                          <TooltipContent className="max-w-xs" side="left">
                             <p>{tooltips.volumeCilindro}</p>
                           </TooltipContent>
                         </Tooltip>
@@ -754,7 +791,7 @@ function CompactacaoDesktop() {
                           <TooltipTrigger>
                             <Info className="w-3 h-3 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
+                          <TooltipContent className="max-w-xs" side="left">
                             <p>{tooltips.pesoCilindro}</p>
                           </TooltipContent>
                         </Tooltip>
@@ -784,7 +821,7 @@ function CompactacaoDesktop() {
                           <TooltipTrigger>
                             <Info className="w-3 h-3 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
-                          <TooltipContent className="max-w-xs">
+                          <TooltipContent className="max-w-xs" side="left">
                             <p>{tooltips.Gs}</p>
                           </TooltipContent>
                         </Tooltip>

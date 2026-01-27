@@ -157,29 +157,47 @@ function calcularIndiceGrupo(
 }
 
 function obterDescricaoHRB(grupo: string, subgrupo: string | undefined): string {
+  // Descrições específicas para grupos/subgrupos combinados (A-2-4, A-2-5, etc.)
+  // Quando houver subgrupo numérico (4, 5, 6, 7), a descrição é específica da combinação
+  if (grupo === 'A-2' && subgrupo) {
+    const descricoesA2: Record<string, string> = {
+      '4': 'Pedregulho ou areia siltosa (Baixa plasticidade)',
+      '5': 'Pedregulho ou areia siltosa elástica (Siltes micáceos ou diatomáceos)',
+      '6': 'Pedregulho ou areia argilosa (Argila plástica)',
+      '7': 'Pedregulho ou areia argilosa (Argila muito plástica/elástica)',
+    };
+    if (descricoesA2[subgrupo]) return descricoesA2[subgrupo];
+  }
+
+  if (grupo === 'A-7' && subgrupo) {
+    const descricoesA7: Record<string, string> = {
+      '5': 'Argilas elásticas (sujeitas a alta compressibilidade)',
+      '6': 'Argilas muito plásticas (sujeitas a grande variação volumétrica)',
+    };
+    if (descricoesA7[subgrupo]) return descricoesA7[subgrupo];
+  }
+
+  // Descrições gerais para os grupos principais
   const descricoes: Record<string, string> = {
     'A-1': 'Misturas bem graduadas de fragmentos de pedra, pedregulho e areia',
-    'A-2': 'Materiais granulares com teor de silte e argila',
-    'A-3': 'Areia fina de praia ou dunas, sem finos plásticos',
-    'A-4': 'Solos siltosos pouco ou nada plásticos',
-    'A-5': 'Solos siltosos com alta compressibilidade',
-    'A-6': 'Solos argilosos plásticos',
-    'A-7': 'Solos argilosos altamente plásticos',
+    'A-3': 'Areia fina (limpa, de praia ou duna) ou mistura de areia fina com pequena quantidade de silte não plástico',
+    'A-2': 'Solos granulares "sujos" (contendo silte ou argila)', // Fallback se não tiver subgrupo (raro)
+    'A-4': 'Solos siltosos (Pouca ou nenhuma plasticidade)',
+    'A-5': 'Solos siltosos elásticos (Alta compressibilidade, geralmente micáceos)',
+    'A-6': 'Solos argilosos (Plasticidade média a alta, argilas plásticas)',
+    'A-7': 'Solos argilosos (Alta plasticidade e/ou elasticidade)', // Fallback se não tiver subgrupo
   };
 
-  const subgrupo_desc: Record<string, string> = {
-    a: ' (predominantemente pedregulho)',
-    b: ' (predominantemente areia)',
-    '4': ' (características siltosas)',
-    '5': ' (características siltosas, alta compressibilidade)',
-    '6': ' (características argilosas)',
-    '7': ' (características argilosas, alta plasticidade)',
+  // Sufixos descritivos para A-1 (a, b)
+  const subgrupo_desc_A1: Record<string, string> = {
+    'a': ': Predominância de fragmentos de pedra ou pedregulho',
+    'b': ': Predominância de areia grossa',
   };
 
   let desc = descricoes[grupo] || 'Material não classificado';
 
-  if (subgrupo) {
-    desc += subgrupo_desc[subgrupo] || '';
+  if (grupo === 'A-1' && subgrupo && subgrupo_desc_A1[subgrupo]) {
+    desc += subgrupo_desc_A1[subgrupo];
   }
 
   return desc;
@@ -188,12 +206,16 @@ function obterDescricaoHRB(grupo: string, subgrupo: string | undefined): string 
 function obterAvaliacaoSubleito(grupo: string): string {
   const avaliacoes: Record<string, string> = {
     'A-1': 'Excelente a Bom',
-    'A-2': 'Bom a Regular',
-    'A-3': 'Regular',
-    'A-4': 'Regular a Pobre',
-    'A-5': 'Pobre',
-    'A-6': 'Regular a Pobre',
-    'A-7': 'Pobre a Muito Pobre',
+    'A-2': 'Excelente a Bom', // A-2 também é considerado Excelente a Bom na maioria das tabelas resumidas de Mat. Granulares, mas o usuário pediu para seguir o texto dele? 
+    // O usuário disse: "1. Materiais Granulares ... Comportamento geral como subleito: Excelente a Bom."
+    // A-2 está dentro de Materiais Granulares.
+    // Mas no texto detalhado do IG diz: "0: Subleito Bom (típico de ... A-2-4)"
+    // Vamos manter "Excelente a Bom" para todo o grupo de Materiais Granulares (A-1, A-3, A-2) conforme o cabeçalho do item 1 do prompt.
+    'A-3': 'Excelente a Bom',
+    'A-4': 'Regular a Fraco', // Item 2 do prompt: "Regular a Fraco" para Materiais Silto-Argilosos
+    'A-5': 'Regular a Fraco',
+    'A-6': 'Regular a Fraco',
+    'A-7': 'Regular a Fraco',
   };
 
   return avaliacoes[grupo] || 'Não avaliado';

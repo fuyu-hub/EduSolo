@@ -50,6 +50,8 @@ function classificarSoloGrosso(
 ): ClassificacaoUSCSOutput {
   // Determinar se é pedregulho (G) ou areia (S) pela fração dominante na porção grossa
   const prefixo = pedregulho > areia ? 'G' : 'S';
+  // Genero para concordância: 'o' (Pedregulho) ou 'a' (Areia)
+  const genero = prefixo === 'G' ? 'o' : 'a';
   const tipo_solo = prefixo === 'G' ? 'Pedregulho' : 'Areia';
 
   // Analisar os finos
@@ -73,12 +75,12 @@ function classificarSoloGrosso(
     if (bem_graduado) {
       return {
         classificacao: `${prefixo}W`,
-        descricao: `${tipo_solo} bem graduado`,
+        descricao: `${tipo_solo} bem graduad${genero}`,
       };
     } else {
       return {
         classificacao: `${prefixo}P`,
-        descricao: `${tipo_solo} mal graduado`,
+        descricao: `${tipo_solo} mal graduad${genero}`,
       };
     }
   } else if (finos >= 5.0 && finos <= 12.0) {
@@ -99,23 +101,32 @@ function classificarSoloGrosso(
       // Para classificar o tipo de finos (M/C/C-M), usamos LL e IP (0 se vazios)
       const sufixo_finos = determinarSufixoFinos(ll, ip);
 
+      let tipo_finos_desc = "finos";
+      if (sufixo_finos === 'M') tipo_finos_desc = "silte";
+      else if (sufixo_finos === 'C') tipo_finos_desc = "argila";
+      else if (sufixo_finos === 'C-M') tipo_finos_desc = "silte e argila"; // Caso misto
+
       if (bem_graduado) {
+        // GW-GM, GW-GC, SW-SM, SW-SC
         const classificacao =
           sufixo_finos === 'C-M'
             ? `${prefixo}W-${prefixo}C/${prefixo}W-${prefixo}M`
             : `${prefixo}W-${prefixo}${sufixo_finos}`;
+
         return {
           classificacao,
-          descricao: `${tipo_solo} bem graduado com finos`,
+          descricao: `${tipo_solo} bem graduad${genero} com ${tipo_finos_desc}`,
         };
       } else {
+        // GP-GM, GP-GC, SP-SM, SP-SC
         const classificacao =
           sufixo_finos === 'C-M'
             ? `${prefixo}P-${prefixo}C/${prefixo}P-${prefixo}M`
             : `${prefixo}P-${prefixo}${sufixo_finos}`;
+
         return {
           classificacao,
-          descricao: `${tipo_solo} mal graduado com finos`,
+          descricao: `${tipo_solo} mal graduad${genero} com ${tipo_finos_desc}`,
         };
       }
     } else {
@@ -124,21 +135,23 @@ function classificarSoloGrosso(
 
       const ll = dados.ll ?? 0;
       const ip = dados.ip ?? 0;
-
-      // Para classificar o tipo de finos (M/C/C-M)
       const sufixo_finos = determinarSufixoFinos(ll, ip);
+      let tipo_finos_desc = "finos";
+      if (sufixo_finos === 'M') tipo_finos_desc = "silte";
+      else if (sufixo_finos === 'C') tipo_finos_desc = "argila";
 
       // Assumir P (mal graduado) na parte grossa
       let classificacao: string;
       if (sufixo_finos === 'C-M') {
         classificacao = `${prefixo}P-${prefixo}C/${prefixo}P-${prefixo}M`;
+        tipo_finos_desc = "silte e argila";
       } else {
         classificacao = `${prefixo}P-${prefixo}${sufixo_finos}`;
       }
 
       return {
         classificacao,
-        descricao: `${tipo_solo} mal graduado com finos (Assumido P por falta de D10)`,
+        descricao: `${tipo_solo} mal graduad${genero} com ${tipo_finos_desc}`,
       };
     }
   } else {
@@ -152,14 +165,14 @@ function classificarSoloGrosso(
 
     if (sufixo_finos === 'M') {
       classificacao = `${prefixo}M`;
-      descricao = `${tipo_solo} siltoso`;
+      descricao = `${tipo_solo} siltos${genero}`;
     } else if (sufixo_finos === 'C') {
       classificacao = `${prefixo}C`;
-      descricao = `${tipo_solo} argiloso`;
+      descricao = `${tipo_solo} argilos${genero}`;
     } else {
       // Caso 'C-M' (zona hachurada): classificação dupla
       classificacao = `${prefixo}C-${prefixo}M`;
-      descricao = `${tipo_solo} silto-argiloso`;
+      descricao = `${tipo_solo} silto-argilos${genero}`;
     }
 
     return {
@@ -181,9 +194,9 @@ function classificarSoloFino(dados: ClassificacaoUSCSInput): ClassificacaoUSCSOu
   // Verificar solo orgânico
   if (dados.is_organico_fino) {
     if (LL < 50.0) {
-      return { classificacao: 'OL', descricao: 'Silte/argila orgânico de baixa plasticidade' };
+      return { classificacao: 'OL', descricao: 'Solo orgânico de baixa plasticidade' };
     } else {
-      return { classificacao: 'OH', descricao: 'Silte/argila orgânico de alta plasticidade' };
+      return { classificacao: 'OH', descricao: 'Solo orgânico de alta plasticidade' };
     }
   }
 

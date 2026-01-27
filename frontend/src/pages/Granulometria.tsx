@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Filter, Info, Calculator as CalcIcon, Plus, Trash2, Table as TableIcon, TrendingUp, GraduationCap, Activity, BarChart3 } from "lucide-react";
+import { Filter, Info, Calculator as CalcIcon, Plus, Trash2, Table as TableIcon, TrendingUp, GraduationCap, Activity, BarChart3, Columns, PanelTop } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { calcularGranulometria } from "@/lib/calculations/granulometria";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,6 +93,14 @@ function GranulometriaDesktop() {
 
   const [results, setResults] = useState<GranulometriaOutput | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [layoutMode, setLayoutMode] = useState<'default' | 'side-by-side'>(() => {
+    const saved = localStorage.getItem('granulometriaLayoutMode');
+    return (saved === 'side-by-side') ? 'side-by-side' : 'default';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('granulometriaLayoutMode', layoutMode);
+  }, [layoutMode]);
 
   // Estados para salvamento
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -792,6 +800,19 @@ function GranulometriaDesktop() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setLayoutMode(prev => prev === 'default' ? 'side-by-side' : 'default')}
+            title={layoutMode === 'default' ? "Mudar para layout lateral" : "Mudar para layout padrão"}
+            className="gap-2"
+          >
+            {layoutMode === 'default' ? <Columns className="w-4 h-4" /> : <PanelTop className="w-4 h-4" />}
+            Layout
+          </Button>
+
+          <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
+
           <DialogExemplos onCarregarExemplo={handleCarregarExemplo} />
 
           <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
@@ -810,96 +831,34 @@ function GranulometriaDesktop() {
         </div>
       </div>
 
-      {/* Formulário - Grid 2 Colunas */}
-      <div className="grid lg:grid-cols-2 gap-4 md:gap-6 animate-in fade-in slide-in-from-left-4 duration-700" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }} onKeyDown={handleKeyNavigation}>
+      <div className={cn(
+        layoutMode === 'side-by-side' ? "grid lg:grid-cols-2 gap-6 items-start" : "space-y-6"
+      )}>
+        {/* Formulário - Grid 2 Colunas */}
+        <div className={cn(
+          "grid gap-4 md:gap-6 animate-in fade-in slide-in-from-left-4 duration-700",
+          layoutMode === 'side-by-side' ? "grid-cols-1" : "lg:grid-cols-2"
+        )} style={{ animationDelay: '100ms', animationFillMode: 'backwards' }} onKeyDown={handleKeyNavigation}>
 
-        {/* Coluna 1: Peneiramento Grosso */}
-        <Card className="glass h-full">
-          <CardHeader className="pb-3 pt-4 px-4 md:px-6">
-            <CardTitle className="text-base md:text-lg font-semibold flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-orange-500 shadow-sm shadow-orange-500/50"></span>
-              Peneiramento Grosso
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 md:px-6 pb-6 space-y-4">
-            {/* Inputs de Massa Grosso */}
-            <div className="grid grid-cols-3 gap-3 bg-muted/30 p-3 rounded-lg border border-border/40" data-tour="massa-grosso-input">
-              <div className="space-y-1.5">
-                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Massa Úmida (g)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.peneiramento_grosso.massa_total_umida}
-                  onChange={(e) => handleMassaChange('grosso', 'massa_total_umida', e.target.value)}
-                  placeholder="Ex: 1000.0"
-                  className="h-8 text-sm bg-background/80"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Massa Seca (g)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.peneiramento_grosso.massa_total_seca}
-                  onChange={(e) => handleMassaChange('grosso', 'massa_total_seca', e.target.value)}
-                  placeholder="Ex: 950.0"
-                  className="h-8 text-sm bg-background/80"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Umidade (%)</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.peneiramento_grosso.teor_umidade}
-                  onChange={(e) => handleMassaChange('grosso', 'teor_umidade', e.target.value)}
-                  placeholder="Ex: 5.2"
-                  className="h-8 text-sm bg-background/80"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                {formData.peneiramento_grosso.peneiras.map((peneira, index) => (
-                  <div key={index} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-muted/30 transition-colors">
-                    <span className="text-xs font-medium text-foreground/80 w-16 shrink-0">{peneira.peneira}</span>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="g"
-                      value={peneira.massaRetida}
-                      onChange={(e) => handlePeneiraChange(index, "massaRetida", e.target.value, 'grosso')}
-                      className="h-7 text-xs text-center flex-1"
-                    />
-                    <span className="text-[10px] font-mono text-muted-foreground w-14 text-right shrink-0">{peneira.abertura} mm</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Coluna 2: Fino e Limites */}
-        <div className="space-y-4 md:space-y-6 flex flex-col h-full">
-          <Card className="glass">
+          {/* Coluna 1: Peneiramento Grosso */}
+          <Card className="glass h-full">
             <CardHeader className="pb-3 pt-4 px-4 md:px-6">
               <CardTitle className="text-base md:text-lg font-semibold flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50"></span>
-                Peneiramento Fino
+                <span className="w-3 h-3 rounded-full bg-orange-500 shadow-sm shadow-orange-500/50"></span>
+                Peneiramento Grosso
               </CardTitle>
             </CardHeader>
             <CardContent className="px-4 md:px-6 pb-6 space-y-4">
-              {/* Inputs de Massa Fino */}
-              <div className="grid grid-cols-3 gap-3 bg-muted/30 p-3 rounded-lg border border-border/40">
+              {/* Inputs de Massa Grosso */}
+              <div className="grid grid-cols-3 gap-3 bg-muted/30 p-3 rounded-lg border border-border/40" data-tour="massa-grosso-input">
                 <div className="space-y-1.5">
                   <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Massa Úmida (g)</Label>
                   <Input
                     type="number"
                     step="0.01"
-                    value={formData.peneiramento_fino.massa_total_umida}
-                    onChange={(e) => handleMassaChange('fino', 'massa_total_umida', e.target.value)}
-                    placeholder="Ex: 100.0"
+                    value={formData.peneiramento_grosso.massa_total_umida}
+                    onChange={(e) => handleMassaChange('grosso', 'massa_total_umida', e.target.value)}
+                    placeholder="Ex: 1000.0"
                     className="h-8 text-sm bg-background/80"
                   />
                 </div>
@@ -908,9 +867,9 @@ function GranulometriaDesktop() {
                   <Input
                     type="number"
                     step="0.01"
-                    value={formData.peneiramento_fino.massa_total_seca}
-                    onChange={(e) => handleMassaChange('fino', 'massa_total_seca', e.target.value)}
-                    placeholder="Ex: 95.0"
+                    value={formData.peneiramento_grosso.massa_total_seca}
+                    onChange={(e) => handleMassaChange('grosso', 'massa_total_seca', e.target.value)}
+                    placeholder="Ex: 950.0"
                     className="h-8 text-sm bg-background/80"
                   />
                 </div>
@@ -919,8 +878,8 @@ function GranulometriaDesktop() {
                   <Input
                     type="number"
                     step="0.01"
-                    value={formData.peneiramento_fino.teor_umidade}
-                    onChange={(e) => handleMassaChange('fino', 'teor_umidade', e.target.value)}
+                    value={formData.peneiramento_grosso.teor_umidade}
+                    onChange={(e) => handleMassaChange('grosso', 'teor_umidade', e.target.value)}
                     placeholder="Ex: 5.2"
                     className="h-8 text-sm bg-background/80"
                   />
@@ -929,7 +888,7 @@ function GranulometriaDesktop() {
 
               <div className="space-y-1">
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                  {formData.peneiramento_fino.peneiras.map((peneira, index) => (
+                  {formData.peneiramento_grosso.peneiras.map((peneira, index) => (
                     <div key={index} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-muted/30 transition-colors">
                       <span className="text-xs font-medium text-foreground/80 w-16 shrink-0">{peneira.peneira}</span>
                       <Input
@@ -937,7 +896,7 @@ function GranulometriaDesktop() {
                         step="0.01"
                         placeholder="g"
                         value={peneira.massaRetida}
-                        onChange={(e) => handlePeneiraChange(index, "massaRetida", e.target.value, 'fino')}
+                        onChange={(e) => handlePeneiraChange(index, "massaRetida", e.target.value, 'grosso')}
                         className="h-7 text-xs text-center flex-1"
                       />
                       <span className="text-[10px] font-mono text-muted-foreground w-14 text-right shrink-0">{peneira.abertura} mm</span>
@@ -948,73 +907,143 @@ function GranulometriaDesktop() {
             </CardContent>
           </Card>
 
-          <Card className="glass flex-1">
-            <CardHeader className="pb-3 pt-4 px-4 md:px-6">
-              <CardTitle className="text-base font-semibold flex items-center gap-2 text-primary">
-                <Activity className="w-4 h-4" />
-                Limites de Atterberg
-                <span className="text-xs font-normal text-muted-foreground ml-2">(Opcional)</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 md:px-6 pb-6">
-              <TooltipProvider>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="ll" className="text-xs font-semibold">Limite de Liquidez (LL)</Label>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Info className="w-3 h-3 text-muted-foreground" />
-                        </TooltipTrigger>
-                        <TooltipContent>Umidade onde o solo passa do estado plástico para líquido</TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <div className="relative">
-                      <Input
-                        id="ll"
-                        type="number"
-                        step="0.1"
-                        value={formData.limitePercent}
-                        onChange={(e) => handleInputChange("limitePercent", e.target.value)}
-                        placeholder="Ex: 45"
-                        className="pl-3 pr-8"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
-                    </div>
+          {/* Coluna 2: Fino e Limites */}
+          <div className="space-y-4 md:space-y-6 flex flex-col h-full">
+            <Card className="glass">
+              <CardHeader className="pb-3 pt-4 px-4 md:px-6">
+                <CardTitle className="text-base md:text-lg font-semibold flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50"></span>
+                  Peneiramento Fino
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 md:px-6 pb-6 space-y-4">
+                {/* Inputs de Massa Fino */}
+                <div className="grid grid-cols-3 gap-3 bg-muted/30 p-3 rounded-lg border border-border/40">
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Massa Úmida (g)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.peneiramento_fino.massa_total_umida}
+                      onChange={(e) => handleMassaChange('fino', 'massa_total_umida', e.target.value)}
+                      placeholder="Ex: 100.0"
+                      className="h-8 text-sm bg-background/80"
+                    />
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="lp" className="text-xs font-semibold">Limite de Plasticidade (LP)</Label>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Info className="w-3 h-3 text-muted-foreground" />
-                        </TooltipTrigger>
-                        <TooltipContent>Umidade onde o solo passa do estado semissólido para plástico</TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <div className="relative">
-                      <Input
-                        id="lp"
-                        type="number"
-                        step="0.1"
-                        value={formData.limitePlasticidade}
-                        onChange={(e) => handleInputChange("limitePlasticidade", e.target.value)}
-                        placeholder="Ex: 25"
-                        className="pl-3 pr-8"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
-                    </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Massa Seca (g)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.peneiramento_fino.massa_total_seca}
+                      onChange={(e) => handleMassaChange('fino', 'massa_total_seca', e.target.value)}
+                      placeholder="Ex: 95.0"
+                      className="h-8 text-sm bg-background/80"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Umidade (%)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.peneiramento_fino.teor_umidade}
+                      onChange={(e) => handleMassaChange('fino', 'teor_umidade', e.target.value)}
+                      placeholder="Ex: 5.2"
+                      className="h-8 text-sm bg-background/80"
+                    />
                   </div>
                 </div>
-              </TooltipProvider>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
 
-      {/* Resultados - Abaixo do formulário */}
-      {results && (
-        <div className="pt-4 space-y-6 animate-in slide-in-from-bottom-4 duration-700 fade-in" data-tour="classificacoes" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
+                <div className="space-y-1">
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                    {formData.peneiramento_fino.peneiras.map((peneira, index) => (
+                      <div key={index} className="flex items-center gap-2 p-1.5 rounded-md hover:bg-muted/30 transition-colors">
+                        <span className="text-xs font-medium text-foreground/80 w-16 shrink-0">{peneira.peneira}</span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="g"
+                          value={peneira.massaRetida}
+                          onChange={(e) => handlePeneiraChange(index, "massaRetida", e.target.value, 'fino')}
+                          className="h-7 text-xs text-center flex-1"
+                        />
+                        <span className="text-[10px] font-mono text-muted-foreground w-14 text-right shrink-0">{peneira.abertura} mm</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="glass flex-1">
+              <CardHeader className="pb-3 pt-4 px-4 md:px-6">
+                <CardTitle className="text-base font-semibold flex items-center gap-2 text-primary">
+                  <Activity className="w-4 h-4" />
+                  Limites de Atterberg
+                  <span className="text-xs font-normal text-muted-foreground ml-2">(Opcional)</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-4 md:px-6 pb-6">
+                <TooltipProvider>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="ll" className="text-xs font-semibold">Limite de Liquidez (LL)</Label>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Info className="w-3 h-3 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>Umidade onde o solo passa do estado plástico para líquido</TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          id="ll"
+                          type="number"
+                          step="0.1"
+                          value={formData.limitePercent}
+                          onChange={(e) => handleInputChange("limitePercent", e.target.value)}
+                          placeholder="Ex: 45"
+                          className="pl-3 pr-8"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="lp" className="text-xs font-semibold">Limite de Plasticidade (LP)</Label>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Info className="w-3 h-3 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>Umidade onde o solo passa do estado semissólido para plástico</TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <div className="relative">
+                        <Input
+                          id="lp"
+                          type="number"
+                          step="0.1"
+                          value={formData.limitePlasticidade}
+                          onChange={(e) => handleInputChange("limitePlasticidade", e.target.value)}
+                          placeholder="Ex: 25"
+                          className="pl-3 pr-8"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
+                      </div>
+                    </div>
+                  </div>
+                </TooltipProvider>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Resultados - Abaixo do formulário / Sempre visível */}
+        <div className={cn(
+          "animate-in slide-in-from-bottom-4 duration-700 fade-in",
+          layoutMode === 'side-by-side' ? "pt-0 sticky top-4 self-start max-h-[calc(100vh-2rem)] overflow-y-auto pr-2 space-y-4" : "pt-4 space-y-6"
+        )} data-tour="classificacoes" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
           <Tabs defaultValue="classificacao" className="w-full" onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 mb-4">
               <TabsTrigger value="classificacao" className="gap-2 text-xs md:text-sm">
@@ -1047,7 +1076,7 @@ function GranulometriaDesktop() {
                         <span className="text-xs font-bold tracking-widest uppercase text-muted-foreground/80">Sistema USCS</span>
                       </div>
 
-                      {results.classificacao_uscs ? (
+                      {results?.classificacao_uscs ? (
                         <>
                           <h3 className="text-6xl font-black tracking-tighter text-blue-600 dark:text-blue-500 my-2 drop-shadow-sm leading-none tabular-nums">
                             {results.classificacao_uscs}
@@ -1057,7 +1086,7 @@ function GranulometriaDesktop() {
                           </p>
                         </>
                       ) : (
-                        <span className="text-muted-foreground italic text-sm">Não classificado</span>
+                        <span className="text-muted-foreground italic text-sm my-4">-</span>
                       )}
                     </div>
 
@@ -1070,7 +1099,7 @@ function GranulometriaDesktop() {
                         <span className="text-xs font-bold tracking-widest uppercase text-muted-foreground/80">Sistema AASHTO (HRB)</span>
                       </div>
 
-                      {results.classificacao_hrb ? (
+                      {results?.classificacao_hrb ? (
                         <>
                           <div className="flex items-center justify-center gap-4 my-2">
                             <h3 className="text-6xl font-black tracking-tighter text-foreground leading-none tabular-nums">
@@ -1093,7 +1122,7 @@ function GranulometriaDesktop() {
                           )}
                         </>
                       ) : (
-                        <span className="text-muted-foreground italic text-sm">Não classificado</span>
+                        <span className="text-muted-foreground italic text-sm my-4">-</span>
                       )}
                     </div>
                   </CardContent>
@@ -1109,16 +1138,16 @@ function GranulometriaDesktop() {
                   </CardHeader>
                   <CardContent className="px-5 pb-5">
                     <div className="space-y-1.5">
-                      <ResultRow label="D10 (Diâmetro Efetivo)" value={results.d10} unit="mm" precision={4} />
-                      <ResultRow label="D30" value={results.d30} unit="mm" precision={4} />
-                      <ResultRow label="D60" value={results.d60} unit="mm" precision={4} />
+                      <ResultRow label="D10 (Diâmetro Efetivo)" value={results?.d10} unit="mm" precision={4} />
+                      <ResultRow label="D30" value={results?.d30} unit="mm" precision={4} />
+                      <ResultRow label="D60" value={results?.d60} unit="mm" precision={4} />
                       <Separator className="my-2" />
-                      <ResultRow label="Coef. de Uniformidade (Cu)" value={results.coef_uniformidade} unit="" tooltip={tooltips.cu} highlight />
-                      <ResultRow label="Coef. de Curvatura (Cc)" value={results.coef_curvatura} unit="" tooltip={tooltips.cc} highlight />
+                      <ResultRow label="Coef. de Uniformidade (Cu)" value={results?.coef_uniformidade} unit="" tooltip={tooltips.cu} highlight />
+                      <ResultRow label="Coef. de Curvatura (Cc)" value={results?.coef_curvatura} unit="" tooltip={tooltips.cc} highlight />
                       <Separator className="my-2" />
-                      <ResultRow label="Pedregulho" value={results.percentagem_pedregulho} unit="%" />
-                      <ResultRow label="Areia" value={results.percentagem_areia} unit="%" />
-                      <ResultRow label="Finos" value={results.percentagem_finos} unit="%" />
+                      <ResultRow label="Pedregulho" value={results?.percentagem_pedregulho} unit="%" />
+                      <ResultRow label="Areia" value={results?.percentagem_areia} unit="%" />
+                      <ResultRow label="Finos" value={results?.percentagem_finos} unit="%" />
                     </div>
                   </CardContent>
                 </Card>
@@ -1134,7 +1163,7 @@ function GranulometriaDesktop() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <TabelaDadosGranulometricos dados={results.dados_granulometricos} />
+                  <TabelaDadosGranulometricos dados={results?.dados_granulometricos || []} />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -1143,10 +1172,10 @@ function GranulometriaDesktop() {
               <Card className="glass">
                 <CardContent className="pt-6">
                   <CurvaGranulometrica
-                    dados={results.dados_granulometricos}
-                    d10={results.d10}
-                    d30={results.d30}
-                    d60={results.d60}
+                    dados={results?.dados_granulometricos || []}
+                    d10={results?.d10}
+                    d30={results?.d30}
+                    d60={results?.d60}
                   />
                 </CardContent>
               </Card>
@@ -1175,7 +1204,6 @@ function GranulometriaDesktop() {
               </Card>
             </TabsContent>
           </Tabs>
-
 
           {/* Dialogs */}
           <SaveDialog
@@ -1229,7 +1257,7 @@ function GranulometriaDesktop() {
             moduleName="Granulometria"
           />
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -1271,7 +1299,7 @@ function ResultRow({
               <TooltipTrigger>
                 <Info className="w-3.5 h-3.5 text-muted-foreground/70" />
               </TooltipTrigger>
-              <TooltipContent className="max-w-xs">{tooltip}</TooltipContent>
+              <TooltipContent className="max-w-xs" side="left">{tooltip}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         )}

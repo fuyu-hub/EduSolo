@@ -70,6 +70,27 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
       return [Math.max(1.0, minG - margem), maxG + margem];
     })();
 
+    // Gerar ticks personalizados
+    const ticksX = (() => {
+      const arr = [];
+      const start = Math.ceil(dominioX[0]);
+      const end = Math.floor(dominioX[1]);
+      for (let i = start; i <= end; i++) {
+        arr.push(i);
+      }
+      return arr;
+    })();
+
+    const ticksY = (() => {
+      const arr = [];
+      const start = Math.ceil(dominioY[0] * 100);
+      const end = Math.floor(dominioY[1] * 100);
+      for (let i = start; i <= end; i++) {
+        arr.push(Number((i / 100).toFixed(2)));
+      }
+      return arr;
+    })();
+
     // Função para exportar como JPG
     const handleExportJPG = async () => {
       // Capturar o elemento específico com fundo branco (id="chart-container")
@@ -167,6 +188,7 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
                 type="number"
                 dataKey="umidade"
                 domain={dominioX}
+                ticks={ticksX}
                 stroke="#000000"
                 tick={{ fontSize, fill: '#000000' }}
                 tickFormatter={(val) => val.toFixed(1)}
@@ -182,9 +204,10 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
               <YAxis
                 type="number"
                 domain={dominioY}
+                ticks={ticksY}
                 stroke="#000000"
                 tick={{ fontSize, fill: '#000000' }}
-                tickFormatter={(val) => val.toFixed(3)}
+                tickFormatter={(val) => val.toFixed(2)}
               >
                 <Label
                   value="Densidade Seca (g/cm³)"
