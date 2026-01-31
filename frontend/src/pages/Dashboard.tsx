@@ -136,7 +136,10 @@ export default function Dashboard() {
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">
             <span className="text-foreground">Bem-vindo ao </span>
             <span className="bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">
-              EduSolos
+              Edu
+            </span>
+            <span className="text-foreground">
+              Solos
             </span>
           </h1>
           <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-3xl leading-relaxed">

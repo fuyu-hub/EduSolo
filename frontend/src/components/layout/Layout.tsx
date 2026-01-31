@@ -42,9 +42,6 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
     { icon: Beaker, label: "Índices Físicos e Consistência", path: "/caracterizacao" },
     { icon: Filter, label: "Granulometria", path: "/granulometria" },
     { icon: Database, label: "Compactação", path: "/compactacao" },
-    { icon: Mountain, label: "Tensões Geostáticas", path: "/tensoes" },
-    { icon: Target, label: "Acréscimo de Tensões", path: "/acrescimo-tensoes" },
-    { icon: MoveDown, label: "Recalque por Adensamento", path: "/recalque-adensamento" },
   ];
   const isModulePath =
     modulesBrief.some((m) => location.pathname.startsWith(m.path)) ||
