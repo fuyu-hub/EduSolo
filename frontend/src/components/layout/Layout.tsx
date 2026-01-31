@@ -60,19 +60,14 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
         <ConditionalSheetClose shouldWrap={!!onLinkClick} asChild>
           <Link to="/" className="flex items-center gap-2.5 group" onClick={onLinkClick}>
             {collapsed ? (
-              // Mostrar logo pequena quando colapsado
-              <img
-                src="/edusolo - logo.svg"
-                alt="EduSolos"
-                className="w-10 h-10 group-hover:scale-105 transition-transform"
-              />
+              <span className="text-2xl font-bold group-hover:scale-105 transition-transform">
+                <span className="text-primary">E</span><span className="text-foreground">S</span>
+              </span>
             ) : (
-              // Mostrar logo com texto quando expandido
-              <img
-                src="/edusolo-logo-texto.svg"
-                alt="EduSolos - Ferramentas de Mecânica dos Solos"
-                className="h-20 group-hover:scale-105 transition-transform"
-              />
+              <span className="text-2xl font-bold group-hover:scale-105 transition-transform">
+                <span className="bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">Edu</span>
+                <span className="text-foreground">Solos</span>
+              </span>
             )}
           </Link>
         </ConditionalSheetClose>
