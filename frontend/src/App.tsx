@@ -34,9 +34,9 @@ const Newmark = lazy(() => import("./pages/acrescimo-tensoes/Newmark"));
 
 // Páginas auxiliares (lazy loading)
 const Educacional = lazy(() => import("./pages/Educacional"));
-const Settings = lazy(() => import("./pages/Settings"));
+// const Settings = lazy(() => import("./pages/Settings"));
 const About = lazy(() => import("./pages/About"));
-const PlanosFuturos = lazy(() => import("./pages/PlanosFuturos"));
+// const PlanosFuturos = lazy(() => import("./pages/PlanosFuturos"));
 const Manual = lazy(() => import("./pages/Manual"));
 const Salvos = lazy(() => import("./pages/Salvos"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
@@ -66,7 +66,7 @@ const AppContent = () => {
     const timer = setTimeout(() => {
       import("./pages/LimitesConsistencia");
       import("./pages/AcrescimoTensoes");
-      import("./pages/Settings");
+      // import("./pages/Settings");
     }, 5000);
 
     return () => clearTimeout(timer);
@@ -282,7 +282,7 @@ const AppContent = () => {
             </Layout>
           }
         />
-        <Route
+        {/* <Route
           path="/settings"
           element={
             <Layout>
@@ -291,7 +291,7 @@ const AppContent = () => {
               </Suspense>
             </Layout>
           }
-        />
+        /> */}
         <Route
           path="/about"
           element={
@@ -302,7 +302,7 @@ const AppContent = () => {
             </Layout>
           }
         />
-        <Route
+        {/* <Route
           path="/planos-futuros"
           element={
             <Layout>
@@ -311,7 +311,7 @@ const AppContent = () => {
               </Suspense>
             </Layout>
           }
-        />
+        /> */}
         <Route
           path="/manual"
           element={

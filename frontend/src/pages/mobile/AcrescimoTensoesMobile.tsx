@@ -81,7 +81,7 @@ export default function AcrescimoTensoesMobile() {
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="p-4">
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Este módulo permite analisar a distribuição de tensões no solo em um plano 2D (eixos X e Z) 
+            Este módulo permite analisar a distribuição de tensões no solo em um plano 2D (eixos X e Z)
             devido a diferentes tipos de carregamentos superficiais.
           </p>
         </CardContent>
@@ -102,15 +102,14 @@ export default function AcrescimoTensoesMobile() {
           {metodos.map((metodo) => {
             const Icon = metodo.icon;
             const isDisponivel = metodo.disponivel;
-            
+
             return (
               <Card
                 key={metodo.id}
-                className={`transition-all ${
-                  isDisponivel 
-                    ? "cursor-pointer active:scale-[0.98] hover:shadow-md hover:border-primary/30" 
+                className={`transition-all ${isDisponivel
+                    ? "cursor-pointer active:scale-[0.98] hover:shadow-md hover:border-primary/30"
                     : "opacity-60"
-                }`}
+                  }`}
                 onClick={() => handleMetodoClick(metodo)}
               >
                 <CardContent className="p-4">
@@ -123,7 +122,7 @@ export default function AcrescimoTensoesMobile() {
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-bold text-base">
@@ -131,19 +130,19 @@ export default function AcrescimoTensoesMobile() {
                         </h3>
                         {!isDisponivel && (
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                            Em breve
+                            Em planejamento
                           </Badge>
                         )}
                       </div>
-                      
+
                       <p className="text-sm font-medium text-muted-foreground mb-2">
                         {metodo.description}
                       </p>
-                      
+
                       <p className="text-xs text-muted-foreground mb-2 leading-relaxed line-clamp-2">
                         {metodo.detalhes}
                       </p>
-                      
+
                       <div className="text-xs">
                         <span className="font-semibold text-foreground">Aplicações: </span>
                         <span className="text-muted-foreground">{metodo.aplicacoes}</span>

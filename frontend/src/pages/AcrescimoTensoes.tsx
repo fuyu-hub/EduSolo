@@ -222,7 +222,7 @@ function AcrescimoTensoesDesktop() {
                           </h3>
                           {!isDisponivel && (
                             <span className="text-xs px-2 py-0.5 bg-muted rounded-full text-muted-foreground font-medium">
-                              Em breve
+                              Em planejamento
                             </span>
                           )}
                         </div>

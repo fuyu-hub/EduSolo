@@ -12,7 +12,7 @@ const moreItems = [
   { icon: Mountain, label: "Tensões", path: "/tensoes", color: "from-emerald-500 via-green-500 to-teal-600" },
   { icon: Target, label: "Acréscimo", path: "/acrescimo-tensoes", color: "from-orange-500 via-red-500 to-rose-600", disabled: true },
   { icon: Info, label: "Sobre", path: "/about", color: "from-slate-500 via-gray-500 to-zinc-600" },
-  { icon: Rocket, label: "Planos", path: "/planos-futuros", color: "from-amber-500 via-yellow-500 to-orange-600" },
+  // { icon: Rocket, label: "Planos", path: "/planos-futuros", color: "from-amber-500 via-yellow-500 to-orange-600" },
 ];
 
 interface NavItem {
@@ -28,7 +28,7 @@ const mainNavItems: NavItem[] = [
   { icon: BookOpen, label: "Educacional", path: "/educacional" },
   { icon: Home, label: "Início", path: "/", isExpandButton: true },
   { icon: MoreHorizontal, label: "Mais", path: "#placeholder" },
-  { icon: Settings, label: "Config", path: "/settings" },
+  // { icon: Settings, label: "Config", path: "/settings" },
 ];
 
 export function BottomNav() {

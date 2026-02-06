@@ -89,9 +89,9 @@ export function CommandPalette() {
               <Command.Item onSelect={() => goto("/relatorios")} className="px-3 py-2 flex items-center gap-2 cursor-pointer">
                 <FileText className="w-4 h-4" /> Relatórios
               </Command.Item>
-              <Command.Item onSelect={() => goto("/settings")} className="px-3 py-2 flex items-center gap-2 cursor-pointer">
+              {/* <Command.Item onSelect={() => goto("/settings")} className="px-3 py-2 flex items-center gap-2 cursor-pointer">
                 <Settings className="w-4 h-4" /> Configurações
-              </Command.Item>
+              </Command.Item> */}
             </Command.Group>
           </Command.List>
         </Command>

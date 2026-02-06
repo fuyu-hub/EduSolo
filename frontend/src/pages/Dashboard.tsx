@@ -106,7 +106,7 @@ const ModuleCard = memo<{
           </div>
           {comingSoon && (
             <span className="px-2 py-0.5 rounded text-[10px] font-medium tracking-wide uppercase text-muted-foreground/70 border border-dashed border-border/50">
-              Em breve
+              Em planejamento
             </span>
           )}
           {!comingSoon && (
