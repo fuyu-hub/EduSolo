@@ -274,7 +274,7 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
                   <span className="font-mono font-semibold">{pontoOtimo.umidade} %</span>
                 </div>
                 <div className="flex justify-between items-center gap-4 text-black" style={{ fontSize: isDialog ? 16 : 12 }}>
-                  <span className="font-bold"><span className="font-serif italic" style={{ fontSize: isDialog ? 20 : 16 }}>γ</span><sub style={{ fontSize: isDialog ? 10 : 8 }}>d,máx</sub></span>
+                  <span className="font-bold"><span className="font-serif italic" style={{ fontSize: isDialog ? 20 : 16 }}>ρ</span><sub style={{ fontSize: isDialog ? 10 : 8 }}>d,máx</sub></span>
                   <span className="font-mono font-semibold">{pontoOtimo.gamaSeco} g/cm³</span>
                 </div>
               </div>

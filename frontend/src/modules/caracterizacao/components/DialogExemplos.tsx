@@ -29,7 +29,7 @@ export default function DialogExemplos({ onSelectExample, disabled }: DialogExem
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Exemplos de Índices Físicos e Consistência</DialogTitle>
+                    <DialogTitle>Exemplos de Índices Físicos e Limites de Consistência</DialogTitle>
                     <DialogDescription>
                         Selecione um exemplo abaixo para preencher os dados de índices físicos e limites de consistência.
                     </DialogDescription>

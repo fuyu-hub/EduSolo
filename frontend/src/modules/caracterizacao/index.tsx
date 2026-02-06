@@ -373,7 +373,7 @@ export default function CaracterizacaoPage() {
                     addReport({
                         name: reportName,
                         moduleType: "caracterizacao",
-                        moduleName: "Índices Físicos e Consistência",
+                        moduleName: "Índices Físicos e Limites de Consistência",
                         pdfUrl: "", // Blob URL is temporary, we use pdfData
                         pdfData: base64data,
                         calculationData: {
@@ -426,7 +426,7 @@ export default function CaracterizacaoPage() {
                         <Beaker className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold text-foreground">Índices Físicos e Consistência</h1>
+                        <h1 className="text-3xl font-bold text-foreground">Índices Físicos e Limites de Consistência</h1>
                         <p className="text-muted-foreground text-sm">Análise das propriedades físicas do solo</p>
                     </div>
                 </div>
