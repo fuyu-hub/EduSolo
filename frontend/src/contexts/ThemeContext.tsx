@@ -47,15 +47,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Remover TODAS as classes de tema anteriores
     root.classList.remove(
       "light", "dark",
-      "theme-blue", "theme-indigo", "theme-soil", "theme-green", "theme-amber", "theme-red", "theme-slate"
+      "theme-blue", "theme-indigo", "theme-soil", "theme-green", "theme-amber", "theme-red", "theme-slate", "theme-pro"
     );
 
     // Validar mode antes de aplicar
     const validMode = theme.mode === "light" || theme.mode === "dark" ? theme.mode : "dark";
 
-    // Adicionar modo e tema indigo fixo
+    // Adicionar modo e tema Pro Industrial
     root.classList.add(validMode);
-    root.classList.add("theme-indigo");
+    root.classList.add("theme-pro");
 
     // Salvar no localStorage apenas se válido
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: validMode }));

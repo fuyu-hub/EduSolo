@@ -141,8 +141,8 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
 
     // Componente do gráfico reutilizável
     const ChartContent = ({ isDialog = false }: { isDialog?: boolean }) => {
-      const chartWidth = isDialog ? 1150 : (isMobile ? 340 : 450);
-      const chartHeight = isDialog ? 580 : 280;
+      const chartWidth = isDialog ? 900 : (isMobile ? 340 : 450);
+      const chartHeight = isDialog ? 480 : 280;
       const fontSize = isDialog ? 14 : 12;
       const labelFontSize = isDialog ? 16 : 14;
 
@@ -274,7 +274,7 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
                   Ampliar
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-[95vw] max-h-[95vh] w-full">
+              <DialogContent className="max-w-5xl max-h-[90vh] w-full">
                 <DialogHeader>
                   <DialogTitle>Gráfico - Limite de Liquidez (Ampliado)</DialogTitle>
                 </DialogHeader>

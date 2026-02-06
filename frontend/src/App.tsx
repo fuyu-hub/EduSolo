@@ -171,7 +171,7 @@ const AppContent = () => {
           }
         />
         <Route
-          path="/caracterizacao"
+          path="/indices-limites"
           element={
             <Layout>
               <Suspense fallback={<PageLoader />}>

@@ -695,8 +695,8 @@ function CompactacaoDesktop() {
       {/* Top Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
-            <Database className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-center transition-colors hover:border-primary/60 hover:bg-primary/10">
+            <Database className="w-6 h-6 text-primary" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-foreground">Ensaio de Compactação</h1>
@@ -1176,7 +1176,7 @@ function CompactacaoDesktop() {
         onRename={renameCalculation}
         moduleName="Compactação"
       />
-    </div>
+    </div >
   );
 }
 
@@ -1197,10 +1197,11 @@ function ResultRow({ label, value, unit, precision = 2, highlight = false }: { l
       "flex justify-between items-center text-sm py-2 px-3 rounded-md transition-colors",
       highlight ? "font-semibold bg-primary/5 text-primary" : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
     )}>
-      <span className={cn(highlight && "text-foreground")}>{label}</span>
-      <span className={cn("font-mono font-medium", highlight ? "text-primary dark:text-primary-foreground" : "text-foreground dark:text-white")}>
+      <span className={cn("flex-1", highlight && "text-foreground")}>{label}</span>
+      <span className={cn("font-mono font-medium text-right whitespace-nowrap ml-2", highlight ? "text-primary dark:text-primary-foreground" : "text-foreground dark:text-white")}>
         {value.toFixed(precision)} {unit}
       </span>
     </div>
   );
 }
+

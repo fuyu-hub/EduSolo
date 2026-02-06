@@ -39,7 +39,7 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
   const location = useLocation();
   // Lista resumida de módulos para o menu expansível
   const modulesBrief = [
-    { icon: Beaker, label: "Índices Físicos e Consistência", path: "/caracterizacao" },
+    { icon: Beaker, label: "Índices Físicos e Limites", path: "/indices-limites" },
     { icon: Filter, label: "Granulometria", path: "/granulometria" },
     { icon: Database, label: "Compactação", path: "/compactacao" },
   ];
@@ -52,17 +52,17 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
   return (
     <>
       {/* Logo */}
-      <div className="h-16 flex items-center justify-center px-3">
+      <div className="h-14 flex items-center justify-center px-2">
         {/* Link fecha a Sheet se onLinkClick estiver definido */}
         <ConditionalSheetClose shouldWrap={!!onLinkClick} asChild>
           <Link to="/" className="flex items-center gap-2.5 group" onClick={onLinkClick}>
             {collapsed ? (
-              <span className="text-2xl font-bold group-hover:scale-105 transition-transform">
+              <span className="text-xl font-bold group-hover:scale-105 transition-transform">
                 <span className="text-primary">E</span><span className="text-foreground">S</span>
               </span>
             ) : (
-              <span className="text-2xl font-bold group-hover:scale-105 transition-transform">
-                <span className="bg-gradient-to-r from-primary via-primary to-primary/70 bg-clip-text text-transparent">Edu</span>
+              <span className="text-xl font-bold group-hover:scale-105 transition-transform">
+                <span className="text-primary">Edu</span>
                 <span className="text-foreground">Solos</span>
               </span>
             )}
@@ -71,7 +71,7 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
       </div>
 
       {/* Navigation */}
-      <nav className="p-3 space-y-4">
+      <nav className="px-2 py-2 space-y-3">
         {menuItems.map((section) => (
           <div key={section.title}>
             {!collapsed && (
@@ -98,9 +98,11 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
                         <Button
                           variant="ghost"
                           className={cn(
-                            "w-full transition-all duration-300 h-10 rounded-lg",
+                            "w-full transition-all duration-200 h-9 rounded-md relative",
                             collapsed ? "justify-center px-2" : "justify-start px-3",
-                            modulesOpen ? "bg-gradient-to-r from-primary/20 to-primary/10 text-primary border border-primary/30" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 border border-transparent"
+                            modulesOpen
+                              ? "text-primary before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-0.5 before:bg-primary before:rounded-r"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                           )}
                           aria-label="Dashboard"
                         >
@@ -121,9 +123,11 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
                                   <Button
                                     variant="ghost"
                                     className={cn(
-                                      "w-full h-9 rounded-md",
+                                      "w-full h-8 rounded-md relative",
                                       collapsed ? "justify-center px-1" : "justify-start px-2",
-                                      active ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                                      active
+                                        ? "text-primary bg-primary/8 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-0.5 before:bg-primary before:rounded-r"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
                                     )}
                                   >
                                     <MIcon className={cn("h-4 w-4", !collapsed && "mr-2")} />
@@ -146,11 +150,11 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
                         data-tour={item.tourId}
                         variant="ghost"
                         className={cn(
-                          "w-full transition-all duration-300 h-10 rounded-lg",
+                          "w-full transition-all duration-200 h-9 rounded-md relative",
                           collapsed ? "justify-center px-2" : "justify-start px-3",
                           isActive
-                            ? "bg-gradient-to-r from-primary/20 to-primary/10 text-primary hover:from-primary/30 hover:to-primary/20 shadow-sm border border-primary/30"
-                            : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 hover:scale-[1.01] border border-transparent"
+                            ? "text-primary bg-primary/8 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-0.5 before:bg-primary before:rounded-r"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
                         )}
                         aria-label={item.label}
                         aria-current={isActive ? "page" : undefined}
@@ -227,8 +231,8 @@ function DesktopLayout({ children }: { children: React.ReactNode }) {
       {/* -- Desktop Sidebar -- */}
       <aside
         className={cn(
-          "glass-card transition-[width] duration-300 ease-in-out border-r border-sidebar-border/30 fixed left-0 top-0 h-full z-20 shadow-modern",
-          collapsed ? "w-16" : "w-64"
+          "bg-card transition-[width] duration-300 ease-in-out border-r border-border/50 fixed left-0 top-0 h-full z-20",
+          collapsed ? "w-14" : "w-56"
         )}
       >
         <SidebarContent collapsed={collapsed} />
@@ -238,11 +242,11 @@ function DesktopLayout({ children }: { children: React.ReactNode }) {
       <div
         className={cn(
           "flex-1 transition-[margin-left] duration-300 ease-in-out",
-          collapsed ? "ml-16" : "ml-64"
+          collapsed ? "ml-14" : "ml-56"
         )}
       >
         {/* Header */}
-        <header className="h-16 glass-card border-b border-border/30 sticky top-0 z-10 flex items-center px-4 md:px-6 shadow-sm">
+        <header className="h-14 bg-card border-b border-border/50 sticky top-0 z-10 flex items-center px-4 md:px-6">
           <Button
             variant="ghost"
             size="icon"

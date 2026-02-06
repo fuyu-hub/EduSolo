@@ -635,6 +635,108 @@ All colors MUST be HSL.
     --glass-bg: hsl(0 0% 100% / 0.75);
     --glass-border: hsl(38 35% 90% / 0.55);
   }
+
+  /* ========== TEMA PRO INDUSTRIAL ========== */
+  /* Dark Mode - Pro Industrial (Cinza neutro puro, sem tint azulado) */
+  .dark.theme-pro {
+    /* Fundo principal: Cinza carvão quase preto */
+    --background: 0 0% 7%;
+    /* Texto: Off-white, evita ofuscamento */
+    --foreground: 220 14% 90%;
+
+    /* Cards: Tom levemente mais claro para hierarquia */
+    --card: 0 0% 10%;
+    --card-foreground: 220 14% 90%;
+
+    /* Popovers */
+    --popover: 0 0% 9%;
+    --popover-foreground: 220 14% 90%;
+
+    /* Cor de acento: Azul Aço sóbrio (#3b82f6 convertido para HSL) */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secundário: Cinza neutro */
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 220 14% 90%;
+
+    /* Muted: Para elementos menos proeminentes */
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 55%;
+
+    /* Acento igual ao primary */
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destrutivo */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 220 14% 90%;
+
+    /* Bordas: Sutis, cinza escuro */
+    --border: 0 0% 18%;
+    --input: 0 0% 15%;
+    --ring: 217 91% 60%;
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 9%;
+    --sidebar-foreground: 220 14% 90%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 15%;
+    --sidebar-accent-foreground: 220 14% 90%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-ring: 217 91% 60%;
+
+    /* Gradiente radial muito sutil */
+    --gradient-radial: radial-gradient(circle at 20% 50%, hsl(217 91% 60% / 0.06), transparent 50%);
+    /* Glass effects */
+    --glass-bg: hsl(0 0% 10% / 0.90);
+    --glass-border: hsl(0 0% 18% / 0.5);
+  }
+
+  /* Light Mode - Pro Industrial */
+  .light.theme-pro {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 12%;
+
+    --primary: 217 91% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 12%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 217 91% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 217 91% 50%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 0 0% 12%;
+    --sidebar-primary: 217 91% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 12%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 217 91% 50%;
+
+    --gradient-radial: radial-gradient(circle at 20% 50%, hsl(217 91% 50% / 0.05), transparent 50%);
+    --glass-bg: hsl(0 0% 100% / 0.90);
+    --glass-border: hsl(0 0% 90% / 0.6);
+  }
 }
 
 @layer base {

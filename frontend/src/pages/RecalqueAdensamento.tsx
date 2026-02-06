@@ -5,9 +5,9 @@ import { calcularRecalqueAdensamento } from "@/lib/calculations/recalque-adensam
 import { calcularTensoesGeostaticas } from "@/modules/tensoes/calculations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { 
+import {
   MoveDown,
-  AlertCircle, 
+  AlertCircle,
   Info,
   BarChart3,
   Maximize2,
@@ -43,9 +43,9 @@ import { useRecentReports } from "@/hooks/useRecentReports";
 import { prepareReportForStorage } from "@/lib/reportManager";
 import { useNotification } from "@/hooks/use-notification";
 import { useNavigate } from "react-router-dom";
-import type { 
-  RecalqueAdensamentoInput, 
-  RecalqueAdensamentoOutput 
+import type {
+  RecalqueAdensamentoInput,
+  RecalqueAdensamentoOutput
 } from "@/lib/schemas/outros-modulos";
 import type { TensoesGeostaticasInput, CamadaSolo } from "@/modules/tensoes/schemas";
 
@@ -54,7 +54,7 @@ const camadaSchema = z.object({
   id: z.string(),
   nome: z.string().min(1, { message: "Nome da camada é obrigatório" }),
   espessura: z.string().min(1, { message: "Campo obrigatório" }).refine(
-    val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 
+    val => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
     { message: "Espessura deve ser maior que 0" }
   ),
   profundidadeNA: z.string().optional(),
@@ -69,11 +69,11 @@ const camadaSchema = z.object({
 const perfilSchema = z.object({
   profundidadeNA: z.string().optional(),
   alturaCapilar: z.string().refine(
-    val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, 
+    val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0,
     { message: "Altura deve ser maior ou igual a 0" }
   ),
   pesoEspecificoAgua: z.string().refine(
-    val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, 
+    val => !isNaN(parseFloat(val)) && parseFloat(val) > 0,
     { message: "Peso específico da água deve ser maior que 0" }
   ),
   camadas: z.array(camadaSchema).min(1, { message: "É necessária pelo menos 1 camada de solo" }),
@@ -89,14 +89,14 @@ export default function RecalqueAdensamento() {
   const notify = useNotification();
   const navigate = useNavigate();
   const [config, setConfig] = useState<ConfigData>({ pesoEspecificoAgua: "10.0" });
-  
+
   // Estados para exportação
   const [pdfFileName, setPdfFileName] = useState("");
   const [exportPDFDialogOpen, setExportPDFDialogOpen] = useState(false);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [pdfSavedDialogOpen, setPdfSavedDialogOpen] = useState(false);
   const [customReportTitle, setCustomReportTitle] = useState("");
-  
+
   // Estados das abas
   const [camadaCompressivelIndex, setCamadaCompressivelIndex] = useState<number | null>(null);
   const [profundidadeCentro, setProfundidadeCentro] = useState<number | null>(null);
@@ -104,7 +104,7 @@ export default function RecalqueAdensamento() {
   const [sigmaVmPrime, setSigmaVmPrime] = useState<number | null>(0); // σvm′ do passado (pré-adensamento)
   const [sigmaVfPrime, setSigmaVfPrime] = useState<number | null>(0); // σvf′ do futuro (tensão final)
   const [currentPerfilState, setCurrentPerfilState] = useState<"passado" | "presente" | "futuro">("presente");
-  
+
   // Estados para nova estrutura de perfil
   // Argila padrão: 10m ao entrar no módulo
   const [camadaArgila, setCamadaArgila] = useState<{
@@ -145,63 +145,63 @@ export default function RecalqueAdensamento() {
     gamaNat?: number;
     gamaSat?: number;
   }>>([]);
-  
+
   // Estado para Δσ′ calculado como σvf′ - σvm′
   const [deltaSigma, setDeltaSigma] = useState<number | null>(0);
-  
+
 
   // Estados resultados
   const [results, setResults] = useState<RecalqueAdensamentoOutput | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const tempoAdensamento = results?.tempo_adensamento;
-const [indiceTempoSelecionado, setIndiceTempoSelecionado] = useState(0);
-const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
-const [carouselProgress, setCarouselProgress] = useState(0);
-const [carouselTotalSlides, setCarouselTotalSlides] = useState(0);
-const tabelaTempo = useMemo(() => tempoAdensamento?.tabela_por_tempo ?? [], [tempoAdensamento]);
-const maxIndiceTempo = tabelaTempo.length > 0 ? tabelaTempo.length - 1 : 0;
-const tempoSelecionado = tabelaTempo[indiceTempoSelecionado] ?? null;
-const tempoInicial = tabelaTempo[0] ?? null;
-const tempoFinal = tabelaTempo.length > 0 ? tabelaTempo[tabelaTempo.length - 1] : null;
-  
-useEffect(() => {
-  setIndiceTempoSelecionado(0);
-}, [tempoAdensamento]);
+  const [indiceTempoSelecionado, setIndiceTempoSelecionado] = useState(0);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
+  const [carouselProgress, setCarouselProgress] = useState(0);
+  const [carouselTotalSlides, setCarouselTotalSlides] = useState(0);
+  const tabelaTempo = useMemo(() => tempoAdensamento?.tabela_por_tempo ?? [], [tempoAdensamento]);
+  const maxIndiceTempo = tabelaTempo.length > 0 ? tabelaTempo.length - 1 : 0;
+  const tempoSelecionado = tabelaTempo[indiceTempoSelecionado] ?? null;
+  const tempoInicial = tabelaTempo[0] ?? null;
+  const tempoFinal = tabelaTempo.length > 0 ? tabelaTempo[tabelaTempo.length - 1] : null;
 
-useEffect(() => {
-  if (indiceTempoSelecionado > maxIndiceTempo) {
-    setIndiceTempoSelecionado(maxIndiceTempo);
-  }
-}, [indiceTempoSelecionado, maxIndiceTempo]);
+  useEffect(() => {
+    setIndiceTempoSelecionado(0);
+  }, [tempoAdensamento]);
 
-useEffect(() => {
-  if (!carouselApi) {
-    return;
-  }
+  useEffect(() => {
+    if (indiceTempoSelecionado > maxIndiceTempo) {
+      setIndiceTempoSelecionado(maxIndiceTempo);
+    }
+  }, [indiceTempoSelecionado, maxIndiceTempo]);
 
-  const updateCarouselProgress = () => {
-    const total = carouselApi.scrollSnapList().length;
-    setCarouselTotalSlides(total);
-    setCarouselProgress(total > 0 ? (carouselApi.selectedScrollSnap() + 1) / total : 0);
-  };
+  useEffect(() => {
+    if (!carouselApi) {
+      return;
+    }
 
-  updateCarouselProgress();
-  carouselApi.on("select", updateCarouselProgress);
-  carouselApi.on("reInit", updateCarouselProgress);
+    const updateCarouselProgress = () => {
+      const total = carouselApi.scrollSnapList().length;
+      setCarouselTotalSlides(total);
+      setCarouselProgress(total > 0 ? (carouselApi.selectedScrollSnap() + 1) / total : 0);
+    };
 
-  return () => {
-    carouselApi.off("select", updateCarouselProgress);
-    carouselApi.off("reInit", updateCarouselProgress);
-  };
-}, [carouselApi]);
+    updateCarouselProgress();
+    carouselApi.on("select", updateCarouselProgress);
+    carouselApi.on("reInit", updateCarouselProgress);
+
+    return () => {
+      carouselApi.off("select", updateCarouselProgress);
+      carouselApi.off("reInit", updateCarouselProgress);
+    };
+  }, [carouselApi]);
 
   // Estados salvamento
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
   const [loadDialogOpen, setLoadDialogOpen] = useState(false);
-  const { calculations, saveCalculation, deleteCalculation, renameCalculation } = 
+  const { calculations, saveCalculation, deleteCalculation, renameCalculation } =
     useSavedCalculations("recalque-adensamento");
-  
+
 
   // Forms
   const perfilForm = useForm<PerfilFormValues>({
@@ -211,15 +211,15 @@ useEffect(() => {
       alturaCapilar: "0.0",
       pesoEspecificoAgua: "10.0",
       camadas: [
-        { 
-          id: generateId(), 
-          nome: "Camada 1", 
-          espessura: "5.0", 
-          profundidadeNA: "", 
-          capilaridade: "", 
-          gamaNat: "18.0", 
-          gamaSat: "20.0", 
-          Ko: "", 
+        {
+          id: generateId(),
+          nome: "Camada 1",
+          espessura: "5.0",
+          profundidadeNA: "",
+          capilaridade: "",
+          gamaNat: "18.0",
+          gamaSat: "20.0",
+          Ko: "",
           impermeavel: false,
           compressivel: false,
         },
@@ -253,43 +253,43 @@ useEffect(() => {
 
     try {
       const espessuraArgilaReal = camadaArgila.espessura;
-      
+
       // NA é digitado relativo ao topo da argila (positivo = acima, negativo = abaixo)
       // Para cálculos, precisa converter para profundidade absoluta da superfície
       const profNAArgilaRelativo = camadaArgila.profundidadeNA ?? null;
-      const profNAGlobalRelativo = profNAArgilaRelativo !== null 
-        ? profNAArgilaRelativo 
+      const profNAGlobalRelativo = profNAArgilaRelativo !== null
+        ? profNAArgilaRelativo
         : (parseFloat(perfilForm.watch("profundidadeNA") || "0") || 0);
-      
+
       // Converter para profundidade absoluta: profundidadeAterro + valorRelativo
       // Valor positivo significa acima da argila, então subtrai (ou seja, está mais próximo da superfície)
       // Valor negativo significa abaixo da argila, então soma
       const alturaAterroPassado = camadasAterroPassado.reduce((sum, c) => sum + c.espessura, 0);
       const alturaAterroPresente = camadasAterroPresente.reduce((sum, c) => sum + c.espessura, 0);
-      
+
       // Para o período atual, usar a altura do aterro correspondente
-      const alturaAterroAtual = currentPerfilState === "passado" 
-        ? alturaAterroPassado 
+      const alturaAterroAtual = currentPerfilState === "passado"
+        ? alturaAterroPassado
         : currentPerfilState === "futuro"
-        ? camadasAterroFuturo.length > 0 
-          ? [...camadasAterroPresente, ...camadasAterroFuturo].reduce((sum, c) => sum + c.espessura, 0)
-          : alturaAterroPresente
-        : alturaAterroPresente;
-      
+          ? camadasAterroFuturo.length > 0
+            ? [...camadasAterroPresente, ...camadasAterroFuturo].reduce((sum, c) => sum + c.espessura, 0)
+            : alturaAterroPresente
+          : alturaAterroPresente;
+
       const alturaCap = parseFloat(perfilForm.watch("alturaCapilar") || "0") || 0;
       const pesoAgua = parseFloat(config.pesoEspecificoAgua || "10.0");
 
       // Função auxiliar para calcular tensão em um período
       const calcularTensaoNoPeriodo = (aterros: typeof camadasAterroPassado): number => {
         const camadas: CamadaSolo[] = [];
-        
+
         const alturaAterroNoPeriodo = aterros.reduce((sum, c) => sum + c.espessura, 0);
-        
+
         // Converter NA relativo para absoluto para este período específico
         // Se NA = 1m (acima da argila): absoluta = alturaAterroNoPeriodo - 1
         // Se NA = -1m (abaixo da argila): absoluta = alturaAterroNoPeriodo - (-1) = alturaAterroNoPeriodo + 1
         const profNAAbsoluto = alturaAterroNoPeriodo - profNAGlobalRelativo;
-        
+
         aterros.forEach(aterro => {
           camadas.push({
             espessura: aterro.espessura,
@@ -298,7 +298,7 @@ useEffect(() => {
             impermeavel: false,
           });
         });
-        
+
         camadas.push({
           espessura: camadaArgila.espessura,
           gama_nat: camadaArgila.gamaNat ?? undefined,
@@ -317,12 +317,12 @@ useEffect(() => {
         if (resultado.erro) return 0;
 
         const centro = alturaAterroNoPeriodo + (espessuraArgilaReal / 2);
-        
+
         const pontos = resultado.pontos_calculo;
         for (let i = 0; i < pontos.length - 1; i++) {
           const p1 = pontos[i];
           const p2 = pontos[i + 1];
-          
+
           if (centro >= p1.profundidade && centro <= p2.profundidade) {
             const t = (centro - p1.profundidade) / (p2.profundidade - p1.profundidade);
             const sigma1 = p1.tensao_efetiva_vertical ?? 0;
@@ -337,7 +337,7 @@ useEffect(() => {
       const alturaAterroPassadoCalc = camadasAterroPassado.reduce((sum, c) => sum + c.espessura, 0);
       const centroPassado = alturaAterroPassadoCalc + (espessuraArgilaReal / 2);
       setProfundidadeCentro(centroPassado);
-      
+
       const sigmaVm = calcularTensaoNoPeriodo(camadasAterroPassado);
       setSigmaVmPrime(sigmaVm);
 
@@ -348,7 +348,7 @@ useEffect(() => {
       // Calcular σvf′ (tensão do futuro) - camadas do presente + modificações futuras
       // Constrói o perfil futuro completo (presente + edições/adições futuras)
       const camadasFuturoCompleto = [...camadasAterroPresente];
-      
+
       // Para cada camada futura, verifica se é uma edição (mesmo nome) ou nova
       camadasAterroFuturo.forEach((camadaFuturo) => {
         const indexNoPresente = camadasAterroPresente.findIndex(c => c.nome === camadaFuturo.nome);
@@ -360,7 +360,7 @@ useEffect(() => {
           camadasFuturoCompleto.push(camadaFuturo);
         }
       });
-      
+
       const sigmaVf = calcularTensaoNoPeriodo(camadasFuturoCompleto);
       setSigmaVfPrime(sigmaVf);
 
@@ -417,7 +417,7 @@ useEffect(() => {
       const nomesPresente = camadasAterroPresente.map(c => c.nome);
       const nomesFuturo = camadasAterroFuturo.map(c => c.nome);
       const todosNomes = [...nomesPresente, ...nomesFuturo];
-      
+
       let contador = 1;
       let nomeBase = nomeFinal;
       while (todosNomes.includes(nomeFinal)) {
@@ -468,19 +468,19 @@ useEffect(() => {
       // No futuro, sempre edita no futuro (não afeta o presente)
       // Usa camadasAterroAtual para identificar a camada que está sendo editada
       const camadaSendoEditada = camadasAterroAtual[index];
-      
+
       if (!camadaSendoEditada) return;
-      
+
       // Verifica se essa camada existe no presente (pelo nome)
       const existeNoPresente = camadasAterroPresente.some(c => c.nome === camadaSendoEditada.nome);
-      
+
       if (existeNoPresente) {
         // É uma camada do presente que está sendo editada
         const camadaOriginal = camadasAterroPresente.find(c => c.nome === camadaSendoEditada.nome);
         if (!camadaOriginal) return;
-        
+
         const indexFuturoExistente = camadasAterroFuturo.findIndex(c => c.nome === camadaOriginal.nome);
-        
+
         if (indexFuturoExistente >= 0) {
           // Atualiza camada futura existente
           const novasCamadas = [...camadasAterroFuturo];
@@ -495,7 +495,7 @@ useEffect(() => {
       } else {
         // É uma camada nova do futuro
         const indexFuturo = camadasAterroFuturo.findIndex(c => c.nome === camadaSendoEditada.nome);
-        
+
         if (indexFuturo >= 0) {
           // Atualiza a camada futura existente
           const novasCamadas = [...camadasAterroFuturo];
@@ -515,10 +515,10 @@ useEffect(() => {
       // No futuro, remove apenas do futuro (não afeta o presente)
       const camadaSendoRemovida = camadasAterroAtual[index];
       if (!camadaSendoRemovida) return;
-      
+
       // Verifica se é uma camada do presente ou nova do futuro
       const existeNoPresente = camadasAterroPresente.some(c => c.nome === camadaSendoRemovida.nome);
-      
+
       if (existeNoPresente) {
         // É uma camada do presente - remove a versão futura se existir
         const camadaOriginal = camadasAterroPresente.find(c => c.nome === camadaSendoRemovida.nome);
@@ -548,14 +548,14 @@ useEffect(() => {
     } else if (currentPerfilState === "futuro") {
       // No futuro, começa com uma cópia das camadas do presente
       const resultado = camadasAterroPresente.map(c => ({ ...c }));
-      
+
       // Processa as camadas futuras para aplicar edições e adições
       const novasCamadas: typeof camadasAterroFuturo = [];
-      
+
       camadasAterroFuturo.forEach((camadaFuturo) => {
         // Verifica se é uma edição: procura pelo nome que corresponde a uma camada do presente
         const indexNoPresente = camadasAterroPresente.findIndex(c => c.nome === camadaFuturo.nome);
-        
+
         if (indexNoPresente >= 0) {
           // É uma edição: substitui a camada do presente no índice correspondente
           resultado[indexNoPresente] = { ...camadaFuturo };
@@ -564,28 +564,28 @@ useEffect(() => {
           novasCamadas.push({ ...camadaFuturo });
         }
       });
-      
+
       // Combina: novas camadas primeiro (acima), depois as camadas do presente (editadas ou não)
       const resultadoFinal = [
         ...novasCamadas,
         ...resultado
       ];
-      
+
       return resultadoFinal;
     }
     return [];
   }, [currentPerfilState, camadasAterroPassado, camadasAterroPresente, camadasAterroFuturo]);
 
   const handleAddCamada = () => {
-    append({ 
-      id: generateId(), 
-      nome: `Camada ${fields.length + 1}`, 
-      espessura: "", 
-      profundidadeNA: "", 
-      capilaridade: "", 
-      gamaNat: "", 
-      gamaSat: "", 
-      Ko: "", 
+    append({
+      id: generateId(),
+      nome: `Camada ${fields.length + 1}`,
+      espessura: "",
+      profundidadeNA: "",
+      capilaridade: "",
+      gamaNat: "",
+      gamaSat: "",
+      Ko: "",
       impermeavel: false,
       compressivel: false,
     });
@@ -632,12 +632,12 @@ useEffect(() => {
         ...data,
       };
       append(novaCamada);
-      
+
       if (data.compressivel) {
         setCamadaCompressivelIndex(fields.length);
       }
     }
-    
+
     setDialogCamadaOpen(false);
     setCamadaEditando(undefined);
   };
@@ -657,7 +657,7 @@ useEffect(() => {
     if (sigmaV0Prime === null || sigmaV0Prime === 0) return false; // Precisa de σv0′ (presente)
     if (sigmaVmPrime === null || sigmaVmPrime === 0) return false; // Precisa de σvm′ (passado)
     if (currentPerfilState === "futuro" && (deltaSigma === null || deltaSigma === 0)) return false; // Precisa de Δσ′ (futuro)
-    
+
     // Verificar se parâmetros da argila estão preenchidos
     if (!camadaArgila.e0 || !camadaArgila.Cc || !camadaArgila.Cr) return false;
 
@@ -690,7 +690,7 @@ useEffect(() => {
     setDeltaSigma(0);
     setCurrentPerfilState("presente");
     setResults(null);
-    
+
     // Aguardar um pouco para garantir que o estado foi limpo
     setTimeout(() => {
       // Configurar perfil
@@ -702,22 +702,22 @@ useEffect(() => {
       perfilForm.setValue("profundidadeNA", exemplo.dados.perfil.profundidadeNA);
       perfilForm.setValue("alturaCapilar", exemplo.dados.perfil.alturaCapilar);
       perfilForm.setValue("pesoEspecificoAgua", exemplo.dados.perfil.pesoEspecificoAgua);
-      
+
       // Configurar argila
       setCamadaArgila(exemplo.dados.camadaArgila);
       setCamadaCompressivelIndex(0);
-      
+
       // Configurar base
       setCamadaBase(exemplo.dados.camadaBase);
-      
+
       // Configurar aterros
       setCamadasAterroPassado(exemplo.dados.camadasAterroPassado);
       setCamadasAterroPresente(exemplo.dados.camadasAterroPresente);
       setCamadasAterroFuturo(exemplo.dados.camadasAterroFuturo);
-      
+
       // Mudar para período inicial
       setCurrentPerfilState(exemplo.dados.periodoInicial);
-      
+
       toast.success(`Exemplo "${exemplo.nome}" carregado com sucesso!`);
     }, 100);
   };
@@ -729,7 +729,7 @@ useEffect(() => {
     }
 
     setIsCalculating(true);
-    
+
     try {
       if (!camadaArgila || !camadaArgila.e0 || !camadaArgila.Cc || !camadaArgila.Cr) {
         toast.error("Configure os parâmetros da camada de argila (e0, Cc, Cr)");
@@ -741,7 +741,7 @@ useEffect(() => {
       const e0 = camadaArgila.e0;
       const Cc = camadaArgila.Cc;
       const Cr = camadaArgila.Cr;
-      
+
       // σv0′ é do presente, σvm′ é do passado (pré-adensamento)
       const sigmaV0PrimeVal = sigmaV0Prime!;
       const sigmaVmPrimeVal = sigmaVmPrime!;
@@ -775,8 +775,8 @@ useEffect(() => {
         toast.success("Cálculo realizado com sucesso!");
       }
     } catch (error: any) {
-      toast.error("Erro ao calcular", { 
-        description: error.message || "Erro desconhecido" 
+      toast.error("Erro ao calcular", {
+        description: error.message || "Erro desconhecido"
       });
       setResults(null);
     } finally {
@@ -788,16 +788,16 @@ useEffect(() => {
     console.log('🔍 [DEBUG] handleExportPDF chamado');
     console.log('🔍 [DEBUG] results:', results);
     console.log('🔍 [DEBUG] results?.erro:', results?.erro);
-    
+
     if (!results || results.erro) {
       console.log('🔍 [DEBUG] Retornando early - sem results ou com erro');
       return;
     }
-    
+
     // Gerar nome padrão usando a função auxiliar
     const defaultName = generateDefaultPDFFileName("Recalque por Adensamento");
     console.log('🔍 [DEBUG] Nome padrão gerado:', defaultName);
-    
+
     setPdfFileName(defaultName);
     console.log('🔍 [DEBUG] Abrindo diálogo de exportação...');
     setExportPDFDialogOpen(true);
@@ -805,24 +805,24 @@ useEffect(() => {
 
   const handleConfirmExportPDF = async () => {
     if (!results || results.erro) return;
-    
+
     setIsExportingPDF(true);
 
     // Parâmetros de entrada
     const inputs: { label: string; value: string }[] = [];
-    
+
     // Parâmetros da camada de argila
     if (camadaArgila?.espessura) inputs.push({ label: "Espessura da Camada (H0)", value: `${camadaArgila.espessura.toFixed(2)} m` });
     if (camadaArgila?.e0) inputs.push({ label: "Índice de Vazios Inicial (e0)", value: camadaArgila.e0.toFixed(3) });
     if (camadaArgila?.Cc) inputs.push({ label: "Índice de Compressão (Cc)", value: camadaArgila.Cc.toFixed(3) });
     if (camadaArgila?.Cr) inputs.push({ label: "Índice de Recompressão (Cr)", value: camadaArgila.Cr.toFixed(3) });
     if (camadaArgila?.Cv) inputs.push({ label: "Coeficiente de Adensamento (Cv)", value: `${camadaArgila.Cv.toFixed(2)} m²/ano` });
-    
+
     // Tensões
     if (sigmaV0Prime) inputs.push({ label: "Tensão Efetiva Inicial - Presente", value: `${formatNumberForExport(sigmaV0Prime)} kPa` });
     if (sigmaVmPrime) inputs.push({ label: "Tensão de Pré-Adensamento - Passado", value: `${formatNumberForExport(sigmaVmPrime)} kPa` });
     if (deltaSigma) inputs.push({ label: "Acréscimo de Tensão", value: `${formatNumberForExport(deltaSigma)} kPa` });
-    
+
     // Configurações do perfil
     if (config.pesoEspecificoAgua) inputs.push({ label: "Peso Específico da Água", value: `${config.pesoEspecificoAgua} kN/m³` });
     const profundidadeNA = perfilForm.watch("profundidadeNA");
@@ -831,17 +831,17 @@ useEffect(() => {
     // Resultados
     const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
     if (results.recalque_total_primario != null) {
-      resultsList.push({ 
-        label: "Recalque Total Primário", 
-        value: `${formatNumberForExport(results.recalque_total_primario)} m (${(results.recalque_total_primario * 1000).toFixed(2)} mm)`, 
-        highlight: true 
+      resultsList.push({
+        label: "Recalque Total Primário",
+        value: `${formatNumberForExport(results.recalque_total_primario)} m (${(results.recalque_total_primario * 1000).toFixed(2)} mm)`,
+        highlight: true
       });
     }
     if (camadaArgila && results.recalque_total_primario) {
       const porcentagem = ((results.recalque_total_primario / camadaArgila.espessura) * 100).toFixed(2);
-      resultsList.push({ 
-        label: "Porcentagem de Recalque", 
-        value: `${porcentagem}%` 
+      resultsList.push({
+        label: "Porcentagem de Recalque",
+        value: `${porcentagem}%`
       });
     }
     if (results.estado_adensamento) {
@@ -859,38 +859,38 @@ useEffect(() => {
 
     // Fórmulas utilizadas
     const formulas = [
-      { 
-        label: "Tensão Efetiva Final", 
+      {
+        label: "Tensão Efetiva Final",
         formula: "sigma vf linha = sigma v0 linha + Delta sigma linha",
         latex: false,
         description: "Soma da tensão efetiva inicial com o acréscimo de tensão"
       },
-      { 
-        label: "Razão de Pré-Adensamento (RPA)", 
+      {
+        label: "Razão de Pré-Adensamento (RPA)",
         formula: "RPA = sigma vm linha / sigma v0 linha",
         latex: false,
         description: "Relaciona a tensão de pré-adensamento com a tensão efetiva inicial"
       },
-      { 
-        label: "Normalmente Adensado - Deformação", 
+      {
+        label: "Normalmente Adensado - Deformação",
         formula: "epsilon v = (Cc / (1 + e0)) × log10(sigma vf linha / sigma v0 linha)",
         latex: false,
         description: "Deformação para solo normalmente adensado (RPA ≈ 1)"
       },
-      { 
-        label: "Pré-Adensado - Recompressão", 
+      {
+        label: "Pré-Adensado - Recompressão",
         formula: "epsilon v = (Cr / (1 + e0)) × log10(sigma vf linha / sigma v0 linha)",
         latex: false,
         description: "Deformação quando sigma vf linha menor ou igual a sigma vm linha (apenas recompressão)"
       },
-      { 
-        label: "Pré-Adensado - Recompressão + Compressão Virgem", 
+      {
+        label: "Pré-Adensado - Recompressão + Compressão Virgem",
         formula: "epsilon v = (Cr / (1 + e0)) × log10(sigma vm linha / sigma v0 linha) + (Cc / (1 + e0)) × log10(sigma vf linha / sigma vm linha)",
         latex: false,
         description: "Deformação quando sigma vf linha maior que sigma vm linha (recompressão até sigma vm linha, depois compressão virgem)"
       },
-      { 
-        label: "Recalque Total", 
+      {
+        label: "Recalque Total",
         formula: "recalque = epsilon v × H0",
         latex: false,
         description: "Recalque calculado a partir da deformação volumétrica e espessura inicial"
@@ -921,7 +921,7 @@ useEffect(() => {
       if (settings.printSettings?.includeCustomTitle) {
         localStorage.setItem('edusolo_last_custom_report_title', customReportTitle || '');
       }
-    } catch {}
+    } catch { }
 
     console.log('🔍 [DEBUG] Iniciando exportação PDF...');
     console.log('🔍 [DEBUG] exportData:', {
@@ -945,16 +945,16 @@ useEffect(() => {
       if (result instanceof Blob) {
         console.log('🔍 [DEBUG] Tamanho do Blob:', result.size, 'bytes');
       }
-      
+
       setIsExportingPDF(false);
-      
+
       if (result instanceof Blob) {
         console.log('🔍 [DEBUG] Blob válido, preparando para salvar...');
         try {
           const reportName = pdfFileName.replace('.pdf', '');
           console.log('🔍 [DEBUG] reportName:', reportName);
           console.log('🔍 [DEBUG] Chamando prepareReportForStorage...');
-          
+
           const prepared = await prepareReportForStorage({
             name: reportName,
             moduleType: 'recalque-adensamento',
@@ -973,19 +973,19 @@ useEffect(() => {
               exportDate: new Date().toISOString()
             }
           });
-          
+
           console.log('🔍 [DEBUG] prepareReportForStorage concluído:', prepared);
           console.log('🔍 [DEBUG] Chamando addReport...');
           addReport(prepared);
           console.log('🔍 [DEBUG] addReport concluído');
-          
+
           setExportPDFDialogOpen(false);
           console.log('🔍 [DEBUG] Fechando diálogo de exportação');
-          
+
           // Padrão unificado: abrir diálogo pós-exportação com CTA
           notify.success({ title: "Relatório salvo", description: "PDF disponível em Relatórios" });
           console.log('🔍 [DEBUG] Notificação de sucesso enviada');
-          
+
           console.log('🔍 [DEBUG] Abrindo diálogo de sucesso...');
           setPdfSavedDialogOpen(true);
           console.log('🔍 [DEBUG] ✅ Processo completo concluído com sucesso!');
@@ -1046,7 +1046,7 @@ useEffect(() => {
       { label: "=== RESULTADOS ===", value: "" },
       { label: "", value: "" },
     ];
-    
+
     if (results.recalque_total_primario != null) {
       resultadosData.push({ label: "Recalque Total Primário (m)", value: results.recalque_total_primario.toFixed(4) });
       resultadosData.push({ label: "Recalque Total Primário (mm)", value: (results.recalque_total_primario * 1000).toFixed(2) });
@@ -1220,7 +1220,7 @@ useEffect(() => {
                     <Maximize2 className="w-4 h-4" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-[95vw] max-h-[95vh] w-full p-6 overflow-hidden flex flex-col">
+                <DialogContent className="max-w-5xl max-h-[90vh] w-full p-6 overflow-hidden flex flex-col">
                   <DialogHeader className="mb-4 flex-shrink-0">
                     <DialogTitle className="text-xl">Comparação dos 3 Perfis (Passado, Presente e Futuro)</DialogTitle>
                   </DialogHeader>
@@ -1235,14 +1235,14 @@ useEffect(() => {
                           camadasAterro={camadasAterroPassadoDiagrama}
                           profundidadeNA={profundidadeNA}
                           alturaCapilar={parseFloat(perfilForm.watch("alturaCapilar") || "0") || 0}
-                          onEditCamadaArgila={() => {}}
-                          onConfigCamadaBase={() => {}}
-                          onAddCamadaAterro={() => {}}
-                          onEditCamadaAterro={() => {}}
-                          onRemoveCamadaAterro={() => {}}
+                          onEditCamadaArgila={() => { }}
+                          onConfigCamadaBase={() => { }}
+                          onAddCamadaAterro={() => { }}
+                          onEditCamadaAterro={() => { }}
+                          onRemoveCamadaAterro={() => { }}
                           camadaCompressivelIndex={camadaArgilaParaDiagrama?.compressivel ? 0 : null}
                           currentPerfilState="passado"
-                          onPerfilStateChange={() => {}}
+                          onPerfilStateChange={() => { }}
                           interactive={false}
                           hideTabs={true}
                         />
@@ -1259,14 +1259,14 @@ useEffect(() => {
                           camadasAterro={camadasAterroPresenteDiagrama}
                           profundidadeNA={profundidadeNA}
                           alturaCapilar={parseFloat(perfilForm.watch("alturaCapilar") || "0") || 0}
-                          onEditCamadaArgila={() => {}}
-                          onConfigCamadaBase={() => {}}
-                          onAddCamadaAterro={() => {}}
-                          onEditCamadaAterro={() => {}}
-                          onRemoveCamadaAterro={() => {}}
+                          onEditCamadaArgila={() => { }}
+                          onConfigCamadaBase={() => { }}
+                          onAddCamadaAterro={() => { }}
+                          onEditCamadaAterro={() => { }}
+                          onRemoveCamadaAterro={() => { }}
                           camadaCompressivelIndex={camadaArgilaParaDiagrama?.compressivel ? 0 : null}
                           currentPerfilState="presente"
-                          onPerfilStateChange={() => {}}
+                          onPerfilStateChange={() => { }}
                           interactive={false}
                           hideTabs={true}
                         />
@@ -1283,14 +1283,14 @@ useEffect(() => {
                           camadasAterro={camadasAterroFuturoDiagrama}
                           profundidadeNA={profundidadeNA}
                           alturaCapilar={parseFloat(perfilForm.watch("alturaCapilar") || "0") || 0}
-                          onEditCamadaArgila={() => {}}
-                          onConfigCamadaBase={() => {}}
-                          onAddCamadaAterro={() => {}}
-                          onEditCamadaAterro={() => {}}
-                          onRemoveCamadaAterro={() => {}}
+                          onEditCamadaArgila={() => { }}
+                          onConfigCamadaBase={() => { }}
+                          onAddCamadaAterro={() => { }}
+                          onEditCamadaAterro={() => { }}
+                          onRemoveCamadaAterro={() => { }}
                           camadaCompressivelIndex={camadaArgilaParaDiagrama?.compressivel ? 0 : null}
                           currentPerfilState="futuro"
-                          onPerfilStateChange={() => {}}
+                          onPerfilStateChange={() => { }}
                           interactive={false}
                           hideTabs={true}
                         />

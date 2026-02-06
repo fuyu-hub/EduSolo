@@ -22,7 +22,7 @@ const moduleRoutes: { [key: string]: string } = {
   'compactacao': '/compactacao',
   'tensoes': '/tensoes',
   'acrescimo': '/acrescimo-tensoes',
-  'caracterizacao': '/caracterizacao',
+  'caracterizacao': '/indices-limites',
 };
 
 const moduleLabels: { [key: string]: string } = {
@@ -32,7 +32,7 @@ const moduleLabels: { [key: string]: string } = {
   'compactacao': 'Compactação',
   'tensoes': 'Tensões Geostáticas',
   'acrescimo': 'Acréscimo de Tensões',
-  'caracterizacao': 'Índices Físicos e Consistência',
+  'caracterizacao': 'Índices e Limites',
 };
 
 export default function Relatorios() {

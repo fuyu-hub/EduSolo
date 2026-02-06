@@ -421,8 +421,8 @@ export default function CaracterizacaoPage() {
             {/* Top Header Section */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg transition-transform hover:scale-110 hover:rotate-3">
-                        <Beaker className="w-6 h-6 text-white" />
+                    <div className="w-12 h-12 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-center transition-colors hover:border-primary/60 hover:bg-primary/10">
+                        <Beaker className="w-6 h-6 text-primary" />
                     </div>
                     <div>
                         <h1 className="text-3xl font-bold text-foreground">Índices Físicos e Consistência</h1>

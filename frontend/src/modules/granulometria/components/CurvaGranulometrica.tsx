@@ -177,8 +177,8 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
   // Componente do gráfico
   const GraficoContent = ({ isDialog = false }: { isDialog?: boolean }) => (
     <ComposedChart
-      width={isDialog ? 1200 : (isMobile ? 340 : 1300)}
-      height={isDialog ? 600 : (isMobile ? 300 : 380)}
+      width={isDialog ? 950 : (isMobile ? 340 : 1300)}
+      height={isDialog ? 520 : (isMobile ? 300 : 380)}
       data={dadosGrafico}
       margin={isDialog
         ? { top: 50, right: 40, left: 60, bottom: 80 }
@@ -197,46 +197,15 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
       {/* Fundo branco */}
       <rect width="100%" height="100%" fill="white" />
 
-      {/* Zonas coloridas das frações granulométricas (fundo) - tom muito suave */}
-      {/* Argila: < 0.02 mm */}
-      {minAberturaLog < Math.log10(0.02) && (
-        <ReferenceArea
-          x1={minAberturaLog}
-          x2={Math.min(Math.log10(0.02), maxAberturaLog)}
-          fill="#fef3c7"
-          fillOpacity={0.3}
-        />
-      )}
-
-      {/* Silte: 0.02 - 0.06 mm */}
-      {minAberturaLog <= Math.log10(0.06) && Math.log10(0.02) <= maxAberturaLog && (
-        <ReferenceArea
-          x1={Math.max(Math.log10(0.02), minAberturaLog)}
-          x2={Math.min(Math.log10(0.06), maxAberturaLog)}
-          fill="#fef3c7"
-          fillOpacity={0.3}
-        />
-      )}
-
-      {/* Areia: 0.06 - 2.0 mm */}
-      {minAberturaLog <= Math.log10(2.0) && Math.log10(0.06) <= maxAberturaLog && (
-        <ReferenceArea
-          x1={Math.max(Math.log10(0.06), minAberturaLog)}
-          x2={Math.min(Math.log10(2.0), maxAberturaLog)}
-          fill="#fef3c7"
-          fillOpacity={0.3}
-        />
-      )}
-
-      {/* Pedregulho: 2.0 - 60 mm */}
-      {minAberturaLog <= Math.log10(60) && Math.log10(2.0) <= maxAberturaLog && (
-        <ReferenceArea
-          x1={Math.max(Math.log10(2.0), minAberturaLog)}
-          x2={Math.min(Math.log10(60), maxAberturaLog)}
-          fill="#fef3c7"
-          fillOpacity={0.3}
-        />
-      )}
+      {/* Fundo amarelo cobrindo toda a área do gráfico */}
+      <ReferenceArea
+        x1={minAberturaLog}
+        x2={maxAberturaLog}
+        y1={0}
+        y2={100}
+        fill="#fef3c7"
+        fillOpacity={0.3}
+      />
 
       {/* Grid: horizontal linear, vertical logarítmico */}
       <CartesianGrid
@@ -269,7 +238,7 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
         ticks={ticksX}
         tickFormatter={formatarEixoX}
         label={{
-          value: isMobile ? 'Diâmetro (mm)' : 'Diâmetro das partículas (mm) - Escala Logarítmica',
+          value: isMobile ? 'Diâmetro (mm)' : 'Diâmetro das partículas (mm)',
           position: 'bottom',
           offset: isDialog ? 5 : (isMobile ? 5 : 10),
           style: { fontSize: isDialog ? 14 : (isMobile ? 10 : 13), fontWeight: 600, fill: '#374151' }
@@ -532,7 +501,7 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
                 Ampliar
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] max-h-[95vh] w-full">
+            <DialogContent className="max-w-5xl max-h-[90vh] w-full">
               <DialogHeader>
                 <DialogTitle>Curva Granulométrica - Visualização Ampliada</DialogTitle>
               </DialogHeader>
@@ -550,7 +519,7 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
         style={{
           left: '-9999px',
           top: 0,
-          width: '1240px', // Largura fixa para o gráfico ampliado
+          width: '1000px', // Largura fixa para o gráfico ampliado
           zIndex: -9999
         }}
       >
