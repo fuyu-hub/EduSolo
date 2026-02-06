@@ -1064,20 +1064,20 @@ function CompactacaoDesktop() {
                     <CardContent className="px-5 pb-5">
                       <div className="space-y-1.5">
                         <ResultRow
-                          label="Umidade Ótima (w)"
+                          label={<span><span className="font-serif italic font-bold text-lg">w</span> <span className="text-[10px] font-normal opacity-70">(Umidade Ótima)</span></span>}
                           value={results.umidade_otima}
                           unit="%"
                           highlight
                         />
                         <ResultRow
-                          label="Peso Esp. Seco Máx (γd)"
+                          label={<span><span className="font-serif italic font-bold text-lg">ρ<sub className="text-xs">d</sub></span> <span className="text-[10px] font-normal opacity-70">(Massa Esp. Seca Máx)</span></span>}
                           value={results.peso_especifico_seco_max !== null ? results.peso_especifico_seco_max / 10 : null}
                           unit="g/cm³"
                           precision={3}
                           highlight
                         />
                         <ResultRow
-                          label="Peso Esp. Seco Máx (γd)"
+                          label={<span><span className="font-serif italic font-bold text-lg">γ<sub className="text-xs">d</sub></span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Seco Máx)</span></span>}
                           value={results.peso_especifico_seco_max}
                           unit="kN/m³"
                         />
@@ -1190,7 +1190,7 @@ export default function Compactacao() {
 }
 // Função auxiliar para linhas de resultado
 // Função auxiliar para linhas de resultado
-function ResultRow({ label, value, unit, precision = 2, highlight = false }: { label: string, value: number | null | undefined, unit: string, precision?: number, highlight?: boolean }) {
+function ResultRow({ label, value, unit, precision = 2, highlight = false }: { label: string | React.ReactNode, value: number | null | undefined, unit: string, precision?: number, highlight?: boolean }) {
   if (value === undefined || value === null || isNaN(value)) return null;
   return (
     <div className={cn(

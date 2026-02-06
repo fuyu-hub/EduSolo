@@ -3,6 +3,7 @@
 export interface IndicesFisicosInput {
     massaUmida: string;
     massaSeca: string;
+    tara?: string; // Massa do recipiente
     volume?: string;
 }
 

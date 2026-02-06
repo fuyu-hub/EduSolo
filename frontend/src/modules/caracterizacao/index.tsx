@@ -35,6 +35,7 @@ import ExportPDFDialog from "@/components/ExportPDFDialog";
 const tooltips = {
     massaUmida: "Massa total da amostra de solo incluindo a água, obtida por pesagem direta (g).",
     massaSeca: "Massa da amostra após secagem em estufa a 105-110°C até peso constante (g).",
+    tara: "Massa do recipiente (cápsula) utilizado na pesagem (g).",
     volume: "Volume total da amostra de solo, incluindo sólidos e vazios (cm³).",
     Gs: "Densidade relativa dos grãos sólidos (adimensional). Valores típicos: Areias 2.65, Argilas 2.60-2.80.",
     emin: "Índice de vazios mínimo do solo, obtido em ensaio de compactação máxima (estado mais denso possível).",
@@ -43,7 +44,7 @@ const tooltips = {
 
 // Tooltips para resultados com faixas típicas
 const resultTooltips: Record<string, { desc: string; range?: string }> = {
-    h: { desc: "Teor de umidade: relação entre massa de água e massa de sólidos.", range: "Típico: 5% a 50%" },
+    w: { desc: "Teor de umidade: relação entre massa de água e massa de sólidos.", range: "Típico: 5% a 50%" },
     gamma: { desc: "Peso específico natural: peso do solo por unidade de volume no estado natural.", range: "Típico: 14 a 22 kN/m³" },
     gamma_d: { desc: "Peso específico aparente seco: peso dos sólidos por unidade de volume total.", range: "Típico: 12 a 20 kN/m³" },
     e: { desc: "Índice de vazios: relação entre volume de vazios e volume de sólidos.", range: "Areias: 0.4-0.9 | Argilas: 0.5-1.5" },
@@ -757,90 +758,111 @@ const EntradaDados = () => {
 
                 </CardHeader>
                 <CardContent className="space-y-3 pt-3">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="space-y-1.5">
-                            <div className="flex items-center h-5">
-                                <Label htmlFor="Gs" className="text-xs flex items-center gap-1">
-                                    Gs (Dens. Grãos)
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
-                                            <TooltipContent side="left"><p className="max-w-xs text-xs">{tooltips.Gs}</p></TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </Label>
+                    <div className="space-y-4">
+                        {/* Linha Superior: Gs, Massas e Tara */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="space-y-1.5">
+                                <div className="flex items-center h-5">
+                                    <Label htmlFor="Gs" className="text-xs flex items-center gap-1">
+                                        Gs (Dens. Grãos)
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground" /></TooltipTrigger>
+                                                <TooltipContent side="left"><p className="max-w-xs text-xs">{tooltips.Gs}</p></TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </Label>
+                                </div>
+                                <Input id="Gs" placeholder="Ex: 2.65" value={settings.Gs} onChange={(e) => updateSettings({ Gs: e.target.value })} className="h-9" />
                             </div>
-                            <Input id="Gs" placeholder="Ex: 2.65" value={settings.Gs} onChange={(e) => updateSettings({ Gs: e.target.value })} className="h-9" />
+                            <div className="space-y-1.5">
+                                <div className="flex items-center h-5">
+                                    <Label htmlFor="massaUmida" className="text-xs flex items-center gap-1">
+                                        Mbu (g)
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
+                                                <TooltipContent side="left"><p className="max-w-xs text-xs">{tooltips.massaUmida}</p></TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </Label>
+                                </div>
+                                <Input id="massaUmida" placeholder="0.00" value={currentAmostra.indices.massaUmida} onChange={(e) => updateIndices(currentAmostraIndex, { massaUmida: e.target.value })} className="h-9" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <div className="flex items-center h-5">
+                                    <Label htmlFor="massaSeca" className="text-xs flex items-center gap-1">
+                                        Mbs (g)
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
+                                                <TooltipContent><p className="max-w-xs text-xs">{tooltips.massaSeca}</p></TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </Label>
+                                </div>
+                                <Input id="massaSeca" placeholder="0.00" value={currentAmostra.indices.massaSeca} onChange={(e) => updateIndices(currentAmostraIndex, { massaSeca: e.target.value })} className="h-9" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <div className="flex items-center h-5">
+                                    <Label htmlFor="tara" className="text-xs flex items-center gap-1">
+                                        Tara (g)
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
+                                                <TooltipContent><p className="max-w-xs text-xs">{tooltips.tara}</p></TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </Label>
+                                </div>
+                                <Input id="tara" placeholder="0.00" value={currentAmostra.indices.tara || ""} onChange={(e) => updateIndices(currentAmostraIndex, { tara: e.target.value })} className="h-9" />
+                            </div>
                         </div>
-                        <div className="space-y-1.5">
-                            <div className="flex items-center h-5">
-                                <Label htmlFor="massaUmida" className="text-xs flex items-center gap-1">
-                                    Massa Úmida (g)
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
-                                            <TooltipContent side="left"><p className="max-w-xs text-xs">{tooltips.massaUmida}</p></TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </Label>
+
+                        {/* Linha Inferior: Volume e Índices de Vazios */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-1.5">
+                                <div className="flex items-center h-5">
+                                    <Label htmlFor="volume" className="text-xs flex items-center gap-1">
+                                        Volume (cm³)
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
+                                                <TooltipContent><p className="max-w-xs text-xs">{tooltips.volume}</p></TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </Label>
+                                </div>
+                                <Input id="volume" placeholder="Ex: 100" value={currentAmostra.indices.volume || ""} onChange={(e) => updateIndices(currentAmostraIndex, { volume: e.target.value })} className="h-9" />
                             </div>
-                            <Input id="massaUmida" placeholder="0.00" value={currentAmostra.indices.massaUmida} onChange={(e) => updateIndices(currentAmostraIndex, { massaUmida: e.target.value })} className="h-9" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <div className="flex items-center h-5">
-                                <Label htmlFor="massaSeca" className="text-xs flex items-center gap-1">
-                                    Massa Seca (g)
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
-                                            <TooltipContent><p className="max-w-xs text-xs">{tooltips.massaSeca}</p></TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </Label>
+                            <div className="space-y-1.5">
+                                <div className="flex items-center h-5">
+                                    <Label htmlFor="emin" className="text-xs flex items-center gap-1">
+                                        e<sub>mín</sub>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
+                                                <TooltipContent><p className="max-w-xs text-xs">{tooltips.emin}</p></TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </Label>
+                                </div>
+                                <Input id="emin" placeholder="Ex: 0.4" value={settings.indice_vazios_min} onChange={(e) => updateSettings({ indice_vazios_min: e.target.value })} className="h-9" />
                             </div>
-                            <Input id="massaSeca" placeholder="0.00" value={currentAmostra.indices.massaSeca} onChange={(e) => updateIndices(currentAmostraIndex, { massaSeca: e.target.value })} className="h-9" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <div className="flex items-center h-5">
-                                <Label htmlFor="volume" className="text-xs flex items-center gap-1">
-                                    Volume (cm³)
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
-                                            <TooltipContent><p className="max-w-xs text-xs">{tooltips.volume}</p></TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </Label>
+                            <div className="space-y-1.5">
+                                <div className="flex items-center h-5">
+                                    <Label htmlFor="emax" className="text-xs flex items-center gap-1">
+                                        e<sub>máx</sub>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
+                                                <TooltipContent><p className="max-w-xs text-xs">{tooltips.emax}</p></TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                    </Label>
+                                </div>
+                                <Input id="emax" placeholder="Ex: 0.9" value={settings.indice_vazios_max} onChange={(e) => updateSettings({ indice_vazios_max: e.target.value })} className="h-9" />
                             </div>
-                            <Input id="volume" placeholder="Ex: 100" value={currentAmostra.indices.volume || ""} onChange={(e) => updateIndices(currentAmostraIndex, { volume: e.target.value })} className="h-9" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <div className="flex items-center h-5">
-                                <Label htmlFor="emin" className="text-xs flex items-center gap-1">
-                                    e<sub>mín</sub>
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
-                                            <TooltipContent><p className="max-w-xs text-xs">{tooltips.emin}</p></TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </Label>
-                            </div>
-                            <Input id="emin" placeholder="Ex: 0.4" value={settings.indice_vazios_min} onChange={(e) => updateSettings({ indice_vazios_min: e.target.value })} className="h-9" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <div className="flex items-center h-5">
-                                <Label htmlFor="emax" className="text-xs flex items-center gap-1">
-                                    e<sub>máx</sub>
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
-                                            <TooltipContent><p className="max-w-xs text-xs">{tooltips.emax}</p></TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </Label>
-                            </div>
-                            <Input id="emax" placeholder="Ex: 0.9" value={settings.indice_vazios_max} onChange={(e) => updateSettings({ indice_vazios_max: e.target.value })} className="h-9" />
                         </div>
                     </div>
                     {/* Aviso quando há dados de LP e emin/emax preenchidos */}
@@ -1045,13 +1067,13 @@ const ResultadosView = ({ resultadoCombinado }: { resultadoCombinado: Caracteriz
                                                 Índices Físicos
                                             </h4>
                                             <div className="space-y-[1px]">
-                                                <ResultRow label={<span><span className="font-serif italic text-lg">h</span> <span className="text-[10px] font-normal opacity-70">(Umidade)</span></span>} value={displayResult.w} unit="%" precision={1} tooltipKey="h" statusRanges={{ ok: [5, 50], warn: [0, 80] }} />
-                                                <ResultRow label={<span><span className="font-serif italic text-lg">γ</span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Natural)</span></span>} value={displayResult.gamma_nat} unit="kN/m³" precision={2} tooltipKey="gamma" statusRanges={{ ok: [14, 22], warn: [10, 25] }} />
-                                                <ResultRow label={<span><span className="font-serif italic text-lg">γ<sub className="text-xs not-italic">s</sub></span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Seco)</span></span>} value={displayResult.gamma_d} unit="kN/m³" precision={2} tooltipKey="gamma_d" statusRanges={{ ok: [12, 20], warn: [8, 22] }} />
-                                                <ResultRow label={<span><span className="font-serif italic text-lg">e</span> <span className="text-[10px] font-normal opacity-70">(Índice de Vazios)</span></span>} value={displayResult.e} unit="" precision={2} tooltipKey="e" statusRanges={{ ok: [0.3, 1.2], warn: [0.1, 2.0] }} />
-                                                <ResultRow label={<span><span className="font-serif italic text-lg">n</span> <span className="text-[10px] font-normal opacity-70">(Porosidade)</span></span>} value={displayResult.n} unit="%" precision={0} tooltipKey="n" statusRanges={{ ok: [25, 60], warn: [15, 75] }} />
-                                                <ResultRow label={<span><span className="font-serif italic text-lg">S</span> <span className="text-[10px] font-normal opacity-70">(Grau de Saturação)</span></span>} value={displayResult.Sr} unit="%" precision={0} tooltipKey="Sr" statusRanges={{ ok: [0, 100], warn: [0, 100] }} />
-                                                <ResultRow label={<span><span className="font-serif italic text-lg">γ<sub className="text-xs not-italic">sat</sub></span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Saturado)</span></span>} value={displayResult.gamma_sat} unit="kN/m³" precision={2} tooltipKey="gamma_sat" statusRanges={{ ok: [18, 23], warn: [15, 25] }} />
+                                                <ResultRow label={<span><span className="font-serif italic font-bold text-lg">w</span> <span className="text-[10px] font-normal opacity-70">(Umidade)</span></span>} value={displayResult.w} unit="%" precision={1} tooltipKey="w" statusRanges={{ ok: [5, 50], warn: [0, 80] }} />
+                                                <ResultRow label={<span><span className="font-serif italic font-bold text-lg">γ</span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Natural)</span></span>} value={displayResult.gamma_nat} unit="kN/m³" precision={2} tooltipKey="gamma" statusRanges={{ ok: [14, 22], warn: [10, 25] }} />
+                                                <ResultRow label={<span><span className="font-serif italic font-bold text-lg">γ<sub className="text-xs not-italic">s</sub></span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Seco)</span></span>} value={displayResult.gamma_d} unit="kN/m³" precision={2} tooltipKey="gamma_d" statusRanges={{ ok: [12, 20], warn: [8, 22] }} />
+                                                <ResultRow label={<span><span className="font-serif italic font-bold text-lg">e</span> <span className="text-[10px] font-normal opacity-70">(Índice de Vazios)</span></span>} value={displayResult.e} unit="" precision={2} tooltipKey="e" statusRanges={{ ok: [0.3, 1.2], warn: [0.1, 2.0] }} />
+                                                <ResultRow label={<span><span className="font-serif italic font-bold text-lg">n</span> <span className="text-[10px] font-normal opacity-70">(Porosidade)</span></span>} value={displayResult.n} unit="%" precision={0} tooltipKey="n" statusRanges={{ ok: [25, 60], warn: [15, 75] }} />
+                                                <ResultRow label={<span><span className="font-serif italic font-bold text-lg">S</span> <span className="text-[10px] font-normal opacity-70">(Grau de Saturação)</span></span>} value={displayResult.Sr} unit="%" precision={0} tooltipKey="Sr" statusRanges={{ ok: [0, 100], warn: [0, 100] }} />
+                                                <ResultRow label={<span><span className="font-serif italic font-bold text-lg">γ<sub className="text-xs not-italic">sat</sub></span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Saturado)</span></span>} value={displayResult.gamma_sat} unit="kN/m³" precision={2} tooltipKey="gamma_sat" statusRanges={{ ok: [18, 23], warn: [15, 25] }} />
                                             </div>
                                         </div>
 
