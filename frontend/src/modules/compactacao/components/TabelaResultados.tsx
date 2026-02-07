@@ -1,18 +1,13 @@
 // frontend/src/components/compactacao/TabelaResultados.tsx
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
 
-interface PontoCalculado {
-  umidade: number;
-  peso_especifico_seco: number;
-}
+import { PontoCurvaCompactacao } from "../schemas";
 
 interface TabelaResultadosProps {
-  pontos: PontoCalculado[];
-  indiceMaximo?: number;
+  pontos: PontoCurvaCompactacao[];
 }
 
-export default function TabelaResultados({ pontos, indiceMaximo }: TabelaResultadosProps) {
+export default function TabelaResultados({ pontos }: TabelaResultadosProps) {
   if (!pontos || pontos.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -27,19 +22,17 @@ export default function TabelaResultados({ pontos, indiceMaximo }: TabelaResulta
         <TableHeader>
           <TableRow className="h-8">
             <TableHead className="text-center py-2">Ponto</TableHead>
-            <TableHead className="text-center py-2">Umidade (%)</TableHead>
-            <TableHead className="text-center py-2">γ seco (g/cm³)</TableHead>
+            <TableHead className="text-center py-2">
+              <span className="font-serif italic">w</span> (%)
+            </TableHead>
+            <TableHead className="text-center py-2">
+              <span className="font-serif italic">ρ</span><sub>d</sub> (g/cm³)
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {pontos.map((ponto, index) => (
-            <TableRow 
-              key={index}
-              className={cn(
-                "h-9",
-                indiceMaximo === index && "bg-primary/10 font-semibold"
-              )}
-            >
+            <TableRow key={index} className="h-9">
               <TableCell className="text-center py-1.5 text-sm">{index + 1}</TableCell>
               <TableCell className="text-center py-1.5 text-sm">{ponto.umidade.toFixed(2)}</TableCell>
               <TableCell className="text-center py-1.5 text-sm font-mono">
@@ -49,14 +42,6 @@ export default function TabelaResultados({ pontos, indiceMaximo }: TabelaResulta
           ))}
         </TableBody>
       </Table>
-      {indiceMaximo !== undefined && (
-        <div className="text-xs text-muted-foreground px-4 py-2 bg-muted/30 border-t">
-          <span className="flex items-center gap-2">
-            <span className="inline-block w-3 h-3 bg-primary/10 border border-primary/20 rounded"></span>
-            Ponto com máximo γ seco
-          </span>
-        </div>
-      )}
     </div>
   );
 }

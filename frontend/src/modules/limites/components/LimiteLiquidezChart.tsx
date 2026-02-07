@@ -1,15 +1,14 @@
 import React, { useRef, useState } from 'react';
 import {
-  ScatterChart,
-  Scatter,
   XAxis,
   YAxis,
   CartesianGrid,
-  Legend,
   ReferenceLine,
   Label,
   Line,
-  ComposedChart
+  LineChart,
+  ResponsiveContainer,
+  ReferenceDot
 } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +35,7 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
 
     // Função para exportar como JPG
     const handleExportJPG = async () => {
-      const elementToCapture = document.getElementById('limite-liquidez-ampliado');
+      const elementToCapture = document.getElementById('limite-liquidez-main');
       if (!elementToCapture) return;
 
       try {
@@ -90,7 +89,6 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
     }
 
     // Calcular regressão linear para linha de tendência
-    // Onde x = log(golpes) e y = umidade
     const n = pontos.length;
     const sumX = pontos.reduce((sum, p) => sum + p.x, 0);
     const sumY = pontos.reduce((sum, p) => sum + p.y, 0);
@@ -106,148 +104,251 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
     const minUmidade = Math.min(...pontos.map(p => p.y));
     const maxUmidade = Math.max(...pontos.map(p => p.y));
 
-    // Criar pontos da linha de tendência limitados ao range dos dados
-    const numPontosLinha = 50;
-    const stepX = (maxLogGolpes - minLogGolpes) / numPontosLinha;
-    const linhaRegressao = [];
-    for (let i = 0; i <= numPontosLinha; i++) {
-      const x = minLogGolpes + i * stepX;
-      const y = slope * x + intercept;
-
-      // Adicionar apenas se estiver dentro do range de umidade
-      if (y >= minUmidade - 1 && y <= maxUmidade + 1) {
-        linhaRegressao.push({
-          x: x,
-          y: y
-        });
-      }
-    }
-
-    // Preparar dados separadamente
-    const pontosDados = pontos.map(p => ({
-      x: p.y, // umidade no eixo X
-      y: p.x, // log(golpes) no eixo Y
+    // Converter pontos para formato do gráfico
+    const pontosConvertidos = pontos.map(p => ({
       golpes: Math.round(Math.pow(10, p.x)),
-      umidade: p.y
-    }));
-
-    const linhaDados = linhaRegressao.map(p => ({
-      x: p.y, // umidade no eixo X
-      yLinha: p.x // log(golpes) no eixo Y
+      umidade: Number(p.y.toFixed(2))
     }));
 
     // log10(25) = 1.397940
     const log25 = Math.log10(25);
 
+    // Verificar se algum ponto tem menos de 10 golpes
+    const minGolpesReal = Math.min(...pontosConvertidos.map(p => p.golpes));
+    const comecaEm1 = minGolpesReal < 10;
+
+    // Criar pontos da linha de regressão - começar no primeiro ponto, não no eixo
+    const linhaRegressao = (() => {
+      const pontosLinha = [];
+      // Começar no primeiro ponto real e ir até o último ponto ou 25 golpes (o que for maior)
+      const minX = minLogGolpes;
+      const maxX = Math.max(maxLogGolpes, log25);
+      const step = (maxX - minX) / 50;
+
+      for (let x = minX; x <= maxX; x += step) {
+        const umidade = slope * x + intercept;
+        pontosLinha.push({
+          golpes: Number(Math.pow(10, x).toFixed(1)),
+          umidade: Number(umidade.toFixed(2))
+        });
+      }
+      return pontosLinha;
+    })();
+
+    // Ponto do LL (interseção com 25 golpes)
+    const pontoLL = ll !== null ? {
+      golpes: 25,
+      umidade: Number(ll.toFixed(2))
+    } : null;
+
+    // Determina os limites dos eixos
+    const dominioX = (() => {
+      // Começar em 10 (ou 1 se houver pontos < 10)
+      const inicio = comecaEm1 ? 1 : 10;
+      // Máximo: 80 por padrão, ou múltiplo de 10 superior se algum ponto exceder 80
+      const maxGolpes = Math.max(...pontosConvertidos.map(p => p.golpes));
+      const fim = maxGolpes > 80 ? Math.ceil(maxGolpes / 10) * 10 : 80;
+      return [inicio, fim];
+    })();
+
+    const dominioY = (() => {
+      const umidades = pontosConvertidos.map(p => p.umidade);
+      if (ll !== null) umidades.push(ll);
+      const minU = Math.min(...umidades);
+      const maxU = Math.max(...umidades);
+      // Margem generosa para centralizar
+      return [0, 60];
+    })();
+
+    // Gerar ticks para o eixo X (múltiplos de 10)
+    const ticksX = (() => {
+      const arr = [];
+      const start = dominioX[0] < 10 ? 1 : 10;
+      // Se começa em 1, adiciona 1-9
+      if (start === 1) {
+        for (let i = 1; i < 10; i++) arr.push(i);
+      }
+      // Múltiplos de 10
+      for (let i = 10; i <= dominioX[1]; i += 10) {
+        arr.push(i);
+      }
+      return arr;
+    })();
+
+    // Gerar ticks para o eixo Y
+    const ticksY = (() => {
+      const arr = [];
+      const step = 5;
+      for (let i = 0; i <= dominioY[1]; i += step) {
+        arr.push(i);
+      }
+      return arr;
+    })();
+
     // Componente do gráfico reutilizável
-    const ChartContent = ({ isDialog = false }: { isDialog?: boolean }) => {
-      const chartWidth = isDialog ? 900 : (isMobile ? 340 : 450);
-      const chartHeight = isDialog ? 480 : 280;
+    const ChartContent = ({ isDialog = false, isExport = false }: { isDialog?: boolean; isExport?: boolean }) => {
+      const height = isDialog ? 500 : 320;
       const fontSize = isDialog ? 14 : 12;
       const labelFontSize = isDialog ? 16 : 14;
 
-      // Domínios invertidos (umidade no X, log golpes no Y)
-      const minUmidadeChart = minUmidade - 2;
-      const maxUmidadeChart = maxUmidade + 2;
-      const minLogGolpesChart = minLogGolpes - 0.05;
-      const maxLogGolpesChart = maxLogGolpes + 0.05;
-
       return (
-        <div style={{ width: chartWidth, height: chartHeight }}>
-          <ComposedChart
-            width={chartWidth}
-            height={chartHeight}
-            data={linhaDados}
-            margin={isDialog
-              ? { top: 40, right: 40, bottom: 80, left: 80 }
-              : { top: 20, right: 20, bottom: 60, left: 20 }
-            }
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#000000" opacity={1} />
-
-            <XAxis
-              dataKey="x"
-              type="number"
-              domain={[minUmidadeChart, maxUmidadeChart]}
-              tick={{ fontSize, fill: '#000000' }}
-              stroke="#000000"
-              tickFormatter={(value) => value.toFixed(1)}
-            >
-              <Label
-                value="Teor de Umidade (%)"
-                position="bottom"
-                offset={isDialog ? 40 : 30}
-                style={{ fontSize: labelFontSize, fontWeight: 'bold', fill: '#000000' }}
-              />
-            </XAxis>
-
-            <YAxis
-              type="number"
-              domain={[minLogGolpesChart, maxLogGolpesChart]}
-              tick={{ fontSize, fill: '#000000' }}
-              stroke="#000000"
-              tickFormatter={(value) => Math.round(Math.pow(10, value)).toString()}
-            >
-              <Label
-                value="Número de Golpes"
-                angle={-90}
-                position="insideLeft"
-                offset={isDialog ? -10 : 0}
-                style={{ fontSize: labelFontSize, fontWeight: 'bold', fill: '#000000', textAnchor: 'middle' }}
-              />
-            </YAxis>
-
-            <Legend
-              verticalAlign="top"
-              height={36}
-              iconType="circle"
-              wrapperStyle={{ fontSize, color: '#000000' }}
-            />
-
-            {/* Linha de tendência (regressão linear) */}
-            <Line
-              type="monotone"
-              dataKey="yLinha"
-              stroke="#2563eb"
-              strokeWidth={2}
-              dot={false}
-              name="Linha de Tendência"
-              connectNulls={false}
-            />
-
-            {/* Pontos do ensaio */}
-            <Scatter
-              data={pontosDados}
-              dataKey="y"
-              fill="#dc2626"
-              name="Pontos do Ensaio"
-              shape={(props: any) => {
-                const { cx, cy } = props;
-                return (
-                  <g>
-                    <circle cx={cx} cy={cy} r={5} fill="#dc2626" stroke="#ffffff" strokeWidth={2} />
-                  </g>
-                );
+        <div
+          id={isExport ? "limite-liquidez-export" : "limite-liquidez-main"}
+          className="bg-white p-4 w-full relative"
+        >
+          {/* Caixa de Resultados no canto superior direito */}
+          {pontoLL && (
+            <div
+              className="absolute z-10 bg-white border-2 border-black"
+              style={{
+                top: isDialog ? 30 : 15,
+                right: isDialog ? 50 : 35,
+                padding: isDialog ? '12px 16px' : '8px 12px'
               }}
-            />
+            >
+              {/* Valor do LL */}
+              <div className={`space-y-0.5 pb-2 border-b border-gray-400 ${isDialog ? 'mb-3' : 'mb-2'}`}>
+                <div className="flex justify-between items-center gap-4 text-black" style={{ fontSize: isDialog ? 16 : 12 }}>
+                  <span className="font-bold">LL</span>
+                  <span className="font-mono font-semibold">{Math.round(pontoLL.umidade)} %</span>
+                </div>
+              </div>
 
-            {/* Linha vertical no LL */}
-            {ll !== null && (
+              {/* Legenda */}
+              <div className="space-y-0.5 text-black" style={{ fontSize: isDialog ? 11 : 9 }}>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-4 h-0.5 bg-blue-600"></div>
+                  <span>Linha de Tendência</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-black"></div>
+                  <span>Pontos do Ensaio</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-red-700"></div>
+                  <span>LL (25 golpes)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <svg width="16" height="4" className="flex-shrink-0">
+                    <line x1="0" y1="2" x2="16" y2="2" stroke="#dc2626" strokeWidth="2" strokeDasharray="3 2" />
+                  </svg>
+                  <span>25 golpes</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <ResponsiveContainer width="100%" height={height}>
+            <LineChart margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#000000" opacity={0.1} />
+
+              <XAxis
+                type="number"
+                dataKey="golpes"
+                domain={dominioX}
+                ticks={ticksX}
+                stroke="#000000"
+                tick={{ fontSize, fill: '#000000' }}
+                tickFormatter={(val) => val.toString()}
+                scale="log"
+              >
+                <Label
+                  value="Número de Golpes"
+                  position="bottom"
+                  offset={isDialog ? 20 : 10}
+                  style={{ fontSize: labelFontSize, fontWeight: 'bold', fill: '#000000' }}
+                />
+              </XAxis>
+
+              <YAxis
+                type="number"
+                domain={dominioY}
+                ticks={ticksY}
+                stroke="#000000"
+                tick={{ fontSize, fill: '#000000' }}
+                tickFormatter={(val) => val.toFixed(0)}
+              >
+                <Label
+                  value="Teor de Umidade (%)"
+                  angle={-90}
+                  position="insideLeft"
+                  offset={10}
+                  style={{ fontSize: labelFontSize, fontWeight: 'bold', fill: '#000000', textAnchor: 'middle' }}
+                />
+              </YAxis>
+
+              {/* Linha de Regressão Linear */}
+              <Line
+                name="Linha de Tendência"
+                data={linhaRegressao}
+                type="linear"
+                dataKey="umidade"
+                stroke="#2563eb"
+                strokeWidth={2.5}
+                dot={false}
+                activeDot={false}
+                isAnimationActive={false}
+                connectNulls
+              />
+
+              {/* Pontos do Ensaio - pretos */}
+              <Line
+                name="Pontos do Ensaio"
+                data={pontosConvertidos}
+                type="linear"
+                dataKey="umidade"
+                stroke="transparent"
+                strokeWidth={0}
+                dot={{ r: 5, fill: "#000000", stroke: "#fff", strokeWidth: 1 }}
+                activeDot={false}
+                isAnimationActive={false}
+              />
+
+              {/* Linha vertical em 25 golpes */}
               <ReferenceLine
-                x={ll}
-                stroke="#22c55e"
+                x={25}
+                stroke="#dc2626"
                 strokeDasharray="5 5"
                 strokeWidth={2}
                 label={{
-                  value: `LL = ${ll.toFixed(1)}%`,
+                  value: '25 golpes',
                   position: 'top',
-                  fill: '#22c55e',
-                  fontSize,
+                  fill: '#000000',
+                  fontSize: fontSize,
                   fontWeight: 'bold'
                 }}
               />
-            )}
-          </ComposedChart>
+
+              {/* Linha horizontal no LL */}
+              {ll !== null && (
+                <ReferenceLine
+                  y={ll}
+                  stroke="#dc2626"
+                  strokeDasharray="5 5"
+                  strokeWidth={2}
+                  label={{
+                    value: 'LL',
+                    position: 'right',
+                    fill: '#000000',
+                    fontSize: fontSize,
+                    fontWeight: 'bold'
+                  }}
+                />
+              )}
+
+              {/* Ponto do LL - vermelho escuro */}
+              {pontoLL && (
+                <ReferenceDot
+                  x={pontoLL.golpes}
+                  y={pontoLL.umidade}
+                  r={isDialog ? 6 : 5}
+                  fill="#b91c1c"
+                  stroke="#ffffff"
+                  strokeWidth={1}
+                />
+              )}
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       );
     };
@@ -255,83 +356,68 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
     return (
       <div className="space-y-2 relative" ref={ref}>
         {/* Botões Ampliar e Exportar */}
-        <div className="flex justify-end gap-2">
-          <Button
-            onClick={handleExportJPG}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Salvar JPG
-          </Button>
+        <div className="flex justify-end items-center mb-2">
+          <div className="flex gap-2">
+            <Button
+              onClick={handleExportJPG}
+              variant="outline"
+              size="sm"
+              className="gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Salvar JPG
+            </Button>
 
-          {!isMobile && (
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Maximize2 className="w-4 h-4" />
-                  Ampliar
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-5xl max-h-[90vh] w-full">
-                <DialogHeader>
-                  <DialogTitle>Gráfico - Limite de Liquidez (Ampliado)</DialogTitle>
-                </DialogHeader>
-                <div className="w-full flex justify-center items-center p-2">
-                  <div className="bg-white p-4 rounded-xl border border-border shadow-sm">
-                    <ChartContent isDialog={true} />
+            {!isMobile && (
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Maximize2 className="w-4 h-4" />
+                    Ampliar
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-5xl max-h-[90vh] w-full">
+                  <DialogHeader>
+                    <DialogTitle>Gráfico - Limite de Liquidez (Ampliado)</DialogTitle>
+                  </DialogHeader>
+                  <div className="w-full flex justify-center items-center p-2 bg-muted/10 rounded-lg">
+                    <div className="w-full max-w-[1200px]">
+                      <ChartContent isDialog={true} />
+                    </div>
                   </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
-
-        {/* Gráfico ampliado renderizado em background (invisível) para captura */}
-        <div
-          className="fixed pointer-events-none"
-          style={{
-            left: '-9999px',
-            top: 0,
-            width: '1240px',
-            zIndex: -9999
-          }}
-        >
-          <div id="limite-liquidez-ampliado" className="bg-white p-4">
-            <ChartContent isDialog={true} />
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </div>
 
-        {/* Gráfico principal */}
-        <div ref={chartRef} className="bg-white p-4 rounded-xl border border-border shadow-sm w-full overflow-x-auto">
-          <div className="flex items-center justify-center min-w-[350px]">
-            <ChartContent isDialog={false} />
-          </div>
+        {/* Gráfico Principal */}
+        <div ref={chartRef} className="w-full rounded-xl border border-border shadow-sm overflow-hidden">
+          <ChartContent isDialog={false} />
         </div>
 
-        {/* Informações adicionais */}
-        <Card>
-          <CardHeader className="pb-2 pt-3">
-            <CardTitle className="text-sm">Sobre o Gráfico</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0 pb-3">
-            <div className="space-y-2 text-xs text-muted-foreground">
-              <p>
-                <strong>Equação da Reta:</strong> h = {slope.toFixed(4)} ⋅ log(N) + {intercept.toFixed(4)}
-              </p>
-              <p>
-                <strong>Regressão Linear:</strong> A linha azul representa a relação linear entre o teor de umidade e o logaritmo do número de golpes.
-              </p>
-              <p>
-                <strong>Limite de Liquidez (LL):</strong> Determinado como o teor de umidade correspondente a 25 golpes (linha verde tracejada).
-              </p>
-              <p>
-                <strong>Norma:</strong> NBR 6459 - Solo - Determinação do Limite de Liquidez.
-              </p>
-            </div>
+        {/* Sobre o Gráfico */}
+        <Card className="bg-muted/30 border-none shadow-inner">
+          <CardContent className="p-4 space-y-2 text-xs text-muted-foreground">
+            <p>
+              <strong>Equação da Reta:</strong> w = {slope.toFixed(4)} ⋅ log(N) + {intercept.toFixed(4)}
+            </p>
+            <p>
+              <strong>Regressão Linear:</strong> A linha azul representa a relação linear entre o teor de umidade e o logaritmo do número de golpes.
+            </p>
+            <p>
+              <strong>Limite de Liquidez (LL):</strong> Determinado como o teor de umidade correspondente a 25 golpes (ponto vermelho).
+            </p>
+            <p>
+              <strong>Norma:</strong> NBR 6459 - Solo - Determinação do Limite de Liquidez.
+            </p>
           </CardContent>
         </Card>
+
+        {/* Gráfico Oculto para Exportação */}
+        <div style={{ position: 'absolute', left: '-9999px', top: 0, width: '1200px' }} aria-hidden="true">
+          <ChartContent isDialog={true} isExport={true} />
+        </div>
       </div>
     );
   }

@@ -69,10 +69,10 @@ export function CommandPalette() {
                 <Droplet className="w-4 h-4" /> Limites de Consistência
               </Command.Item>
               <Command.Item onSelect={() => goto("/granulometria")} className="px-3 py-2 flex items-center gap-2 cursor-pointer">
-                <Filter className="w-4 h-4" /> Granulometria
+                <Database className="w-4 h-4" /> Granulometria
               </Command.Item>
               <Command.Item onSelect={() => goto("/compactacao")} className="px-3 py-2 flex items-center gap-2 cursor-pointer">
-                <Database className="w-4 h-4" /> Compactação
+                <Filter className="w-4 h-4" /> Compactação
               </Command.Item>
               <Command.Item onSelect={() => goto("/tensoes")} className="px-3 py-2 flex items-center gap-2 cursor-pointer">
                 <Mountain className="w-4 h-4" /> Tensões Geostáticas

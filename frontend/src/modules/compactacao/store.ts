@@ -3,12 +3,17 @@ import { create } from 'zustand';
 // Função auxiliar para gerar IDs
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
+export type ModoEntradaUmidade = 'medicoes' | 'direta';
+
 interface PontoCompactacao {
     id: string;
     pesoAmostaCilindro: string;
+    // Campos para medições
     pesoBrutoUmido: string;
     pesoBrutoSeco: string;
     tara: string;
+    // Campo para umidade direta
+    umidadeDireta: string;
 }
 
 interface CompactacaoFormData {
@@ -16,6 +21,7 @@ interface CompactacaoFormData {
     pesoCilindro: string;
     Gs: string;
     pesoEspecificoAgua: string;
+    modoEntradaUmidade: ModoEntradaUmidade;
     pontos: PontoCompactacao[];
 }
 
@@ -28,15 +34,25 @@ interface CompactacaoState {
     resetForm: () => void;
 }
 
+const createEmptyPonto = (): PontoCompactacao => ({
+    id: generateId(),
+    pesoAmostaCilindro: "",
+    pesoBrutoUmido: "",
+    pesoBrutoSeco: "",
+    tara: "",
+    umidadeDireta: ""
+});
+
 const defaultFormData: CompactacaoFormData = {
     volumeCilindro: "",
     pesoCilindro: "",
     Gs: "",
     pesoEspecificoAgua: "10.0",
+    modoEntradaUmidade: "direta",
     pontos: [
-        { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
-        { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
-        { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
+        createEmptyPonto(),
+        createEmptyPonto(),
+        createEmptyPonto(),
     ],
 };
 
@@ -58,7 +74,7 @@ export const useCompactacaoStore = create<CompactacaoState>((set) => ({
             ...state.formData,
             pontos: [
                 ...state.formData.pontos,
-                { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" }
+                createEmptyPonto()
             ]
         }
     })),
@@ -73,9 +89,9 @@ export const useCompactacaoStore = create<CompactacaoState>((set) => ({
         formData: {
             ...defaultFormData,
             pontos: [
-                { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
-                { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
-                { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
+                createEmptyPonto(),
+                createEmptyPonto(),
+                createEmptyPonto(),
             ],
         }
     }),

@@ -185,7 +185,7 @@ function LimitesConsistenciaDesktop() {
     {
       target: "[data-tour='module-header']",
       title: "💧 Bem-vindo aos Limites de Consistência!",
-      content: "Este módulo calcula os Limites de Atterberg (LL, LP e IP) e classifica o solo quanto à plasticidade e consistência, essenciais para projetos geotécnicos.",
+      content: "Este módulo calcula os Limites de Consistência (LL, LP e IP) e classifica o solo quanto à plasticidade e consistência, essenciais para projetos geotécnicos.",
       placement: "bottom",
       spotlightPadding: 16,
     },
@@ -420,9 +420,9 @@ function LimitesConsistenciaDesktop() {
       if (formData.percentualArgila) inputs.push({ label: "Percentual de Argila", value: `${formData.percentualArgila}%` });
 
       const resultsList: { label: string; value: string }[] = [];
-      if (results.ll !== null) resultsList.push({ label: "Limite de Liquidez (LL)", value: `${formatNumberForExport(results.ll, 1)}%` });
-      if (results.lp !== null) resultsList.push({ label: "Limite de Plasticidade (LP)", value: `${formatNumberForExport(results.lp, 1)}%` });
-      if (results.ip !== null) resultsList.push({ label: "Índice de Plasticidade (IP)", value: `${formatNumberForExport(results.ip, 1)}%` });
+      if (results.ll !== null) resultsList.push({ label: "Limite de Liquidez (LL)", value: `${formatNumberForExport(results.ll, 0)}%` });
+      if (results.lp !== null) resultsList.push({ label: "Limite de Plasticidade (LP)", value: `${formatNumberForExport(results.lp, 0)}%` });
+      if (results.ip !== null) resultsList.push({ label: "Índice de Plasticidade (IP)", value: `${formatNumberForExport(results.ip, 0)}%` });
       if (results.ic !== null) resultsList.push({ label: "Índice de Consistência (IC)", value: formatNumberForExport(results.ic, 2) });
       if (results.classificacao_plasticidade) resultsList.push({ label: "Classificação Plasticidade", value: results.classificacao_plasticidade });
       if (results.classificacao_consistencia) resultsList.push({ label: "Classificação Consistência", value: results.classificacao_consistencia });
@@ -570,9 +570,9 @@ function LimitesConsistenciaDesktop() {
 
     // Sheet de Resultados
     const resultadosData: { label: string; value: string | number }[] = [];
-    if (results.ll !== null) resultadosData.push({ label: "Limite de Liquidez (LL) %", value: results.ll.toFixed(1) });
-    if (results.lp !== null) resultadosData.push({ label: "Limite de Plasticidade (LP) %", value: results.lp.toFixed(1) });
-    if (results.ip !== null) resultadosData.push({ label: "Índice de Plasticidade (IP) %", value: results.ip.toFixed(1) });
+    if (results.ll !== null) resultadosData.push({ label: "Limite de Liquidez (LL) %", value: results.ll.toFixed(0) });
+    if (results.lp !== null) resultadosData.push({ label: "Limite de Plasticidade (LP) %", value: results.lp.toFixed(0) });
+    if (results.ip !== null) resultadosData.push({ label: "Índice de Plasticidade (IP) %", value: results.ip.toFixed(0) });
     if (results.ic !== null) resultadosData.push({ label: "Índice de Consistência (IC)", value: results.ic.toFixed(2) });
     if (results.classificacao_plasticidade) resultadosData.push({ label: "Classificação Plasticidade", value: results.classificacao_plasticidade });
     if (results.classificacao_consistencia) resultadosData.push({ label: "Classificação Consistência", value: results.classificacao_consistencia });
@@ -958,10 +958,10 @@ function LimitesConsistenciaDesktop() {
                     {/* Slide 1: Resultados Numéricos e Classificações Gerais */}
                     <CarouselItem>
                       <div className="space-y-2">
-                        <ResultItemGroup title="Limites de Atterberg">
-                          <ResultItem label="Limite de Liquidez (LL)" value={results.ll} unit="%" tooltip={tooltips.LL} precision={2} />
-                          <ResultItem label="Limite de Plasticidade (LP)" value={results.lp} unit="%" tooltip={tooltips.LP} precision={2} />
-                          <ResultItem label="Índice de Plasticidade (IP)" value={results.ip} unit="%" tooltip={tooltips.IP} highlight precision={2} />
+                        <ResultItemGroup title="Limites de Consistência">
+                          <ResultItem label="Limite de Liquidez (LL)" value={results.ll} unit="%" tooltip={tooltips.LL} precision={0} />
+                          <ResultItem label="Limite de Plasticidade (LP)" value={results.lp} unit="%" tooltip={tooltips.LP} precision={0} />
+                          <ResultItem label="Índice de Plasticidade (IP)" value={results.ip} unit="%" tooltip={tooltips.IP} highlight precision={0} />
                         </ResultItemGroup>
                         {(results.ic !== null) && (
                           <ResultItemGroup title="Consistência">

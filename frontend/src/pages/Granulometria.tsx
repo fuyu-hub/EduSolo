@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Filter, Info, Calculator as CalcIcon, Plus, Trash2, Table as TableIcon, TrendingUp, GraduationCap, Activity, BarChart3, Columns, PanelTop } from "lucide-react";
+import { Database, Filter, Info, Calculator as CalcIcon, Plus, Trash2, Table as TableIcon, TrendingUp, GraduationCap, Activity, BarChart3, Columns, PanelTop } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { calcularGranulometria } from "@/lib/calculations/granulometria";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -321,7 +321,7 @@ function GranulometriaDesktop() {
   // Funções de salvamento e exportação
   const handleSaveClick = () => {
     if (!results) return;
-    setSaveName(`Cálculo ${new Date().toLocaleDateString('pt-BR')}`);
+    setSaveName(`Cálculo ${new Date().toLocaleDateString('pt-BR')} `);
     setSaveDialogOpen(true);
   };
 
@@ -473,7 +473,7 @@ function GranulometriaDesktop() {
       inputs.push({ label: "Massa Total Úmida", value: `${formData.peneiramento_grosso.massa_total_umida} g` });
     }
     if (formData.peneiramento_grosso.teor_umidade) {
-      inputs.push({ label: "Teor de Umidade", value: `${formData.peneiramento_grosso.teor_umidade}%` });
+      inputs.push({ label: "Teor de Umidade", value: `${formData.peneiramento_grosso.teor_umidade}% ` });
     }
     if (formData.peneiramento_grosso.massa_graos) {
       inputs.push({ label: "Massa dos Grãos", value: `${formData.peneiramento_grosso.massa_graos} g` });
@@ -481,8 +481,8 @@ function GranulometriaDesktop() {
     if (formData.peneiramento_fino?.massa_total_seca) {
       inputs.push({ label: "Massa Fina Seca", value: `${formData.peneiramento_fino.massa_total_seca} g` });
     }
-    if (formData.limitePercent) inputs.push({ label: "Limite de Liquidez (LL)", value: `${formData.limitePercent}%` });
-    if (formData.limitePlasticidade) inputs.push({ label: "Limite de Plasticidade (LP)", value: `${formData.limitePlasticidade}%` });
+    if (formData.limitePercent) inputs.push({ label: "Limite de Liquidez (LL)", value: `${formData.limitePercent}% ` });
+    if (formData.limitePlasticidade) inputs.push({ label: "Limite de Plasticidade (LP)", value: `${formData.limitePlasticidade}% ` });
 
     // Lista vazia de resultados (vamos usar tabelas ao invés)
     const resultsList: { label: string; value: string; highlight?: boolean }[] = [];
@@ -495,7 +495,7 @@ function GranulometriaDesktop() {
     const peneirasRows = formData.peneiramento_grosso.peneiras
       .filter(p => p.abertura && p.massaRetida)
       .map((p, i) => [
-        `#${i + 1}`,
+        `#${i + 1} `,
         p.abertura,
         p.massaRetida
       ]);
@@ -513,7 +513,7 @@ function GranulometriaDesktop() {
       const peneirasFinasRows = formData.peneiramento_fino.peneiras
         .filter(p => p.abertura && p.massaRetida)
         .map((p, i) => [
-          `#${i + 1}`,
+          `#${i + 1} `,
           p.abertura,
           p.massaRetida
         ]);
@@ -791,7 +791,7 @@ function GranulometriaDesktop() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-center transition-colors hover:border-primary/60 hover:bg-primary/10">
-            <Filter className="w-6 h-6 text-primary" />
+            <Database className="w-6 h-6 text-primary" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-foreground">Granulometria</h1>
@@ -852,7 +852,7 @@ function GranulometriaDesktop() {
               {/* Inputs de Massa Grosso */}
               <div className="grid grid-cols-3 gap-3 bg-muted/30 p-3 rounded-lg border border-border/40" data-tour="massa-grosso-input">
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Massa Úmida (g)</Label>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Massa Úmida Total (g)</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -863,7 +863,7 @@ function GranulometriaDesktop() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Massa Seca (g)</Label>
+                  <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Massa Seca Total (g)</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -920,7 +920,7 @@ function GranulometriaDesktop() {
                 {/* Inputs de Massa Fino */}
                 <div className="grid grid-cols-3 gap-3 bg-muted/30 p-3 rounded-lg border border-border/40">
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Massa Úmida (g)</Label>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Massa Úmida Parcial (g)</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -931,7 +931,7 @@ function GranulometriaDesktop() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Massa Seca (g)</Label>
+                    <Label className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Massa Seca Parcial (g)</Label>
                     <Input
                       type="number"
                       step="0.01"
@@ -979,7 +979,7 @@ function GranulometriaDesktop() {
               <CardHeader className="pb-3 pt-4 px-4 md:px-6">
                 <CardTitle className="text-base font-semibold flex items-center gap-2 text-primary">
                   <Activity className="w-4 h-4" />
-                  Limites de Atterberg
+                  Limites de Consistência
                   <span className="text-xs font-normal text-muted-foreground ml-2">(Opcional)</span>
                 </CardTitle>
               </CardHeader>
@@ -1282,7 +1282,7 @@ function ResultRow({
   const isValidValue = value !== undefined && value !== null && !isNaN(value) && isFinite(value);
 
   // Format display value
-  const displayValue = isValidValue ? `${value.toFixed(precision)} ${unit}` : "-";
+  const displayValue = isValidValue ? `${value.toFixed(precision)} ${unit} ` : "-";
 
   return (
     <div className={cn(

@@ -6,8 +6,8 @@ import { useState, useRef } from "react";
 const moreItems = [
   { icon: Beaker, label: "Índices Físicos", path: "/indices-fisicos", color: "from-blue-500 via-blue-600 to-indigo-600" },
   { icon: Droplet, label: "Limites", path: "/limites-consistencia", color: "from-cyan-500 via-teal-500 to-emerald-600" },
-  { icon: Filter, label: "Granulometria", path: "/granulometria", color: "from-purple-500 via-purple-600 to-indigo-600" },
-  { icon: Database, label: "Compactação", path: "/compactacao", color: "from-violet-500 via-fuchsia-500 to-pink-600" },
+  { icon: Database, label: "Granulometria", path: "/granulometria", color: "from-purple-500 via-purple-600 to-indigo-600" },
+  { icon: Filter, label: "Compactação", path: "/compactacao", color: "from-violet-500 via-fuchsia-500 to-pink-600" },
   { icon: Home, label: "Início", path: "/", color: "from-primary via-primary to-primary" }, // Centro do grid
   { icon: Mountain, label: "Tensões", path: "/tensoes", color: "from-emerald-500 via-green-500 to-teal-600" },
   { icon: Target, label: "Acréscimo", path: "/acrescimo-tensoes", color: "from-orange-500 via-red-500 to-rose-600", disabled: true },

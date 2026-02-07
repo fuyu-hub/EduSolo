@@ -13,14 +13,14 @@ const modules = [
     preload: () => import("./../modules/caracterizacao"),
   },
   {
-    icon: Filter,
+    icon: Database,
     title: "Granulometria e Classificação",
     description: "Análise granulométrica com classificação USCS e AASHTO",
     path: "/granulometria",
     preload: () => import("./Granulometria"),
   },
   {
-    icon: Database,
+    icon: Filter,
     title: "Compactação",
     description: "Curvas de compactação e energia Proctor",
     path: "/compactacao",

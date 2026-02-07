@@ -104,7 +104,7 @@ export default function TabelaDadosGranulometricos({
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
                 <TableHead className="text-center font-bold text-sm py-2.5">Peneira</TableHead>
-                <TableHead className="text-center font-bold text-sm py-2.5">Abertura</TableHead>
+                <TableHead className="text-center font-bold text-sm py-2.5">Abertura (mm)</TableHead>
                 <TableHead className="text-center font-bold text-sm py-2.5">M. Retida (g)</TableHead>
                 <TableHead className="text-center font-bold text-sm py-2.5">% Ret.</TableHead>
                 <TableHead className="text-center font-bold text-sm py-2.5">% Ret. Ac.</TableHead>

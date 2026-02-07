@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Filter, Calculator, Plus, Trash2, Info, Save, Download, FileText, FolderOpen, Lightbulb, AlertCircle, ChevronLeft, ChevronRight, Table as TableIcon, BarChart3 } from "lucide-react";
+import { Filter, Database, Calculator, Plus, Trash2, Info, Save, Download, FileText, FolderOpen, Lightbulb, AlertCircle, ChevronLeft, ChevronRight, Table as TableIcon, BarChart3 } from "lucide-react";
 import { calcularGranulometria } from "@/lib/calculations/granulometria";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -588,7 +588,7 @@ export default function GranulometriaMobile() {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 flex items-center justify-center shadow-md">
-              <Filter className="w-5 h-5 text-white" />
+              <Database className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-foreground">Granulometria</h2>
@@ -839,7 +839,7 @@ export default function GranulometriaMobile() {
 
       {/* Dados Opcionais */}
       <MobileSection
-        title="Limites de Atterberg (Opcional)"
+        title="Limites de Consistência (Opcional)"
         icon={<Info className="w-4 h-4" />}
         defaultOpen={false}
         collapsible

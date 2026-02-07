@@ -94,7 +94,7 @@ export default function LimitesConsistenciaMobile() {
   const { toast } = useToast();
   const { addReport } = useRecentReports();
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState<FormData>({
     pontosLL: [
       { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
@@ -106,7 +106,7 @@ export default function LimitesConsistenciaMobile() {
     umidadeNatural: "",
     percentualArgila: "",
   });
-  
+
   const [results, setResults] = useState<Results | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,7 +135,7 @@ export default function LimitesConsistenciaMobile() {
   // Sincronizar carousel LL com índice atual
   useEffect(() => {
     if (!carouselApi) return;
-    
+
     carouselApi.on("select", () => {
       setCurrentPointIndex(carouselApi.selectedScrollSnap());
     });
@@ -144,7 +144,7 @@ export default function LimitesConsistenciaMobile() {
   // Sincronizar carousel LP com índice atual
   useEffect(() => {
     if (!carouselApiLP) return;
-    
+
     carouselApiLP.on("select", () => {
       setCurrentLPIndex(carouselApiLP.selectedScrollSnap());
     });
@@ -247,7 +247,7 @@ export default function LimitesConsistenciaMobile() {
 
   const handleCalculate = async () => {
     // Validação
-    const pontosValidosLL = formData.pontosLL.filter(p => 
+    const pontosValidosLL = formData.pontosLL.filter(p =>
       p.numGolpes && p.massaUmidaRecipiente && p.massaSecaRecipiente && p.massaRecipiente
     );
 
@@ -261,7 +261,7 @@ export default function LimitesConsistenciaMobile() {
       return;
     }
 
-    const pontosValidosLP = formData.pontosLP.filter(p => 
+    const pontosValidosLP = formData.pontosLP.filter(p =>
       p.massaUmidaRecipiente && p.massaSecaRecipiente && p.massaRecipiente
     );
 
@@ -298,7 +298,7 @@ export default function LimitesConsistenciaMobile() {
       // Calcula localmente no frontend
       const resultado = calcularLimitesConsistencia(payload);
       setResults(resultado);
-      
+
       if (resultado.erro) {
         setError(resultado.erro);
         toast({
@@ -315,7 +315,7 @@ export default function LimitesConsistenciaMobile() {
     } catch (err: any) {
       const errorMsg = err.message || "Erro ao calcular";
       setError(errorMsg);
-      
+
       toast({
         title: "❌ Erro",
         description: errorMsg,
@@ -377,7 +377,7 @@ export default function LimitesConsistenciaMobile() {
 
   const handleConfirmSave = () => {
     if (!results || !saveName.trim()) return;
-    
+
     const success = saveCalculation(saveName.trim(), formData, results);
     if (success) {
       toast({
@@ -528,7 +528,7 @@ export default function LimitesConsistenciaMobile() {
       entradaLPData.push({ label: `Ensaio LP ${i + 1} - Massa Seca+Rec (g)`, value: p.massaSecaRecipiente });
       entradaLPData.push({ label: `Ensaio LP ${i + 1} - Massa Recipiente (g)`, value: p.massaRecipiente });
     });
-    
+
     // Sheet de Entrada - Adicionais
     const entradaAdicionaisData: { label: string; value: string | number }[] = [];
     if (formData.umidadeNatural) entradaAdicionaisData.push({ label: "Umidade Natural (%)", value: formData.umidadeNatural });
@@ -550,7 +550,7 @@ export default function LimitesConsistenciaMobile() {
       { name: "Dados LP", data: entradaLPData },
       { name: "Resultados", data: resultadosData }
     ];
-    
+
     if (entradaAdicionaisData.length > 0) {
       sheets.splice(2, 0, { name: "Dados Adicionais", data: entradaAdicionaisData });
     }
@@ -581,7 +581,7 @@ export default function LimitesConsistenciaMobile() {
     return formatNumber(value, settings);
   };
 
-  const isFormValid = 
+  const isFormValid =
     formData.pontosLL.filter(p => p.numGolpes && p.massaUmidaRecipiente && p.massaSecaRecipiente && p.massaRecipiente).length >= 2 &&
     formData.pontosLP.filter(p => p.massaUmidaRecipiente && p.massaSecaRecipiente && p.massaRecipiente).length >= 1;
 
@@ -599,7 +599,7 @@ export default function LimitesConsistenciaMobile() {
               <p className="text-xs text-muted-foreground">LL, LP, IP, IC e classificação</p>
             </div>
           </div>
-          
+
           <div className="flex gap-2 shrink-0">
             <Button
               variant="outline"
@@ -899,7 +899,7 @@ export default function LimitesConsistenciaMobile() {
           <Calculator className="w-4 h-4 mr-2" />
           {isCalculating ? "Calculando..." : "Calcular"}
         </Button>
-        
+
         <Button
           onClick={handleClear}
           variant="outline"
@@ -957,7 +957,7 @@ export default function LimitesConsistenciaMobile() {
                   <div className="bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 p-4 space-y-3">
                     <h3 className="font-semibold text-sm flex items-center gap-2">
                       <Droplet className="w-4 h-4 text-cyan-500" />
-                      Limites de Atterberg
+                      Limites de Consistência
                     </h3>
                     <ResultItem label="LL" value={results.ll} unit="%" />
                     <ResultItem label="LP" value={results.lp} unit="%" />

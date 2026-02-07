@@ -163,29 +163,46 @@ export function calcularCompactacao(dados: CompactacaoInput): CompactacaoOutput 
         );
       }
 
-      // Cálculo da Umidade
-      const massa_agua_w = ponto.massa_umida_recipiente_w - ponto.massa_seca_recipiente_w;
-      const massa_seca_w = ponto.massa_seca_recipiente_w - ponto.massa_recipiente_w;
+      // Cálculo da Umidade - usar direta se fornecida, senão calcular
+      let umidade_percentual: number;
 
-      if (massa_seca_w <= 0) {
-        throw new Error(
-          `Massa seca inválida (${massa_seca_w}) no cálculo de umidade do ponto ${i + 1}.`
-        );
-      }
-      if (massa_agua_w < 0) {
-        throw new Error(
-          `Massa de água negativa (${massa_agua_w}) no cálculo de umidade do ponto ${i + 1}.`
-        );
-      }
+      if (ponto.umidade_direta !== undefined && ponto.umidade_direta !== null) {
+        // Usar umidade fornecida diretamente
+        umidade_percentual = ponto.umidade_direta;
+      } else {
+        // Calcular umidade via medições
+        if (ponto.massa_umida_recipiente_w === undefined ||
+          ponto.massa_seca_recipiente_w === undefined ||
+          ponto.massa_recipiente_w === undefined) {
+          throw new Error(
+            `Ponto ${i + 1}: é necessário fornecer a umidade direta ou as medições de peso para cálculo.`
+          );
+        }
 
-      const umidade_decimal = massa_agua_w / massa_seca_w;
-      const umidade_percentual = umidade_decimal * 100;
+        const massa_agua_w = ponto.massa_umida_recipiente_w - ponto.massa_seca_recipiente_w;
+        const massa_seca_w = ponto.massa_seca_recipiente_w - ponto.massa_recipiente_w;
+
+        if (massa_seca_w <= 0) {
+          throw new Error(
+            `Massa seca inválida (${massa_seca_w}) no cálculo de umidade do ponto ${i + 1}.`
+          );
+        }
+        if (massa_agua_w < 0) {
+          throw new Error(
+            `Massa de água negativa (${massa_agua_w}) no cálculo de umidade do ponto ${i + 1}.`
+          );
+        }
+
+        const umidade_decimal = massa_agua_w / massa_seca_w;
+        umidade_percentual = umidade_decimal * 100;
+      }
 
       // Cálculo do Peso Específico Seco
       const massa_solo_umido = ponto.massa_umida_total - ponto.massa_molde;
       const gama_h_gcm3 = massa_solo_umido / ponto.volume_molde;
       const gama_h_knm3 = (gama_h_gcm3 * gama_w) / gama_w_gcm3;
 
+      const umidade_decimal = umidade_percentual / 100;
       const gama_d = gama_h_knm3 / (1 + umidade_decimal);
 
       pontos_calculados.push({

@@ -161,31 +161,31 @@ function obterDescricaoHRB(grupo: string, subgrupo: string | undefined): string 
   // Quando houver subgrupo numérico (4, 5, 6, 7), a descrição é específica da combinação
   if (grupo === 'A-2' && subgrupo) {
     const descricoesA2: Record<string, string> = {
-      '4': 'Pedregulho ou areia siltosa (Baixa plasticidade)',
-      '5': 'Pedregulho ou areia siltosa elástica (Siltes micáceos ou diatomáceos)',
-      '6': 'Pedregulho ou areia argilosa (Argila plástica)',
-      '7': 'Pedregulho ou areia argilosa (Argila muito plástica/elástica)',
+      '4': 'Materiais comuns constituintes: Pedregulho ou areia siltosa (Baixa plasticidade)',
+      '5': 'Materiais comuns constituintes: Pedregulho ou areia siltosa elástica (Siltes micáceos ou diatomáceos)',
+      '6': 'Materiais comuns constituintes: Pedregulho ou areia argilosa (Argila plástica)',
+      '7': 'Materiais comuns constituintes: Pedregulho ou areia argilosa (Argila muito plástica/elástica)',
     };
     if (descricoesA2[subgrupo]) return descricoesA2[subgrupo];
   }
 
   if (grupo === 'A-7' && subgrupo) {
     const descricoesA7: Record<string, string> = {
-      '5': 'Argilas elásticas (sujeitas a alta compressibilidade)',
-      '6': 'Argilas muito plásticas (sujeitas a grande variação volumétrica)',
+      '5': 'Materiais comuns constituintes: Argilas elásticas (sujeitas a alta compressibilidade)',
+      '6': 'Materiais comuns constituintes: Argilas muito plásticas (sujeitas a grande variação volumétrica)',
     };
     if (descricoesA7[subgrupo]) return descricoesA7[subgrupo];
   }
 
   // Descrições gerais para os grupos principais
   const descricoes: Record<string, string> = {
-    'A-1': 'Misturas bem graduadas de fragmentos de pedra, pedregulho e areia',
-    'A-3': 'Areia fina (limpa, de praia ou duna) ou mistura de areia fina com pequena quantidade de silte não plástico',
-    'A-2': 'Solos granulares "sujos" (contendo silte ou argila)', // Fallback se não tiver subgrupo (raro)
-    'A-4': 'Solos siltosos (Pouca ou nenhuma plasticidade)',
-    'A-5': 'Solos siltosos elásticos (Alta compressibilidade, geralmente micáceos)',
-    'A-6': 'Solos argilosos (Plasticidade média a alta, argilas plásticas)',
-    'A-7': 'Solos argilosos (Alta plasticidade e/ou elasticidade)', // Fallback se não tiver subgrupo
+    'A-1': 'Materiais comuns constituintes: Misturas bem graduadas de fragmentos de pedra, pedregulho e areia',
+    'A-3': 'Materiais comuns constituintes: Areia fina (limpa, de praia ou duna) ou mistura de areia fina com pequena quantidade de silte não plástico',
+    'A-2': 'Materiais comuns constituintes: Solos granulares "sujos" (contendo silte ou argila)', // Fallback se não tiver subgrupo (raro)
+    'A-4': 'Materiais comuns constituintes: Solos siltosos (Pouca ou nenhuma plasticidade)',
+    'A-5': 'Materiais comuns constituintes: Solos siltosos elásticos (Alta compressibilidade, geralmente micáceos)',
+    'A-6': 'Materiais comuns constituintes: Solos argilosos (Plasticidade média a alta, argilas plásticas)',
+    'A-7': 'Materiais comuns constituintes: Solos argilosos (Alta plasticidade e/ou elasticidade)', // Fallback se não tiver subgrupo
   };
 
   // Sufixos descritivos para A-1 (a, b)

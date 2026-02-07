@@ -40,8 +40,8 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
   // Lista resumida de módulos para o menu expansível
   const modulesBrief = [
     { icon: Beaker, label: "Índices Físicos e Limites", path: "/indices-limites" },
-    { icon: Filter, label: "Granulometria", path: "/granulometria" },
-    { icon: Database, label: "Compactação", path: "/compactacao" },
+    { icon: Database, label: "Granulometria", path: "/granulometria" },
+    { icon: Filter, label: "Compactação", path: "/compactacao" },
   ];
   const isModulePath =
     modulesBrief.some((m) => location.pathname.startsWith(m.path)) ||

@@ -339,9 +339,9 @@ export default function CaracterizacaoPage() {
             if (resultadoCombinado.e != null) resultsList.push({ label: "Índice de Vazios (e)", value: formatNumberForExport(resultadoCombinado.e, 3) });
             if (resultadoCombinado.n != null) resultsList.push({ label: "Porosidade (n)", value: `${formatNumberForExport(resultadoCombinado.n)}%` });
             if (resultadoCombinado.Sr != null) resultsList.push({ label: "Saturação (Sr)", value: `${formatNumberForExport(resultadoCombinado.Sr)}%` });
-            if (resultadoCombinado.ll != null) resultsList.push({ label: "Limite de Liquidez (LL)", value: `${formatNumberForExport(resultadoCombinado.ll)}%` });
-            if (resultadoCombinado.lp != null) resultsList.push({ label: "Limite de Plasticidade (LP)", value: `${formatNumberForExport(resultadoCombinado.lp)}%` });
-            if (resultadoCombinado.ip != null) resultsList.push({ label: "Índice de Plasticidade (IP)", value: `${formatNumberForExport(resultadoCombinado.ip)}%`, highlight: true });
+            if (resultadoCombinado.ll != null) resultsList.push({ label: "Limite de Liquidez (LL)", value: `${formatNumberForExport(resultadoCombinado.ll, 0)}%` });
+            if (resultadoCombinado.lp != null) resultsList.push({ label: "Limite de Plasticidade (LP)", value: `${formatNumberForExport(resultadoCombinado.lp, 0)}%` });
+            if (resultadoCombinado.ip != null) resultsList.push({ label: "Índice de Plasticidade (IP)", value: `${formatNumberForExport(resultadoCombinado.ip, 0)}%`, highlight: true });
             if (resultadoCombinado.classificacao_plasticidade) resultsList.push({ label: "Classificação Plasticidade", value: resultadoCombinado.classificacao_plasticidade });
             if (resultadoCombinado.classificacao_consistencia) resultsList.push({ label: "Classificação Consistência", value: resultadoCombinado.classificacao_consistencia });
 
@@ -778,7 +778,7 @@ const EntradaDados = () => {
                             <div className="space-y-1.5">
                                 <div className="flex items-center h-5">
                                     <Label htmlFor="massaUmida" className="text-xs flex items-center gap-1">
-                                        Mbu (g)
+                                        MBU (g)
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
@@ -792,7 +792,7 @@ const EntradaDados = () => {
                             <div className="space-y-1.5">
                                 <div className="flex items-center h-5">
                                     <Label htmlFor="massaSeca" className="text-xs flex items-center gap-1">
-                                        Mbs (g)
+                                        MBS (g)
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
@@ -1068,8 +1068,8 @@ const ResultadosView = ({ resultadoCombinado }: { resultadoCombinado: Caracteriz
                                             </h4>
                                             <div className="space-y-[1px]">
                                                 <ResultRow label={<span><span className="font-serif italic font-bold text-lg">w</span> <span className="text-[10px] font-normal opacity-70">(Umidade)</span></span>} value={displayResult.w} unit="%" precision={1} tooltipKey="w" statusRanges={{ ok: [5, 50], warn: [0, 80] }} />
-                                                <ResultRow label={<span><span className="font-serif italic font-bold text-lg">γ</span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Natural)</span></span>} value={displayResult.gamma_nat} unit="kN/m³" precision={2} tooltipKey="gamma" statusRanges={{ ok: [14, 22], warn: [10, 25] }} />
-                                                <ResultRow label={<span><span className="font-serif italic font-bold text-lg">γ<sub className="text-xs not-italic">s</sub></span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Seco)</span></span>} value={displayResult.gamma_d} unit="kN/m³" precision={2} tooltipKey="gamma_d" statusRanges={{ ok: [12, 20], warn: [8, 22] }} />
+                                                <ResultRow label={<span><span className="font-serif italic font-bold text-lg">γ<sub className="text-xs not-italic">n</sub></span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Natural)</span></span>} value={displayResult.gamma_nat} unit="kN/m³" precision={2} tooltipKey="gamma" statusRanges={{ ok: [14, 22], warn: [10, 25] }} />
+                                                <ResultRow label={<span><span className="font-serif italic font-bold text-lg">γ<sub className="text-xs not-italic">d</sub></span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Seco)</span></span>} value={displayResult.gamma_d} unit="kN/m³" precision={2} tooltipKey="gamma_d" statusRanges={{ ok: [12, 20], warn: [8, 22] }} />
                                                 <ResultRow label={<span><span className="font-serif italic font-bold text-lg">e</span> <span className="text-[10px] font-normal opacity-70">(Índice de Vazios)</span></span>} value={displayResult.e} unit="" precision={2} tooltipKey="e" statusRanges={{ ok: [0.3, 1.2], warn: [0.1, 2.0] }} />
                                                 <ResultRow label={<span><span className="font-serif italic font-bold text-lg">n</span> <span className="text-[10px] font-normal opacity-70">(Porosidade)</span></span>} value={displayResult.n} unit="%" precision={0} tooltipKey="n" statusRanges={{ ok: [25, 60], warn: [15, 75] }} />
                                                 <ResultRow label={<span><span className="font-serif italic font-bold text-lg">S</span> <span className="text-[10px] font-normal opacity-70">(Grau de Saturação)</span></span>} value={displayResult.Sr} unit="%" precision={0} tooltipKey="Sr" statusRanges={{ ok: [0, 100], warn: [0, 100] }} />
@@ -1084,9 +1084,9 @@ const ResultadosView = ({ resultadoCombinado }: { resultadoCombinado: Caracteriz
                                                 Limites de Consistência
                                             </h4>
                                             <div className="space-y-[1px]">
-                                                <ResultRow label={<span>LL <span className="text-[10px] font-normal opacity-70">(Limite de Liquidez)</span></span>} value={displayResult.ll} unit="%" tooltipKey="LL" />
-                                                <ResultRow label={<span>LP <span className="text-[10px] font-normal opacity-70">(Limite de Plasticidade)</span></span>} value={displayResult.lp} unit="%" tooltipKey="LP" />
-                                                <ResultRow label={<span>IP <span className="text-[10px] font-normal opacity-70">(Índice de Plasticidade)</span></span>} value={displayResult.ip} unit="%" tooltipKey="IP" statusRanges={{ ok: [7, 15], warn: [0, 30] }} />
+                                                <ResultRow label={<span>LL <span className="text-[10px] font-normal opacity-70">(Limite de Liquidez)</span></span>} value={displayResult.ll} unit="%" precision={0} tooltipKey="LL" />
+                                                <ResultRow label={<span>LP <span className="text-[10px] font-normal opacity-70">(Limite de Plasticidade)</span></span>} value={displayResult.lp} unit="%" precision={0} tooltipKey="LP" />
+                                                <ResultRow label={<span>IP <span className="text-[10px] font-normal opacity-70">(Índice de Plasticidade)</span></span>} value={displayResult.ip} unit="%" precision={0} tooltipKey="IP" statusRanges={{ ok: [7, 15], warn: [0, 30] }} />
                                                 <ResultRow label={<span>IC <span className="text-[10px] font-normal opacity-70">(Índice de Consistência)</span></span>} value={displayResult.ic} unit="" precision={2} tooltipKey="IC" statusRanges={{ ok: [0, 1], warn: [-0.5, 1.5] }} />
                                             </div>
                                             <Separator className="my-3" />
@@ -1147,8 +1147,8 @@ const ResultadosView = ({ resultadoCombinado }: { resultadoCombinado: Caracteriz
 
                             <Card className="glass">
                                 <CardHeader className="pb-2">
-                                    <CardTitle className="text-sm">Gráfico Limite de Liquidez</CardTitle>
-                                    <CardDescription>Curva de fluidez (Casagrande).</CardDescription>
+                                    <CardTitle className="text-sm">Gráfico - Limite de Liquidez</CardTitle>
+                                    <CardDescription>Regressão linear: Umidade (%) vs. log(Golpes).</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <LimiteLiquidezChart

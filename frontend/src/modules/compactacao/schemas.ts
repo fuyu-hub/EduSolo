@@ -9,9 +9,12 @@ export const PontoEnsaioCompactacaoSchema = z.object({
   massa_umida_total: z.number(),
   massa_molde: z.number(),
   volume_molde: z.number().positive(),
-  massa_umida_recipiente_w: z.number(),
-  massa_seca_recipiente_w: z.number(),
-  massa_recipiente_w: z.number(),
+  // Campos para cálculo de umidade via medições
+  massa_umida_recipiente_w: z.number().optional(),
+  massa_seca_recipiente_w: z.number().optional(),
+  massa_recipiente_w: z.number().optional(),
+  // Campo para umidade direta (quando fornecida diretamente)
+  umidade_direta: z.number().optional(),
 });
 
 export const CompactacaoInputSchema = z.object({

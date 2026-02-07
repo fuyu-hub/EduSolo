@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { calcularCompactacao } from "@/lib/calculations/compactacao";
-import { Database, Calculator, Plus, Trash2, Info, Save, FolderOpen, Download, FileText, AlertCircle, ChevronLeft, ChevronRight, Lightbulb } from "lucide-react";
+import { Database, Filter, Calculator, Plus, Trash2, Info, Save, FolderOpen, Download, FileText, AlertCircle, ChevronLeft, ChevronRight, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/components/ui/use-toast";
@@ -97,7 +97,7 @@ export default function CompactacaoMobile() {
   const { theme } = useTheme();
   const { addReport } = useRecentReports();
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState<FormData>({
     volumeCilindro: "982",
     pesoCilindro: "4100",
@@ -109,7 +109,7 @@ export default function CompactacaoMobile() {
       { id: generateId(), pesoAmostaCilindro: "", pesoBrutoUmido: "", pesoBrutoSeco: "", tara: "" },
     ],
   });
-  
+
   const [results, setResults] = useState<Results | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -198,10 +198,10 @@ export default function CompactacaoMobile() {
       return;
     }
 
-    const pontosValidos = formData.pontos.filter(p => 
-      p.pesoAmostaCilindro && 
-      p.pesoBrutoUmido && 
-      p.pesoBrutoSeco && 
+    const pontosValidos = formData.pontos.filter(p =>
+      p.pesoAmostaCilindro &&
+      p.pesoBrutoUmido &&
+      p.pesoBrutoSeco &&
       p.tara &&
       !isNaN(parseFloat(p.pesoAmostaCilindro)) &&
       !isNaN(parseFloat(p.pesoBrutoUmido)) &&
@@ -243,7 +243,7 @@ export default function CompactacaoMobile() {
 
       // Calcula localmente no frontend
       const resultado = calcularCompactacao(apiInput);
-      
+
       if (resultado.erro) {
         setError(resultado.erro);
         toast({
@@ -261,7 +261,7 @@ export default function CompactacaoMobile() {
     } catch (err: any) {
       const errorMsg = err.response?.data?.detail || err.response?.data?.message || "Erro ao calcular";
       setError(errorMsg);
-      
+
       toast({
         title: "❌ Erro",
         description: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg),
@@ -322,7 +322,7 @@ export default function CompactacaoMobile() {
 
   const handleConfirmSave = () => {
     if (!results || !saveName.trim()) return;
-    
+
     const success = saveCalculation(saveName.trim(), formData, results);
     if (success) {
       toast({
@@ -362,7 +362,7 @@ export default function CompactacaoMobile() {
     setIsExportingPDF(true);
 
     // Capturar imagem do gráfico
-    const chartImage = curvaCompactacaoRef.current 
+    const chartImage = curvaCompactacaoRef.current
       ? await curvaCompactacaoRef.current.getImageForExport()
       : null;
 
@@ -470,7 +470,7 @@ export default function CompactacaoMobile() {
     }
   };
 
-  const isFormValid = 
+  const isFormValid =
     formData.volumeCilindro &&
     formData.pesoCilindro &&
     formData.pontos.filter(p => p.pesoAmostaCilindro && p.pesoBrutoUmido && p.pesoBrutoSeco && p.tara).length >= 3;
@@ -487,14 +487,14 @@ export default function CompactacaoMobile() {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-600 flex items-center justify-center shadow-md">
-              <Database className="w-5 h-5 text-white" />
+              <Filter className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-foreground">Compactação</h2>
               <p className="text-xs text-muted-foreground">Ensaio Proctor</p>
             </div>
           </div>
-          
+
           <div className="flex gap-2">
             <Button
               variant="outline"
@@ -690,7 +690,7 @@ export default function CompactacaoMobile() {
           <Calculator className="w-4 h-4 mr-2" />
           {isCalculating ? "Calculando..." : "Calcular"}
         </Button>
-        
+
         <Button
           onClick={handleClear}
           variant="outline"

@@ -7,16 +7,13 @@ import html2canvas from "html2canvas";
 import { toast } from "@/components/ui/sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
-interface PontoCurva {
-  umidade: number;
-  peso_especifico_seco: number;
-}
+import { PontoCurvaCompactacao } from "../schemas";
 
 interface CurvaCompactacaoProps {
-  pontosEnsaio: PontoCurva[];
+  pontosEnsaio: PontoCurvaCompactacao[];
   umidadeOtima?: number;
   gamaSecoMax?: number;
-  pontosSaturacao?: PontoCurva[];
+  pontosSaturacao?: PontoCurvaCompactacao[];
 }
 
 export interface CurvaCompactacaoRef {
@@ -30,15 +27,19 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
     const chartRef = useRef<HTMLDivElement>(null);
 
     // Converte γd de kN/m³ para g/cm³ para exibição
-    const pontosConvertidos = pontosEnsaio.map(p => ({
-      umidade: Number(p.umidade.toFixed(2)),
-      gamaSeco: Number((p.peso_especifico_seco / 10).toFixed(3))
-    }));
+    const pontosConvertidos = pontosEnsaio
+      .filter(p => typeof p.umidade === 'number' && typeof p.peso_especifico_seco === 'number')
+      .map(p => ({
+        umidade: Number(p.umidade!.toFixed(2)),
+        gamaSeco: Number((p.peso_especifico_seco! / 10).toFixed(3))
+      }));
 
-    const pontosSaturacaoConvertidos = (pontosSaturacao || []).map(p => ({
-      umidade: Number(p.umidade.toFixed(2)),
-      gamaSeco: Number((p.peso_especifico_seco / 10).toFixed(3))
-    }));
+    const pontosSaturacaoConvertidos = (pontosSaturacao || [])
+      .filter(p => typeof p.umidade === 'number' && typeof p.peso_especifico_seco === 'number')
+      .map(p => ({
+        umidade: Number(p.umidade!.toFixed(2)),
+        gamaSeco: Number((p.peso_especifico_seco! / 10).toFixed(3))
+      }));
 
     const pontoOtimo = (umidadeOtima !== undefined && gamaSecoMax !== undefined) ? {
       umidade: Number(umidadeOtima.toFixed(2)),
@@ -123,7 +124,7 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
       return pontos;
     })();
 
-    // Determina os limites dos eixos
+    // Determina os limites dos eixos - margens fixas para visualização consistente
     const dominioX = (() => {
       if (pontosConvertidos.length === 0) return [0, 40];
       const umidades = pontosConvertidos.map(p => p.umidade);
@@ -132,7 +133,8 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
       }
       const minU = Math.min(...umidades);
       const maxU = Math.max(...umidades);
-      const margem = (maxU - minU) * 0.15 || 5;
+      // Margem mínima de 5% para cada lado, mas no mínimo 3 pontos percentuais
+      const margem = Math.max((maxU - minU) * 0.25, 3);
       return [Math.max(0, minU - margem), maxU + margem];
     })();
 
@@ -144,8 +146,11 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
       }
       const minG = Math.min(...gamas);
       const maxG = Math.max(...gamas);
-      const margem = (maxG - minG) * 0.15 || 0.1;
-      return [Math.max(1.0, minG - margem), maxG + margem];
+      // Margem inferior: 25% ou 0.15 g/cm³
+      const margemInferior = Math.max((maxG - minG) * 0.25, 0.15);
+      // Margem superior maior para acomodar a caixa de resultados (40% ou 0.25 g/cm³)
+      const margemSuperior = Math.max((maxG - minG) * 0.40, 0.25);
+      return [Math.max(1.0, minG - margemInferior), maxG + margemSuperior];
     })();
 
     // Gerar ticks personalizados
@@ -171,27 +176,31 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
 
     // Função para exportar como JPG
     const handleExportJPG = async () => {
-      // Capturar o elemento específico de exportação (versão expandida oculta)
-      const element = document.getElementById('chart-export-container');
+      // Capturar o gráfico principal (versão reduzida)
+      const element = document.getElementById('compactacao-chart-main');
       if (!element) return;
 
       try {
         toast.info("Capturando gráfico...");
 
         const canvas = await html2canvas(element, {
-          backgroundColor: '#ffffff', // Força fundo branco na exportação
+          backgroundColor: '#ffffff',
           scale: 2,
           logging: false,
+          useCORS: true,
         });
 
-        const image = canvas.toDataURL('image/jpeg', 0.95);
-
-        const link = document.createElement('a');
-        link.href = image;
-        link.download = `curva-compactacao-${Date.now()}.jpg`;
-        link.click();
-
-        toast.success("Gráfico exportado com sucesso!");
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = `grafico_compactacao_${new Date().toISOString().split('T')[0]}.jpg`;
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+            toast.success("Gráfico exportado com sucesso!");
+          }
+        }, 'image/jpeg', 0.95);
       } catch (error) {
         console.error('Erro ao exportar imagem:', error);
         toast.error("Erro ao exportar o gráfico");
@@ -254,8 +263,8 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
 
       return (
         <div
-          id={isExport ? "chart-export-container" : (isDialog || !dialogOpen ? "chart-capture-container" : undefined)}
-          className={`bg-white p-4 w-full relative ${isExport ? '' : 'rounded-xl border border-border shadow-sm'}`}
+          id={isExport ? "chart-export-container" : "compactacao-chart-main"}
+          className="bg-white p-4 w-full relative"
         >
           {/* Caixa de Resultados no canto superior direito */}
           {pontoOtimo && (
@@ -405,11 +414,7 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
     return (
       <div className="space-y-2 relative">
         {/* Botões Ampliar e Exportar */}
-        <div className="flex justify-between items-center mb-2">
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">Gráfico Curva de Compactação</h3>
-            <p className="text-xs text-muted-foreground">Curva de compactação</p>
-          </div>
+        <div className="flex justify-end items-center mb-2">
           <div className="flex gap-2">
             <Button
               onClick={handleExportJPG}
@@ -443,7 +448,7 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
         </div>
 
         {/* Gráfico Principal */}
-        <div ref={chartRef} className="w-full">
+        <div ref={chartRef} className="w-full rounded-xl border border-border shadow-sm overflow-hidden">
           <ChartContent isDialog={false} />
         </div>
 
