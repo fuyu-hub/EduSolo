@@ -95,12 +95,12 @@ interface CompactacaoInputAPI {
 
 const tooltips = {
   volumeCilindro: "Volume interno do cilindro/molde de compactação (cm³)",
-  pesoCilindro: "Peso do cilindro vazio (g)",
+  pesoCilindro: "Massa do cilindro vazio (g)",
   Gs: "Densidade dos grãos (opcional, necessário para curva S=100%)",
-  pesoAmostaCilindro: "Peso da amostra compactada + cilindro (g)",
+  pesoAmostaCilindro: "Massa da amostra compactada + cilindro (g)",
   pesoBrutoUmido: "MBU: Massa Bruta Úmida (Solo Úmido + Tara)",
   pesoBrutoSeco: "MBS: Massa Bruta Seca (Solo Seco + Tara)",
-  tara: "Peso do recipiente vazio (g)",
+  tara: "Massa do recipiente vazio (g)",
 };
 
 // Cálculos agora são feitos localmente no frontend
@@ -232,14 +232,14 @@ function CompactacaoDesktop() {
     {
       target: "[data-tour='config-gerais']",
       title: "⚙️ Parâmetros Gerais",
-      content: "Configure o volume e peso do cilindro de compactação. O Gs (densidade relativa dos grãos) é opcional, mas necessário para traçar a curva de saturação teórica (S=100%).",
+      content: "Configure o volume e massa do cilindro de compactação. O Gs (densidade relativa dos grãos) é opcional, mas necessário para traçar a curva de saturação teórica (S=100%).",
       placement: "right",
       spotlightPadding: 12,
     },
     {
       target: "[data-tour='pontos-ensaio']",
       title: "📋 Pontos do Ensaio",
-      content: "Adicione os pontos do ensaio (mínimo 3). Para cada ponto, registre: peso da amostra compactada + cilindro e as massas para determinação de umidade.",
+      content: "Adicione os pontos do ensaio (mínimo 3). Para cada ponto, registre: massa da amostra compactada + cilindro e as massas para determinação de umidade.",
       placement: "right",
       spotlightPadding: 12,
     },
@@ -496,7 +496,7 @@ function CompactacaoDesktop() {
 
     const inputs: { label: string; value: string }[] = [
       { label: "Volume do Cilindro", value: `${formData.volumeCilindro} cm³` },
-      { label: "Peso do Cilindro", value: `${formData.pesoCilindro} g` },
+      { label: "Massa do Cilindro", value: `${formData.pesoCilindro} g` },
     ];
     if (formData.Gs) inputs.push({ label: "Densidade Relativa (Gs)", value: formData.Gs });
 
@@ -508,7 +508,7 @@ function CompactacaoDesktop() {
     const tables = [];
 
     // TABELA 1: Dados do Ensaio de Compactação
-    const ensaioHeaders = ["Ponto", "Peso Amostra+Cilindro (g)", "MBU (g)", "MBS (g)", "Tara (g)"];
+    const ensaioHeaders = ["Ponto", "Massa Amostra+Cilindro (g)", "MBU (g)", "MBS (g)", "Tara (g)"];
     const ensaioRows = formData.pontos.map((p, i) => [
       `${i + 1}`,
       p.pesoAmostaCilindro,
@@ -526,13 +526,13 @@ function CompactacaoDesktop() {
     // Fórmulas utilizadas
     const formulas = [
       {
-        label: "Peso da Amostra Úmida",
-        formula: "Peso Amostra = (Peso Amostra+Cilindro) - (Peso Cilindro)",
-        description: "Peso da amostra compactada dentro do cilindro"
+        label: "Massa da Amostra Úmida",
+        formula: "Massa Amostra = (Massa Amostra+Cilindro) - (Massa Cilindro)",
+        description: "Massa da amostra compactada dentro do cilindro"
       },
       {
         label: "Peso Específico Natural (γnat)",
-        formula: "γnat = (Peso Amostra / Volume Cilindro) × 10",
+        formula: "γnat = (Massa Amostra / Volume Cilindro) × 10",
         description: "Peso específico da amostra úmida compactada em kN/m³"
       },
       {
@@ -610,13 +610,13 @@ function CompactacaoDesktop() {
 
     const configData: { label: string; value: string | number }[] = [
       { label: "Volume do Cilindro (cm³)", value: formData.volumeCilindro },
-      { label: "Peso do Cilindro (g)", value: formData.pesoCilindro },
+      { label: "Massa do Cilindro (g)", value: formData.pesoCilindro },
     ];
     if (formData.Gs) configData.push({ label: "Densidade Relativa (Gs)", value: formData.Gs });
 
     const dadosData: { label: string; value: string | number }[] = [];
     formData.pontos.forEach((p, i) => {
-      dadosData.push({ label: `Ponto ${i + 1} - Peso Amostra+Cil (g)`, value: p.pesoAmostaCilindro });
+      dadosData.push({ label: `Ponto ${i + 1} - Massa Amostra+Cil (g)`, value: p.pesoAmostaCilindro });
       dadosData.push({ label: `Ponto ${i + 1} - MBU (g)`, value: p.pesoBrutoUmido });
       dadosData.push({ label: `Ponto ${i + 1} - MBS (g)`, value: p.pesoBrutoSeco });
       dadosData.push({ label: `Ponto ${i + 1} - Tara (g)`, value: p.tara });
@@ -657,7 +657,7 @@ function CompactacaoDesktop() {
       // Verificação básica de números válidos nos campos de configuração
       if (isNaN(volumeCil) || volumeCil <= 0 || isNaN(pesoCil) || pesoCil < 0 || isNaN(pesoEspAgua) || pesoEspAgua <= 0) {
         if (!isAuto) {
-          setApiError("Verifique os parâmetros gerais (Volume, Peso Cilindro).");
+          setApiError("Verifique os parâmetros gerais (Volume, Massa Cilindro).");
           toast.error("Erro de Validação", { description: "Parâmetros gerais inválidos." });
           setIsCalculating(false);
         }
@@ -858,7 +858,7 @@ function CompactacaoDesktop() {
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
                         <Label htmlFor="pesoCilindro" className={cn("text-xs", errors.pesoCilindro && "text-destructive")}>
-                          Peso Cilindro (g)
+                          Massa Cilindro (g)
                         </Label>
                         <Tooltip>
                           <TooltipTrigger>
@@ -976,7 +976,7 @@ function CompactacaoDesktop() {
                                 : "text-muted-foreground hover:bg-muted"
                             )}
                           >
-                            Medições (Peso Bruto/Seco)
+                            Medições (Massa Bruta/Seca)
                           </button>
                           <button
                             type="button"
@@ -1001,7 +1001,7 @@ function CompactacaoDesktop() {
                         {/* Peso Amostra + Cilindro - Sempre visível */}
                         <div className="space-y-0.5 col-span-2">
                           <Label htmlFor={`pontos.${currentPointIndex}.pesoAmostaCilindro`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.pesoAmostaCilindro && "text-destructive")}>
-                            Peso Amostra + Cilindro (g)
+                            Massa Amostra + Cilindro (g)
                           </Label>
                           <Controller
                             name={`pontos.${currentPointIndex}.pesoAmostaCilindro`}
@@ -1197,7 +1197,7 @@ function CompactacaoDesktop() {
                     <CardContent className="px-5 pb-5">
                       <div className="space-y-1.5">
                         <ResultRow label="Volume do Cilindro" value={parseFloat(form.getValues().volumeCilindro)} unit="cm³" />
-                        <ResultRow label="Peso do Cilindro" value={parseFloat(form.getValues().pesoCilindro)} unit="g" />
+                        <ResultRow label="Massa do Cilindro" value={parseFloat(form.getValues().pesoCilindro)} unit="g" />
                         <ResultRow label="Densidade dos Grãos (Gs)" value={form.getValues().Gs ? parseFloat(form.getValues().Gs!) : null} unit="" precision={3} />
                         <ResultRow label="Peso Esp. da Água" value={parseFloat(form.getValues().pesoEspecificoAgua)} unit="kN/m³" />
                       </div>
