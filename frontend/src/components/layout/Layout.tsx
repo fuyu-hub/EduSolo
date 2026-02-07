@@ -34,6 +34,8 @@ const menuItems = [
   },
 ];
 
+import { CompactacaoIcon } from "@/components/icons/CompactacaoIcon";
+
 // Componente para o conteúdo da Sidebar (reutilizável)
 const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLinkClick?: () => void }) => {
   const location = useLocation();
@@ -41,7 +43,7 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
   const modulesBrief = [
     { icon: Beaker, label: "Índices Físicos e Limites", path: "/indices-limites" },
     { icon: Database, label: "Granulometria", path: "/granulometria" },
-    { icon: Filter, label: "Compactação", path: "/compactacao" },
+    { icon: CompactacaoIcon, label: "Compactação", path: "/compactacao" },
   ];
   const isModulePath =
     modulesBrief.some((m) => location.pathname.startsWith(m.path)) ||

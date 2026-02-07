@@ -1,4 +1,5 @@
-import { Beaker, Droplet, Filter, Database, Mountain, Target, MoveDown, Scissors, ArrowRight, BookOpen } from "lucide-react";
+import { Beaker, Droplet, Database, Mountain, Target, MoveDown, Scissors, ArrowRight, BookOpen } from "lucide-react";
+import { CompactacaoIcon } from "@/components/icons/CompactacaoIcon";
 import { memo } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -20,7 +21,7 @@ const modules = [
     preload: () => import("./Granulometria"),
   },
   {
-    icon: Filter,
+    icon: CompactacaoIcon,
     title: "Compactação",
     description: "Curvas de compactação e energia Proctor",
     path: "/compactacao",

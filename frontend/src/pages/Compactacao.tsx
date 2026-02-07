@@ -6,6 +6,7 @@ import { calcularCompactacao } from "@/lib/calculations/compactacao";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { RotateCcw, Database, Filter, Info, Calculator as CalcIcon, Plus, Trash2, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, GraduationCap, LayoutGrid, RefreshCw } from "lucide-react";
+import { CompactacaoIcon } from "@/components/icons/CompactacaoIcon";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -574,7 +575,7 @@ function CompactacaoDesktop() {
       tables,
       chartImage: chartImage || undefined,
       customFileName: pdfFileName,
-      theme,
+      theme: { mode: theme.mode, color: (theme as any).color || 'indigo' },
       printSettings: settings.printSettings
     };
 
@@ -769,7 +770,7 @@ function CompactacaoDesktop() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-center transition-colors hover:border-primary/60 hover:bg-primary/10">
-            <Filter className="w-6 h-6 text-primary" />
+            <CompactacaoIcon className="w-6 h-6 text-primary" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-foreground">Ensaio de Compactação</h1>
