@@ -1049,8 +1049,8 @@ function CompactacaoDesktop() {
                             {errors.pontos?.[currentPointIndex]?.umidadeDireta && (
                               <p className="text-xs text-destructive mt-0.5">{errors.pontos[currentPointIndex]?.umidadeDireta?.message}</p>
                             )}
-                            <p className="text-[10px] text-muted-foreground mt-1">
-                              * Insira a umidade média calculada para este ponto.
+                            <p className="text-[10px] text-muted-foreground mt-1 text-center italic">
+                              Insira a umidade calculada para este ponto, de acordo com a NBR 6457/2024
                             </p>
                           </div>
                         ) : (
