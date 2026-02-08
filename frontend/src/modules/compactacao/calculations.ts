@@ -225,7 +225,7 @@ export function calcularCompactacao(dados: CompactacaoInput): CompactacaoOutput 
     const gamas_d = pontos_calculados.map((p) => p.peso_especifico_seco);
 
     // Ajuste polinomial
-    const grau_polinomio = pontos_calculados.length >= 4 ? 3 : 2;
+    const grau_polinomio = 2;
     const coeffs = polyfit(umidades, gamas_d, grau_polinomio);
 
     // Encontrar máximo
