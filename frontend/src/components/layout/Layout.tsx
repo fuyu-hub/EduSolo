@@ -43,6 +43,7 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
   const modulesBrief = [
     { icon: Beaker, label: "Índices Físicos e Limites", path: "/indices-limites" },
     { icon: Database, label: "Granulometria", path: "/granulometria" },
+    { icon: Database, label: "Granulometria Teste", path: "/granulometria-teste" },
     { icon: CompactacaoIcon, label: "Compactação", path: "/compactacao" },
   ];
   const isModulePath =

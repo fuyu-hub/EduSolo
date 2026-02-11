@@ -21,6 +21,13 @@ const modules = [
     preload: () => import("./Granulometria"),
   },
   {
+    icon: Database,
+    title: "Granulometria Teste",
+    description: "Classificação por porcentagem de frações granulométricas",
+    path: "/granulometria-teste",
+    preload: () => import("./GranulometriaTeste"),
+  },
+  {
     icon: CompactacaoIcon,
     title: "Compactação",
     description: "Curvas de compactação e energia Proctor",

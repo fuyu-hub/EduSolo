@@ -1103,7 +1103,7 @@ function GranulometriaDesktop() {
                         <>
                           <div className="flex items-center justify-center gap-4 my-2">
                             <h3 className="text-6xl font-black tracking-tighter text-foreground leading-none tabular-nums">
-                              {results.classificacao_hrb}
+                              {results.subgrupo_hrb ? `${results.grupo_hrb}-${results.subgrupo_hrb}` : results.grupo_hrb}
                             </h3>
                             {results.indice_grupo_hrb !== undefined && (
                               <div className="flex flex-col items-center justify-center bg-muted/50 px-3 py-2 rounded-xl border border-border/40 backdrop-blur-sm">
@@ -1111,6 +1111,7 @@ function GranulometriaDesktop() {
                                 <span className="text-2xl font-bold leading-none tabular-nums">{results.indice_grupo_hrb}</span>
                               </div>
                             )}
+
                           </div>
                           <p className="text-base font-medium text-foreground/80 max-w-[90%] leading-relaxed mb-2">
                             {results.descricao_hrb}

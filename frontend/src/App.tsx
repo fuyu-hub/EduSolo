@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 const IndicesFisicos = lazy(() => import("./pages/IndicesFisicos"));
 const LimitesConsistencia = lazy(() => import("./pages/LimitesConsistencia"));
 const Granulometria = lazy(() => import("./pages/Granulometria"));
+const GranulometriaTeste = lazy(() => import("./pages/GranulometriaTeste"));
 const Compactacao = lazy(() => import("./pages/Compactacao"));
 const TensoesGeostaticas = lazy(() => import("./pages/TensoesGeostaticas"));
 const AcrescimoTensoes = lazy(() => import("./pages/AcrescimoTensoes"));
@@ -186,6 +187,16 @@ const AppContent = () => {
             <Layout>
               <Suspense fallback={<PageLoader />}>
                 <Granulometria />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/granulometria-teste"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <GranulometriaTeste />
               </Suspense>
             </Layout>
           }
