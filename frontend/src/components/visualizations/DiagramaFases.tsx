@@ -50,10 +50,6 @@ const PhaseBlock = ({
 }: PhaseBlockProps) => {
     const [showDetails, setShowDetails] = useState(false);
 
-    // Se a largura for muito pequena, esconde o texto para não quebrar o layout
-    // Pode ser ajustado conforme necessidade
-    const isTooSmall = widthPercentage < 5;
-
     return (
         <div
             className={cn(basePhaseStyle, colorClass)}
@@ -61,18 +57,16 @@ const PhaseBlock = ({
             onClick={() => setShowDetails(!showDetails)}
             title={`${label}: Clique para ver detalhes`}
         >
-            {!isTooSmall && (
-                !showDetails ? (
-                    <div className="flex flex-col items-center animate-in fade-in duration-300">
-                        <span className="font-bold text-sm mb-0.5 drop-shadow-sm shadow-black/20">{label}</span>
-                        <span className={innerTextStyle}>{percentage.toFixed(1)}%</span>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center text-[10px] leading-snug font-mono animate-in zoom-in-95 duration-200">
-                        <span className="whitespace-nowrap font-bold">V: {volume.toFixed(2)}</span>
-                        <span className="whitespace-nowrap">M: {mass.toFixed(2)}</span>
-                    </div>
-                )
+            {!showDetails ? (
+                <div className="flex flex-col items-center animate-in fade-in duration-300">
+                    <span className="font-bold text-sm mb-0.5 drop-shadow-sm shadow-black/20">{label}</span>
+                    <span className={innerTextStyle}>{percentage.toFixed(1)}%</span>
+                </div>
+            ) : (
+                <div className="flex flex-col items-center animate-in zoom-in-95 duration-200">
+                    <span className="font-bold text-sm mb-0.5 drop-shadow-sm shadow-black/20">{volume.toFixed(2)} cm³</span>
+                    <span className={innerTextStyle}>{mass.toFixed(2)} g</span>
+                </div>
             )}
         </div>
     );
@@ -116,9 +110,25 @@ export function DiagramaFases({
     const mw = massaAguaCalc ?? 0;
     // const mt = massaTotalCalc ?? (ms + mw); // Não usado diretamente nos blocos individuais
 
+    // --- Cálculos de Porcentagem Real ---
     const percentVolSolidos = (vs / vt) * 100;
     const percentVolAgua = (vw / vt) * 100;
     const percentVolAr = Math.max(0, 100 - percentVolSolidos - percentVolAgua);
+
+    // --- Lógica de Escala Ajustada para Legibilidade ---
+    // Definimos um peso mínimo para fases existentes (> 0) para garantir que o texto caiba
+    const MIN_VISUAL_WEIGHT = 12;
+
+    const phases = [
+        { label: "Sólido", realPerc: percentVolSolidos, vol: vs, mass: ms, color: solidColor },
+        { label: "Água", realPerc: percentVolAgua, vol: vw, mass: mw, color: waterColor },
+        { label: "Ar", realPerc: percentVolAr, vol: va, mass: 0, color: airColor },
+    ].filter(p => p.vol > EPSILON || p.realPerc > EPSILON);
+
+    // Calcula pesos visuais
+    const weights = phases.map(p => Math.max(p.realPerc, MIN_VISUAL_WEIGHT));
+    const totalWeight = weights.reduce((acc, w) => acc + w, 0);
+    const visualWidths = weights.map(w => (w / totalWeight) * 100);
 
     return (
         <div className={cn("w-full space-y-2", className)}>
@@ -129,35 +139,17 @@ export function DiagramaFases({
                 )}
                 aria-label="Diagrama Trifásico do Solo"
             >
-                {/* --- Fase Sólidos --- */}
-                <PhaseBlock
-                    label="Sólido"
-                    percentage={percentVolSolidos}
-                    volume={vs}
-                    mass={ms}
-                    colorClass={solidColor}
-                    widthPercentage={percentVolSolidos}
-                />
-
-                {/* --- Fase Água --- */}
-                <PhaseBlock
-                    label="Água"
-                    percentage={percentVolAgua}
-                    volume={vw}
-                    mass={mw}
-                    colorClass={waterColor}
-                    widthPercentage={percentVolAgua}
-                />
-
-                {/* --- Fase Ar --- */}
-                <PhaseBlock
-                    label="Ar"
-                    percentage={percentVolAr}
-                    volume={va}
-                    mass={0}
-                    colorClass={airColor}
-                    widthPercentage={percentVolAr}
-                />
+                {phases.map((phase, idx) => (
+                    <PhaseBlock
+                        key={phase.label}
+                        label={phase.label}
+                        percentage={phase.realPerc}
+                        volume={phase.vol}
+                        mass={phase.mass}
+                        colorClass={phase.color}
+                        widthPercentage={visualWidths[idx]}
+                    />
+                ))}
             </div>
             <p className="text-[10px] text-center text-muted-foreground italic">
                 * Clique nas seções para alternar entre porcentagem e valores físicos.

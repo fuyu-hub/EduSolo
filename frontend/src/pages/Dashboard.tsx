@@ -13,17 +13,17 @@ const modules = [
     path: "/indices-limites",
     preload: () => import("./../modules/caracterizacao"),
   },
+  /*   {
+      icon: Database,
+      title: "Granulometria e Classificação",
+      description: "Análise granulométrica com classificação USCS e AASHTO",
+      path: "/granulometria",
+      preload: () => import("./Granulometria"),
+    }, */
   {
     icon: Database,
-    title: "Granulometria e Classificação",
-    description: "Análise granulométrica com classificação USCS e AASHTO",
-    path: "/granulometria",
-    preload: () => import("./Granulometria"),
-  },
-  {
-    icon: Database,
-    title: "Granulometria Teste",
-    description: "Classificação por porcentagem de frações granulométricas",
+    title: "Classificação Granulométrica",
+    description: "Classificação de Solos pelos Sistemas USCS e AASHTO",
     path: "/granulometria-teste",
     preload: () => import("./GranulometriaTeste"),
   },
@@ -156,7 +156,7 @@ export default function Dashboard() {
             <span className="text-foreground">Solos</span>
           </h1>
           <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
-            Ferramentas de análise para Mecânica dos Solos. Selecione um módulo para começar.
+            Selecione um módulo para começar.
           </p>
         </div>
       </div>

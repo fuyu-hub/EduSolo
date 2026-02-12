@@ -42,8 +42,8 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
   // Lista resumida de módulos para o menu expansível
   const modulesBrief = [
     { icon: Beaker, label: "Índices Físicos e Limites", path: "/indices-limites" },
-    { icon: Database, label: "Granulometria", path: "/granulometria" },
-    { icon: Database, label: "Granulometria Teste", path: "/granulometria-teste" },
+    // { icon: Database, label: "Granulometria", path: "/granulometria" },
+    { icon: Database, label: "Classificação Granulométrica", path: "/granulometria-teste" },
     { icon: CompactacaoIcon, label: "Compactação", path: "/compactacao" },
   ];
   const isModulePath =
@@ -276,7 +276,7 @@ function DesktopLayout({ children }: { children: React.ReactNode }) {
 
           <div className="flex-1"></div>
 
-          <Button
+          {/*           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate("/relatorios")}
@@ -294,7 +294,7 @@ function DesktopLayout({ children }: { children: React.ReactNode }) {
           >
             <HelpCircle className="h-4 w-4 mr-2" />
             Manual
-          </Button>
+          </Button> */}
 
           {/* Botão de Toggle de Modo Claro/Escuro */}
           <Button

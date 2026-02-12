@@ -143,12 +143,15 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
 
     // Determina os limites dos eixos (dinâmicos)
     const dominioX = (() => {
-      // Começar em 10 (ou 1 se houver pontos < 10)
-      const inicio = comecaEm1 ? 1 : 10;
-      // Máximo: próximo múltiplo de 10 acima do maior nº de golpes
-      const maxGolpes = Math.max(...pontosConvertidos.map(p => p.golpes));
+      // Se tivermos pontos <= 10, começamos em (menor - 1) para dar um respiro.
+      let inicio = 10;
+      if (minGolpesReal <= 10) {
+        inicio = Math.max(1, minGolpesReal - 1);
+      }
+
+      const maxGolpes = Math.max(...pontosConvertidos.map(p => p.golpes), 25);
       const fim = Math.ceil(maxGolpes / 10) * 10;
-      return [inicio, Math.max(fim, 30)];
+      return [inicio, Math.max(fim, 40)];
     })();
 
     const dominioY = (() => {
@@ -166,15 +169,21 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
     // Gerar ticks principais para o eixo X (valores logarítmicos importantes)
     const ticksX = (() => {
       const arr: number[] = [];
-      const start = dominioX[0] < 10 ? 1 : 10;
-      // Se começa em 1, adiciona 1-9
-      if (start === 1) {
-        for (let i = 1; i < 10; i++) arr.push(i);
+      const min = dominioX[0];
+      const max = dominioX[1];
+
+      // Valores abaixo de 10 (se o domínio permitir)
+      if (min < 10) {
+        for (let i = min; i < 10; i++) {
+          arr.push(i);
+        }
       }
+
       // Múltiplos de 10
-      for (let i = 10; i <= dominioX[1]; i += 10) {
+      for (let i = 10; i <= max; i += 10) {
         arr.push(i);
       }
+
       // Sempre incluir 25 como tick (referência normativa)
       if (!arr.includes(25)) {
         arr.push(25);
@@ -186,15 +195,27 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
     // Gerar linhas de grade secundárias logarítmicas para o eixo X
     const gradeSecundariaX = (() => {
       const arr: number[] = [];
-      // Subdivisões logarítmicas dentro de cada década
-      const decades = comecaEm1 ? [[1, 10], [10, 100]] : [[10, 100]];
-      for (const [dStart, dEnd] of decades) {
-        for (let i = dStart; i < dEnd; i += dStart) {
-          if (i >= dominioX[0] && i <= dominioX[1] && !ticksX.includes(i)) {
-            arr.push(i);
-          }
-        }
+      const min = dominioX[0];
+      const max = dominioX[1];
+
+      // Década 1-10: Adicionar o que não está nos ticks
+      for (let i = 1; i < 10; i++) {
+        if (i >= min && !ticksX.includes(i)) arr.push(i);
       }
+
+      // Década 10-100: Adicionar subdivisões (20, 30, 40 etc que não sejam ticks - embora costumem ser)
+      // E também subdivisões de 5 (15, 35) para ajudar na leitura logarítmica
+      for (let i = 15; i <= max; i += 10) {
+        if (!ticksX.includes(i)) arr.push(i);
+      }
+      for (let i = 10; i <= max; i += 10) {
+        // Adiciona linhas extras se faltarem
+        [2, 3, 4, 5, 6, 7, 8, 9].forEach(sub => {
+          const val = i + (sub * (i / 10)); // Não, isso é para linear. 
+          // Para log 10-100 as linhas são 20, 30, 40...
+        });
+      }
+
       return arr;
     })();
 

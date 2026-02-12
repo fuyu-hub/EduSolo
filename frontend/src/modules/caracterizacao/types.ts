@@ -14,6 +14,7 @@ export interface PontoLL {
     massaUmidaRecipiente: string;
     massaSecaRecipiente: string;
     massaRecipiente: string;
+    umidade: string;
 }
 
 export interface PontoLP {
@@ -21,6 +22,7 @@ export interface PontoLP {
     massaUmidaRecipiente: string;
     massaSecaRecipiente: string;
     massaRecipiente: string;
+    umidade: string;
 }
 
 export interface LimitesInput {

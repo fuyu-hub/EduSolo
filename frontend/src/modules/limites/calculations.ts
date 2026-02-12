@@ -122,14 +122,19 @@ export function calcularLimitesConsistencia(
       ip_calculado = ll_calculado - lp_calculado;
       if (ip_calculado < 0) ip_calculado = 0; // Solo NP
 
+      // Classificação de plasticidade (Burmister, 1949)
       if (ip_calculado <= EPSILON) {
         classificacao_plasticidade = 'Não Plástico (NP)';
-      } else if (ip_calculado <= 7) {
-        classificacao_plasticidade = 'Fracamente Plástico';
-      } else if (ip_calculado <= 15) {
-        classificacao_plasticidade = 'Medianamente Plástico';
+      } else if (ip_calculado <= 5) {
+        classificacao_plasticidade = 'Plasticidade Leve';
+      } else if (ip_calculado <= 10) {
+        classificacao_plasticidade = 'Plasticidade Baixa';
+      } else if (ip_calculado <= 20) {
+        classificacao_plasticidade = 'Plasticidade Média';
+      } else if (ip_calculado <= 40) {
+        classificacao_plasticidade = 'Plasticidade Alta';
       } else {
-        classificacao_plasticidade = 'Altamente Plástico';
+        classificacao_plasticidade = 'Plasticidade Muito Alta';
       }
 
       // IC Calculation

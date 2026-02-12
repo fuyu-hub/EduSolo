@@ -51,16 +51,16 @@ export const useCaracterizacaoStore = create<CaracterizacaoState>((set) => ({
 
     limites: {
         pontosLL: [
-            { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
-            { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
-            { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
-            { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
-            { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }
+            { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" },
+            { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" },
+            { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" },
+            { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" },
+            { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" }
         ],
         pontosLP: [
-            { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
-            { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
-            { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }
+            { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" },
+            { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" },
+            { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" }
         ],
     },
     updateLimites: (data) => set((state) => ({

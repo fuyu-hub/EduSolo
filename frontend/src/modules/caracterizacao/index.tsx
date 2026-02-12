@@ -53,7 +53,7 @@ const resultTooltips: Record<string, { desc: string; range?: string }> = {
     gamma_sat: { desc: "Peso específico saturado: peso do solo quando todos os vazios estão cheios de água.", range: "Típico: 18 a 23 kN/m³" },
     LL: { desc: "Limite de Liquidez: teor de umidade onde o solo passa de plástico para líquido.", range: "Argilas: 30% a 100%" },
     LP: { desc: "Limite de Plasticidade: teor de umidade onde o solo passa de semi-sólido para plástico.", range: "Argilas: 15% a 40%" },
-    IP: { desc: "Índice de Plasticidade: amplitude do estado plástico (LL - LP).", range: "Baixo: <7 | Médio: 7-15 | Alto: >15" },
+    IP: { desc: "Índice de Plasticidade: amplitude do estado plástico (LL - LP).", range: "0: Não plástico | 1-5: Leve | 5-10: Baixa | 10-20: Média | 20-40: Alta | >40: Muito alta (Burmister, 1949)" },
     IC: { desc: "Índice de Consistência: posição relativa da umidade natural entre LL e LP.", range: "<0: líquido | 0-1: plástico | >1: sólido" },
     Dr: { desc: "Compacidade Relativa: indica o quão compacto está o solo em relação aos estados extremos.", range: "<15%: muito fofa | >85%: muito compacta" },
 };
@@ -270,16 +270,16 @@ export default function CaracterizacaoPage() {
 
         updateGlobalLimites({
             pontosLL: [
-                { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
-                { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
-                { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
-                { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
-                { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }
+                { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" },
+                { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" },
+                { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" },
+                { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" },
+                { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" }
             ],
             pontosLP: [
-                { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
-                { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
-                { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }
+                { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" },
+                { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" },
+                { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" }
             ]
         });
         clearResults();
@@ -295,10 +295,16 @@ export default function CaracterizacaoPage() {
         // 1. Set Settings
         updateSettings(exemplo.settings);
 
-        // 2. Set Limits (Global)
+        // 2. Set Limits (Global) - calcular umidade a partir das massas dos exemplos
+        const calcW = (mbu: string, mbs: string, tara: string): string => {
+            const mu = parseFloat(mbu), ms = parseFloat(mbs), t = parseFloat(tara);
+            if (isNaN(mu) || isNaN(ms) || isNaN(t) || ms <= t) return "";
+            const sol = ms - t;
+            return sol > 0 ? (((mu - ms) / sol) * 100).toFixed(1) : "";
+        };
         updateGlobalLimites({
-            pontosLL: exemplo.limites.pontosLL.map(p => ({ ...p, id: generateId() })),
-            pontosLP: exemplo.limites.pontosLP.map(p => ({ ...p, id: generateId() })),
+            pontosLL: exemplo.limites.pontosLL.map(p => ({ ...p, id: generateId(), umidade: calcW(p.massaUmidaRecipiente, p.massaSecaRecipiente, p.massaRecipiente) })),
+            pontosLP: exemplo.limites.pontosLP.map(p => ({ ...p, id: generateId(), umidade: calcW(p.massaUmidaRecipiente, p.massaSecaRecipiente, p.massaRecipiente) })),
         });
 
         // 3. Set Sample (Indices)
@@ -509,6 +515,8 @@ export default function CaracterizacaoPage() {
     );
 }
 
+
+
 const EntradaDados = () => {
     const {
         amostras, currentAmostraIndex, addAmostra, setCurrentAmostra, removeAmostra,
@@ -518,15 +526,53 @@ const EntradaDados = () => {
     const currentAmostra = amostras[currentAmostraIndex];
 
     // Handlers para atualizar pontos LL
+    // Função auxiliar para calcular umidade a partir de massas
+    const calcularW = (mbu: string, mbs: string, tara: string): string => {
+        const mu = parseFloat(mbu);
+        const ms = parseFloat(mbs);
+        const t = parseFloat(tara);
+        if (isNaN(mu) || isNaN(ms) || isNaN(t) || ms <= t) return "";
+        const massaAgua = mu - ms;
+        const massaSolidos = ms - t;
+        if (massaSolidos <= 0) return "";
+        return ((massaAgua / massaSolidos) * 100).toFixed(1);
+    };
+
+    // Função auxiliar para calcular MBS a partir de umidade
+    const calcularMBS = (mbu: string, tara: string, w: string): string => {
+        const mu = parseFloat(mbu);
+        const t = parseFloat(tara);
+        const wVal = parseFloat(w.replace(',', '.'));
+        if (isNaN(mu) || isNaN(t) || isNaN(wVal) || wVal <= 0) return "";
+        const wDec = wVal / 100;
+        return ((mu + wDec * t) / (1 + wDec)).toFixed(1);
+    };
+
+    // Handler para LL - ao alterar MBU/MBS/Tara, recalcula w
     const handleUpdateLL = (idx: number, field: string, value: string) => {
         const newPontos = [...limites.pontosLL];
-        newPontos[idx] = { ...newPontos[idx], [field]: value };
+        const ponto = { ...newPontos[idx], [field]: value };
+        // Recalcular umidade quando massas mudam
+        if (field === 'massaUmidaRecipiente' || field === 'massaSecaRecipiente' || field === 'massaRecipiente') {
+            ponto.umidade = calcularW(ponto.massaUmidaRecipiente, ponto.massaSecaRecipiente, ponto.massaRecipiente);
+        }
+        newPontos[idx] = ponto;
+        updateLimites({ pontosLL: newPontos });
+    };
+
+    // Handler para LL - ao alterar w(%), recalcula MBS
+    const handleUpdateUmidadeLL = (idx: number, value: string) => {
+        const newPontos = [...limites.pontosLL];
+        const ponto = { ...newPontos[idx], umidade: value };
+        const newMBS = calcularMBS(ponto.massaUmidaRecipiente, ponto.massaRecipiente, value);
+        if (newMBS) ponto.massaSecaRecipiente = newMBS;
+        newPontos[idx] = ponto;
         updateLimites({ pontosLL: newPontos });
     };
 
     const addPontoLL = () => {
         updateLimites({
-            pontosLL: [...limites.pontosLL, { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }]
+            pontosLL: [...limites.pontosLL, { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" }]
         });
     };
 
@@ -535,15 +581,35 @@ const EntradaDados = () => {
         if (newPontos.length > 1) {
             newPontos.splice(index, 1);
         } else {
-            // Limpar apenas os dados se estiver no limite mínimo
-            newPontos[index] = { ...newPontos[index], numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" };
+            newPontos[index] = { ...newPontos[index], numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" };
         }
         updateLimites({ pontosLL: newPontos });
     };
 
+    // Handler para LP - ao alterar MBU/MBS/Tara, recalcula w
+    const handleUpdateLP = (idx: number, field: string, value: string) => {
+        const newPontos = [...limites.pontosLP];
+        const ponto = { ...newPontos[idx], [field]: value };
+        if (field === 'massaUmidaRecipiente' || field === 'massaSecaRecipiente' || field === 'massaRecipiente') {
+            ponto.umidade = calcularW(ponto.massaUmidaRecipiente, ponto.massaSecaRecipiente, ponto.massaRecipiente);
+        }
+        newPontos[idx] = ponto;
+        updateLimites({ pontosLP: newPontos });
+    };
+
+    // Handler para LP - ao alterar w(%), recalcula MBS
+    const handleUpdateUmidadeLP = (idx: number, value: string) => {
+        const newPontos = [...limites.pontosLP];
+        const ponto = { ...newPontos[idx], umidade: value };
+        const newMBS = calcularMBS(ponto.massaUmidaRecipiente, ponto.massaRecipiente, value);
+        if (newMBS) ponto.massaSecaRecipiente = newMBS;
+        newPontos[idx] = ponto;
+        updateLimites({ pontosLP: newPontos });
+    };
+
     const addPontoLP = () => {
         updateLimites({
-            pontosLP: [...limites.pontosLP, { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }]
+            pontosLP: [...limites.pontosLP, { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" }]
         });
     };
 
@@ -552,45 +618,21 @@ const EntradaDados = () => {
         if (newPontos.length > 1) {
             newPontos.splice(index, 1);
         } else {
-            // Limpar apenas os dados se estiver no limite mínimo
-            newPontos[index] = { ...newPontos[index], massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" };
+            newPontos[index] = { ...newPontos[index], massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" };
         }
         updateLimites({ pontosLP: newPontos });
     };
 
-    // Handlers para LP
-    const handleUpdateLP = (idx: number, field: string, value: string) => {
-        const newPontos = [...limites.pontosLP];
-        newPontos[idx] = { ...newPontos[idx], [field]: value };
-        updateLimites({ pontosLP: newPontos });
-    };
+    // Converter umidades de string para number para validações
+    const umidadesLP = limites.pontosLP.map(p => {
+        const w = parseFloat(p.umidade);
+        return isNaN(w) ? null : w;
+    });
 
-    // Função para calcular umidade de um ponto
-    const calcularUmidadePonto = (mbu: string, mbs: string, tara: string): number | null => {
-        const massaUmida = parseFloat(mbu);
-        const massaSeca = parseFloat(mbs);
-        const massaTara = parseFloat(tara);
-
-        if (isNaN(massaUmida) || isNaN(massaSeca) || isNaN(massaTara)) return null;
-        if (massaSeca <= massaTara) return null;
-
-        const massaAgua = massaUmida - massaSeca;
-        const massaSolidos = massaSeca - massaTara;
-
-        if (massaSolidos <= 0) return null;
-
-        return (massaAgua / massaSolidos) * 100;
-    };
-
-    // Calcular umidades de todos os pontos LL
-    const umidadesLL = limites.pontosLL.map(p =>
-        calcularUmidadePonto(p.massaUmidaRecipiente, p.massaSecaRecipiente, p.massaRecipiente)
-    );
-
-    // Calcular umidades de todos os pontos LP
-    const umidadesLP = limites.pontosLP.map(p =>
-        calcularUmidadePonto(p.massaUmidaRecipiente, p.massaSecaRecipiente, p.massaRecipiente)
-    );
+    const umidadesLL = limites.pontosLL.map(p => {
+        const w = parseFloat(p.umidade);
+        return isNaN(w) ? null : w;
+    });
 
     // Criar pares ordenados (golpes, umidade) para validação de monotonicidade
     const pontosLLValidos = limites.pontosLL
@@ -654,15 +696,13 @@ const EntradaDados = () => {
     ).length;
 
     const avisoQuantidadePontosLL = (): { status: 'ok' | 'warn' | 'error', msg?: string } => {
-        if (pontosLLPreenchidos > 0 && pontosLLPreenchidos < 3) {
-            return { status: 'error', msg: `Erro: Mínimo de 3 pontos necessário (atual: ${pontosLLPreenchidos})` };
-        } else if (pontosLLPreenchidos >= 3 && pontosLLPreenchidos < 5) {
-            return { status: 'warn', msg: `Recomendação pela NBR 6459: 5 pontos (atual: ${pontosLLPreenchidos})` };
+        if (pontosLLPreenchidos > 0 && pontosLLPreenchidos < 5) {
+            return { status: 'error', msg: `Erro: Um mínimo de 5 determinações são necessárias para cálculo do limite de liquidez (NBR 6459/2025).` };
         }
         return { status: 'ok' };
     };
 
-    // Validar variação de umidade para LP (NBR 7180: valores não devem desviar mais que 5% da média)
+    // Validar variação de umidade para LP (NBR 7180/2025: valores não devem desviar mais que 5% da média)
     const validarVariacaoLP = (index: number): { status: 'ok' | 'warn' | 'error', variacao?: number, msg?: string } => {
         const umidadeAtual = umidadesLP[index];
         if (umidadeAtual === null) return { status: 'ok' };
@@ -674,24 +714,34 @@ const EntradaDados = () => {
         const media = umidadesValidas.reduce((a, b) => a + b, 0) / umidadesValidas.length;
         const variacaoPercentual = Math.abs((umidadeAtual - media) / media) * 100;
 
-        // Só mostrar erro se desviar mais de 5% (NBR 7180)
+        // Só mostrar erro se desviar mais de 5% (NBR 7180/2025)
         if (variacaoPercentual > 5) {
-            return { status: 'error', variacao: variacaoPercentual, msg: `Erro: Desvio de ${variacaoPercentual.toFixed(1)}% da média (max 5%, NBR 7180)` };
+            return { status: 'error', variacao: variacaoPercentual, msg: `Erro: Amostra com desvio de ${variacaoPercentual.toFixed(1)}% em relação à média. Desvio máximo permitido 5% (NBR 7180/2025). Exclua esta amostra.` };
         }
 
         return { status: 'ok', variacao: variacaoPercentual };
     };
 
-    // Validar quantidade de pontos LP (mínimo 3 recomendado pela NBR 7180)
+    // Calcular desvio de cada ponto LP para exibição
+    const calcularDesvioLP = (index: number): number | null => {
+        const umidadeAtual = umidadesLP[index];
+        if (umidadeAtual === null) return null;
+
+        const umidadesValidas = umidadesLP.filter((u): u is number => u !== null);
+        if (umidadesValidas.length < 2) return null;
+
+        const media = umidadesValidas.reduce((a, b) => a + b, 0) / umidadesValidas.length;
+        return Math.abs((umidadeAtual - media) / media) * 100;
+    };
+
+    // Validar quantidade de pontos LP (mínimo 3 pela NBR 7180/2025)
     const pontosLPPreenchidos = limites.pontosLP.filter(p =>
         p.massaUmidaRecipiente && p.massaSecaRecipiente && p.massaRecipiente
     ).length;
 
     const avisoQuantidadePontosLP = (): { status: 'ok' | 'warn' | 'error', msg?: string } => {
         if (pontosLPPreenchidos > 0 && pontosLPPreenchidos < 3) {
-            if (pontosLPPreenchidos > 0 && pontosLPPreenchidos < 3) {
-                return { status: 'warn', msg: `Recomendação pela NBR 7180: mínimo 3 determinações (atual: ${pontosLPPreenchidos})` };
-            }
+            return { status: 'error', msg: `Erro: Um mínimo de 3 determinações são necessárias para cálculo do limite de plasticidade (NBR 7180/2025).` };
         }
         return { status: 'ok' };
     };
@@ -902,11 +952,12 @@ const EntradaDados = () => {
                         </div>
 
                         {/* Header Row */}
-                        <div className="grid grid-cols-[50px,1fr,1fr,1fr,32px] gap-1.5 px-2 mb-1 text-[10px] text-muted-foreground font-medium text-center">
+                        <div className="grid grid-cols-[50px,1fr,1fr,1fr,70px,32px] gap-1.5 px-2 mb-1 text-[10px] text-muted-foreground font-medium text-center">
                             <div>Golpes</div>
                             <div>MBU (g)</div>
                             <div>MBS (g)</div>
                             <div>Tara (g)</div>
+                            <div>w (%)</div>
                             <div></div>
                         </div>
 
@@ -919,16 +970,18 @@ const EntradaDados = () => {
                                         ? 'border-amber-500/70 bg-amber-500/5'
                                         : 'border bg-muted/5';
 
+
                                 return (
                                     <div key={ponto.id} className="relative">
                                         <div className={cn(
-                                            "grid grid-cols-[50px,1fr,1fr,1fr,auto] gap-1.5 items-center p-1.5 rounded-md transition-colors hover:bg-muted/10",
+                                            "grid grid-cols-[50px,1fr,1fr,1fr,70px,auto] gap-1.5 items-center p-1.5 rounded-md transition-colors hover:bg-muted/10",
                                             borderClass
                                         )}>
                                             <Input className="h-8 text-xs px-2 text-center" placeholder="N" value={ponto.numGolpes} onChange={e => handleUpdateLL(i, 'numGolpes', e.target.value)} />
                                             <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaUmidaRecipiente} onChange={e => handleUpdateLL(i, 'massaUmidaRecipiente', e.target.value)} />
                                             <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaSecaRecipiente} onChange={e => handleUpdateLL(i, 'massaSecaRecipiente', e.target.value)} />
                                             <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaRecipiente} onChange={e => handleUpdateLL(i, 'massaRecipiente', e.target.value)} />
+                                            <Input className="h-8 text-xs px-2 text-center" placeholder="%" value={ponto.umidade || ""} onChange={e => handleUpdateUmidadeLL(i, e.target.value)} />
                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive shrink-0" onClick={() => removePontoLL(i)}>
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </Button>
@@ -970,10 +1023,12 @@ const EntradaDados = () => {
                         </div>
 
                         {/* Header Row */}
-                        <div className="grid grid-cols-[1fr,1fr,1fr,32px] gap-1.5 px-2 mb-1 text-[10px] text-muted-foreground font-medium text-center">
+                        <div className="grid grid-cols-[1fr,1fr,1fr,70px,60px,32px] gap-1.5 px-2 mb-1 text-[10px] text-muted-foreground font-medium text-center">
                             <div>MBU (g)</div>
                             <div>MBS (g)</div>
                             <div>Tara (g)</div>
+                            <div>w (%)</div>
+                            <div>Desvio (%)</div>
                             <div></div>
                         </div>
 
@@ -985,16 +1040,24 @@ const EntradaDados = () => {
                                     : validacao.status === 'warn'
                                         ? 'border-amber-500/70 bg-amber-500/5'
                                         : 'border bg-muted/5';
+                                const desvioLP = calcularDesvioLP(i);
 
                                 return (
                                     <div key={ponto.id || i} className="relative">
                                         <div className={cn(
-                                            "grid grid-cols-[1fr,1fr,1fr,auto] gap-1.5 items-center p-1.5 rounded-md transition-colors hover:bg-muted/10",
+                                            "grid grid-cols-[1fr,1fr,1fr,70px,60px,auto] gap-1.5 items-center p-1.5 rounded-md transition-colors hover:bg-muted/10",
                                             borderClass
                                         )}>
                                             <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaUmidaRecipiente || ""} onChange={e => handleUpdateLP(i, 'massaUmidaRecipiente', e.target.value)} />
                                             <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaSecaRecipiente || ""} onChange={e => handleUpdateLP(i, 'massaSecaRecipiente', e.target.value)} />
                                             <Input className="h-8 text-xs px-2 text-center" placeholder="g" value={ponto.massaRecipiente || ""} onChange={e => handleUpdateLP(i, 'massaRecipiente', e.target.value)} />
+                                            <Input className="h-8 text-xs px-2 text-center" placeholder="%" value={ponto.umidade || ""} onChange={e => handleUpdateUmidadeLP(i, e.target.value)} />
+                                            <div className={cn(
+                                                "h-8 text-xs px-1 flex items-center justify-center rounded-md font-mono",
+                                                desvioLP !== null && desvioLP > 5 ? "text-red-400 bg-red-500/10 border border-red-500/30" : "text-muted-foreground bg-muted/10"
+                                            )}>
+                                                {desvioLP !== null ? `${desvioLP.toFixed(1)}%` : "-"}
+                                            </div>
                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive shrink-0" onClick={() => removePontoLP(i)}>
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </Button>
@@ -1093,7 +1156,7 @@ const ResultadosView = ({ resultadoCombinado }: { resultadoCombinado: Caracteriz
                                             <div className="space-y-[1px]">
                                                 <ResultRow label={<span>LL <span className="text-[10px] font-normal opacity-70">(Limite de Liquidez)</span></span>} value={displayResult.ll} unit="%" precision={0} tooltipKey="LL" statusRanges={{ ok: [0, 100], warn: [100.1, 200] }} />
                                                 <ResultRow label={<span>LP <span className="text-[10px] font-normal opacity-70">(Limite de Plasticidade)</span></span>} value={displayResult.lp} unit="%" precision={0} tooltipKey="LP" statusRanges={{ ok: [0, 100], warn: [100.1, 200] }} />
-                                                <ResultRow label={<span>IP <span className="text-[10px] font-normal opacity-70">(Índice de Plasticidade)</span></span>} value={displayResult.ip} unit="%" precision={0} tooltipKey="IP" statusRanges={{ ok: [7, 15], warn: [0, 30] }} />
+                                                <ResultRow label={<span>IP <span className="text-[10px] font-normal opacity-70">(Índice de Plasticidade)</span></span>} value={displayResult.ip} unit="%" precision={0} tooltipKey="IP" statusRanges={{ ok: [5, 20], warn: [0, 40] }} />
                                                 <ResultRow label={<span>IC <span className="text-[10px] font-normal opacity-70">(Índice de Consistência)</span></span>} value={displayResult.ic} unit="" precision={2} tooltipKey="IC" statusRanges={{ ok: [0, 1], warn: [-0.5, 1.5] }} />
                                             </div>
                                             <Separator className="my-3" />
@@ -1232,7 +1295,30 @@ function ResultRow({
                             <TooltipContent side="left" className="max-w-xs z-50">
                                 <p className="text-xs font-normal">{tooltip.desc}</p>
                                 {tooltip.range && (
-                                    <p className="text-xs text-muted-foreground mt-1 border-t border-border/50 pt-1">{tooltip.range}</p>
+                                    <div className="text-xs text-muted-foreground mt-1 border-t border-border/50 pt-1">
+                                        {tooltip.range.split(' | ').length > 4 ? (
+                                            <>
+                                                {tooltip.range.split(' | ').map((item, idx) => {
+                                                    // Verificar se o item contém referência bibliográfica entre parênteses
+                                                    const refMatch = item.match(/\(([^)]+)\)$/);
+                                                    if (refMatch) {
+                                                        const mainText = item.replace(refMatch[0], '').trim();
+                                                        return (
+                                                            <div key={idx}>
+                                                                <span>{mainText}</span>
+                                                                <div className="mt-1 pt-1 border-t border-border/30 italic opacity-70">
+                                                                    Fonte: {refMatch[1]}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return <div key={idx}>{item}</div>;
+                                                })}
+                                            </>
+                                        ) : (
+                                            <p>{tooltip.range}</p>
+                                        )}
+                                    </div>
                                 )}
                             </TooltipContent>
                         </Tooltip>

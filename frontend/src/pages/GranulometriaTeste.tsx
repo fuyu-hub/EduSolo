@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Database, Info, Activity, BarChart3 } from "lucide-react";
+import { Database, Info, Activity, BarChart3, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,12 +21,12 @@ import {
 
 // Campos de fração com labels e tooltips
 const FRACOES = [
-    { key: "pedregulho", label: "Pedregulho", tooltip: "Fração retida na peneira Nº 4 (> 4.8 mm)", color: "bg-amber-500" },
-    { key: "areia_grossa", label: "Areia Grossa", tooltip: "Fração entre peneiras Nº 4 e Nº 10 (2.0 - 4.8 mm)", color: "bg-yellow-500" },
-    { key: "areia_media", label: "Areia Média", tooltip: "Fração entre peneiras Nº 10 e Nº 40 (0.42 - 2.0 mm)", color: "bg-orange-400" },
-    { key: "areia_fina", label: "Areia Fina", tooltip: "Fração entre peneiras Nº 40 e Nº 200 (0.075 - 0.42 mm)", color: "bg-orange-500" },
-    { key: "silte", label: "Silte", tooltip: "Fração entre 0.002 e 0.075 mm", color: "bg-blue-400" },
-    { key: "argila", label: "Argila", tooltip: "Fração menor que 0.002 mm", color: "bg-blue-600" },
+    { key: "pedregulho", label: "Pedregulho", tooltip: "Fração retida na peneira Nº 4 (> 4.8 mm)", color: "#CC4F44" },
+    { key: "areia_grossa", label: "Areia Grossa", tooltip: "Fração entre peneiras Nº 4 e Nº 10 (2.0 - 4.8 mm)", color: "#FF8C00" },
+    { key: "areia_media", label: "Areia Média", tooltip: "Fração entre peneiras Nº 10 e Nº 40 (0.42 - 2.0 mm)", color: "#FFD700" },
+    { key: "areia_fina", label: "Areia Fina", tooltip: "Fração entre peneiras Nº 40 e Nº 200 (0.075 - 0.42 mm)", color: "#4682B4" },
+    { key: "silte", label: "Silte", tooltip: "Fração entre 0.002 e 0.075 mm", color: "#4169E1" },
+    { key: "argila", label: "Argila", tooltip: "Fração menor que 0.002 mm", color: "#00008B" },
 ] as const;
 
 type FracaoKey = typeof FRACOES[number]["key"];
@@ -135,8 +135,11 @@ export default function GranulometriaTeste() {
                     {valores.map((f) => (
                         <div
                             key={f.key}
-                            className={cn("h-full transition-all duration-300", f.color)}
-                            style={{ width: `${(f.valor / Math.max(somaFracoes, 100)) * 100}%` }}
+                            className="h-full transition-all duration-300"
+                            style={{
+                                width: `${(f.valor / Math.max(somaFracoes, 100)) * 100}%`,
+                                backgroundColor: f.color
+                            }}
                             title={`${f.label}: ${f.valor}%`}
                         />
                     ))}
@@ -144,7 +147,7 @@ export default function GranulometriaTeste() {
                 <div className="flex flex-wrap gap-x-3 gap-y-1">
                     {valores.map((f) => (
                         <div key={f.key} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                            <span className={cn("w-2 h-2 rounded-full", f.color)} />
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: f.color }} />
                             <span>{f.label}: {f.valor}%</span>
                         </div>
                     ))}
@@ -155,7 +158,7 @@ export default function GranulometriaTeste() {
 
     return (
         <div className="space-y-3 sm:space-y-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <PrintHeader moduleTitle="Classificação por Porcentagem" moduleName="granulometria-teste" />
+            <PrintHeader moduleTitle="Classificação Granulométrica" moduleName="granulometria-teste" />
 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2 animate-in fade-in slide-in-from-left-4 duration-500">
                 <div className="flex items-center gap-3">
@@ -163,8 +166,8 @@ export default function GranulometriaTeste() {
                         <Database className="w-6 h-6 text-primary" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold text-foreground">Granulometria Teste</h1>
-                        <p className="text-muted-foreground text-sm">Classificação de Solos por Porcentagem</p>
+                        <h1 className="text-3xl font-bold text-foreground">Classificação Granulométrica</h1>
+                        <p className="text-muted-foreground text-sm">Classificação de Solos pelos Sistemas USCS e AASHTO</p>
                     </div>
                 </div>
 
@@ -192,7 +195,7 @@ export default function GranulometriaTeste() {
                                 {FRACOES.map((fracao) => (
                                     <div key={fracao.key} className="space-y-1.5">
                                         <div className="flex items-center gap-1.5">
-                                            <span className={cn("w-2 h-2 rounded-full", fracao.color)} />
+                                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: fracao.color }} />
                                             <Label className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
                                                 {fracao.label}
                                             </Label>
@@ -226,8 +229,9 @@ export default function GranulometriaTeste() {
                             {renderCompositionBar()}
 
                             {temFracoes && !somaValida && (
-                                <div className="text-xs text-destructive font-medium bg-destructive/10 px-3 py-2 rounded-lg border border-destructive/20">
-                                    ⚠ A soma das frações deve ser igual a 100%. Atual: {somaFracoes.toFixed(1)}%
+                                <div className="text-[11px] text-red-500/90 font-medium bg-red-500/5 px-3 py-2 rounded-lg border border-red-500/10 flex items-center gap-2">
+                                    <AlertCircle className="w-3.5 h-3.5" />
+                                    <span>Erro: A soma das frações deve ser igual a 100%. Atual: {somaFracoes.toFixed(1)}%. Continue a fornecer os dados.</span>
                                 </div>
                             )}
                         </CardContent>
