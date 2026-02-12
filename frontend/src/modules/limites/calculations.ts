@@ -55,20 +55,20 @@ export function calcularLimitesConsistencia(
 
         // Validations for LL points...
         if (ponto.massa_umida_recipiente < ponto.massa_seca_recipiente) {
-          throw new Error(`Ponto LL ${i + 1}: Massa úmida menor que massa seca.`);
+          throw new Error(`Erro: Ponto LL ${i + 1}: Massa úmida menor que massa seca.`);
         }
         if (ponto.massa_seca_recipiente < ponto.massa_recipiente) {
-          throw new Error(`Ponto LL ${i + 1}: Massa seca menor que massa do recipiente.`);
+          throw new Error(`Erro: Ponto LL ${i + 1}: Massa seca menor que massa do recipiente.`);
         }
         if (ponto.num_golpes <= 0) {
-          throw new Error(`Ponto LL ${i + 1}: Número de golpes inválido.`);
+          throw new Error(`Erro: Ponto LL ${i + 1}: Número de golpes inválido.`);
         }
 
         const massa_agua = ponto.massa_umida_recipiente - ponto.massa_seca_recipiente;
         const massa_seca = ponto.massa_seca_recipiente - ponto.massa_recipiente;
 
-        if (massa_seca <= EPSILON) throw new Error(`Ponto LL ${i + 1}: Massa seca inválida.`);
-        if (massa_agua < 0) throw new Error(`Ponto LL ${i + 1}: Massa de água negativa.`);
+        if (massa_seca <= EPSILON) throw new Error(`Erro: Ponto LL ${i + 1}: Massa seca inválida.`);
+        if (massa_agua < 0) throw new Error(`Erro: Ponto LL ${i + 1}: Massa de água negativa.`);
 
         const umidade_ponto = (massa_agua / massa_seca) * 100;
         const log_golpes = Math.log10(ponto.num_golpes);
@@ -93,17 +93,17 @@ export function calcularLimitesConsistencia(
 
         // Validations for LP points...
         if (ponto_lp.massa_umida_recipiente < ponto_lp.massa_seca_recipiente) {
-          throw new Error(`Ensaio LP ${i + 1}: Massa úmida menor que massa seca.`);
+          throw new Error(`Erro: Ensaio LP ${i + 1}: Massa úmida menor que massa seca.`);
         }
         if (ponto_lp.massa_seca_recipiente < ponto_lp.massa_recipiente) {
-          throw new Error(`Ensaio LP ${i + 1}: Massa seca menor que massa do recipiente.`);
+          throw new Error(`Erro: Ensaio LP ${i + 1}: Massa seca menor que massa do recipiente.`);
         }
 
         const massa_agua_lp = ponto_lp.massa_umida_recipiente - ponto_lp.massa_seca_recipiente;
         const massa_seca_lp = ponto_lp.massa_seca_recipiente - ponto_lp.massa_recipiente;
 
-        if (massa_seca_lp <= EPSILON) throw new Error(`Ensaio LP ${i + 1}: Massa seca inválida.`);
-        if (massa_agua_lp < 0) throw new Error(`Ensaio LP ${i + 1}: Massa de água negativa.`);
+        if (massa_seca_lp <= EPSILON) throw new Error(`Erro: Ensaio LP ${i + 1}: Massa seca inválida.`);
+        if (massa_agua_lp < 0) throw new Error(`Erro: Ensaio LP ${i + 1}: Massa de água negativa.`);
 
         const lp_ensaio = (massa_agua_lp / massa_seca_lp) * 100;
         lps_calculados.push(lp_ensaio);
@@ -158,7 +158,7 @@ export function calcularLimitesConsistencia(
     };
   } catch (error) {
     return {
-      erro: error instanceof Error ? error.message : 'Erro desconhecido',
+      erro: error instanceof Error ? error.message : 'Erro: Erro desconhecido',
     };
   }
 }

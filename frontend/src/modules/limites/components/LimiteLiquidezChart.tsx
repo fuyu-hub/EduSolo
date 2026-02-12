@@ -141,28 +141,31 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
       umidade: Number(ll.toFixed(2))
     } : null;
 
-    // Determina os limites dos eixos
+    // Determina os limites dos eixos (dinâmicos)
     const dominioX = (() => {
       // Começar em 10 (ou 1 se houver pontos < 10)
       const inicio = comecaEm1 ? 1 : 10;
-      // Máximo: 80 por padrão, ou múltiplo de 10 superior se algum ponto exceder 80
+      // Máximo: próximo múltiplo de 10 acima do maior nº de golpes
       const maxGolpes = Math.max(...pontosConvertidos.map(p => p.golpes));
-      const fim = maxGolpes > 80 ? Math.ceil(maxGolpes / 10) * 10 : 80;
-      return [inicio, fim];
+      const fim = Math.ceil(maxGolpes / 10) * 10;
+      return [inicio, Math.max(fim, 30)];
     })();
 
     const dominioY = (() => {
       const umidades = pontosConvertidos.map(p => p.umidade);
       if (ll !== null) umidades.push(ll);
-      const minU = Math.min(...umidades);
       const maxU = Math.max(...umidades);
-      // Margem generosa para centralizar
-      return [0, 60];
+      const minU = Math.min(...umidades);
+      // Eixo Y inicia ~5 abaixo do menor valor (arredondado para baixo ao múltiplo de 5)
+      const inicioY = Math.max(0, Math.floor((minU - 5) / 5) * 5);
+      // Próximo múltiplo de 5 acima do máximo
+      const fimY = Math.ceil((maxU + 2) / 5) * 5;
+      return [inicioY, Math.max(fimY, inicioY + 10)];
     })();
 
-    // Gerar ticks para o eixo X (múltiplos de 10)
+    // Gerar ticks principais para o eixo X (valores logarítmicos importantes)
     const ticksX = (() => {
-      const arr = [];
+      const arr: number[] = [];
       const start = dominioX[0] < 10 ? 1 : 10;
       // Se começa em 1, adiciona 1-9
       if (start === 1) {
@@ -172,18 +175,56 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
       for (let i = 10; i <= dominioX[1]; i += 10) {
         arr.push(i);
       }
+      // Sempre incluir 25 como tick (referência normativa)
+      if (!arr.includes(25)) {
+        arr.push(25);
+        arr.sort((a, b) => a - b);
+      }
       return arr;
     })();
 
-    // Gerar ticks para o eixo Y
+    // Gerar linhas de grade secundárias logarítmicas para o eixo X
+    const gradeSecundariaX = (() => {
+      const arr: number[] = [];
+      // Subdivisões logarítmicas dentro de cada década
+      const decades = comecaEm1 ? [[1, 10], [10, 100]] : [[10, 100]];
+      for (const [dStart, dEnd] of decades) {
+        for (let i = dStart; i < dEnd; i += dStart) {
+          if (i >= dominioX[0] && i <= dominioX[1] && !ticksX.includes(i)) {
+            arr.push(i);
+          }
+        }
+      }
+      return arr;
+    })();
+
+    // Gerar ticks para o eixo Y (de 5 em 5)
     const ticksY = (() => {
       const arr = [];
       const step = 5;
-      for (let i = 0; i <= dominioY[1]; i += step) {
+      for (let i = dominioY[0]; i <= dominioY[1]; i += step) {
         arr.push(i);
       }
       return arr;
     })();
+
+    // Custom tick renderer para destacar o "25" no eixo X
+    const CustomXTick = (props: any) => {
+      const { x, y, payload } = props;
+      const is25 = payload.value === 25;
+      return (
+        <text
+          x={x}
+          y={y + 14}
+          textAnchor="middle"
+          fill={is25 ? '#dc2626' : '#000000'}
+          fontWeight={is25 ? 'bold' : 'normal'}
+          fontSize={is25 ? (props.fontSize || 12) + 1 : (props.fontSize || 12)}
+        >
+          {payload.value}
+        </text>
+      );
+    };
 
     // Componente do gráfico reutilizável
     const ChartContent = ({ isDialog = false, isExport = false }: { isDialog?: boolean; isExport?: boolean }) => {
@@ -196,51 +237,62 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
           id={isExport ? "limite-liquidez-export" : "limite-liquidez-main"}
           className="bg-white p-4 w-full relative"
         >
-          {/* Caixa de Resultados no canto superior direito */}
-          {pontoLL && (
-            <div
-              className="absolute z-10 bg-white border-2 border-black"
-              style={{
-                top: isDialog ? 30 : 15,
-                right: isDialog ? 50 : 35,
-                padding: isDialog ? '12px 16px' : '8px 12px'
-              }}
-            >
-              {/* Valor do LL */}
-              <div className={`space-y-0.5 pb-2 border-b border-gray-400 ${isDialog ? 'mb-3' : 'mb-2'}`}>
+          {/* Caixa de Legenda no canto superior direito */}
+          <div
+            className="absolute z-10 bg-white border-2 border-black"
+            style={{
+              top: isDialog ? 30 : 15,
+              right: isDialog ? 50 : 35,
+              padding: isDialog ? '12px 16px' : '8px 12px'
+            }}
+          >
+            {/* Valores do LL */}
+            {pontoLL && (
+              <div className={`space-y-0.5 ${isDialog ? 'pb-3 mb-3' : 'pb-2 mb-2'} border-b border-gray-400`}>
                 <div className="flex justify-between items-center gap-4 text-black" style={{ fontSize: isDialog ? 16 : 12 }}>
-                  <span className="font-bold">LL</span>
+                  <span className="font-bold" style={{ fontSize: isDialog ? 20 : 16 }}>LL</span>
                   <span className="font-mono font-semibold">{Math.round(pontoLL.umidade)} %</span>
                 </div>
               </div>
+            )}
 
-              {/* Legenda */}
-              <div className="space-y-0.5 text-black" style={{ fontSize: isDialog ? 11 : 9 }}>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-4 h-0.5 bg-blue-600"></div>
-                  <span>Linha de Tendência</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-black"></div>
-                  <span>Pontos do Ensaio</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-red-700"></div>
-                  <span>LL (25 golpes)</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <svg width="16" height="4" className="flex-shrink-0">
-                    <line x1="0" y1="2" x2="16" y2="2" stroke="#dc2626" strokeWidth="2" strokeDasharray="3 2" />
-                  </svg>
-                  <span>25 golpes</span>
-                </div>
+            {/* Legenda */}
+            <div className="space-y-0.5 text-black" style={{ fontSize: isDialog ? 11 : 9 }}>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-700 border border-white flex-shrink-0" style={{ boxShadow: '0 0 0 1px #b91c1c' }}></div>
+                <span>Limite de Liquidez</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-4 h-0.5 bg-blue-600 flex-shrink-0"></div>
+                <span>Linha de Tendência</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-black flex-shrink-0"></div>
+                <span>Pontos do Ensaio</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <svg width="16" height="4" className="flex-shrink-0">
+                  <line x1="0" y1="2" x2="16" y2="2" stroke="#dc2626" strokeWidth="2" strokeDasharray="3 2" />
+                </svg>
+                <span>Projeção</span>
               </div>
             </div>
-          )}
+          </div>
 
           <ResponsiveContainer width="100%" height={height}>
             <LineChart margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#000000" opacity={0.1} />
+
+              {/* Linhas de grade secundárias (logarítmicas) */}
+              {gradeSecundariaX.map((val) => (
+                <ReferenceLine
+                  key={`grid-minor-${val}`}
+                  x={val}
+                  stroke="#000000"
+                  strokeOpacity={0.05}
+                  strokeWidth={0.5}
+                />
+              ))}
 
               <XAxis
                 type="number"
@@ -248,8 +300,7 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
                 domain={dominioX}
                 ticks={ticksX}
                 stroke="#000000"
-                tick={{ fontSize, fill: '#000000' }}
-                tickFormatter={(val) => val.toString()}
+                tick={<CustomXTick fontSize={fontSize} />}
                 scale="log"
               >
                 <Label
@@ -304,19 +355,12 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
                 isAnimationActive={false}
               />
 
-              {/* Linha vertical em 25 golpes */}
+              {/* Linha vertical em 25 golpes (Projeção) */}
               <ReferenceLine
                 x={25}
                 stroke="#dc2626"
                 strokeDasharray="5 5"
                 strokeWidth={2}
-                label={{
-                  value: '25 golpes',
-                  position: 'top',
-                  fill: '#000000',
-                  fontSize: fontSize,
-                  fontWeight: 'bold'
-                }}
               />
 
               {/* Linha horizontal no LL */}
@@ -326,13 +370,6 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
                   stroke="#dc2626"
                   strokeDasharray="5 5"
                   strokeWidth={2}
-                  label={{
-                    value: 'LL',
-                    position: 'right',
-                    fill: '#000000',
-                    fontSize: fontSize,
-                    fontWeight: 'bold'
-                  }}
                 />
               )}
 
@@ -400,7 +437,7 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
         <Card className="bg-muted/30 border-none shadow-inner">
           <CardContent className="p-4 space-y-2 text-xs text-muted-foreground">
             <p>
-              <strong>Equação da Reta:</strong> w = {slope.toFixed(4)} ⋅ log(N) + {intercept.toFixed(4)}
+              <strong>Equação da Reta:</strong> w (%) = {slope.toFixed(4)} ⋅ log(N) + {intercept.toFixed(4)}
             </p>
             <p>
               <strong>Regressão Linear:</strong> A linha azul representa a relação linear entre o teor de umidade e o logaritmo do número de golpes.
@@ -409,7 +446,7 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
               <strong>Limite de Liquidez (LL):</strong> Determinado como o teor de umidade correspondente a 25 golpes (ponto vermelho).
             </p>
             <p>
-              <strong>Norma:</strong> NBR 6459 - Solo - Determinação do Limite de Liquidez.
+              <strong>Norma:</strong> NBR 6459/2025 - Solos - Determinação do limite de liquidez.
             </p>
           </CardContent>
         </Card>

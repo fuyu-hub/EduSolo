@@ -17,7 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-import { LabModeSwitch } from "./components/LabModeSwitch";
+
 import { useCaracterizacaoStore } from "./store";
 import { calcularIndicesFisicosMultiplasAmostras } from "@/lib/calculations/indices-fisicos";
 import { calcularLimitesConsistencia } from "@/lib/calculations/limites-consistencia";
@@ -271,9 +271,16 @@ export default function CaracterizacaoPage() {
         updateGlobalLimites({
             pontosLL: [
                 { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
+                { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
+                { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
+                { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
                 { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }
             ],
-            pontosLP: [{ id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }]
+            pontosLP: [
+                { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
+                { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" },
+                { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }
+            ]
         });
         clearResults();
         setResultadoCombinado(null);
@@ -432,7 +439,7 @@ export default function CaracterizacaoPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <LabModeSwitch />
+                    {/* LabModeSwitch removed */}
                     <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
 
                     {/* Botão de Exemplos */}
@@ -525,7 +532,7 @@ const EntradaDados = () => {
 
     const removePontoLL = (index: number) => {
         const newPontos = [...limites.pontosLL];
-        if (newPontos.length > 2) {
+        if (newPontos.length > 1) {
             newPontos.splice(index, 1);
         } else {
             // Limpar apenas os dados se estiver no limite mínimo
@@ -604,10 +611,8 @@ const EntradaDados = () => {
         if (isNaN(golpes) || !ponto.numGolpes) return { status: 'ok' };
 
         // A. Verificar intervalo de golpes (15-35)
-        if (golpes < 15) {
-            return { status: 'error', msg: `${golpes} golpes: abaixo do intervalo ideal (15-35)` };
-        } else if (golpes > 35) {
-            return { status: 'warn', msg: `${golpes} golpes: acima do intervalo ideal (15-35)` };
+        if (golpes < 15 || golpes > 35) {
+            return { status: 'error', msg: `Erro: ${golpes} golpes. Fora do intervalo prescrito de 15 a 35 golpes (NBR 6459/2025).` };
         }
 
         // C. Verificar monotonicidade (mais golpes = menor umidade)
@@ -650,9 +655,9 @@ const EntradaDados = () => {
 
     const avisoQuantidadePontosLL = (): { status: 'ok' | 'warn' | 'error', msg?: string } => {
         if (pontosLLPreenchidos > 0 && pontosLLPreenchidos < 3) {
-            return { status: 'error', msg: `Mínimo de 3 pontos necessário (atual: ${pontosLLPreenchidos})` };
+            return { status: 'error', msg: `Erro: Mínimo de 3 pontos necessário (atual: ${pontosLLPreenchidos})` };
         } else if (pontosLLPreenchidos >= 3 && pontosLLPreenchidos < 5) {
-            return { status: 'warn', msg: `Recomendado pela NBR 6459: 5 pontos (atual: ${pontosLLPreenchidos})` };
+            return { status: 'warn', msg: `Recomendação pela NBR 6459: 5 pontos (atual: ${pontosLLPreenchidos})` };
         }
         return { status: 'ok' };
     };
@@ -671,7 +676,7 @@ const EntradaDados = () => {
 
         // Só mostrar erro se desviar mais de 5% (NBR 7180)
         if (variacaoPercentual > 5) {
-            return { status: 'error', variacao: variacaoPercentual, msg: `Desvio de ${variacaoPercentual.toFixed(1)}% da média (max 5%, NBR 7180)` };
+            return { status: 'error', variacao: variacaoPercentual, msg: `Erro: Desvio de ${variacaoPercentual.toFixed(1)}% da média (max 5%, NBR 7180)` };
         }
 
         return { status: 'ok', variacao: variacaoPercentual };
@@ -684,7 +689,9 @@ const EntradaDados = () => {
 
     const avisoQuantidadePontosLP = (): { status: 'ok' | 'warn' | 'error', msg?: string } => {
         if (pontosLPPreenchidos > 0 && pontosLPPreenchidos < 3) {
-            return { status: 'warn', msg: `Recomendado pela NBR 7180: mínimo 3 determinações (atual: ${pontosLPPreenchidos})` };
+            if (pontosLPPreenchidos > 0 && pontosLPPreenchidos < 3) {
+                return { status: 'warn', msg: `Recomendação pela NBR 7180: mínimo 3 determinações (atual: ${pontosLPPreenchidos})` };
+            }
         }
         return { status: 'ok' };
     };
@@ -868,9 +875,9 @@ const EntradaDados = () => {
                     {/* Aviso quando há dados de LP e emin/emax preenchidos */}
                     {(settings.indice_vazios_min || settings.indice_vazios_max) &&
                         limites.pontosLP.some(p => p.massaUmidaRecipiente || p.massaSecaRecipiente || p.massaRecipiente) && (
-                            <p className="text-xs text-amber-500/80 flex items-center gap-1.5 mt-2">
-                                <Info className="w-3 h-3" />
-                                Compacidade Relativa só é calculada para solos não plásticos (sem LP).
+                            <p className="text-xs text-red-500/90 flex items-start gap-1.5 mt-2 font-medium">
+                                <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                                Erro: Solo com plasticidade (LP). emin e emáx não são necessários, dado que o cálculo de CR (Compacidade Relativa) não é aplicável.
                             </p>
                         )}
                 </CardContent>
@@ -1084,8 +1091,8 @@ const ResultadosView = ({ resultadoCombinado }: { resultadoCombinado: Caracteriz
                                                 Limites de Consistência
                                             </h4>
                                             <div className="space-y-[1px]">
-                                                <ResultRow label={<span>LL <span className="text-[10px] font-normal opacity-70">(Limite de Liquidez)</span></span>} value={displayResult.ll} unit="%" precision={0} tooltipKey="LL" />
-                                                <ResultRow label={<span>LP <span className="text-[10px] font-normal opacity-70">(Limite de Plasticidade)</span></span>} value={displayResult.lp} unit="%" precision={0} tooltipKey="LP" />
+                                                <ResultRow label={<span>LL <span className="text-[10px] font-normal opacity-70">(Limite de Liquidez)</span></span>} value={displayResult.ll} unit="%" precision={0} tooltipKey="LL" statusRanges={{ ok: [0, 100], warn: [100.1, 200] }} />
+                                                <ResultRow label={<span>LP <span className="text-[10px] font-normal opacity-70">(Limite de Plasticidade)</span></span>} value={displayResult.lp} unit="%" precision={0} tooltipKey="LP" statusRanges={{ ok: [0, 100], warn: [100.1, 200] }} />
                                                 <ResultRow label={<span>IP <span className="text-[10px] font-normal opacity-70">(Índice de Plasticidade)</span></span>} value={displayResult.ip} unit="%" precision={0} tooltipKey="IP" statusRanges={{ ok: [7, 15], warn: [0, 30] }} />
                                                 <ResultRow label={<span>IC <span className="text-[10px] font-normal opacity-70">(Índice de Consistência)</span></span>} value={displayResult.ic} unit="" precision={2} tooltipKey="IC" statusRanges={{ ok: [0, 1], warn: [-0.5, 1.5] }} />
                                             </div>
@@ -1214,13 +1221,13 @@ function ResultRow({
 
     return (
         <div className="flex justify-between items-center text-sm py-1.5 px-3 rounded-md bg-muted/5 hover:bg-muted/15 transition-all duration-200 border border-transparent hover:border-border/50 -mx-1 group hover:scale-[1.01]">
-            <span className="text-foreground font-semibold flex items-center gap-1.5">
+            <span className="text-foreground font-semibold flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap mr-2">
                 {label}
                 {tooltip && (
                     <TooltipProvider delayDuration={200}>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors" />
+                                <Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help transition-colors shrink-0" />
                             </TooltipTrigger>
                             <TooltipContent side="left" className="max-w-xs z-50">
                                 <p className="text-xs font-normal">{tooltip.desc}</p>
@@ -1232,12 +1239,12 @@ function ResultRow({
                     </TooltipProvider>
                 )}
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
                 {showStatus && (
                     <TooltipProvider delayDuration={200}>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <span className={cn("w-2 h-2 rounded-full opacity-80 group-hover:opacity-100 transition-opacity", statusColor)} />
+                                <span className={cn("w-2 h-2 rounded-full ring-1 ring-offset-1 ring-offset-background/50", statusColor, "opacity-80 group-hover:opacity-100 transition-opacity")} />
                             </TooltipTrigger>
                             <TooltipContent side="top" className="text-xs z-50">
                                 {statusLabel}
@@ -1246,7 +1253,7 @@ function ResultRow({
                     </TooltipProvider>
                 )}
                 <span className={cn(
-                    "font-bold font-mono text-right",
+                    "font-bold font-mono text-right min-w-[60px]",
                     isValidValue ? "text-foreground" : "text-muted-foreground"
                 )}>{displayValue}</span>
             </div>

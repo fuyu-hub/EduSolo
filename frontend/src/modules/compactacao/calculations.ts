@@ -145,21 +145,21 @@ export function calcularCompactacao(dados: CompactacaoInput): CompactacaoOutput 
     const gama_w_gcm3 = Math.abs(gama_w - 10.0) < 0.5 ? 1.0 : gama_w / 9.81;
 
     if (dados.Gs !== undefined && dados.Gs <= 0) {
-      throw new Error('Gs (Densidade relativa dos grãos) deve ser maior que zero.');
+      throw new Error('Erro: Gs (Densidade relativa dos grãos) deve ser maior que zero.');
     }
     if (gama_w <= 0) {
-      throw new Error('Peso específico da água deve ser maior que zero.');
+      throw new Error('Erro: Peso específico da água deve ser maior que zero.');
     }
 
     for (let i = 0; i < dados.pontos_ensaio.length; i++) {
       const ponto = dados.pontos_ensaio[i];
 
       if (ponto.volume_molde <= 0) {
-        throw new Error(`Volume do molde inválido (${ponto.volume_molde}) no ponto ${i + 1}.`);
+        throw new Error(`Erro: Volume do molde inválido (${ponto.volume_molde}) no ponto ${i + 1}.`);
       }
       if (ponto.massa_umida_total < ponto.massa_molde) {
         throw new Error(
-          `Massa úmida total (${ponto.massa_umida_total}) menor que a massa do molde (${ponto.massa_molde}) no ponto ${i + 1}.`
+          `Erro: Massa úmida total (${ponto.massa_umida_total}) menor que a massa do molde (${ponto.massa_molde}) no ponto ${i + 1}.`
         );
       }
 
@@ -175,7 +175,7 @@ export function calcularCompactacao(dados: CompactacaoInput): CompactacaoOutput 
           ponto.massa_seca_recipiente_w === undefined ||
           ponto.massa_recipiente_w === undefined) {
           throw new Error(
-            `Ponto ${i + 1}: é necessário fornecer a umidade direta ou as medições de peso para cálculo.`
+            `Erro: Ponto ${i + 1}: é necessário fornecer a umidade direta ou as medições de peso para cálculo.`
           );
         }
 
@@ -184,12 +184,12 @@ export function calcularCompactacao(dados: CompactacaoInput): CompactacaoOutput 
 
         if (massa_seca_w <= 0) {
           throw new Error(
-            `Massa seca inválida (${massa_seca_w}) no cálculo de umidade do ponto ${i + 1}.`
+            `Erro: Massa seca inválida (${massa_seca_w}) no cálculo de umidade do ponto ${i + 1}.`
           );
         }
         if (massa_agua_w < 0) {
           throw new Error(
-            `Massa de água negativa (${massa_agua_w}) no cálculo de umidade do ponto ${i + 1}.`
+            `Erro: Massa de água negativa (${massa_agua_w}) no cálculo de umidade do ponto ${i + 1}.`
           );
         }
 
@@ -214,7 +214,7 @@ export function calcularCompactacao(dados: CompactacaoInput): CompactacaoOutput 
     if (pontos_calculados.length < 3) {
       return {
         pontos_curva_compactacao: pontos_calculados,
-        erro: 'São necessários pelo menos 3 pontos para traçar a curva de compactação.',
+        erro: 'Erro: São necessários pelo menos 3 pontos para traçar a curva de compactação.',
       };
     }
 
@@ -262,7 +262,7 @@ export function calcularCompactacao(dados: CompactacaoInput): CompactacaoOutput 
     };
   } catch (error) {
     return {
-      erro: error instanceof Error ? error.message : 'Erro no cálculo de compactação',
+      erro: error instanceof Error ? error.message : 'Erro: Erro no cálculo de compactação',
     };
   }
 }

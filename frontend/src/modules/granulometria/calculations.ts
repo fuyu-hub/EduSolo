@@ -145,7 +145,7 @@ export function calcularGranulometria(dados: GranulometriaInput): GranulometriaO
   try {
     // Validação básica
     if (dados.peneiramento_grosso.massa_total_seca <= EPSILON) {
-      throw new Error('Massa total seca deve ser maior que zero.');
+      throw new Error('Erro: Massa total seca deve ser maior que zero.');
     }
 
     // Calcular teor de umidade se não fornecido
@@ -281,7 +281,7 @@ export function calcularGranulometria(dados: GranulometriaInput): GranulometriaO
   } catch (error) {
     return {
       dados_granulometricos: [],
-      erro: error instanceof Error ? error.message : 'Erro na análise granulométrica',
+      erro: error instanceof Error ? error.message : 'Erro: Erro na análise granulométrica',
     };
   }
 }

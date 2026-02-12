@@ -233,6 +233,7 @@ function DesktopLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen w-full bg-background">
       {/* -- Desktop Sidebar -- */}
       <aside
+        style={{ zoom: 1.1 }}
         className={cn(
           "bg-card transition-[width] duration-300 ease-in-out border-r border-border/50 fixed left-0 top-0 h-full z-20",
           collapsed ? "w-14" : "w-56"
@@ -249,7 +250,7 @@ function DesktopLayout({ children }: { children: React.ReactNode }) {
         )}
       >
         {/* Header */}
-        <header className="h-14 bg-card border-b border-border/50 sticky top-0 z-10 flex items-center px-4 md:px-6">
+        <header style={{ zoom: 1.1 }} className="h-14 bg-card border-b border-border/50 sticky top-0 z-10 flex items-center px-4 md:px-6">
           <Button
             variant="ghost"
             size="icon"
