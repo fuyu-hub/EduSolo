@@ -7,13 +7,47 @@ export interface PontoCompactacao {
 }
 
 export interface ExemploCompactacao {
+  id?: string;
   nome: string;
   descricao: string;
   icon: string;
+  iconName?: string;
+  colorName?: string;
   volumeCilindro: string;
   pesoCilindro: string;
   Gs: string;
   pontos: PontoCompactacao[];
+}
+
+const STORAGE_KEY = "edusolo_custom_compactacao_examples";
+
+export function getCustomExamples(): ExemploCompactacao[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCustomExample(example: ExemploCompactacao): void {
+  const all = getCustomExamples();
+  all.push({ ...example, id: crypto.randomUUID() });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+}
+
+export function updateCustomExample(id: string, example: ExemploCompactacao): void {
+  const all = getCustomExamples();
+  const idx = all.findIndex(e => e.id === id);
+  if (idx >= 0) {
+    all[idx] = { ...example, id };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+  }
+}
+
+export function deleteCustomExample(id: string): void {
+  const all = getCustomExamples().filter(e => e.id !== id);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
 }
 
 export const exemplosCompactacao: ExemploCompactacao[] = [
@@ -144,4 +178,3 @@ export const exemplosCompactacao: ExemploCompactacao[] = [
     ]
   }
 ];
-

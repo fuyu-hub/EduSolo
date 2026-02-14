@@ -42,7 +42,7 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
       }));
 
     const pontoOtimo = (umidadeOtima !== undefined && gamaSecoMax !== undefined) ? {
-      umidade: Number(umidadeOtima.toFixed(2)),
+      umidade: Number(umidadeOtima.toFixed(1)),
       gamaSeco: Number((gamaSecoMax / 10).toFixed(3))
     } : null;
 
@@ -467,7 +467,7 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
               </p>
             )}
             <p>
-              <strong>Norma:</strong> NBR 7182 - Solo - Ensaio de Compactação.
+              <strong>Norma:</strong> NBR 7182/2025 - Solo - Ensaio de Compactação.
             </p>
           </CardContent>
         </Card>

@@ -377,7 +377,7 @@ export default function DialogExemplos({ onSelectExample, currentFormData, disab
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
                                 <FileText className="w-5 h-5 text-primary" />
-                                Exemplos Didáticos
+                                Exemplos de Granulometria
                             </DialogTitle>
                             <DialogDescription>
                                 Selecione um tipo de solo para carregar dados de classificação granulométrica.

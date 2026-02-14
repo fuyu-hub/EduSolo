@@ -390,7 +390,7 @@ export default function DialogExemplos({ onSelectExample, disabled }: DialogExem
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
                                 <FileText className="w-5 h-5 text-primary" />
-                                Exemplos Didáticos
+                                Exemplos de Índices Físicos e Limites de Consistência
                             </DialogTitle>
                             <DialogDescription>
                                 Selecione um tipo de solo para carregar dados reais de ensaio.

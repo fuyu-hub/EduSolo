@@ -5,22 +5,22 @@ import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { calcularCompactacao } from "@/lib/calculations/compactacao";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { RotateCcw, Database, Filter, Info, Calculator as CalcIcon, Plus, Trash2, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, GraduationCap, LayoutGrid, RefreshCw } from "lucide-react";
+import { RotateCcw, Database, Info, Calculator as CalcIcon, Plus, Trash2, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, GraduationCap, LayoutGrid, RefreshCw } from "lucide-react";
 import { CompactacaoIcon } from "@/components/icons/CompactacaoIcon";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter as UIDialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Skeleton } from "@/components/ui/skeleton";
+
 import { toast } from "@/components/ui/sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { useRecentReports } from "@/hooks/useRecentReports";
 import { useSettings } from "@/hooks/use-settings";
@@ -781,22 +781,10 @@ function CompactacaoDesktop() {
 
         <div className={UI_STANDARDS.header.actionsContainer} data-tour="actions">
           <TooltipProvider>
-            {/* Exemplos */}
-            <DialogExemplos onSelectExample={handleSelectExample} disabled={isCalculating} />
-
             <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
 
-            {/* Salvar */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-2">
-                  <Save className="w-4 h-4" />
-                  Salvar
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Salvar e Exportar Relatório</TooltipContent>
-            </Tooltip>
-
+            {/* Exemplos */}
+            <DialogExemplos onSelectExample={handleSelectExample} disabled={isCalculating} currentFormData={form.getValues()} />
 
             <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
 
@@ -810,352 +798,156 @@ function CompactacaoDesktop() {
 
       <div className={UI_STANDARDS.mainGrid}>
         {/* Formulário - Input */}
-        <Card className="glass border-primary/20 flex flex-col animate-in fade-in slide-in-from-left-5 duration-300">
-          <form className="flex flex-col flex-1">
-            <CardHeader className="pb-3 bg-gradient-to-r from-primary/5 to-transparent flex flex-row items-center justify-between">
+        <div className="space-y-4 animate-in slide-in-from-left-5 duration-300">
+          {/* Card: Parâmetros Gerais */}
+          <Card className="glass border-primary/20">
+            <CardHeader className="pb-3 bg-gradient-to-r from-primary/5 to-transparent">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Info className="w-5 h-5 text-primary" />
                 Dados do Ensaio
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 p-4 pt-3 flex-1">
+            <CardContent className="space-y-4 pt-3">
               <TooltipProvider>
-                {/* Dados Fixos */}
-                <div className="space-y-3 p-3 rounded-lg bg-accent/5 border border-accent/20" data-tour="config-gerais">
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                    <Info className="w-4 h-4 text-orange-500" />
-                    Parâmetros Gerais
-                  </h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor="volumeCilindro" className={cn("text-xs", errors.volumeCilindro && "text-destructive")}>
-                          Volume Cilindro (cm³)
-                        </Label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-tour="config-gerais">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center h-5">
+                      <Label htmlFor="volumeCilindro" className="text-xs flex items-center gap-1">
+                        Volume (cm³)
                         <Tooltip>
-                          <TooltipTrigger>
-                            <Info className="w-3 h-3 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs" side="left">
-                            <p>{tooltips.volumeCilindro}</p>
-                          </TooltipContent>
+                          <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
+                          <TooltipContent><p className="max-w-xs text-xs">{tooltips.volumeCilindro}</p></TooltipContent>
                         </Tooltip>
-                      </div>
-                      <Controller
-                        name="volumeCilindro"
-                        control={form.control}
-                        render={({ field }) => (
-                          <Input
-                            id="volumeCilindro"
-                            type="number"
-                            step="0.01"
-                            placeholder="Ex: 982"
-                            {...field}
-                            className={cn("bg-background/50 h-9", errors.volumeCilindro && "border-destructive")}
-                          />
-                        )}
-                      />
+                      </Label>
                     </div>
+                    <Controller name="volumeCilindro" control={form.control} render={({ field }) => (
+                      <Input id="volumeCilindro" type="number" step="0.01" placeholder="Ex: 982" {...field} className="h-9" />
+                    )} />
+                  </div>
 
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor="pesoCilindro" className={cn("text-xs", errors.pesoCilindro && "text-destructive")}>
-                          Massa Cilindro (g)
-                        </Label>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center h-5">
+                      <Label htmlFor="pesoCilindro" className="text-xs flex items-center gap-1">
+                        Massa Cilindro (g)
                         <Tooltip>
-                          <TooltipTrigger>
-                            <Info className="w-3 h-3 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs" side="left">
-                            <p>{tooltips.pesoCilindro}</p>
-                          </TooltipContent>
+                          <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
+                          <TooltipContent><p className="max-w-xs text-xs">{tooltips.pesoCilindro}</p></TooltipContent>
                         </Tooltip>
-                      </div>
-                      <Controller
-                        name="pesoCilindro"
-                        control={form.control}
-                        render={({ field }) => (
-                          <Input
-                            id="pesoCilindro"
-                            type="number"
-                            step="0.01"
-                            placeholder="Ex: 4100"
-                            {...field}
-                            className={cn("bg-background/50 h-9", errors.pesoCilindro && "border-destructive")}
-                          />
-                        )}
-                      />
+                      </Label>
                     </div>
+                    <Controller name="pesoCilindro" control={form.control} render={({ field }) => (
+                      <Input id="pesoCilindro" type="number" step="0.01" placeholder="Ex: 4100" {...field} className="h-9" />
+                    )} />
+                  </div>
 
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor="Gs" className={cn("text-xs", errors.Gs && "text-destructive")}>
-                          Gs (opcional)
-                        </Label>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center h-5">
+                      <Label htmlFor="Gs" className="text-xs flex items-center gap-1">
+                        Gs (opcional)
                         <Tooltip>
-                          <TooltipTrigger>
-                            <Info className="w-3 h-3 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent className="max-w-xs" side="left">
-                            <p>{tooltips.Gs}</p>
-                          </TooltipContent>
+                          <TooltipTrigger><Info className="w-3 h-3 text-muted-foreground/50 hover:text-muted-foreground cursor-help" /></TooltipTrigger>
+                          <TooltipContent><p className="max-w-xs text-xs">{tooltips.Gs}</p></TooltipContent>
                         </Tooltip>
-                      </div>
-                      <Controller
-                        name="Gs"
-                        control={form.control}
-                        render={({ field }) => (
-                          <Input
-                            id="Gs"
-                            type="number"
-                            step="0.01"
-                            placeholder="Ex: 2.65"
-                            {...field}
-                            value={field.value ?? ""}
-                            className={cn("bg-background/50 h-9", errors.Gs && "border-destructive")}
-                          />
-                        )}
-                      />
+                      </Label>
                     </div>
+                    <Controller name="Gs" control={form.control} render={({ field }) => (
+                      <Input id="Gs" type="number" step="0.01" placeholder="Ex: 2.65" {...field} value={field.value ?? ""} className="h-9" />
+                    )} />
+                  </div>
 
-                    <div className="space-y-0.5">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center h-5">
                       <Label htmlFor="pesoEspecificoAgua" className="text-xs">γ<sub>w</sub> (kN/m³)</Label>
-                      <Controller
-                        name="pesoEspecificoAgua"
-                        control={form.control}
-                        render={({ field }) => (
-                          <Input
-                            id="pesoEspecificoAgua"
-                            type="number"
-                            step="0.01"
-                            {...field}
-                            className="bg-background/50 h-9"
-                          />
-                        )}
-                      />
                     </div>
+                    <Controller name="pesoEspecificoAgua" control={form.control} render={({ field }) => (
+                      <Input id="pesoEspecificoAgua" type="number" step="0.01" {...field} className="h-9" />
+                    )} />
                   </div>
-                </div>
-
-                {/* Pontos do Ensaio */}
-                <div className="space-y-2 rounded-lg bg-background/30 border border-accent/20 p-3" data-tour="pontos-ensaio">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                      <Database className="w-4 h-4 text-violet-500" />
-                      Pontos de Compactação
-                    </h3>
-                    <div className="flex items-center gap-1" data-tour="navegacao-pontos">
-                      <span className="text-xs text-muted-foreground mr-2">Ponto {currentPointIndex + 1} / {fields.length}</span>
-                      <Button type="button" onClick={goToPreviousPoint} size="icon" variant="outline" className="h-7 w-7" disabled={currentPointIndex === 0}>
-                        <ChevronLeft className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button type="button" onClick={goToNextPoint} size="icon" variant="outline" className="h-7 w-7" disabled={currentPointIndex === fields.length - 1}>
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button type="button" onClick={addPonto} size="icon" variant="outline" className="h-7 w-7 ml-1.5" title="Adicionar Ponto">
-                        <Plus className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button type="button" onClick={removePonto} size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:bg-destructive/10" disabled={fields.length <= 3} title="Remover Ponto">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between mb-4 px-1">
-                    <Label className="text-sm font-medium">Método de Entrada de Umidade</Label>
-                    <Controller
-                      name="modoEntradaUmidade"
-                      control={form.control}
-                      render={({ field }) => (
-                        <div className="flex items-center space-x-2 bg-muted/30 p-1 rounded-lg border border-border/50">
-                          <button
-                            type="button"
-                            onClick={() => field.onChange("medicoes")}
-                            className={cn(
-                              "px-3 py-1 text-xs rounded-md transition-all font-medium",
-                              field.value === "medicoes"
-                                ? "bg-primary text-primary-foreground shadow-sm"
-                                : "text-muted-foreground hover:bg-muted"
-                            )}
-                          >
-                            Medições (Massa Bruta/Seca)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => field.onChange("direta")}
-                            className={cn(
-                              "px-3 py-1 text-xs rounded-md transition-all font-medium",
-                              field.value === "direta"
-                                ? "bg-primary text-primary-foreground shadow-sm"
-                                : "text-muted-foreground hover:bg-muted"
-                            )}
-                          >
-                            Umidade Direta (%)
-                          </button>
-                        </div>
-                      )}
-                    />
-                  </div>
-
-                  {currentPointField && (
-                    <div key={currentPointField.id} className="space-y-3 animate-in fade-in duration-300">
-                      <div className="grid grid-cols-2 gap-3">
-                        {/* Peso Amostra + Cilindro - Sempre visível */}
-                        <div className="space-y-0.5 col-span-2">
-                          <Label htmlFor={`pontos.${currentPointIndex}.pesoAmostaCilindro`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.pesoAmostaCilindro && "text-destructive")}>
-                            Massa Amostra + Cilindro (g)
-                          </Label>
-                          <Controller
-                            name={`pontos.${currentPointIndex}.pesoAmostaCilindro`}
-                            control={form.control}
-                            render={({ field }) => (
-                              <Input
-                                id={`pontos.${currentPointIndex}.pesoAmostaCilindro`}
-                                type="number"
-                                step="0.01"
-                                placeholder="Ex: 6050.00"
-                                {...field}
-                                className={cn("bg-background/50 h-9", errors.pontos?.[currentPointIndex]?.pesoAmostaCilindro && "border-destructive")}
-                              />
-                            )}
-                          />
-                          {errors.pontos?.[currentPointIndex]?.pesoAmostaCilindro && (
-                            <p className="text-xs text-destructive mt-0.5">{errors.pontos[currentPointIndex]?.pesoAmostaCilindro?.message}</p>
-                          )}
-                        </div>
-
-                        {modoEntradaUmidade === "direta" ? (
-                          /* Modo Direto: Apenas Input de Umidade */
-                          <div className="space-y-0.5 col-span-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <Label htmlFor={`pontos.${currentPointIndex}.umidadeDireta`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.umidadeDireta && "text-destructive")}>
-                              Umidade (%)
-                            </Label>
-                            <Controller
-                              name={`pontos.${currentPointIndex}.umidadeDireta`}
-                              control={form.control}
-                              render={({ field }) => (
-                                <div className="relative">
-                                  <Input
-                                    id={`pontos.${currentPointIndex}.umidadeDireta`}
-                                    type="number"
-                                    step="0.01"
-                                    placeholder="Ex: 14.5"
-                                    {...field}
-                                    value={field.value ?? ""}
-                                    className={cn("bg-background/50 h-9 pr-8", errors.pontos?.[currentPointIndex]?.umidadeDireta && "border-destructive")}
-                                  />
-                                  <span className="absolute right-3 top-2.5 text-xs text-muted-foreground">%</span>
-                                </div>
-                              )}
-                            />
-                            {errors.pontos?.[currentPointIndex]?.umidadeDireta && (
-                              <p className="text-xs text-destructive mt-0.5">{errors.pontos[currentPointIndex]?.umidadeDireta?.message}</p>
-                            )}
-                            <p className="text-[10px] text-muted-foreground mt-1 text-center italic">
-                              Insira a umidade calculada para este ponto, de acordo com a NBR 6457/2024
-                            </p>
-                          </div>
-                        ) : (
-                          /* Modo Medições: Inputs Detalhados */
-                          <>
-                            {/* MBU - Peso Bruto Úmido */}
-                            <div className="space-y-0.5 animate-in fade-in slide-in-from-top-2 duration-300 delay-75">
-                              <Label htmlFor={`pontos.${currentPointIndex}.pesoBrutoUmido`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.pesoBrutoUmido && "text-destructive")}>
-                                MBU (g)
-                              </Label>
-                              <Controller
-                                name={`pontos.${currentPointIndex}.pesoBrutoUmido`}
-                                control={form.control}
-                                render={({ field }) => (
-                                  <Input
-                                    id={`pontos.${currentPointIndex}.pesoBrutoUmido`}
-                                    type="number"
-                                    step="0.01"
-                                    placeholder="Ex: 106.56"
-                                    {...field}
-                                    value={field.value ?? ""}
-                                    className={cn("bg-background/50 h-9", errors.pontos?.[currentPointIndex]?.pesoBrutoUmido && "border-destructive")}
-                                  />
-                                )}
-                              />
-                              {errors.pontos?.[currentPointIndex]?.pesoBrutoUmido && (
-                                <p className="text-xs text-destructive mt-0.5">{errors.pontos[currentPointIndex]?.pesoBrutoUmido?.message}</p>
-                              )}
-                            </div>
-
-                            {/* MBS - Peso Bruto Seco */}
-                            <div className="space-y-0.5 animate-in fade-in slide-in-from-top-2 duration-300 delay-100">
-                              <Label htmlFor={`pontos.${currentPointIndex}.pesoBrutoSeco`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.pesoBrutoSeco && "text-destructive")}>
-                                MBS (g)
-                              </Label>
-                              <Controller
-                                name={`pontos.${currentPointIndex}.pesoBrutoSeco`}
-                                control={form.control}
-                                render={({ field }) => (
-                                  <Input
-                                    id={`pontos.${currentPointIndex}.pesoBrutoSeco`}
-                                    type="number"
-                                    step="0.01"
-                                    placeholder="Ex: 93.69"
-                                    {...field}
-                                    value={field.value ?? ""}
-                                    className={cn("bg-background/50 h-9", errors.pontos?.[currentPointIndex]?.pesoBrutoSeco && "border-destructive")}
-                                  />
-                                )}
-                              />
-                              {errors.pontos?.[currentPointIndex]?.pesoBrutoSeco && (
-                                <p className="text-xs text-destructive mt-0.5">{errors.pontos[currentPointIndex]?.pesoBrutoSeco?.message}</p>
-                              )}
-                            </div>
-
-                            {/* Tara */}
-                            <div className="space-y-0.5 col-span-2 animate-in fade-in slide-in-from-top-2 duration-300 delay-150">
-                              <Label htmlFor={`pontos.${currentPointIndex}.tara`} className={cn("text-xs", errors.pontos?.[currentPointIndex]?.tara && "text-destructive")}>
-                                Tara (g)
-                              </Label>
-                              <div className="flex gap-2 items-center">
-                                <Controller
-                                  name={`pontos.${currentPointIndex}.tara`}
-                                  control={form.control}
-                                  render={({ field }) => (
-                                    <Input
-                                      id={`pontos.${currentPointIndex}.tara`}
-                                      type="number"
-                                      step="0.01"
-                                      placeholder="Ex: 24.72"
-                                      {...field}
-                                      value={field.value ?? ""}
-                                      className={cn("bg-background/50 h-9 flex-1", errors.pontos?.[currentPointIndex]?.tara && "border-destructive")}
-                                    />
-                                  )}
-                                />
-                              </div>
-                              {errors.pontos?.[currentPointIndex]?.tara && (
-                                <p className="text-xs text-destructive mt-0.5">{errors.pontos[currentPointIndex]?.tara?.message}</p>
-                              )}
-                            </div>
-
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </TooltipProvider>
             </CardContent>
+          </Card>
 
-            {/* Error Alert inside Card if API Error */}
-            {apiError && !isCalculating && (
-              <div className="px-4 pb-3">
+          {/* Card: Pontos de Compactação */}
+          <Card className="glass border-blue-500/20" data-tour="pontos-ensaio">
+            <CardHeader className="pb-3 bg-gradient-to-r from-blue-500/5 to-transparent">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Database className="w-5 h-5 text-blue-500" />
+                Pontos de Compactação
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-3">
+              <div className="flex items-center justify-between mb-1">
+                <Label className="text-sm font-medium">Pontos do Ensaio</Label>
+                <Button type="button" size="sm" variant="ghost" onClick={addPonto} className="h-7 px-2 text-xs gap-1" data-tour="navegacao-pontos">
+                  <Plus className="w-3 h-3" /> Ponto
+                </Button>
+              </div>
+
+              {/* Header Row */}
+              <div className="grid grid-cols-[1fr,1fr,1fr,1fr,70px,32px] gap-1.5 px-2 mb-1 text-[10px] text-muted-foreground font-medium text-center">
+                <div>Massa Amostra+Cil (g)</div>
+                <div>MBU (g)</div>
+                <div>MBS (g)</div>
+                <div>Tara (g)</div>
+                <div>w (%)</div>
+                <div></div>
+              </div>
+
+              <div className="space-y-1">
+                {fields.map((fieldItem, i) => {
+                  // Calcular umidade automaticamente para esta linha
+                  const pbu = parseFloat(form.watch(`pontos.${i}.pesoBrutoUmido`) || "0");
+                  const pbs = parseFloat(form.watch(`pontos.${i}.pesoBrutoSeco`) || "0");
+                  const t = parseFloat(form.watch(`pontos.${i}.tara`) || "0");
+                  const umidadeCalc = (pbu > 0 && pbs > 0 && t >= 0 && pbs > t && pbu >= pbs)
+                    ? ((pbu - pbs) / (pbs - t)) * 100
+                    : null;
+
+                  return (
+                    <div key={fieldItem.fieldId} className="relative">
+                      <div className="grid grid-cols-[1fr,1fr,1fr,1fr,70px,auto] gap-1.5 items-center p-1.5 rounded-md border bg-muted/5 transition-colors hover:bg-muted/10">
+                        <Controller name={`pontos.${i}.pesoAmostaCilindro`} control={form.control} render={({ field }) => (
+                          <Input className="h-8 text-xs px-2 text-center" placeholder="g" {...field} />
+                        )} />
+                        <Controller name={`pontos.${i}.pesoBrutoUmido`} control={form.control} render={({ field }) => (
+                          <Input className="h-8 text-xs px-2 text-center" placeholder="g" {...field} value={field.value ?? ""} />
+                        )} />
+                        <Controller name={`pontos.${i}.pesoBrutoSeco`} control={form.control} render={({ field }) => (
+                          <Input className="h-8 text-xs px-2 text-center" placeholder="g" {...field} value={field.value ?? ""} />
+                        )} />
+                        <Controller name={`pontos.${i}.tara`} control={form.control} render={({ field }) => (
+                          <Input className="h-8 text-xs px-2 text-center" placeholder="g" {...field} value={field.value ?? ""} />
+                        )} />
+                        <Controller name={`pontos.${i}.umidadeDireta`} control={form.control} render={({ field }) => (
+                          <Input
+                            className="h-8 text-xs px-1 text-center font-mono"
+                            placeholder="%"
+                            {...field}
+                            value={umidadeCalc !== null ? umidadeCalc.toFixed(2) : (field.value ?? "")}
+                            onChange={(e) => field.onChange(e.target.value)}
+                          />
+                        )} />
+                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive shrink-0" onClick={() => { remove(i); }} disabled={fields.length <= 3}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Error Alert */}
+              {apiError && !isCalculating && (
                 <Alert variant="destructive" className="p-2">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle className="text-sm">Erro</AlertTitle>
                   <AlertDescription className="text-xs">{apiError}</AlertDescription>
                 </Alert>
-              </div>
-            )}
-          </form>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Resultados */}
         <div className="space-y-4 animate-in slide-in-from-right-5 duration-300">
@@ -1164,7 +956,7 @@ function CompactacaoDesktop() {
               <div>
                 <CalcIcon className="w-16 h-16 mx-auto mb-4 opacity-20" />
                 <p className="text-lg font-medium mb-2">Nenhum resultado ainda</p>
-                <p className="text-sm">Preencha os dados e clique em <strong>Calcular</strong>.</p>
+                <p className="text-sm">Preencha os dados para calcular automaticamente.</p>
               </div>
             </Card>
           ) : results.erro ? (
@@ -1186,61 +978,57 @@ function CompactacaoDesktop() {
               </TabsList>
 
               {/* Tab Resultados */}
-              <TabsContent value="resultados" className="mt-2 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Coluna 1: Parâmetros de Entrada */}
-                  <Card className="glass overflow-hidden h-full">
-                    <CardHeader className="pb-2 pt-4 px-5">
-                      <CardTitle className="text-sm font-semibold flex items-center gap-2 text-violet-500">
-                        <Info className="w-4 h-4" />
-                        Parâmetros do Ensaio
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-5 pb-5">
-                      <div className="space-y-1.5">
-                        <ResultRow label="Volume do Cilindro" value={parseFloat(form.getValues().volumeCilindro)} unit="cm³" />
-                        <ResultRow label="Massa do Cilindro" value={parseFloat(form.getValues().pesoCilindro)} unit="g" />
-                        <ResultRow label="Densidade dos Grãos (Gs)" value={form.getValues().Gs ? parseFloat(form.getValues().Gs!) : null} unit="" precision={3} />
-                        <ResultRow label="Peso Esp. da Água" value={parseFloat(form.getValues().pesoEspecificoAgua)} unit="kN/m³" />
+              <TabsContent value="resultados" className="mt-0 animate-in fade-in-50 slide-in-from-left-2 duration-300">
+                <Card className="glass">
+                  <CardContent className="p-0">
+                    <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
+                      {/* Parâmetros do Ensaio */}
+                      <div className="p-3 space-y-2">
+                        <h4 className="font-semibold text-sm flex items-center gap-2 text-blue-500">
+                          <Info className="w-4 h-4" />
+                          Parâmetros do Ensaio
+                        </h4>
+                        <div className="space-y-[1px]">
+                          <ResultRow label="Volume do Cilindro" value={parseFloat(form.getValues().volumeCilindro)} unit="cm³" />
+                          <ResultRow label="Massa do Cilindro" value={parseFloat(form.getValues().pesoCilindro)} unit="g" />
+                          <ResultRow label="Densidade dos Grãos (Gs)" value={form.getValues().Gs ? parseFloat(form.getValues().Gs!) : null} unit="" precision={3} />
+                          <ResultRow label="Peso Esp. da Água" value={parseFloat(form.getValues().pesoEspecificoAgua)} unit="kN/m³" />
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
 
-                  {/* Coluna 2: Resultados Ótimos */}
-                  <Card className="glass overflow-hidden h-full">
-                    <CardHeader className="pb-2 pt-4 px-5">
-                      <CardTitle className="text-sm font-semibold flex items-center gap-2 text-emerald-500">
-                        <BarChart3 className="w-4 h-4" />
-                        Resultados da Compactação
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="px-5 pb-5">
-                      <div className="space-y-1.5">
-                        <ResultRow
-                          label={<span><span className="font-serif italic font-bold text-lg">w</span> <span className="text-[10px] font-normal opacity-70">(Umidade Ótima)</span></span>}
-                          value={results.umidade_otima}
-                          unit="%"
-                          highlight
-                        />
-                        <ResultRow
-                          label={<span><span className="font-serif italic font-bold text-lg">ρ<sub className="text-xs">d</sub></span> <span className="text-[10px] font-normal opacity-70">(Massa Esp. Seca Máx)</span></span>}
-                          value={results.peso_especifico_seco_max !== null ? results.peso_especifico_seco_max / 10 : null}
-                          unit="g/cm³"
-                          precision={3}
-                          highlight
-                        />
-                        <ResultRow
-                          label={<span><span className="font-serif italic font-bold text-lg">γ<sub className="text-xs">d</sub></span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Seco Máx)</span></span>}
-                          value={results.peso_especifico_seco_max}
-                          unit="kN/m³"
-                        />
+                      {/* Resultados da Compactação */}
+                      <div className="p-3 space-y-2">
+                        <h4 className="font-semibold text-sm flex items-center gap-2 text-blue-500">
+                          <BarChart3 className="w-4 h-4" />
+                          Resultados da Compactação
+                        </h4>
+                        <div className="space-y-[1px]">
+                          <ResultRow
+                            label={<span><span className="font-serif italic font-bold text-lg text-foreground">w</span><sub className="text-[10px] text-foreground">ót</sub> <span className="text-[10px] font-normal opacity-70">(Umidade Ótima)</span></span>}
+                            value={results.umidade_otima}
+                            unit="%"
+                            precision={1}
+                          />
+                          <ResultRow
+                            label={<span><span className="font-serif italic font-bold text-lg text-foreground">ρ<sub className="text-xs">d</sub></span> <span className="text-[10px] font-normal opacity-70">(Massa Esp. Seca Máx)</span></span>}
+                            value={results.peso_especifico_seco_max !== null ? results.peso_especifico_seco_max / 10 : null}
+                            unit="g/cm³"
+                            precision={3}
+
+                          />
+                          <ResultRow
+                            label={<span><span className="font-serif italic font-bold text-lg text-foreground">γ<sub className="text-xs">d</sub></span> <span className="text-[10px] font-normal opacity-70">(Peso Esp. Seco Máx)</span></span>}
+                            value={results.peso_especifico_seco_max}
+                            unit="kN/m³"
+                          />
+                        </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
                 {/* Tabela de Pontos */}
-                <Card className="glass">
+                <Card className="glass mt-4">
                   <CardHeader className="pb-2 pt-4 px-5">
                     <CardTitle className="text-sm font-semibold text-muted-foreground">
                       Pontos Calculados
