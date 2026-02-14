@@ -1,6 +1,7 @@
 /**
  * Módulo para Classificação de Solos por Porcentagem de Frações
- * Recebe porcentagens diretas (pedregulho, areias, silte, argila) + LL e LP
+ * Recebe porcentagens diretas (pedregulho, areias, silte, argila)
+ * + Parâmetros de Caracterização (%P#10, %P#40, %P#200, D10, D30, D60, LL, LP)
  * e retorna classificações USCS e HRB/AASHTO
  */
 
@@ -14,8 +15,16 @@ export interface ClassificacaoPorcentagemInput {
     areia_fina: number;      // % areia fina (0.075 - 0.42mm)
     silte: number;           // % silte (0.002 - 0.075mm)
     argila: number;          // % argila (< 0.002mm)
-    ll?: number;             // Limite de Liquidez
-    lp?: number;             // Limite de Plasticidade
+
+    // Parâmetros de Caracterização
+    pass_peneira_10?: number;  // % Passante #10
+    pass_peneira_40?: number;  // % Passante #40
+    pass_peneira_200?: number; // % Passante #200
+    d10?: number;              // Diâmetro efetivo D10 (mm)
+    d30?: number;              // Diâmetro D30 (mm)
+    d60?: number;              // Diâmetro D60 (mm)
+    ll?: number;               // Limite de Liquidez
+    lp?: number;               // Limite de Plasticidade
 }
 
 export interface ClassificacaoPorcentagemOutput {
@@ -77,14 +86,20 @@ export function calcularClassificacaoPorPorcentagem(
         // Passante na #4 = tudo exceto pedregulho
         const pass_peneira_4 = 100 - dados.pedregulho;
 
-        // Passante na #10 = tudo exceto pedregulho e areia grossa
-        const pass_peneira_10 = pass_peneira_4 - dados.areia_grossa;
+        // Usar valores fornecidos pelo usuário ou derivar das frações
+        const pass_peneira_10 = dados.pass_peneira_10 ?? (pass_peneira_4 - dados.areia_grossa);
+        const pass_peneira_40 = dados.pass_peneira_40 ?? (finos + dados.areia_fina);
+        const pass_peneira_200 = dados.pass_peneira_200 ?? finos;
 
-        // Passante na #40 = finos + areia fina
-        const pass_peneira_40 = finos + dados.areia_fina;
-
-        // Passante na #200 = finos (silte + argila)
-        const pass_peneira_200 = finos;
+        // Calcular Cu e Cc se D10, D30 e D60 forem fornecidos
+        let Cu: number | undefined;
+        let Cc: number | undefined;
+        if (dados.d10 !== undefined && dados.d10 > 0 && dados.d60 !== undefined && dados.d60 > 0) {
+            Cu = dados.d60 / dados.d10;
+            if (dados.d30 !== undefined && dados.d30 > 0) {
+                Cc = (dados.d30 * dados.d30) / (dados.d10 * dados.d60);
+            }
+        }
 
         // Calcular IP se LL e LP disponíveis
         let ip: number | undefined;
@@ -110,9 +125,8 @@ export function calcularClassificacaoPorPorcentagem(
                 pass_peneira_4,
                 ll: dados.ll,
                 ip,
-                // Cu e Cc não disponíveis no modo porcentagem
-                Cu: undefined,
-                Cc: undefined,
+                Cu,
+                Cc,
                 is_organico_fino: false,
                 is_altamente_organico: false,
             });

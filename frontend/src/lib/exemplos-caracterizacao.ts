@@ -26,6 +26,11 @@ export interface ExemploCaracterizacao {
         umidadeNatural: string;
         percentualArgila: string;
     };
+    // Custom example metadata
+    isCustom?: boolean;
+    id?: string;
+    iconName?: string;   // Lucide icon key
+    colorName?: string;  // Color preset key
 }
 
 export const exemplosCaracterizacao: ExemploCaracterizacao[] = [
@@ -77,53 +82,6 @@ export const exemplosCaracterizacao: ExemploCaracterizacao[] = [
         }
     },
     {
-        nome: "Silte Argiloso Médio",
-        descricao: "Solo siltoso com características intermediárias (ML/CL), plasticidade média.",
-        numAmostras: 1,
-        indices: { massaUmida: "185.0", massaSeca: "160.0", volume: "100" },
-        settings: { Gs: "2.68", pesoEspecificoAgua: "10.0" },
-        limites: {
-            pontosLL: [
-                { numGolpes: "33", massaUmidaRecipiente: "27.5", massaSecaRecipiente: "23.0", massaRecipiente: "10.0" },
-                { numGolpes: "26", massaUmidaRecipiente: "28.8", massaSecaRecipiente: "23.8", massaRecipiente: "10.0" },
-                { numGolpes: "21", massaUmidaRecipiente: "30.1", massaSecaRecipiente: "24.5", massaRecipiente: "10.0" },
-                { numGolpes: "15", massaUmidaRecipiente: "32.2", massaSecaRecipiente: "25.4", massaRecipiente: "10.0" },
-                { numGolpes: "9", massaUmidaRecipiente: "34.5", massaSecaRecipiente: "26.5", massaRecipiente: "10.0" },
-            ],
-            pontosLP: [
-                { massaUmidaRecipiente: "16.5", massaSecaRecipiente: "15.0", massaRecipiente: "5.0" },
-                { massaUmidaRecipiente: "17.0", massaSecaRecipiente: "15.4", massaRecipiente: "5.0" },
-                { massaUmidaRecipiente: "15.8", massaSecaRecipiente: "14.4", massaRecipiente: "5.0" },
-                { massaUmidaRecipiente: "16.2", massaSecaRecipiente: "14.8", massaRecipiente: "5.0" }
-            ],
-            umidadeNatural: "15.6",
-            percentualArgila: "25",
-        }
-    },
-    {
-        nome: "Argila Rija Pré-Adensada",
-        descricao: "Argila muito consistente e densa, com alto peso específico seco.",
-        numAmostras: 1,
-        indices: { massaUmida: "210.0", massaSeca: "185.0", volume: "100" },
-        settings: { Gs: "2.75", pesoEspecificoAgua: "10.0" },
-        limites: {
-            pontosLL: [
-                { numGolpes: "40", massaUmidaRecipiente: "38.5", massaSecaRecipiente: "30.2", massaRecipiente: "10.0" },
-                { numGolpes: "32", massaUmidaRecipiente: "40.2", massaSecaRecipiente: "31.0", massaRecipiente: "10.0" },
-                { numGolpes: "25", massaUmidaRecipiente: "42.0", massaSecaRecipiente: "31.8", massaRecipiente: "10.0" },
-                { numGolpes: "18", massaUmidaRecipiente: "44.5", massaSecaRecipiente: "32.9", massaRecipiente: "10.0" },
-                { numGolpes: "11", massaUmidaRecipiente: "47.8", massaSecaRecipiente: "34.1", massaRecipiente: "10.0" },
-            ],
-            pontosLP: [
-                { massaUmidaRecipiente: "20.5", massaSecaRecipiente: "18.2", massaRecipiente: "5.0" },
-                { massaUmidaRecipiente: "21.0", massaSecaRecipiente: "18.6", massaRecipiente: "5.0" },
-                { massaUmidaRecipiente: "19.8", massaSecaRecipiente: "17.6", massaRecipiente: "5.0" }
-            ],
-            umidadeNatural: "13.5",
-            percentualArgila: "60",
-        }
-    },
-    {
         nome: "Solo Orgânico Mole",
         descricao: "Solo com presença de matéria orgânica, alta compressibilidade e baixa densidade.",
         numAmostras: 1,
@@ -147,3 +105,42 @@ export const exemplosCaracterizacao: ExemploCaracterizacao[] = [
         }
     }
 ];
+
+// --- Custom Examples Management (localStorage) ---
+
+const CUSTOM_EXAMPLES_KEY = "edusolo_custom_examples_caracterizacao";
+
+export function getCustomExamples(): ExemploCaracterizacao[] {
+    try {
+        const stored = localStorage.getItem(CUSTOM_EXAMPLES_KEY);
+        if (!stored) return [];
+        return JSON.parse(stored);
+    } catch {
+        return [];
+    }
+}
+
+export function saveCustomExample(exemplo: ExemploCaracterizacao): void {
+    const existing = getCustomExamples();
+    const newExample: ExemploCaracterizacao = {
+        ...exemplo,
+        isCustom: true,
+        id: `custom_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    };
+    existing.push(newExample);
+    localStorage.setItem(CUSTOM_EXAMPLES_KEY, JSON.stringify(existing));
+}
+
+export function updateCustomExample(id: string, updates: Partial<ExemploCaracterizacao>): void {
+    const existing = getCustomExamples();
+    const index = existing.findIndex(e => e.id === id);
+    if (index === -1) return;
+    existing[index] = { ...existing[index], ...updates };
+    localStorage.setItem(CUSTOM_EXAMPLES_KEY, JSON.stringify(existing));
+}
+
+export function deleteCustomExample(id: string): void {
+    const existing = getCustomExamples();
+    const filtered = existing.filter(e => e.id !== id);
+    localStorage.setItem(CUSTOM_EXAMPLES_KEY, JSON.stringify(filtered));
+}

@@ -194,29 +194,29 @@ function classificarSoloFino(dados: ClassificacaoUSCSInput): ClassificacaoUSCSOu
   // Verificar solo orgânico
   if (dados.is_organico_fino) {
     if (LL < 50.0) {
-      return { classificacao: 'OL', descricao: 'Solo orgânico de baixa plasticidade' };
+      return { classificacao: 'OL', descricao: 'Solo orgânico de baixa compressibilidade' };
     } else {
-      return { classificacao: 'OH', descricao: 'Solo orgânico de alta plasticidade' };
+      return { classificacao: 'OH', descricao: 'Solo orgânico de alta compressibilidade' };
     }
   }
 
   // LL < 50: ML, CL-ML, CL
   if (LL < 50.0) {
     if (!acima_linha_a || IP < 4.0) {
-      return { classificacao: 'ML', descricao: 'Silte de baixa plasticidade' };
+      return { classificacao: 'ML', descricao: 'Silte de baixa compressibilidade' };
     }
     if (IP >= 7.0 && acima_linha_a) {
-      return { classificacao: 'CL', descricao: 'Argila de baixa plasticidade' };
+      return { classificacao: 'CL', descricao: 'Argila de baixa compressibilidade' };
     }
     // 4 ≤ IP < 7 e acima da Linha A
-    return { classificacao: 'CL-ML', descricao: 'Silte argiloso de baixa plasticidade' };
+    return { classificacao: 'CL-ML', descricao: 'Silte argiloso de baixa compressibilidade' };
   }
 
   // LL ≥ 50: MH ou CH
   if (acima_linha_a) {
-    return { classificacao: 'CH', descricao: 'Argila de alta plasticidade' };
+    return { classificacao: 'CH', descricao: 'Argila de alta compressibilidade' };
   } else {
-    return { classificacao: 'MH', descricao: 'Silte de alta plasticidade' };
+    return { classificacao: 'MH', descricao: 'Silte de alta compressibilidade' };
   }
 }
 

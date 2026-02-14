@@ -29,6 +29,8 @@ import { useNavigate } from "react-router-dom";
 import { useRecentReports } from "@/hooks/useRecentReports";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CheckCircle } from "lucide-react";
+import PrintHeader from "@/components/PrintHeader";
+import { UI_STANDARDS } from "@/lib/ui-standards";
 import ExportPDFDialog from "@/components/ExportPDFDialog";
 
 // Tooltips para entradas
@@ -424,37 +426,29 @@ export default function CaracterizacaoPage() {
     };
 
 
-
-
-
-
-
     return (
-        <div className="container mx-auto p-4 md:p-6 space-y-5 max-w-7xl animate-in fade-in duration-500">
+        <div className={UI_STANDARDS.pageContainer}>
+            <PrintHeader moduleTitle="Índices Físicos e Limites de Consistência" moduleName="caracterizacao" />
 
             {/* Top Header Section */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
+            <div className={UI_STANDARDS.header.container} data-tour="module-header">
                 <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-center transition-colors hover:border-primary/60 hover:bg-primary/10">
-                        <Beaker className="w-6 h-6 text-primary" />
+                    <div className={UI_STANDARDS.header.iconContainer}>
+                        <Beaker className={UI_STANDARDS.header.icon} />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-bold text-foreground">Índices Físicos e Limites de Consistência</h1>
-                        <p className="text-muted-foreground text-sm">Análise das propriedades físicas do solo</p>
+                        <h1 className={UI_STANDARDS.header.title}>Índices Físicos e Limites de Consistência</h1>
+                        <p className={UI_STANDARDS.header.subtitle}>Análise das propriedades físicas do solo</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className={UI_STANDARDS.header.actionsContainer}>
                     {/* LabModeSwitch removed */}
                     <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
 
                     {/* Botão de Exemplos */}
                     <DialogExemplos onSelectExample={handleLoadExample} />
 
-                    <Button variant="outline" size="sm" onClick={handleExportPDF} className="gap-2">
-                        <Save className="w-4 h-4" />
-                        Salvar
-                    </Button>
 
                     <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
 
@@ -468,7 +462,7 @@ export default function CaracterizacaoPage() {
             {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
 
             {/* Conteúdo Principal */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div className={UI_STANDARDS.mainGrid}>
                 <EntradaDados />
                 <ResultadosView resultadoCombinado={resultadoCombinado} />
             </div>

@@ -1073,7 +1073,7 @@ function GranulometriaDesktop() {
                     <div className="flex-1 p-4 flex flex-col items-center justify-center text-center relative">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></span>
-                        <span className="text-xs font-bold tracking-widest uppercase text-muted-foreground/80">Sistema USCS</span>
+                        <span className="text-xs font-bold tracking-widest uppercase text-muted-foreground/80">Classificação USCS</span>
                       </div>
 
                       {results?.classificacao_uscs ? (
@@ -1096,7 +1096,7 @@ function GranulometriaDesktop() {
                     <div className="flex-1 p-8 flex flex-col items-center justify-center text-center relative">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="w-3 h-3 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]"></span>
-                        <span className="text-xs font-bold tracking-widest uppercase text-muted-foreground/80">Sistema AASHTO (HRB)</span>
+                        <span className="text-xs font-bold tracking-widest uppercase text-muted-foreground/80">Classificação AASHTO (HRB)</span>
                       </div>
 
                       {results?.classificacao_hrb ? (

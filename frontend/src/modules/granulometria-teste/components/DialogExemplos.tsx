@@ -11,14 +11,13 @@ import {
     type LucideIcon,
 } from "lucide-react";
 import {
-    exemplosCaracterizacao,
-    ExemploCaracterizacao,
+    exemplosGranulometriaTeste,
+    ExemploGranulometriaTeste,
     getCustomExamples,
     saveCustomExample,
     updateCustomExample,
     deleteCustomExample,
-} from "@/lib/exemplos-caracterizacao";
-import { useCaracterizacaoStore } from "../store";
+} from "@/lib/exemplos-granulometria-teste";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -55,7 +54,7 @@ const COLOR_OPTIONS: { key: string; label: string; bg: string; text: string; bor
 ];
 
 function getIconComponent(iconName?: string): LucideIcon {
-    return ICON_OPTIONS.find(o => o.key === iconName)?.icon || Droplets;
+    return ICON_OPTIONS.find(o => o.key === iconName)?.icon || Layers;
 }
 
 function getColorTheme(colorName?: string) {
@@ -64,9 +63,9 @@ function getColorTheme(colorName?: string) {
 
 // Built-in themes (fixed for built-in examples)
 const builtInThemes = [
-    { iconKey: "droplets", colorKey: "blue" },
     { iconKey: "mountain", colorKey: "amber" },
-    { iconKey: "leaf", colorKey: "emerald" },
+    { iconKey: "waves", colorKey: "blue" },
+    { iconKey: "gem", colorKey: "emerald" },
 ];
 
 // =============================================
@@ -186,46 +185,70 @@ function IconColorPicker({
 }
 
 // =============================================
+// Fraction fields config
+// =============================================
+
+const FRACOES_FORM = [
+    { key: "pedregulho", label: "Pedregulho (%)" },
+    { key: "areia_grossa", label: "Areia Grossa (%)" },
+    { key: "areia_media", label: "Areia Média (%)" },
+    { key: "areia_fina", label: "Areia Fina (%)" },
+    { key: "silte", label: "Silte (%)" },
+    { key: "argila", label: "Argila (%)" },
+] as const;
+
+// =============================================
 // Component
 // =============================================
 
+interface FormData {
+    pedregulho: string;
+    areia_grossa: string;
+    areia_media: string;
+    areia_fina: string;
+    silte: string;
+    argila: string;
+    pass_p10: string;
+    pass_p40: string;
+    pass_p200: string;
+    d10: string;
+    d30: string;
+    d60: string;
+    ll: string;
+    lp: string;
+}
+
 interface DialogExemplosProps {
-    onSelectExample: (example: ExemploCaracterizacao) => void;
+    onSelectExample: (example: ExemploGranulometriaTeste) => void;
+    currentFormData: FormData;
     disabled?: boolean;
 }
 
 type View = "list" | "form";
 
-export default function DialogExemplos({ onSelectExample, disabled }: DialogExemplosProps) {
+export default function DialogExemplos({ onSelectExample, currentFormData, disabled }: DialogExemplosProps) {
     const [open, setOpen] = useState(false);
     const [view, setView] = useState<View>("list");
-    const [customExamples, setCustomExamples] = useState<ExemploCaracterizacao[]>([]);
+    const [customExamples, setCustomExamples] = useState<ExemploGranulometriaTeste[]>([]);
     const [editingId, setEditingId] = useState<string | null>(null);
 
     // Form state
     const [formName, setFormName] = useState("");
     const [formDesc, setFormDesc] = useState("");
-    const [formIcon, setFormIcon] = useState("droplets");
+    const [formIcon, setFormIcon] = useState("layers");
     const [formColor, setFormColor] = useState("blue");
-    const [formGs, setFormGs] = useState("");
-    const [formGammaW, setFormGammaW] = useState("10.0");
-    const [formMBU, setFormMBU] = useState("");
-    const [formMBS, setFormMBS] = useState("");
-    const [formVol, setFormVol] = useState("");
-    const [formLL, setFormLL] = useState([
-        { numGolpes: "", mbu: "", mbs: "", tara: "" },
-        { numGolpes: "", mbu: "", mbs: "", tara: "" },
-        { numGolpes: "", mbu: "", mbs: "", tara: "" },
-        { numGolpes: "", mbu: "", mbs: "", tara: "" },
-        { numGolpes: "", mbu: "", mbs: "", tara: "" },
-    ]);
-    const [formLP, setFormLP] = useState([
-        { mbu: "", mbs: "", tara: "" },
-        { mbu: "", mbs: "", tara: "" },
-        { mbu: "", mbs: "", tara: "" },
-    ]);
 
-    const store = useCaracterizacaoStore();
+    // Frações
+    const [formFracoes, setFormFracoes] = useState({
+        pedregulho: "", areia_grossa: "", areia_media: "", areia_fina: "", silte: "", argila: "",
+    });
+
+    // Parâmetros complementares
+    const [formParams, setFormParams] = useState({
+        pass_p10: "", pass_p40: "", pass_p200: "",
+        d10: "", d30: "", d60: "",
+        ll: "", lp: "",
+    });
 
     useEffect(() => {
         if (open) {
@@ -235,7 +258,7 @@ export default function DialogExemplos({ onSelectExample, disabled }: DialogExem
         }
     }, [open]);
 
-    const handleSelect = (exemplo: ExemploCaracterizacao) => {
+    const handleSelect = (exemplo: ExemploGranulometriaTeste) => {
         onSelectExample(exemplo);
         setOpen(false);
     };
@@ -252,95 +275,59 @@ export default function DialogExemplos({ onSelectExample, disabled }: DialogExem
 
     // ---- Form helpers ----
 
-    const resetFormFromStore = () => {
-        const amostra = store.amostras[store.currentAmostraIndex || 0];
+    const resetFormFromCurrent = () => {
         setFormName("");
         setFormDesc("");
-        setFormIcon("droplets");
+        setFormIcon("layers");
         setFormColor("blue");
-        setFormGs(store.settings.Gs || "");
-        setFormGammaW(store.settings.pesoEspecificoAgua || "10.0");
-        setFormMBU(amostra?.indices?.massaUmida || "");
-        setFormMBS(amostra?.indices?.massaSeca || "");
-        setFormVol(amostra?.indices?.volume || "");
-
-        const llPoints = store.limites.pontosLL.map(p => ({
-            numGolpes: p.numGolpes || "",
-            mbu: p.massaUmidaRecipiente || "",
-            mbs: p.massaSecaRecipiente || "",
-            tara: p.massaRecipiente || "",
-        }));
-        while (llPoints.length < 5) llPoints.push({ numGolpes: "", mbu: "", mbs: "", tara: "" });
-        setFormLL(llPoints);
-
-        const lpPoints = store.limites.pontosLP.map(p => ({
-            mbu: p.massaUmidaRecipiente || "",
-            mbs: p.massaSecaRecipiente || "",
-            tara: p.massaRecipiente || "",
-        }));
-        while (lpPoints.length < 3) lpPoints.push({ mbu: "", mbs: "", tara: "" });
-        setFormLP(lpPoints);
+        setFormFracoes({
+            pedregulho: currentFormData.pedregulho,
+            areia_grossa: currentFormData.areia_grossa,
+            areia_media: currentFormData.areia_media,
+            areia_fina: currentFormData.areia_fina,
+            silte: currentFormData.silte,
+            argila: currentFormData.argila,
+        });
+        setFormParams({
+            pass_p10: currentFormData.pass_p10,
+            pass_p40: currentFormData.pass_p40,
+            pass_p200: currentFormData.pass_p200,
+            d10: currentFormData.d10,
+            d30: currentFormData.d30,
+            d60: currentFormData.d60,
+            ll: currentFormData.ll,
+            lp: currentFormData.lp,
+        });
     };
 
-    const loadFormFromExample = (ex: ExemploCaracterizacao) => {
+    const loadFormFromExample = (ex: ExemploGranulometriaTeste) => {
         setFormName(ex.nome);
         setFormDesc(ex.descricao);
-        setFormIcon(ex.iconName || "droplets");
+        setFormIcon(ex.iconName || "layers");
         setFormColor(ex.colorName || "blue");
-        setFormGs(ex.settings.Gs);
-        setFormGammaW(ex.settings.pesoEspecificoAgua);
-        setFormMBU(ex.indices.massaUmida);
-        setFormMBS(ex.indices.massaSeca);
-        setFormVol(ex.indices.volume);
-
-        const llPoints = ex.limites.pontosLL.map(p => ({
-            numGolpes: p.numGolpes,
-            mbu: p.massaUmidaRecipiente,
-            mbs: p.massaSecaRecipiente,
-            tara: p.massaRecipiente,
-        }));
-        while (llPoints.length < 5) llPoints.push({ numGolpes: "", mbu: "", mbs: "", tara: "" });
-        setFormLL(llPoints);
-
-        const lpPoints = ex.limites.pontosLP.map(p => ({
-            mbu: p.massaUmidaRecipiente,
-            mbs: p.massaSecaRecipiente,
-            tara: p.massaRecipiente,
-        }));
-        while (lpPoints.length < 3) lpPoints.push({ mbu: "", mbs: "", tara: "" });
-        setFormLP(lpPoints);
+        setFormFracoes({ ...ex.fracoes });
+        setFormParams({ ...ex.parametros });
     };
 
     const handleOpenCreate = () => {
         setEditingId(null);
-        resetFormFromStore();
+        resetFormFromCurrent();
         setView("form");
     };
 
-    const handleOpenEdit = (ex: ExemploCaracterizacao) => {
+    const handleOpenEdit = (ex: ExemploGranulometriaTeste) => {
         setEditingId(ex.id || null);
         loadFormFromExample(ex);
         setView("form");
     };
 
-    const buildExampleFromForm = (): ExemploCaracterizacao => ({
+    const buildExampleFromForm = (): ExemploGranulometriaTeste => ({
         nome: formName.trim() || "Sem nome",
         descricao: formDesc.trim() || "Exemplo personalizado",
-        numAmostras: 1,
         iconName: formIcon,
         colorName: formColor,
-        indices: { massaUmida: formMBU, massaSeca: formMBS, volume: formVol },
-        settings: { Gs: formGs, pesoEspecificoAgua: formGammaW },
-        limites: {
-            pontosLL: formLL
-                .filter(p => p.numGolpes || p.mbu || p.mbs || p.tara)
-                .map(p => ({ numGolpes: p.numGolpes, massaUmidaRecipiente: p.mbu, massaSecaRecipiente: p.mbs, massaRecipiente: p.tara })),
-            pontosLP: formLP
-                .filter(p => p.mbu || p.mbs || p.tara)
-                .map(p => ({ massaUmidaRecipiente: p.mbu, massaSecaRecipiente: p.mbs, massaRecipiente: p.tara })),
-            umidadeNatural: "",
-            percentualArgila: "",
-        },
+        fracoes: { ...formFracoes },
+        parametros: { ...formParams },
     });
 
     const handleSave = () => {
@@ -361,12 +348,12 @@ export default function DialogExemplos({ onSelectExample, disabled }: DialogExem
         setView("list");
     };
 
-    const updateLLPoint = (index: number, field: string, value: string) => {
-        setFormLL(prev => { const c = [...prev]; c[index] = { ...c[index], [field]: value }; return c; });
+    const updateFracao = (key: string, value: string) => {
+        setFormFracoes(prev => ({ ...prev, [key]: value }));
     };
 
-    const updateLPPoint = (index: number, field: string, value: string) => {
-        setFormLP(prev => { const c = [...prev]; c[index] = { ...c[index], [field]: value }; return c; });
+    const updateParam = (key: string, value: string) => {
+        setFormParams(prev => ({ ...prev, [key]: value }));
     };
 
     // =============================================
@@ -393,13 +380,13 @@ export default function DialogExemplos({ onSelectExample, disabled }: DialogExem
                                 Exemplos Didáticos
                             </DialogTitle>
                             <DialogDescription>
-                                Selecione um tipo de solo para carregar dados reais de ensaio.
+                                Selecione um tipo de solo para carregar dados de classificação granulométrica.
                             </DialogDescription>
                         </DialogHeader>
 
                         {/* Built-in examples */}
                         <div className="grid grid-cols-2 gap-3 mt-2">
-                            {exemplosCaracterizacao.map((exemplo, index) => {
+                            {exemplosGranulometriaTeste.map((exemplo, index) => {
                                 const t = builtInThemes[index];
                                 const color = getColorTheme(t.colorKey);
                                 const Icon = getIconComponent(t.iconKey);
@@ -542,92 +529,80 @@ export default function DialogExemplos({ onSelectExample, disabled }: DialogExem
 
                             <Separator />
 
-                            {/* Dados Físicos */}
+                            {/* Frações Granulométricas */}
                             <div className="space-y-2">
-                                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">Dados Físicos</h4>
-                                <div className="grid grid-cols-5 gap-3">
+                                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">Frações Granulométricas</h4>
+                                <div className="grid grid-cols-3 gap-3">
+                                    {FRACOES_FORM.map((f) => (
+                                        <div key={f.key} className="space-y-1">
+                                            <Label className="text-[11px]">{f.label}</Label>
+                                            <Input
+                                                placeholder="0.0"
+                                                value={formFracoes[f.key as keyof typeof formFracoes]}
+                                                onChange={e => updateFracao(f.key, e.target.value)}
+                                                className="h-8 text-sm"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <Separator />
+
+                            {/* Percentuais Passantes */}
+                            <div className="space-y-2">
+                                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">Percentuais Passantes (%)</h4>
+                                <div className="grid grid-cols-3 gap-3">
                                     <div className="space-y-1">
-                                        <Label className="text-[11px]">Gs</Label>
-                                        <Input placeholder="2.65" value={formGs} onChange={e => setFormGs(e.target.value)} className="h-8 text-sm" />
+                                        <Label className="text-[11px]">Passante #10</Label>
+                                        <Input placeholder="—" value={formParams.pass_p10} onChange={e => updateParam("pass_p10", e.target.value)} className="h-8 text-sm" />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label className="text-[11px]">γw (kN/m³)</Label>
-                                        <Input placeholder="10.0" value={formGammaW} onChange={e => setFormGammaW(e.target.value)} className="h-8 text-sm" />
+                                        <Label className="text-[11px]">Passante #40</Label>
+                                        <Input placeholder="—" value={formParams.pass_p40} onChange={e => updateParam("pass_p40", e.target.value)} className="h-8 text-sm" />
                                     </div>
                                     <div className="space-y-1">
-                                        <Label className="text-[11px]">MBU (g)</Label>
-                                        <Input placeholder="0.00" value={formMBU} onChange={e => setFormMBU(e.target.value)} className="h-8 text-sm" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-[11px]">MBS (g)</Label>
-                                        <Input placeholder="0.00" value={formMBS} onChange={e => setFormMBS(e.target.value)} className="h-8 text-sm" />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-[11px]">Volume (cm³)</Label>
-                                        <Input placeholder="100" value={formVol} onChange={e => setFormVol(e.target.value)} className="h-8 text-sm" />
+                                        <Label className="text-[11px]">Passante #200</Label>
+                                        <Input placeholder="—" value={formParams.pass_p200} onChange={e => updateParam("pass_p200", e.target.value)} className="h-8 text-sm" />
                                     </div>
                                 </div>
                             </div>
 
                             <Separator />
 
-                            {/* Limite de Liquidez */}
+                            {/* Diâmetros Característicos */}
                             <div className="space-y-2">
-                                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">Limite de Liquidez (LL)</h4>
-                                <div className="space-y-1.5">
-                                    <div className="grid grid-cols-[1fr_1fr_1fr_1fr_24px] gap-2 px-1">
-                                        <span className="text-[10px] text-muted-foreground/60 font-medium">Nº Golpes</span>
-                                        <span className="text-[10px] text-muted-foreground/60 font-medium">MBU (g)</span>
-                                        <span className="text-[10px] text-muted-foreground/60 font-medium">MBS (g)</span>
-                                        <span className="text-[10px] text-muted-foreground/60 font-medium">Tara (g)</span>
-                                        <span></span>
+                                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">Diâmetros Característicos (mm)</h4>
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div className="space-y-1">
+                                        <Label className="text-[11px]">D10</Label>
+                                        <Input placeholder="—" value={formParams.d10} onChange={e => updateParam("d10", e.target.value)} className="h-8 text-sm" />
                                     </div>
-                                    {formLL.map((point, i) => (
-                                        <div key={i} className="grid grid-cols-[1fr_1fr_1fr_1fr_24px] gap-2 items-center">
-                                            <Input className="h-7 text-xs" placeholder="25" value={point.numGolpes} onChange={e => updateLLPoint(i, "numGolpes", e.target.value)} />
-                                            <Input className="h-7 text-xs" placeholder="0.00" value={point.mbu} onChange={e => updateLLPoint(i, "mbu", e.target.value)} />
-                                            <Input className="h-7 text-xs" placeholder="0.00" value={point.mbs} onChange={e => updateLLPoint(i, "mbs", e.target.value)} />
-                                            <Input className="h-7 text-xs" placeholder="0.00" value={point.tara} onChange={e => updateLLPoint(i, "tara", e.target.value)} />
-                                            {formLL.length > 1 && (
-                                                <button className="text-muted-foreground/40 hover:text-destructive transition-colors" onClick={() => setFormLL(prev => prev.filter((_, idx) => idx !== i))}>
-                                                    <X className="w-3.5 h-3.5" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                    <Button variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1 h-7 mt-1" onClick={() => setFormLL(prev => [...prev, { numGolpes: "", mbu: "", mbs: "", tara: "" }])}>
-                                        <Plus className="w-3 h-3" /> Adicionar ponto
-                                    </Button>
+                                    <div className="space-y-1">
+                                        <Label className="text-[11px]">D30</Label>
+                                        <Input placeholder="—" value={formParams.d30} onChange={e => updateParam("d30", e.target.value)} className="h-8 text-sm" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label className="text-[11px]">D60</Label>
+                                        <Input placeholder="—" value={formParams.d60} onChange={e => updateParam("d60", e.target.value)} className="h-8 text-sm" />
+                                    </div>
                                 </div>
                             </div>
 
                             <Separator />
 
-                            {/* Limite de Plasticidade */}
+                            {/* Limites de Consistência */}
                             <div className="space-y-2">
-                                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">Limite de Plasticidade (LP)</h4>
-                                <div className="space-y-1.5">
-                                    <div className="grid grid-cols-[1fr_1fr_1fr_24px] gap-2 px-1">
-                                        <span className="text-[10px] text-muted-foreground/60 font-medium">MBU (g)</span>
-                                        <span className="text-[10px] text-muted-foreground/60 font-medium">MBS (g)</span>
-                                        <span className="text-[10px] text-muted-foreground/60 font-medium">Tara (g)</span>
-                                        <span></span>
+                                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">Limites de Consistência (%)</h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                        <Label className="text-[11px]">LL</Label>
+                                        <Input placeholder="—" value={formParams.ll} onChange={e => updateParam("ll", e.target.value)} className="h-8 text-sm" />
                                     </div>
-                                    {formLP.map((point, i) => (
-                                        <div key={i} className="grid grid-cols-[1fr_1fr_1fr_24px] gap-2 items-center">
-                                            <Input className="h-7 text-xs" placeholder="0.00" value={point.mbu} onChange={e => updateLPPoint(i, "mbu", e.target.value)} />
-                                            <Input className="h-7 text-xs" placeholder="0.00" value={point.mbs} onChange={e => updateLPPoint(i, "mbs", e.target.value)} />
-                                            <Input className="h-7 text-xs" placeholder="0.00" value={point.tara} onChange={e => updateLPPoint(i, "tara", e.target.value)} />
-                                            {formLP.length > 1 && (
-                                                <button className="text-muted-foreground/40 hover:text-destructive transition-colors" onClick={() => setFormLP(prev => prev.filter((_, idx) => idx !== i))}>
-                                                    <X className="w-3.5 h-3.5" />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                    <Button variant="ghost" size="sm" className="text-xs text-muted-foreground gap-1 h-7 mt-1" onClick={() => setFormLP(prev => [...prev, { mbu: "", mbs: "", tara: "" }])}>
-                                        <Plus className="w-3 h-3" /> Adicionar ponto
-                                    </Button>
+                                    <div className="space-y-1">
+                                        <Label className="text-[11px]">LP</Label>
+                                        <Input placeholder="—" value={formParams.lp} onChange={e => updateParam("lp", e.target.value)} className="h-8 text-sm" />
+                                    </div>
                                 </div>
                             </div>
 
@@ -660,11 +635,17 @@ function ExampleCard({
     color,
     onClick,
 }: {
-    exemplo: ExemploCaracterizacao;
+    exemplo: ExemploGranulometriaTeste;
     Icon: LucideIcon;
     color: typeof COLOR_OPTIONS[number];
     onClick: () => void;
 }) {
+    // Compute sum of fractions for display
+    const soma = Object.values(exemplo.fracoes).reduce((s, v) => {
+        const n = parseFloat(v);
+        return s + (isNaN(n) ? 0 : n);
+    }, 0);
+
     return (
         <button
             className={cn(
@@ -685,11 +666,18 @@ function ExampleCard({
             </p>
             <div className="relative z-10 flex flex-wrap items-center justify-center gap-1.5 mt-auto">
                 <span className="text-[10px] font-medium text-muted-foreground/70 bg-muted/50 px-2 py-0.5 rounded-full">
-                    Gs: {exemplo.settings.Gs || "—"}
+                    Σ: {soma.toFixed(0)}%
                 </span>
-                <span className="text-[10px] font-medium text-muted-foreground/70 bg-muted/50 px-2 py-0.5 rounded-full">
-                    LL: {exemplo.limites.pontosLL.length} pts
-                </span>
+                {exemplo.parametros.ll && (
+                    <span className="text-[10px] font-medium text-muted-foreground/70 bg-muted/50 px-2 py-0.5 rounded-full">
+                        LL: {exemplo.parametros.ll}
+                    </span>
+                )}
+                {exemplo.parametros.lp && (
+                    <span className="text-[10px] font-medium text-muted-foreground/70 bg-muted/50 px-2 py-0.5 rounded-full">
+                        LP: {exemplo.parametros.lp}
+                    </span>
+                )}
             </div>
         </button>
     );

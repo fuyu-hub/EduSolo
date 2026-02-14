@@ -43,7 +43,7 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
   const modulesBrief = [
     { icon: Beaker, label: "Índices Físicos e Limites", path: "/indices-limites" },
     // { icon: Database, label: "Granulometria", path: "/granulometria" },
-    { icon: Database, label: "Classificação Granulométrica", path: "/granulometria-teste" },
+    { icon: Database, label: "Classif. Granulométrica", path: "/granulometria" },
     { icon: CompactacaoIcon, label: "Compactação", path: "/compactacao" },
   ];
   const isModulePath =
@@ -314,7 +314,7 @@ function DesktopLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="p-4 md:p-6 lg:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen">{children}</main>
+        <main className="px-4 md:px-6 lg:px-8 pt-2 pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen">{children}</main>
       </div>
     </div>
   );

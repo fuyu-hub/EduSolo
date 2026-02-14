@@ -186,17 +186,17 @@ const AppContent = () => {
           element={
             <Layout>
               <Suspense fallback={<PageLoader />}>
-                <Granulometria />
+                <GranulometriaTeste />
               </Suspense>
             </Layout>
           }
         />
         <Route
-          path="/granulometria-teste"
+          path="/granulometria-laboratorio"
           element={
             <Layout>
               <Suspense fallback={<PageLoader />}>
-                <GranulometriaTeste />
+                <Granulometria />
               </Suspense>
             </Layout>
           }

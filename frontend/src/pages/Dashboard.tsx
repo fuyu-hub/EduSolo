@@ -24,7 +24,7 @@ const modules = [
     icon: Database,
     title: "Classificação Granulométrica",
     description: "Classificação de Solos pelos Sistemas USCS e AASHTO",
-    path: "/granulometria-teste",
+    path: "/granulometria",
     preload: () => import("./GranulometriaTeste"),
   },
   {

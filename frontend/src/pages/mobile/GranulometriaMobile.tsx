@@ -981,7 +981,7 @@ export default function GranulometriaMobile() {
                   {/* USCS */}
                   {results.classificacao_uscs && (
                     <div className="bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 p-4 space-y-3">
-                      <h3 className="font-semibold text-sm">Sistema USCS (Unificado)</h3>
+                      <h3 className="font-semibold text-sm">Classificação USCS (Unificado)</h3>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground">Classificação</span>
@@ -997,7 +997,7 @@ export default function GranulometriaMobile() {
                   {/* HRB */}
                   {results.classificacao_hrb && (
                     <div className="bg-card/50 backdrop-blur-sm rounded-xl border border-border/50 p-4 space-y-3">
-                      <h3 className="font-semibold text-sm">Sistema HRB (Rodoviário)</h3>
+                      <h3 className="font-semibold text-sm">Classificação HRB (Rodoviário)</h3>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground">Classificação</span>

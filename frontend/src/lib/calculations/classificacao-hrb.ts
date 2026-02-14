@@ -76,53 +76,66 @@ function determinarGrupoHRB(
 ): [string, string | undefined] {
   // MATERIAIS GRANULARES (≤ 35% passando na #200)
   if (p200 <= 35) {
-    // A-1-a
+    // 1. Tentar A-1-a
     if (
-      ip <= 6 &&
+      (p10 === undefined || p10 <= 50) &&
+      (p40 === undefined || p40 <= 30) &&
       p200 <= 15 &&
-      p40 !== undefined && p40 <= 30 &&
-      p10 !== undefined && p10 <= 50
+      ip <= 6
     ) {
       return ['A-1', 'a'];
     }
-    // A-1-b (sem requisito de P#10)
-    else if (
-      ip <= 6 &&
+
+    // 2. Tentar A-1-b
+    if (
+      (p40 === undefined || p40 <= 50) &&
       p200 <= 25 &&
-      p40 !== undefined && p40 <= 50
+      ip <= 6
     ) {
       return ['A-1', 'b'];
     }
-    // A-3 (sem requisito de P#10)
-    else if (
-      p40 !== undefined && p40 > 50 &&
+
+    // 3. Tentar A-3 (Conforme Nota 4, ele vem antes do A-2)
+    if (
+      (p40 !== undefined && p40 > 50) &&
       p200 <= 10 &&
       ip === 0
     ) {
       return ['A-3', undefined];
     }
-    // A-2
-    else {
-      // LL e IP agora são sempre definidos (0 se vazios)
-      if (ll <= 40) {
-        return ip <= 10 ? ['A-2', '4'] : ['A-2', '6'];
-      } else {
-        return ip <= 10 ? ['A-2', '5'] : ['A-2', '7'];
-      }
+
+    // 4. Se não for nenhum dos acima, DEVE ser A-2 (pois P200 <= 35)
+    if (ll <= 40) {
+      return ip <= 10 ? ['A-2', '4'] : ['A-2', '6'];
+    } else {
+      return ip <= 10 ? ['A-2', '5'] : ['A-2', '7'];
     }
   }
 
   // MATERIAIS SILTO-ARGILOSOS (> 35% passando na #200)
-  // LL e IP agora são sempre definidos (0 se vazios)
+  // Leitura da esquerda para a direita
   else {
+    // 1. Tentar A-4
     if (ll <= 40 && ip <= 10) {
       return ['A-4', undefined];
-    } else if (ll > 40 && ip <= 10) {
+    }
+
+    // 2. Tentar A-5
+    if (ll > 40 && ip <= 10) {
       return ['A-5', undefined];
-    } else if (ll <= 40 && ip > 10) {
+    }
+
+    // 3. Tentar A-6
+    if (ll <= 40 && ip > 10) {
       return ['A-6', undefined];
+    }
+
+    // 4. Deve ser A-7 (P200 > 35, LL > 40, IP > 10)
+    // Nota 3: Subgrupos do A-7
+    if (ip < ll - 30) {
+      return ['A-7', '5'];
     } else {
-      return ip <= ll - 30 ? ['A-7', '5'] : ['A-7', '6'];
+      return ['A-7', '6'];
     }
   }
 }

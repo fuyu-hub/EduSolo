@@ -1160,6 +1160,7 @@ All colors MUST be HSL.
 /* Previne flash de conteúdo durante detecção de dispositivo */
 html {
   overflow-x: hidden;
+  overflow-y: scroll;
 }
 
 body {

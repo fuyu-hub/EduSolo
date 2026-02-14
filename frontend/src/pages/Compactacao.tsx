@@ -41,6 +41,7 @@ import { ExemploCompactacao } from "@/lib/exemplos-compactacao";
 import { MobileModuleWrapper } from "@/components/mobile";
 import CompactacaoMobile from "./mobile/CompactacaoMobile";
 import { useCompactacaoStore } from "@/modules/compactacao/store";
+import { UI_STANDARDS } from "@/lib/ui-standards";
 
 // Schema de validação
 const pontoCompactacaoSchema = z.object({
@@ -763,22 +764,22 @@ function CompactacaoDesktop() {
   const modoEntradaUmidade = form.watch("modoEntradaUmidade") || "medicoes";
 
   return (
-    <div className="container mx-auto px-4 md:px-6 pb-6 pt-0 space-y-5 max-w-7xl animate-in fade-in duration-500">
+    <div className={UI_STANDARDS.pageContainer}>
       <PrintHeader moduleTitle="Compactação (Proctor)" moduleName="compactacao" />
 
       {/* Top Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">
+      <div className={UI_STANDARDS.header.container} data-tour="module-header">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-center transition-colors hover:border-primary/60 hover:bg-primary/10">
-            <CompactacaoIcon className="w-6 h-6 text-primary" />
+          <div className={UI_STANDARDS.header.iconContainer}>
+            <CompactacaoIcon className={UI_STANDARDS.header.icon} />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Ensaio de Compactação</h1>
-            <p className="text-muted-foreground text-sm">Determinação da curva de compactação (Proctor)</p>
+            <h1 className={UI_STANDARDS.header.title}>Ensaio de Compactação</h1>
+            <p className={UI_STANDARDS.header.subtitle}>Determinação da curva de compactação (Proctor)</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2" data-tour="actions">
+        <div className={UI_STANDARDS.header.actionsContainer} data-tour="actions">
           <TooltipProvider>
             {/* Exemplos */}
             <DialogExemplos onSelectExample={handleSelectExample} disabled={isCalculating} />
@@ -807,9 +808,9 @@ function CompactacaoDesktop() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div className={UI_STANDARDS.mainGrid}>
         {/* Formulário - Input */}
-        <Card className="glass border-primary/20 flex flex-col animate-in fade-in slide-in-from-left-4 duration-700">
+        <Card className="glass border-primary/20 flex flex-col animate-in fade-in slide-in-from-left-5 duration-300">
           <form className="flex flex-col flex-1">
             <CardHeader className="pb-3 bg-gradient-to-r from-primary/5 to-transparent flex flex-row items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -1157,7 +1158,7 @@ function CompactacaoDesktop() {
         </Card>
 
         {/* Resultados */}
-        <div className="space-y-4 animate-in slide-in-from-right-4 duration-700">
+        <div className="space-y-4 animate-in slide-in-from-right-5 duration-300">
           {!results ? (
             <Card className="glass flex items-center justify-center p-12 text-center text-muted-foreground border-dashed min-h-[400px]">
               <div>
