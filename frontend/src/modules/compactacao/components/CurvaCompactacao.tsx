@@ -14,6 +14,8 @@ interface CurvaCompactacaoProps {
   umidadeOtima?: number;
   gamaSecoMax?: number;
   pontosSaturacao?: PontoCurvaCompactacao[];
+  Gs?: number;
+  gammaW?: number;
 }
 
 export interface CurvaCompactacaoRef {
@@ -22,7 +24,7 @@ export interface CurvaCompactacaoRef {
 }
 
 const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
-  ({ pontosEnsaio, umidadeOtima, gamaSecoMax, pontosSaturacao }, ref) => {
+  ({ pontosEnsaio, umidadeOtima, gamaSecoMax, pontosSaturacao, Gs, gammaW }, ref) => {
     const [dialogOpen, setDialogOpen] = useState(false);
     const chartRef = useRef<HTMLDivElement>(null);
 
@@ -452,20 +454,44 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
           <ChartContent isDialog={false} />
         </div>
 
+
         {/* Sobre o Gráfico */}
         <Card className="bg-muted/30 border-none shadow-inner">
           <CardContent className="p-4 space-y-2 text-xs text-muted-foreground">
+            {regressao && (
+              <p>
+                <strong>Equação da Curva:</strong> <span className="font-mono">γ<sub>d</sub> = {regressao.a.toFixed(6)}·w² + {regressao.b.toFixed(4)}·w + {regressao.c.toFixed(4)}</span>
+              </p>
+            )}
+
+            {pontosSaturacaoConvertidos.length > 0 && (
+              <>
+                {Gs && gammaW ? (
+                  <p>
+                    <strong>Equação de Saturação:</strong> <span className="font-mono">γ<sub>d</sub> = {(Gs * (gammaW / 10)).toFixed(3)} / (1 + {(Gs / 100).toFixed(4)}·w)</span>
+                  </p>
+                ) : (
+                  <p>
+                    <strong>Equação de Saturação:</strong> <span className="font-mono">γ<sub>d</sub> = (Gs · γ<sub>w</sub>) / (1 + (w · Gs) / 100)</span>
+                  </p>
+                )}
+              </>
+            )}
+
             <p>
               <strong>Curva de Compactação:</strong> A linha azul representa a relação entre a densidade seca do solo e seu teor de umidade para uma energia de compactação específica.
             </p>
-            <p>
-              <strong>Ponto Ótimo:</strong> O ponto vermelho indica a umidade ótima ({pontoOtimo?.umidade || '-'}%) e a densidade seca máxima ({pontoOtimo?.gamaSeco || '-'} g/cm³).
-            </p>
+
             {pontosSaturacaoConvertidos.length > 0 && (
               <p>
                 <strong>Linha de Saturação:</strong> A linha tracejada preta indica a relação teórica para o solo com 100% de saturação.
               </p>
             )}
+
+            <p>
+              <strong>Ponto Ótimo:</strong> O ponto vermelho indica a umidade ótima ({pontoOtimo?.umidade || '-'}%) e a densidade seca máxima ({pontoOtimo?.gamaSeco || '-'} g/cm³).
+            </p>
+
             <p>
               <strong>Norma:</strong> NBR 7182/2025 - Solo - Ensaio de Compactação.
             </p>

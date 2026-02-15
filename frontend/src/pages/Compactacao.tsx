@@ -916,6 +916,8 @@ function CompactacaoDesktop() {
                         umidadeOtima={results.umidade_otima ?? undefined}
                         gamaSecoMax={results.peso_especifico_seco_max ?? undefined}
                         pontosSaturacao={results.pontos_curva_saturacao_100 ?? undefined}
+                        Gs={form.getValues().Gs ? parseFloat(form.getValues().Gs!) : undefined}
+                        gammaW={parseFloat(form.getValues().pesoEspecificoAgua)}
                       />
                     </div>
                   </CardContent>

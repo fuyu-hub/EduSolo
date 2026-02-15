@@ -50,7 +50,7 @@ export function classificarHRB(dados: ClassificacaoHRBInput): ClassificacaoHRBOu
     const descricao = obterDescricaoHRB(grupo, subgrupo);
 
     // Obtém avaliação como subleito
-    const avaliacao_subleito = obterAvaliacaoSubleito(grupo);
+    const avaliacao_subleito = obterAvaliacaoSubleito(grupo, subgrupo);
 
     return {
       classificacao,
@@ -170,67 +170,71 @@ function calcularIndiceGrupo(
 }
 
 function obterDescricaoHRB(grupo: string, subgrupo: string | undefined): string {
-  // Descrições específicas para grupos/subgrupos combinados (A-2-4, A-2-5, etc.)
-  // Quando houver subgrupo numérico (4, 5, 6, 7), a descrição é específica da combinação
-  if (grupo === 'A-2' && subgrupo) {
-    const descricoesA2: Record<string, string> = {
-      '4': 'Materiais comuns constituintes: Pedregulho ou areia siltosa (Baixa plasticidade)',
-      '5': 'Materiais comuns constituintes: Pedregulho ou areia siltosa elástica (Siltes micáceos ou diatomáceos)',
-      '6': 'Materiais comuns constituintes: Pedregulho ou areia argilosa (Argila plástica)',
-      '7': 'Materiais comuns constituintes: Pedregulho ou areia argilosa (Argila muito plástica/elástica)',
-    };
-    if (descricoesA2[subgrupo]) return descricoesA2[subgrupo];
+  // A-1
+  if (grupo === 'A-1') {
+    if (subgrupo === 'a') return 'Fragmentos de rocha ou pedregulho, com ou sem ligante fino bem graduado.';
+    if (subgrupo === 'b') return 'Predominância de areia grossa, com ou sem ligante de solo bem graduado.';
+    return 'Materiais granulares bem graduados.';
   }
 
-  if (grupo === 'A-7' && subgrupo) {
-    const descricoesA7: Record<string, string> = {
-      '5': 'Materiais comuns constituintes: Argilas elásticas (sujeitas a alta compressibilidade)',
-      '6': 'Materiais comuns constituintes: Argilas muito plásticas (sujeitas a grande variação volumétrica)',
-    };
-    if (descricoesA7[subgrupo]) return descricoesA7[subgrupo];
+  // A-3
+  if (grupo === 'A-3') {
+    return 'Areia fina sem finos siltosos/argilosos ou com uma quantidade muito pequena de finos.';
   }
 
-  // Descrições gerais para os grupos principais
-  const descricoes: Record<string, string> = {
-    'A-1': 'Materiais comuns constituintes: Misturas bem graduadas de fragmentos de pedra, pedregulho e areia',
-    'A-3': 'Materiais comuns constituintes: Areia fina (limpa, de praia ou duna) ou mistura de areia fina com pequena quantidade de silte não plástico',
-    'A-2': 'Materiais comuns constituintes: Solos granulares "sujos" (contendo silte ou argila)', // Fallback se não tiver subgrupo (raro)
-    'A-4': 'Materiais comuns constituintes: Solos siltosos (Pouca ou nenhuma plasticidade)',
-    'A-5': 'Materiais comuns constituintes: Solos siltosos elásticos (Alta compressibilidade, geralmente micáceos)',
-    'A-6': 'Materiais comuns constituintes: Solos argilosos (Plasticidade média a alta, argilas plásticas)',
-    'A-7': 'Materiais comuns constituintes: Solos argilosos (Alta plasticidade e/ou elasticidade)', // Fallback se não tiver subgrupo
-  };
-
-  // Sufixos descritivos para A-1 (a, b)
-  const subgrupo_desc_A1: Record<string, string> = {
-    'a': ': Predominância de fragmentos de pedra ou pedregulho',
-    'b': ': Predominância de areia grossa',
-  };
-
-  let desc = descricoes[grupo] || 'Material não classificado';
-
-  if (grupo === 'A-1' && subgrupo && subgrupo_desc_A1[subgrupo]) {
-    desc += subgrupo_desc_A1[subgrupo];
+  // A-2
+  if (grupo === 'A-2') {
+    if (subgrupo === '4') return 'Pedregulhos e areias com finos siltosos ou pouco plásticos (apresentam características dos grupos A-4 e A-5).';
+    if (subgrupo === '5') return 'Pedregulhos e areias com finos siltosos ou pouco plásticos (apresentam características dos grupos A-4 e A-5).';
+    if (subgrupo === '6') return 'Pedregulhos e areias com finos argilosos ou moderadamente plásticos (apresentam características dos grupos A-6 e A-7).';
+    if (subgrupo === '7') return 'Pedregulhos e areias com finos argilosos ou moderadamente plásticos (apresentam características dos grupos A-6 e A-7).';
+    return 'Pedregulhos e areias com conteúdo de siltes e argilas.';
   }
 
-  return desc;
+  // A-4
+  if (grupo === 'A-4') {
+    return 'Solo siltoso, moderadamente ou nada plástico. Geralmente com mais de 75% de finos.';
+  }
+
+  // A-5
+  if (grupo === 'A-5') {
+    return 'Solo siltoso, de caráter diatomáceo ou micáceo e pode ser altamente elástico ("borrachudo"), como indicado pelo alto LL.';
+  }
+
+  // A-6
+  if (grupo === 'A-6') {
+    return 'Solo argiloso plástico. Geralmente apresentam alta variação de volume entre os estados úmido e seco.';
+  }
+
+  // A-7
+  if (grupo === 'A-7') {
+    if (subgrupo === '5') return 'Solo argiloso elástico ("borrachudo"). Índice de plasticidade moderado, mas alta elasticidade.';
+    if (subgrupo === '6') return 'Solo argiloso muito plástico. Sujeitos à altíssima variação de volume.';
+    return 'Solo argiloso plástico ou elástico.';
+  }
+
+  return 'Material não classificado';
 }
 
-function obterAvaliacaoSubleito(grupo: string): string {
-  const avaliacoes: Record<string, string> = {
-    'A-1': 'Excelente a Bom',
-    'A-2': 'Excelente a Bom', // A-2 também é considerado Excelente a Bom na maioria das tabelas resumidas de Mat. Granulares, mas o usuário pediu para seguir o texto dele? 
-    // O usuário disse: "1. Materiais Granulares ... Comportamento geral como subleito: Excelente a Bom."
-    // A-2 está dentro de Materiais Granulares.
-    // Mas no texto detalhado do IG diz: "0: Subleito Bom (típico de ... A-2-4)"
-    // Vamos manter "Excelente a Bom" para todo o grupo de Materiais Granulares (A-1, A-3, A-2) conforme o cabeçalho do item 1 do prompt.
-    'A-3': 'Excelente a Bom',
-    'A-4': 'Regular a Fraco', // Item 2 do prompt: "Regular a Fraco" para Materiais Silto-Argilosos
-    'A-5': 'Regular a Fraco',
-    'A-6': 'Regular a Fraco',
-    'A-7': 'Regular a Fraco',
-  };
+function obterAvaliacaoSubleito(grupo: string, subgrupo: string | undefined): string {
+  // Materiais Granulares (Excelente a Bom)
+  // A-1-a, A-1-b, A-3
+  if (grupo === 'A-1' || grupo === 'A-3') {
+    return 'Excelente a Bom';
+  }
 
-  return avaliacoes[grupo] || 'Não avaliado';
+  // A-2
+  if (grupo === 'A-2') {
+    // A-2-4 e A-2-5 são Excelente a Bom
+    if (subgrupo === '4' || subgrupo === '5') {
+      return 'Excelente a Bom';
+    }
+    // A-2-6 e A-2-7 e qualquer outro caso são Regular a Mau
+    return 'Regular a Mau';
+  }
+
+  // Materiais Silto-Argilosos (Regular a Mau)
+  // A-4, A-5, A-6, A-7
+  return 'Regular a Mau';
 }
 

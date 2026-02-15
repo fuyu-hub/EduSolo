@@ -475,15 +475,15 @@ export default function GranulometriaTeste() {
                         <CardContent className="p-0">
                             <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
                                 {/* USCS */}
-                                <div className="p-4 space-y-3">
-                                    <h4 className="font-semibold text-sm flex items-center gap-2 text-blue-500">
-                                        <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.4)]"></span>
+                                <div className="p-4 flex flex-col">
+                                    <h4 className="font-semibold text-xs flex items-center gap-2 text-blue-500 mb-3 uppercase tracking-wider">
+                                        <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_6px_rgba(59,130,246,0.4)]"></span>
                                         Classificação Unificada (USCS)
                                     </h4>
                                     {results?.classificacao_uscs ? (
-                                        <div className="space-y-2">
-                                            <div className="flex items-baseline gap-3">
-                                                <span className="text-3xl font-black tracking-tight text-blue-600 dark:text-blue-500 tabular-nums leading-none">
+                                        <div className="flex flex-col flex-1">
+                                            <div className="flex items-center gap-3 h-10 mb-1">
+                                                <span className="text-3xl font-black tracking-tight text-blue-600 dark:text-blue-500 tabular-nums leading-tight">
                                                     {results.classificacao_uscs}
                                                 </span>
                                             </div>
@@ -492,40 +492,46 @@ export default function GranulometriaTeste() {
                                             </p>
                                         </div>
                                     ) : (
-                                        <span className="text-muted-foreground text-lg">—</span>
+                                        <div className="flex items-center h-10">
+                                            <span className="text-muted-foreground text-lg">—</span>
+                                        </div>
                                     )}
                                 </div>
 
                                 {/* HRB */}
-                                <div className="p-4 space-y-3">
-                                    <h4 className="font-semibold text-sm flex items-center gap-2 text-orange-500">
-                                        <span className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.4)]"></span>
+                                <div className="p-4 flex flex-col">
+                                    <h4 className="font-semibold text-xs flex items-center gap-2 text-orange-500 mb-3 uppercase tracking-wider">
+                                        <span className="w-2 h-2 rounded-full bg-orange-500 shadow-[0_0_6px_rgba(249,115,22,0.4)]"></span>
                                         Classificação AASHTO (HRB)
                                     </h4>
                                     {results?.classificacao_hrb ? (
-                                        <div className="space-y-2">
-                                            <div className="flex items-baseline gap-3">
-                                                <span className="text-3xl font-black tracking-tight text-foreground tabular-nums leading-none">
+                                        <div className="flex flex-col flex-1">
+                                            <div className="flex items-center gap-3 h-10 mb-1">
+                                                <span className="text-3xl font-black tracking-tight text-foreground tabular-nums leading-tight">
                                                     {results.subgrupo_hrb ? `${results.grupo_hrb}-${results.subgrupo_hrb}` : results.grupo_hrb}
                                                 </span>
                                                 {results.indice_grupo_hrb !== undefined && (
-                                                    <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-lg border border-border/40">
+                                                    <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-0.5 rounded-md border border-border/40">
                                                         <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider opacity-70">IG</span>
-                                                        <span className="text-lg font-bold tabular-nums">{results.indice_grupo_hrb}</span>
+                                                        <span className="text-base font-bold tabular-nums">{results.indice_grupo_hrb}</span>
                                                     </div>
                                                 )}
                                             </div>
-                                            <p className="text-sm text-foreground/70 leading-relaxed">
+                                            <p className="text-sm text-foreground/70 leading-relaxed mb-3">
                                                 {results.descricao_hrb}
                                             </p>
-                                            {results.avaliacao_subleito_hrb && (
-                                                <Badge variant="outline" className="font-normal text-xs text-muted-foreground border-border/30 py-0.5 px-2.5 bg-background/30">
-                                                    Subleito: {results.avaliacao_subleito_hrb}
-                                                </Badge>
-                                            )}
+                                            <div className="mt-auto">
+                                                {results.avaliacao_subleito_hrb && (
+                                                    <Badge variant="outline" className="font-medium text-[10px] uppercase text-muted-foreground border-border/30 py-0 px-2 bg-background/30">
+                                                        Subleito: {results.avaliacao_subleito_hrb}
+                                                    </Badge>
+                                                )}
+                                            </div>
                                         </div>
                                     ) : (
-                                        <span className="text-muted-foreground text-lg">—</span>
+                                        <div className="flex items-center h-10">
+                                            <span className="text-muted-foreground text-lg">—</span>
+                                        </div>
                                     )}
                                 </div>
                             </div>

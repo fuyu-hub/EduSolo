@@ -5,6 +5,35 @@
 
 import type { ClassificacaoUSCSInput, ClassificacaoUSCSOutput } from '../schemas';
 
+const DESCRICOES_USCS: Record<string, string> = {
+  'GW': 'Pedregulho bem graduado e misturas de pedregulho e areia, com poucos ou nenhuns finos siltosos/argilosos.',
+  'GP': 'Pedregulho mal graduado e misturas de pedregulho e areia, com poucos ou nenhuns finos siltosos/argilosos.',
+  'GM': 'Pedregulho siltoso ou misturas de pedregulho, areia e silte, contendo finos de baixa ou nenhuma plasticidade.',
+  'GC': 'Pedregulho argiloso ou misturas de pedregulho, areia e argila, contendo finos de média a alta plasticidade.',
+  'SW': 'Areia bem graduada e misturas de areia com pedregulho, com poucos ou nenhuns finos siltosos/argilosos.',
+  'SP': 'Areia mal graduada e misturas de areia com pedregulho, com poucos ou nenhuns finos siltosos/argilosos.',
+  'SM': 'Areia siltosa ou misturas de areia e silte, contendo finos de baixa ou nenhuma plasticidade.',
+  'SC': 'Areia argilosa ou misturas de areia e argila, contendo finos de média a alta plasticidade.',
+  'ML': 'Silte inorgânico, pó de rocha ou areia fina silto-argilosa. Apresenta baixa a média plasticidade.',
+  'CL': 'Argila inorgânica de baixa a média plasticidade. Pode conter pedregulho ou areia (conhecida como argila magra).',
+  'OL': 'Silte orgânico e argila siltosa orgânica de baixa plasticidade, geralmente apresentando coloração escura.',
+  'MH': 'Silte inorgânico altamente compressível, solos finos micáceos ou diatomáceos (conhecido como silte elástico).',
+  'CH': 'Argila inorgânica de alta plasticidade e alta compressibilidade. Fortemente coesiva (conhecida como argila gorda).',
+  'OH': 'Argila orgânica de média a alta plasticidade ou silte orgânico altamente compressível e de cor escura.',
+  'Pt': 'Turfa e outros solos altamente orgânicos. Caracterizados por cor muito escura, odor forte e restos vegetais.',
+  'GW-GM': 'Pedregulho bem graduado com silte. Apresenta entre 5% e 12% de finos de baixa ou nenhuma plasticidade.',
+  'GW-GC': 'Pedregulho bem graduado com argila. Apresenta entre 5% e 12% de finos com características plásticas.',
+  'GP-GM': 'Pedregulho mal graduado com silte. Apresenta entre 5% e 12% de finos de baixa ou nenhuma plasticidade.',
+  'GP-GC': 'Pedregulho mal graduado com argila. Apresenta entre 5% e 12% de finos com características plásticas.',
+  'SW-SM': 'Areia bem graduada com silte. Apresenta entre 5% e 12% de finos de baixa ou nenhuma plasticidade.',
+  'SW-SC': 'Areia bem graduada com argila. Apresenta entre 5% e 12% de finos com características plásticas.',
+  'SP-SM': 'Areia mal graduada com silte. Apresenta entre 5% e 12% de finos de baixa ou nenhuma plasticidade.',
+  'SP-SC': 'Areia mal graduada com argila. Apresenta entre 5% e 12% de finos com características plásticas.',
+  'GC-GM': 'Pedregulho argilo-siltoso. Os finos apresentam características intermediárias de silte e argila na carta de plasticidade.',
+  'SC-SM': 'Areia argilo-siltosa. Os finos apresentam características intermediárias de silte e argila na carta de plasticidade.',
+  'CL-ML': 'Argila siltosa inorgânica. Apresenta baixa plasticidade, necessitando análise detalhada.',
+};
+
 export function classificarUSCS(dados: ClassificacaoUSCSInput): ClassificacaoUSCSOutput {
   try {
     // Calcular porcentagens
@@ -19,22 +48,28 @@ export function classificarUSCS(dados: ClassificacaoUSCSInput): ClassificacaoUSC
       };
     }
 
+    let result: ClassificacaoUSCSOutput;
+
     // Verificar solo altamente orgânico (Turfa)
     if (dados.is_altamente_organico) {
-      return {
+      result = {
         classificacao: 'Pt',
-        descricao: 'Turfa e outros solos altamente orgânicos',
+        descricao: DESCRICOES_USCS['Pt'],
       };
-    }
-
-    // Decisão principal: Solo grosso (< 50% finos) ou fino (>= 50% finos)
-    if (finos < 50.0) {
+    } else if (finos < 50.0) {
       // SOLO GROSSO
-      return classificarSoloGrosso(pedregulho, areia, finos, dados);
+      result = classificarSoloGrosso(pedregulho, areia, finos, dados);
     } else {
       // SOLO FINO
-      return classificarSoloFino(dados);
+      result = classificarSoloFino(dados);
     }
+
+    // Sobrescrever descrição se existir no mapa de descrições padronizadas
+    if (result.classificacao && DESCRICOES_USCS[result.classificacao]) {
+      result.descricao = DESCRICOES_USCS[result.classificacao];
+    }
+
+    return result;
   } catch (error) {
     return {
       erro: error instanceof Error ? error.message : 'Erro na classificação',
