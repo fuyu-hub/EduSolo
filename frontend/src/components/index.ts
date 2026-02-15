@@ -9,7 +9,7 @@ export * from './layout/PrintHeader';
 // Dialogs
 export * from './dialogs/SaveDialog';
 export * from './dialogs/ExportPDFDialog';
-export * from './dialogs/WelcomeDialog';
+
 
 // Shared
 export * from './shared/ErrorBoundary';
