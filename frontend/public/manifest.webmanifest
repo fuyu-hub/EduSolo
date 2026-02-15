@@ -1,0 +1,15 @@
+{
+    "name": "EduSolos",
+    "short_name": "EduSolos",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#1e293b",
+    "theme_color": "#1e293b",
+    "icons": [
+        {
+            "src": "/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml"
+        }
+    ]
+}

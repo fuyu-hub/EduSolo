@@ -5,14 +5,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="google-site-verification" content="orCboelWL2yehFHMq9raNP4qKZ1Bz9RSDylZaaM8F_Q" />
-  <title>EduSolos - Ferramentas de Mecânica dos Solos</title>
+  <title>EduSolos</title>
+  <meta name="apple-mobile-web-app-title" content="EduSolos" />
+  <meta name="theme-color" content="#1e293b" />
   <meta name="description"
     content="Plataforma completa para análise de Mecânica dos Solos. Ferramentas interativas para Índices Físicos, Granulometria, Compactação e Tensões Geostáticas." />
   <meta name="author" content="EduSolos" />
   <meta name="keywords"
     content="mecânica dos solos, geotecnia, engenharia civil, análise geotécnica, índices físicos, granulometria, compactação" />
 
-  <!-- Favicon -->
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="apple-touch-icon" href="/favicon.svg" />
@@ -22,14 +23,15 @@
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="EduSolos - Ferramentas de Mecânica dos Solos" />
+  <meta property="og:site_name" content="EduSolos" />
+  <meta property="og:title" content="EduSolos" />
   <meta property="og:description"
     content="Plataforma completa para análise de Mecânica dos Solos. Ferramentas interativas para Índices Físicos, Granulometria, Compactação e Tensões Geostáticas." />
   <meta property="og:image" content="/favicon.svg" />
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="EduSolos - Ferramentas de Mecânica dos Solos" />
+  <meta name="twitter:title" content="EduSolos" />
   <meta name="twitter:description"
     content="Plataforma completa para análise de Mecânica dos Solos. Ferramentas interativas para Índices Físicos, Granulometria, Compactação e Tensões Geostáticas." />
   <meta name="twitter:image" content="/favicon.svg" />
@@ -42,6 +44,19 @@
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
+
+  <!-- Structured Data for SEO -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "EduSolos",
+      "url": "https://edusolos.pages.dev/",
+      "logo": "https://edusolos.pages.dev/favicon.svg",
+      "image": "https://edusolos.pages.dev/favicon.svg",
+      "description": "Plataforma completa para análise de Mecânica dos Solos."
+    }
+  </script>
 </body>
 
 </html>
