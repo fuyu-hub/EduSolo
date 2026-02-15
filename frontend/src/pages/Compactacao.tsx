@@ -1,5 +1,6 @@
 // frontend/src/pages/Compactacao.tsx
 import { useState, useEffect, useRef } from "react";
+import { Helmet } from 'react-helmet-async';
 import { useNavigate } from "react-router-dom";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { calcularCompactacao } from "@/lib/calculations/compactacao";
@@ -626,6 +627,10 @@ function CompactacaoDesktop() {
 
   return (
     <div className={UI_STANDARDS.pageContainer}>
+      <Helmet>
+        <title>Ensaio de Compactação (Proctor) | EduSolos</title>
+        <meta name="description" content="Determine a curva de compactação, umidade ótima e peso específico seco máximo conforme a norma Proctor. Ferramenta interativa de geotecnia." />
+      </Helmet>
       <PrintHeader moduleTitle="Compactação (Proctor)" moduleName="compactacao" />
 
       {/* Top Header Section */}

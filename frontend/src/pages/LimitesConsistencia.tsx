@@ -1,5 +1,6 @@
 // frontend/src/pages/LimitesConsistencia.tsx
 import { useState, useEffect, useRef } from "react";
+import { Helmet } from 'react-helmet-async';
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { calcularLimitesConsistencia } from "@/lib/calculations/limites-consistencia";
@@ -117,7 +118,7 @@ interface PontoCurva {
   y: number; // umidade (%)
 }
 
-interface LimitesConsistenciaOutput { ll: number | null; lp: number | null; ip: number | null; ic: number | null; classificacao_plasticidade: string | null; classificacao_consistencia: string | null; atividade_argila: number | null; classificacao_atividade: string | null; pontos_grafico_ll?: PontoCurva[] | null; erro?: string | null; }
+interface LimitesConsistenciaOutput { ll?: number | null; lp?: number | null; ip?: number | null; ic?: number | null; classificacao_plasticidade?: string | null; classificacao_consistencia?: string | null; atividade_argila?: number | null; classificacao_atividade?: string | null; pontos_grafico_ll?: PontoCurva[] | null; erro?: string | null; }
 type Results = LimitesConsistenciaOutput;
 
 // --- Tooltips (mantidos) ---
@@ -491,7 +492,7 @@ function LimitesConsistenciaDesktop() {
       const resultado = calcularLimitesConsistencia(apiInput);
       if (resultado.erro) { setApiError(resultado.erro); notify.error({ title: "Erro no Cálculo", description: resultado.erro }); }
       else {
-        setResults(resultado);
+        setResults(resultado as any);
         notify.success({ title: "Sucesso", description: "Cálculo dos limites de consistência realizado." });
       }
     } catch (err) { let errorMessage = "Erro ao calcular limites de consistência."; if (err instanceof Error) { errorMessage = err.message; } setApiError(errorMessage); notify.error({ title: "Erro no Cálculo", description: errorMessage }); }
@@ -504,6 +505,10 @@ function LimitesConsistenciaDesktop() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Helmet>
+        <title>Limites de Consistência (LL e LP) | EduSolos</title>
+        <meta name="description" content="Calcule o Limite de Liquidez (LL), Limite de Plasticidade (LP) e obtenha a classificação de plasticidade de solos conforme normas ABNT." />
+      </Helmet>
       <PrintHeader moduleTitle="Limites de Consistência" moduleName="limites-consistencia" />
 
       {/* Header */}

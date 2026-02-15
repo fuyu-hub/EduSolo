@@ -1,5 +1,6 @@
 // frontend/src/pages/RecalqueAdensamento.tsx
 import { useState, useEffect, useMemo } from "react";
+import { Helmet } from 'react-helmet-async';
 import { useForm, useFieldArray } from "react-hook-form";
 import { calcularRecalqueAdensamento } from "@/lib/calculations/recalque-adensamento";
 import { calcularTensoesGeostaticas } from "@/modules/tensoes/calculations";
@@ -1175,6 +1176,10 @@ export default function RecalqueAdensamento() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Helmet>
+        <title>Recalque por Adensamento | EduSolos</title>
+        <meta name="description" content="Calcule o recalque final e a evolução do recalque com o tempo em camadas de argila. Ferramenta completa baseada na Teoria de Adensamento de Terzaghi." />
+      </Helmet>
       <PrintHeader moduleTitle="Recalque por Adensamento" moduleName="recalque-adensamento" />
 
       {/* Header */}

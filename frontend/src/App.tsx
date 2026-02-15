@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
+import { HelmetProvider } from "react-helmet-async";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -33,9 +34,9 @@ const Newmark = lazy(() => import("./pages/acrescimo-tensoes/Newmark"));
 
 // Páginas auxiliares (lazy loading)
 const Educacional = lazy(() => import("./pages/Educacional"));
-// const Settings = lazy(() => import("./pages/Settings"));
+const Settings = lazy(() => import("./pages/Settings"));
 const About = lazy(() => import("./pages/About"));
-// const PlanosFuturos = lazy(() => import("./pages/PlanosFuturos"));
+const PlanosFuturos = lazy(() => import("./pages/PlanosFuturos"));
 const Manual = lazy(() => import("./pages/Manual"));
 const Salvos = lazy(() => import("./pages/Salvos"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
@@ -311,7 +312,7 @@ const AppContent = () => {
             </Layout>
           }
         />
-        {/* <Route
+        <Route
           path="/planos-futuros"
           element={
             <Layout>
@@ -320,7 +321,17 @@ const AppContent = () => {
               </Suspense>
             </Layout>
           }
-        /> */}
+        />
+        <Route
+          path="/settings"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Settings />
+              </Suspense>
+            </Layout>
+          }
+        />
         <Route
           path="/manual"
           element={
@@ -363,16 +374,18 @@ const AppContent = () => {
 
 const App = () => (
   <ErrorBoundary>
-    <SettingsProvider>
-      <ThemeProvider>
-        <TooltipProvider>
-          <Sonner />
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
-        </TooltipProvider>
-      </ThemeProvider>
-    </SettingsProvider>
+    <HelmetProvider>
+      <SettingsProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <Sonner />
+            <BrowserRouter>
+              <AppContent />
+            </BrowserRouter>
+          </TooltipProvider>
+        </ThemeProvider>
+      </SettingsProvider>
+    </HelmetProvider>
   </ErrorBoundary>
 );
 

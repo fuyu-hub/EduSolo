@@ -1,4 +1,5 @@
 import { Info, User, GraduationCap, Mail, Code, Package, Rocket, BookOpen, Heart, Award, Target } from "lucide-react";
+import { Helmet } from 'react-helmet-async';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,10 @@ import { Button } from "@/components/ui/button";
 export default function About() {
   return (
     <div className="space-y-6 md:space-y-8 max-w-4xl mx-auto px-4 md:px-0">
+      <Helmet>
+        <title>Sobre o Projeto | EduSolos</title>
+        <meta name="description" content="Conheça o EduSolos, uma plataforma educacional para análise e aprendizado em Mecânica dos Solos desenvolvida por Samuel Sousa Santos." />
+      </Helmet>
       {/* Header */}
       <div className="space-y-2">
         <div className="flex items-center gap-3">

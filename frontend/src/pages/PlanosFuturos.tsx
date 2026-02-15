@@ -1,4 +1,5 @@
 import { Rocket, CheckCircle2, Circle, Clock, Sparkles, Target, Zap, GitBranch } from "lucide-react";
+import { Helmet } from 'react-helmet-async';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -6,6 +7,10 @@ import { Progress } from "@/components/ui/progress";
 export default function PlanosFuturos() {
   return (
     <div className="space-y-6 md:space-y-8 max-w-5xl mx-auto px-4 md:px-0">
+      <Helmet>
+        <title>Planos Futuros e Roadmap | EduSolos</title>
+        <meta name="description" content="Confira o roadmap do EduSolos. Veja os módulos em desenvolvimento e as funcionalidades planejadas para tornar a geotecnia ainda mais acessível." />
+      </Helmet>
       {/* Header */}
       <div className="space-y-2">
         <div className="flex items-center gap-3">

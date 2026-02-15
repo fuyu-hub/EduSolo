@@ -1,5 +1,6 @@
 // frontend/src/modules/caracterizacao/index.tsx
 import { useState, useRef, useEffect } from "react";
+import { Helmet } from 'react-helmet-async';
 import {
     Beaker, Calculator, RefreshCw, Trash2, Plus, GraduationCap, Download,
     Droplet, AlertCircle, Info, BarChart3, LayoutGrid,
@@ -437,6 +438,10 @@ export default function CaracterizacaoPage() {
 
     return (
         <div className={UI_STANDARDS.pageContainer}>
+            <Helmet>
+                <title>Índices Físicos e Limites de Consistência | EduSolos</title>
+                <meta name="description" content="Análise completa da caracterização física do solo: índices físicos, limites de liquidez (LL) e plasticidade (LP), e diagrama de fases interativo." />
+            </Helmet>
             <PrintHeader moduleTitle="Índices Físicos e Limites de Consistência" moduleName="caracterizacao" />
 
             {/* Top Header Section */}

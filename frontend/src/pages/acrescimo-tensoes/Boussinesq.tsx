@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Helmet } from 'react-helmet-async';
 import BoussinesqAnalise from "@/components/acrescimo-tensoes/BoussinesqAnalise";
 import { useNavigate } from "react-router-dom";
 
@@ -26,6 +27,10 @@ function BoussinesqPageDesktop() {
 export default function BoussinesqPage() {
   return (
     <MobileModuleWrapper mobileVersion={<BoussinesqMobile />}>
+      <Helmet>
+        <title>Acréscimo de Tensões - Boussinesq | EduSolos</title>
+        <meta name="description" content="Calcule o acréscimo de tensões no solo para carga pontual usando a teoria de Boussinesq. Visualização interativa 360° e resultados precisos." />
+      </Helmet>
       <BoussinesqPageDesktop />
     </MobileModuleWrapper>
   );

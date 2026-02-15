@@ -1,4 +1,5 @@
 import { Beaker, Droplet, Database, Mountain, Target, MoveDown, Scissors, ArrowRight, BookOpen } from "lucide-react";
+import { Helmet } from 'react-helmet-async';
 import { CompactacaoIcon } from "@/components/icons/CompactacaoIcon";
 import { memo } from "react";
 import { Card } from "@/components/ui/card";
@@ -147,6 +148,10 @@ ModuleCard.displayName = "ModuleCard";
 export default function Dashboard() {
   return (
     <div className="space-y-4 sm:space-y-5 max-w-7xl mx-auto" style={{ zoom: 1.1 }}>
+      <Helmet>
+        <title>EduSolos - Ferramentas de Mecânica dos Solos e Geotecnia</title>
+        <meta name="description" content="Plataforma interativa para cálculos de Geotecnia: Granulometria, Compactação, Limites de Atterberg, Tensões Geostáticas e mais. Ideal para estudantes e engenheiros." />
+      </Helmet>
       {/* Banner compacto - 30-40% menor */}
       <div className="bg-card border border-border/50 p-4 sm:p-5 rounded-xl shadow-sm">
         <div className="space-y-1">

@@ -27,9 +27,9 @@ const menuItems = [
     items: [
       { icon: FileText, label: "Relatórios", path: "/relatorios", tourId: "" },
       { icon: BookOpen, label: "Material Educacional", path: "/educacional", tourId: "" },
-      // { icon: Settings, label: "Configurações", path: "/settings", tourId: "settings-menu" },
+      { icon: Settings, label: "Configurações", path: "/settings", tourId: "settings-menu" },
       { icon: Info, label: "Sobre", path: "/about", tourId: "" },
-      // { icon: Rocket, label: "Planos Futuros", path: "/planos-futuros", tourId: "" },
+      { icon: Rocket, label: "Planos Futuros", path: "/planos-futuros", tourId: "" },
     ],
   },
 ];

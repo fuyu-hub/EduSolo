@@ -1,4 +1,5 @@
 import { Settings as SettingsIcon, Check, Calculator, Monitor, Eye, Database, Download, Upload, Trash2, RotateCcw, Zap, HelpCircle, Printer } from "lucide-react";
+import { Helmet } from 'react-helmet-async';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -787,6 +788,9 @@ function SettingsDesktop() {
 export default function Settings() {
   return (
     <MobileModuleWrapper mobileVersion={<SettingsMobile />}>
+      <Helmet>
+        <title>Configurações | EduSolos</title>
+      </Helmet>
       <SettingsDesktop />
     </MobileModuleWrapper>
   );

@@ -1,5 +1,6 @@
 // frontend/src/pages/TensoesGeostaticas.tsx
 import { useState, useEffect } from "react";
+import { Helmet } from 'react-helmet-async';
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { calcularTensoesGeostaticas } from "@/lib/calculations/tensoes-geostaticas";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -666,6 +667,10 @@ function TensoesGeostaticasDesktop() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Helmet>
+        <title>Tensões Geostáticas | EduSolos</title>
+        <meta name="description" content="Calcule o perfil de tensões totais, efetivas e pressão neutra em profundidade. Ferramenta para análise de tensões geostáticas no solo." />
+      </Helmet>
       <PrintHeader moduleTitle="Tensões Geostáticas" moduleName="tensoes-geostaticas" />
 
       {/* Header */}

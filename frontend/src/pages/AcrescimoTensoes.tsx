@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { Helmet } from 'react-helmet-async';
 import { Target, Layers, Circle, Square, MapPin, GraduationCap, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,10 @@ function AcrescimoTensoesDesktop() {
 
   return (
     <div className="space-y-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Helmet>
+        <title>Acréscimo de Tensões | EduSolos</title>
+        <meta name="description" content="Determine a distribuição de tensões no solo para cargas pontuais, em faixa, circulares e retangulares utilizando os métodos de Boussinesq, Carothers, Love e Newmark." />
+      </Helmet>
       <PrintHeader moduleTitle="Acréscimo de Tensões" moduleName="acrescimo-tensoes" />
 
       {/* Header */}

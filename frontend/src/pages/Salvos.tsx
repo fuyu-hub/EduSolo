@@ -1,4 +1,5 @@
 import { Save, Trash2, FolderOpen, Calendar } from "lucide-react";
+import { Helmet } from 'react-helmet-async';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
@@ -41,6 +42,9 @@ export default function Salvos() {
   if (calculations.length === 0) {
     return (
       <div className="space-y-4 max-w-4xl mx-auto">
+        <Helmet>
+          <title>Cálculos Salvos | EduSolos</title>
+        </Helmet>
         {/* Header */}
         <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 rounded-xl border border-primary/20">
           <div className="flex items-center gap-3 mb-2">
@@ -67,6 +71,9 @@ export default function Salvos() {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
+      <Helmet>
+        <title>Cálculos Salvos | EduSolos</title>
+      </Helmet>
       {/* Header */}
       <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 rounded-xl border border-primary/20">
         <div className="flex items-center gap-3 mb-2">

@@ -1,9 +1,14 @@
 import { BookOpen } from "lucide-react";
+import { Helmet } from 'react-helmet-async';
 import { Card } from "@/components/ui/card";
 
 export default function Educacional() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      <Helmet>
+        <title>Material Educacional | EduSolos</title>
+        <meta name="description" content="Explore conceitos teóricos e fundamentos da Mecânica dos Solos. Biblioteca educacional em desenvolvimento para estudantes e engenheiros." />
+      </Helmet>
       <div className="flex items-center gap-3">
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center shadow-lg">
           <BookOpen className="w-6 h-6 text-white" />

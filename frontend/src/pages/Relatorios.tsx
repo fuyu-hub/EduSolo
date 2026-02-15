@@ -1,4 +1,5 @@
 import { useRecentReports } from '@/hooks/useRecentReports';
+import { Helmet } from 'react-helmet-async';
 import { useIsMobile } from '@/hooks/use-mobile';
 import RelatoriosMobile from './mobile/RelatoriosMobile';
 import { Button } from '@/components/ui/button';
@@ -104,6 +105,9 @@ export default function Relatorios() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/5 p-6">
+      <Helmet>
+        <title>Relatórios Gerados | EduSolos</title>
+      </Helmet>
       <div className="max-w-4xl mx-auto">
         {/* Header e Filtros */}
         <div className="mb-6">

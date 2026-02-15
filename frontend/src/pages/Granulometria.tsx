@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from 'react-helmet-async';
 import { Database, Filter, Info, Calculator as CalcIcon, Plus, Trash2, Table as TableIcon, TrendingUp, GraduationCap, Activity, BarChart3, Columns, PanelTop } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { calcularGranulometria } from "@/lib/calculations/granulometria";
@@ -784,8 +785,13 @@ function GranulometriaDesktop() {
     }
   };
 
+
   return (
     <div className="space-y-3 sm:space-y-4 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Helmet>
+        <title>Análise de Granulometria | EduSolos</title>
+        <meta name="description" content="Faça o cálculo e a curva granulométrica de solos de forma interativa e online. Obtenha coeficientes de uniformidade e curvatura." />
+      </Helmet>
       <PrintHeader moduleTitle="Granulometria e Classificação" moduleName="granulometria" />
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2 animate-in fade-in slide-in-from-left-4 duration-500" data-tour="module-header">

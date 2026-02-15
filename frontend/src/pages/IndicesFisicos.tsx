@@ -1,5 +1,6 @@
 // frontend/src/pages/IndicesFisicos.tsx
 import { useState, useMemo, useEffect } from "react";
+import { Helmet } from 'react-helmet-async';
 import { Beaker, Calculator, Info, BarChart3, ArrowLeft, ArrowRight, Save, FolderOpen, Download, Printer, FileText, AlertCircle, GraduationCap, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -772,9 +773,14 @@ function IndicesFisicosDesktop() {
   }, [results, settings]);
 
 
+
   return (
     <TooltipProvider>
       <div className="space-y-6 max-w-7xl mx-auto">
+        <Helmet>
+          <title>Cálculo de Índices Físicos do Solo | EduSolos</title>
+          <meta name="description" content="Calcule índices físicos do solo: porosidade, índice de vazios, grau de saturação, pesos específicos e muito mais. Ferramenta educativa de mecânica dos solos." />
+        </Helmet>
         <PrintHeader moduleTitle="Índices Físicos" moduleName="indices-fisicos" />
 
         {/* Header */}

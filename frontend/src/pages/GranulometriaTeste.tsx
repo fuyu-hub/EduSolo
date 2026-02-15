@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from "react";
+import { Helmet } from 'react-helmet-async';
 import { Database, Info, Activity, AlertCircle, Droplet } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -212,6 +213,10 @@ export default function GranulometriaTeste() {
 
     return (
         <div className={UI_STANDARDS.pageContainer}>
+            <Helmet>
+                <title>Classificação Mecânica dos Solos | EduSolos</title>
+                <meta name="description" content="Classifique solos pelos sistemas USCS e AASHTO (HRB) informando apenas as frações granulométricas e limites de consistência. Simples e rápido." />
+            </Helmet>
             <PrintHeader moduleTitle="Classificação Granulométrica" moduleName="granulometria" />
 
             <div className={UI_STANDARDS.header.container}>

@@ -1,4 +1,5 @@
 import { BookOpen, CheckCircle2, AlertTriangle, HelpCircle, Target, Zap, Info, FileText, Settings, Download, Save, Rocket, Layers, Calculator } from "lucide-react";
+import { Helmet } from 'react-helmet-async';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -6,6 +7,10 @@ import { Separator } from "@/components/ui/separator";
 export default function Manual() {
   return (
     <div className="space-y-6 md:space-y-8 max-w-6xl mx-auto px-4 md:px-0 pb-8">
+      <Helmet>
+        <title>Manual do Usuário | EduSolos</title>
+        <meta name="description" content="Acesse o manual completo do EduSolos. Aprenda a utilizar os módulos de índices físicos, limites de consistência, granulometria, compactação e recalque." />
+      </Helmet>
       {/* Header */}
       <div className="space-y-3">
         <div className="flex items-center gap-3">
