@@ -163,13 +163,22 @@ export default function CaracterizacaoPage() {
                 massa_umida_recipiente: parseNum(p.massaUmidaRecipiente)!,
                 massa_seca_recipiente: parseNum(p.massaSecaRecipiente)!,
                 massa_recipiente: parseNum(p.massaRecipiente)!
-            })).filter(p => !isNaN(p.num_golpes) && !isNaN(p.massa_umida_recipiente));
+            })).filter(p =>
+                !isNaN(p.num_golpes) &&
+                !isNaN(p.massa_umida_recipiente) &&
+                !isNaN(p.massa_seca_recipiente) &&
+                !isNaN(p.massa_recipiente)
+            );
 
             const pontosLP = globalLimites.pontosLP.map(p => ({
                 massa_umida_recipiente: parseNum(p.massaUmidaRecipiente)!,
                 massa_seca_recipiente: parseNum(p.massaSecaRecipiente)!,
                 massa_recipiente: parseNum(p.massaRecipiente)!
-            })).filter(p => !isNaN(p.massa_umida_recipiente));
+            })).filter(p =>
+                !isNaN(p.massa_umida_recipiente) &&
+                !isNaN(p.massa_seca_recipiente) &&
+                !isNaN(p.massa_recipiente)
+            );
 
             if (pontosLL.length >= 2 || pontosLP.length >= 1) {
                 resLimites = calcularLimitesConsistencia({
