@@ -299,7 +299,7 @@ export default function CaracterizacaoPage() {
 
         // 2. Set Limits (Global) - calcular umidade a partir das massas dos exemplos
         const calcW = (mbu: string, mbs: string, tara: string): string => {
-            const mu = parseFloat(mbu), ms = parseFloat(mbs), t = parseFloat(tara);
+            const mu = parseFloat(mbu.replace(',', '.')), ms = parseFloat(mbs.replace(',', '.')), t = parseFloat(tara.replace(',', '.'));
             if (isNaN(mu) || isNaN(ms) || isNaN(t) || ms <= t) return "";
             const sol = ms - t;
             return sol > 0 ? (((mu - ms) / sol) * 100).toFixed(1) : "";
@@ -522,9 +522,9 @@ const EntradaDados = () => {
     // Handlers para atualizar pontos LL
     // Função auxiliar para calcular umidade a partir de massas
     const calcularW = (mbu: string, mbs: string, tara: string): string => {
-        const mu = parseFloat(mbu);
-        const ms = parseFloat(mbs);
-        const t = parseFloat(tara);
+        const mu = parseFloat(mbu.replace(',', '.'));
+        const ms = parseFloat(mbs.replace(',', '.'));
+        const t = parseFloat(tara.replace(',', '.'));
         if (isNaN(mu) || isNaN(ms) || isNaN(t) || ms <= t) return "";
         const massaAgua = mu - ms;
         const massaSolidos = ms - t;
@@ -534,8 +534,8 @@ const EntradaDados = () => {
 
     // Função auxiliar para calcular MBS a partir de umidade
     const calcularMBS = (mbu: string, tara: string, w: string): string => {
-        const mu = parseFloat(mbu);
-        const t = parseFloat(tara);
+        const mu = parseFloat(mbu.replace(',', '.'));
+        const t = parseFloat(tara.replace(',', '.'));
         const wVal = parseFloat(w.replace(',', '.'));
         if (isNaN(mu) || isNaN(t) || isNaN(wVal) || wVal <= 0) return "";
         const wDec = wVal / 100;
@@ -619,12 +619,12 @@ const EntradaDados = () => {
 
     // Converter umidades de string para number para validações
     const umidadesLP = limites.pontosLP.map(p => {
-        const w = parseFloat(p.umidade);
+        const w = parseFloat(p.umidade.toString().replace(',', '.'));
         return isNaN(w) ? null : w;
     });
 
     const umidadesLL = limites.pontosLL.map(p => {
-        const w = parseFloat(p.umidade);
+        const w = parseFloat(p.umidade.toString().replace(',', '.'));
         return isNaN(w) ? null : w;
     });
 

@@ -46,7 +46,7 @@ import { UI_STANDARDS } from "@/lib/ui-standards";
 // Schema de validação
 const pontoCompactacaoSchema = z.object({
   id: z.string(),
-  pesoAmostaCilindro: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Deve ser maior que 0" }),
+  pesoAmostaCilindro: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val.replace(',', '.'))) && parseFloat(val.replace(',', '.')) > 0, { message: "Deve ser maior que 0" }),
   // Campos para medições (opcionais - dependem do modo)
   pesoBrutoUmido: z.string().optional(),
   pesoBrutoSeco: z.string().optional(),
@@ -56,12 +56,12 @@ const pontoCompactacaoSchema = z.object({
 });
 
 const formSchema = z.object({
-  volumeCilindro: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Volume deve ser maior que 0" }),
-  pesoCilindro: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val)) && parseFloat(val) >= 0, { message: "Peso deve ser maior ou igual a 0" }),
-  Gs: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val)) && parseFloat(val) > 0), {
+  volumeCilindro: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val.replace(',', '.'))) && parseFloat(val.replace(',', '.')) > 0, { message: "Volume deve ser maior que 0" }),
+  pesoCilindro: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val.replace(',', '.'))) && parseFloat(val.replace(',', '.')) >= 0, { message: "Peso deve ser maior ou igual a 0" }),
+  Gs: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val.replace(',', '.'))) && parseFloat(val.replace(',', '.')) > 0), {
     message: "Gs deve ser maior que 0 (ou deixe vazio)",
   }),
-  pesoEspecificoAgua: z.string().refine(val => !isNaN(parseFloat(val)) && parseFloat(val) > 0, { message: "Peso específico da água deve ser maior que 0" }),
+  pesoEspecificoAgua: z.string().refine(val => !isNaN(parseFloat(val.replace(',', '.'))) && parseFloat(val.replace(',', '.')) > 0, { message: "Peso específico da água deve ser maior que 0" }),
   modoEntradaUmidade: z.enum(["medicoes", "direta"]).default("direta"),
   pontos: z.array(pontoCompactacaoSchema).min(3, { message: "São necessários no mínimo 3 pontos de ensaio" }),
 });
@@ -163,9 +163,9 @@ function CompactacaoDesktop() {
   // Cálculo: Pesos -> Umidade (Modo 'medicoes')
   useEffect(() => {
     if (modoEntrada === "medicoes") {
-      const pbu = parseFloat(pesoBrutoUmido || "0");
-      const pbs = parseFloat(pesoBrutoSeco || "0");
-      const t = parseFloat(tara || "0");
+      const pbu = parseFloat((pesoBrutoUmido || "0").replace(',', '.'));
+      const pbs = parseFloat((pesoBrutoSeco || "0").replace(',', '.'));
+      const t = parseFloat((tara || "0").replace(',', '.'));
 
       if (pbu > 0 && pbs > 0 && t >= 0 && pbs > t && pbu >= pbs) {
         const massaAgua = pbu - pbs;
@@ -186,9 +186,9 @@ function CompactacaoDesktop() {
   // Se o usuário altera a umidade diretamente, ajustamos o MBS mantendo MBU e Tara fixos
   useEffect(() => {
     if (modoEntrada === "direta") {
-      const w = parseFloat(umidadeDireta || "0");
-      const pbu = parseFloat(pesoBrutoUmido || "0"); // Mantém MBU fixo
-      const t = parseFloat(tara || "0");
+      const w = parseFloat((umidadeDireta || "0").replace(',', '.'));
+      const pbu = parseFloat((pesoBrutoUmido || "0").replace(',', '.')); // Mantém MBU fixo
+      const t = parseFloat((tara || "0").replace(',', '.'));
 
       if (w >= 0 && pbu > 0 && t >= 0 && pbu > t) {
         // Fórmula derivada: MBS = (MBU + W*Tara) / (1 + W), onde W = w/100
@@ -379,9 +379,9 @@ function CompactacaoDesktop() {
     // Prepara os pontos calculando a umidade direta para cada um
     const pontosComUmidade = example.pontos.map(p => {
       let umidadeDireta = "";
-      const pbu = parseFloat(p.pesoBrutoUmido || "0");
-      const pbs = parseFloat(p.pesoBrutoSeco || "0");
-      const t = parseFloat(p.tara || "0");
+      const pbu = parseFloat((p.pesoBrutoUmido || "0").replace(',', '.'));
+      const pbs = parseFloat((p.pesoBrutoSeco || "0").replace(',', '.'));
+      const t = parseFloat((p.tara || "0").replace(',', '.'));
 
       if (pbu > 0 && pbs > 0 && t >= 0 && pbs > t) {
         const w = ((pbu - pbs) / (pbs - t)) * 100;
@@ -652,9 +652,9 @@ function CompactacaoDesktop() {
 
     let apiInput: CompactacaoInputAPI;
     try {
-      const volumeCil = parseFloat(data.volumeCilindro);
-      const pesoCil = parseFloat(data.pesoCilindro);
-      const pesoEspAgua = parseFloat(data.pesoEspecificoAgua);
+      const volumeCil = parseFloat(data.volumeCilindro.replace(',', '.'));
+      const pesoCil = parseFloat(data.pesoCilindro.replace(',', '.'));
+      const pesoEspAgua = parseFloat(data.pesoEspecificoAgua.replace(',', '.'));
 
       // Verificação básica de números válidos nos campos de configuração
       if (isNaN(volumeCil) || volumeCil <= 0 || isNaN(pesoCil) || pesoCil < 0 || isNaN(pesoEspAgua) || pesoEspAgua <= 0) {
@@ -670,17 +670,17 @@ function CompactacaoDesktop() {
       const modo = data.modoEntradaUmidade;
       const pontosValidos = data.pontos.length >= 3 && data.pontos.every(p => {
         // Peso Amostra+Cilindro é sempre obrigatório
-        const temPesoAmostra = p.pesoAmostaCilindro && !isNaN(parseFloat(p.pesoAmostaCilindro));
+        const temPesoAmostra = p.pesoAmostaCilindro && !isNaN(parseFloat(p.pesoAmostaCilindro.replace(',', '.')));
 
         if (modo === "direta") {
           // Modo direta: precisa de umidadeDireta
-          return temPesoAmostra && p.umidadeDireta && !isNaN(parseFloat(p.umidadeDireta));
+          return temPesoAmostra && p.umidadeDireta && !isNaN(parseFloat(p.umidadeDireta.replace(',', '.')));
         } else {
           // Modo medições: precisa dos 3 pesos
           return temPesoAmostra &&
-            p.pesoBrutoUmido && !isNaN(parseFloat(p.pesoBrutoUmido)) &&
-            p.pesoBrutoSeco && !isNaN(parseFloat(p.pesoBrutoSeco)) &&
-            p.tara && !isNaN(parseFloat(p.tara));
+            p.pesoBrutoUmido && !isNaN(parseFloat(p.pesoBrutoUmido.replace(',', '.'))) &&
+            p.pesoBrutoSeco && !isNaN(parseFloat(p.pesoBrutoSeco.replace(',', '.'))) &&
+            p.tara && !isNaN(parseFloat(p.tara.replace(',', '.')));
         }
       });
 
@@ -700,7 +700,7 @@ function CompactacaoDesktop() {
       apiInput = {
         pontos_ensaio: data.pontos.map(p => {
           const base = {
-            massa_umida_total: parseFloat(p.pesoAmostaCilindro),
+            massa_umida_total: parseFloat(p.pesoAmostaCilindro.replace(',', '.')),
             massa_molde: pesoCil,
             volume_molde: volumeCil,
           };
@@ -708,18 +708,18 @@ function CompactacaoDesktop() {
           if (modo === "direta") {
             return {
               ...base,
-              umidade_direta: parseFloat(p.umidadeDireta!),
+              umidade_direta: parseFloat(p.umidadeDireta!.replace(',', '.')),
             };
           } else {
             return {
               ...base,
-              massa_umida_recipiente_w: parseFloat(p.pesoBrutoUmido!),
-              massa_seca_recipiente_w: parseFloat(p.pesoBrutoSeco!),
-              massa_recipiente_w: parseFloat(p.tara!),
+              massa_umida_recipiente_w: parseFloat(p.pesoBrutoUmido!.replace(',', '.')),
+              massa_seca_recipiente_w: parseFloat(p.pesoBrutoSeco!.replace(',', '.')),
+              massa_recipiente_w: parseFloat(p.tara!.replace(',', '.')),
             };
           }
         }),
-        Gs: (data.Gs && data.Gs !== "") ? parseFloat(data.Gs) : undefined,
+        Gs: (data.Gs && data.Gs !== "") ? parseFloat(data.Gs.replace(',', '.')) : undefined,
         peso_especifico_agua: pesoEspAgua,
       };
 
