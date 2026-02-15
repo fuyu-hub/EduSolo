@@ -13,34 +13,35 @@ import SavedCalculations from "@/components/SavedCalculations";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport } from "@/lib/export-utils";
 import { useSettings } from "@/hooks/use-settings";
+import { useTheme } from "@/hooks/use-theme";
 import { calcularAcrescimoTensoes } from "@/lib/calculations/acrescimo-tensoes";
 
 interface BoussinesqAnaliseProps {
   onVoltar: () => void;
-  onStartTour?: () => void;
   onLoadExampleRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 // Função para gerar IDs únicos (alternativa ao crypto.randomUUID para compatibilidade)
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
-export default function BoussinesqAnalise({ onVoltar, onStartTour, onLoadExampleRef }: BoussinesqAnaliseProps) {
+export default function BoussinesqAnalise({ onVoltar, onLoadExampleRef }: BoussinesqAnaliseProps) {
   // Configurações
   const { settings } = useSettings();
-  
+  const { theme } = useTheme();
+
   // Estado principal
   const [pontos, setPontos] = useState<PontoAnalise[]>([]);
   const [cargaP, setCargaP] = useState<number | undefined>(100); // Valor padrão: 100 kN
   const [isCalculating, setIsCalculating] = useState(false);
   const [calculoFeito, setCalculoFeito] = useState(false);
-  
+
   // Estado dos popups
   const [cargaPopupOpen, setCargaPopupOpen] = useState(false);
   const [pontoPopupOpen, setPontoPopupOpen] = useState(false);
   const [pontoPopupCoords, setPontoPopupCoords] = useState({ x: 0, z: 0.5 });
   const [pontoEditando, setPontoEditando] = useState<PontoAnalise | null>(null);
   const [nomePadraoNovoPonto, setNomePadraoNovoPonto] = useState("");
-  
+
   // Save/Load
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
@@ -99,7 +100,7 @@ export default function BoussinesqAnalise({ onVoltar, onStartTour, onLoadExample
 
       // Atualiza apenas as tensões dos pontos que foram calculados,
       // sem sobrescrever o array completo
-      setPontos(prevPontos => 
+      setPontos(prevPontos =>
         prevPontos.map(p => {
           const tensao = resultadosMap.get(p.id);
           // Se o ponto foi calculado, atualiza a tensão
@@ -153,7 +154,7 @@ export default function BoussinesqAnalise({ onVoltar, onStartTour, onLoadExample
     // y é ignorado pois Boussinesq é 2D (apenas X-Z)
     if (pontoEditando) {
       // Editando ponto existente
-      setPontos(prevPontos => prevPontos.map(p => 
+      setPontos(prevPontos => prevPontos.map(p =>
         p.id === pontoEditando.id ? { ...p, nome, x, z, tensao: undefined } : p
       ));
       toast("Ponto atualizado!", { description: `"${nome}" foi atualizado.` });
@@ -174,7 +175,7 @@ export default function BoussinesqAnalise({ onVoltar, onStartTour, onLoadExample
 
   // Handler de movimentação de ponto (enquanto arrasta)
   const handleMovimentarPonto = (id: string, x: number, z: number) => {
-    setPontos(prevPontos => prevPontos.map(p => 
+    setPontos(prevPontos => prevPontos.map(p =>
       p.id === id ? { ...p, x, z, tensao: undefined } : p
     ));
     setCalculoFeito(false);
@@ -226,7 +227,7 @@ export default function BoussinesqAnalise({ onVoltar, onStartTour, onLoadExample
       inputs,
       results: resultsList,
       formulas,
-      theme,
+      theme: { mode: theme.mode, color: (theme as any).color || 'indigo' },
       printSettings: settings.printSettings
     };
 
@@ -246,12 +247,14 @@ export default function BoussinesqAnalise({ onVoltar, onStartTour, onLoadExample
       { label: "Carga P (kN)", value: cargaP }
     ];
 
-    const resultadosData = pontos.map(p => ({
-      Nome: p.nome,
-      "X (m)": p.x.toFixed(2),
-      "Z (m)": p.z.toFixed(2),
-      "Acréscimo de Tensão Vertical (kPa)": p.tensao !== undefined ? p.tensao.toFixed(settings.decimalPlaces) : "N/A"
-    }));
+    const resultadosData: { label: string; value: string | number }[] = [];
+    pontos.forEach((p, idx) => {
+      resultadosData.push({ label: `=== Ponto ${idx + 1}: ${p.nome} ===`, value: "" });
+      resultadosData.push({ label: "X (m)", value: p.x.toFixed(2) });
+      resultadosData.push({ label: "Z (m)", value: p.z.toFixed(2) });
+      resultadosData.push({ label: "Δσv (kPa)", value: p.tensao !== undefined ? p.tensao.toFixed(settings.decimalPlaces) : "N/A" });
+      resultadosData.push({ label: "", value: "" }); // Espaçamento
+    });
 
     const excelData: ExcelExportData = {
       moduleName: "boussinesq",
@@ -308,7 +311,7 @@ export default function BoussinesqAnalise({ onVoltar, onStartTour, onLoadExample
       setPontos(prevPontos => prevPontos.filter(p => p.id !== id));
       setCalculoFeito(false);
       toast("Ponto excluído!", { description: `"${ponto?.nome || 'Ponto'}" foi removido.` });
-    } 
+    }
     // Se não for passado ID, usa o pontoEditando (para quando clicar no botão Excluir do popup)
     else if (pontoEditando) {
       setPontos(prevPontos => prevPontos.filter(p => p.id !== pontoEditando.id));
@@ -358,11 +361,7 @@ export default function BoussinesqAnalise({ onVoltar, onStartTour, onLoadExample
         </div>
 
         <div className="flex items-center gap-2">
-          {onStartTour && (
-            <Button variant="outline" size="icon" onClick={onStartTour} title="Iniciar tutorial">
-              <GraduationCap className="w-4 h-4" />
-            </Button>
-          )}
+
           <Button variant="outline" size="sm" onClick={handleCarregarExemplos}>
             <BookOpen className="w-4 h-4 mr-2" />
             Exemplos

@@ -18,32 +18,31 @@ import { calcularAcrescimoTensoes } from "@/lib/calculations/acrescimo-tensoes";
 
 interface CarothersAnaliseProps {
   onVoltar: () => void;
-  onStartTour?: () => void;
   onLoadExampleRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 // Função para gerar IDs únicos (alternativa ao crypto.randomUUID para compatibilidade)
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
-export default function CarothersAnalise({ onVoltar, onStartTour, onLoadExampleRef }: CarothersAnaliseProps) {
+export default function CarothersAnalise({ onVoltar, onLoadExampleRef }: CarothersAnaliseProps) {
   // Configurações
   const { settings } = useSettings();
   const { theme } = useTheme();
-  
+
   // Estado principal
   const [pontos, setPontos] = useState<PontoAnalise[]>([]);
   const [cargaQ, setCargaQ] = useState<number | undefined>(50); // Valor padrão: 50 kPa
   const [largura, setLargura] = useState<number | undefined>(2); // Valor padrão: 2 m (largura da faixa)
   const [isCalculating, setIsCalculating] = useState(false);
   const [calculoFeito, setCalculoFeito] = useState(false);
-  
+
   // Estado dos popups
   const [cargaPopupOpen, setCargaPopupOpen] = useState(false);
   const [pontoPopupOpen, setPontoPopupOpen] = useState(false);
   const [pontoPopupCoords, setPontoPopupCoords] = useState({ x: 0, z: 0.5 });
   const [pontoEditando, setPontoEditando] = useState<PontoAnalise | null>(null);
   const [nomePadraoNovoPonto, setNomePadraoNovoPonto] = useState("");
-  
+
   // Save/Load
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
@@ -102,7 +101,7 @@ export default function CarothersAnalise({ onVoltar, onStartTour, onLoadExampleR
       }
 
       // Atualiza apenas as tensões dos pontos que foram calculados
-      setPontos(prevPontos => 
+      setPontos(prevPontos =>
         prevPontos.map(p => {
           const tensao = resultadosMap.get(p.id);
           if (resultadosMap.has(p.id)) {
@@ -153,7 +152,7 @@ export default function CarothersAnalise({ onVoltar, onStartTour, onLoadExampleR
   const handleConfirmarPonto = (nome: string, x: number, y: number, z: number) => {
     // y é ignorado pois Carothers é 2D (apenas X-Z)
     if (pontoEditando) {
-      setPontos(prevPontos => prevPontos.map(p => 
+      setPontos(prevPontos => prevPontos.map(p =>
         p.id === pontoEditando.id ? { ...p, nome, x, z, tensao: undefined } : p
       ));
       toast("Ponto atualizado!", { description: `"${nome}" foi atualizado.` });
@@ -173,7 +172,7 @@ export default function CarothersAnalise({ onVoltar, onStartTour, onLoadExampleR
 
   // Handler de movimentação de ponto
   const handleMovimentarPonto = (id: string, x: number, z: number) => {
-    setPontos(prevPontos => prevPontos.map(p => 
+    setPontos(prevPontos => prevPontos.map(p =>
       p.id === id ? { ...p, x, z, tensao: undefined } : p
     ));
     setCalculoFeito(false);
@@ -223,7 +222,7 @@ export default function CarothersAnalise({ onVoltar, onStartTour, onLoadExampleR
       inputs,
       results: resultsList,
       formulas,
-      theme,
+      theme: { mode: theme.mode, color: (theme as any).color || 'indigo' },
       printSettings: settings.printSettings
     };
 
@@ -244,12 +243,14 @@ export default function CarothersAnalise({ onVoltar, onStartTour, onLoadExampleR
       { label: "Largura B (m)", value: largura }
     ];
 
-    const resultadosData = pontos.map(p => ({
-      Nome: p.nome,
-      "X (m)": p.x.toFixed(2),
-      "Z (m)": p.z.toFixed(2),
-      "Acréscimo de Tensão Vertical (kPa)": p.tensao !== undefined ? p.tensao.toFixed(settings.decimalPlaces) : "N/A"
-    }));
+    const resultadosData: { label: string; value: string | number }[] = [];
+    pontos.forEach((p, idx) => {
+      resultadosData.push({ label: `=== Ponto ${idx + 1}: ${p.nome} ===`, value: "" });
+      resultadosData.push({ label: "X (m)", value: p.x.toFixed(2) });
+      resultadosData.push({ label: "Z (m)", value: p.z.toFixed(2) });
+      resultadosData.push({ label: "Δσv (kPa)", value: p.tensao !== undefined ? p.tensao.toFixed(settings.decimalPlaces) : "N/A" });
+      resultadosData.push({ label: "", value: "" }); // Espaçamento
+    });
 
     const excelData: ExcelExportData = {
       moduleName: "carothers",
@@ -333,7 +334,7 @@ export default function CarothersAnalise({ onVoltar, onStartTour, onLoadExampleR
   }, [onLoadExampleRef]);
 
   const temResultados = pontos.some(p => p.tensao !== undefined);
-  
+
   // Calcular a "carga equivalente" para exibir no canvas
   // Para Carothers, mostramos q*B (carga por unidade de comprimento) em kN/m
   const cargaEquivalente = (cargaQ && largura) ? (cargaQ * largura) : undefined;
@@ -360,11 +361,7 @@ export default function CarothersAnalise({ onVoltar, onStartTour, onLoadExampleR
         </div>
 
         <div className="flex items-center gap-2">
-          {onStartTour && (
-            <Button variant="outline" size="icon" onClick={onStartTour} title="Iniciar tutorial">
-              <GraduationCap className="w-4 h-4" />
-            </Button>
-          )}
+
           <Button variant="outline" size="sm" onClick={handleCarregarExemplos}>
             <BookOpen className="w-4 h-4 mr-2" />
             Exemplos

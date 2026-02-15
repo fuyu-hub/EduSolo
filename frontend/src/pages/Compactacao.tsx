@@ -25,9 +25,7 @@ import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { useRecentReports } from "@/hooks/useRecentReports";
 import { useSettings } from "@/hooks/use-settings";
 import { useTheme } from "@/hooks/use-theme";
-import { useTour, TourStep } from "@/contexts/TourContext";
 import SavedCalculations from "@/components/SavedCalculations";
-import { useToursEnabled } from "@/components/WelcomeDialog";
 import SaveDialog from "@/components/SaveDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
@@ -114,8 +112,6 @@ function CompactacaoDesktop() {
   const { toast: toastFn } = { toast };
   const { settings } = useSettings();
   const { theme } = useTheme();
-  const { startTour, suggestTour } = useTour();
-  const toursEnabled = useToursEnabled();
   const { addReport } = useRecentReports();
   const navigate = useNavigate();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
@@ -223,116 +219,7 @@ function CompactacaoDesktop() {
   const curvaCompactacaoRef = useRef<CurvaCompactacaoRef>(null);
 
   // Definição dos steps do tour
-  const tourSteps: TourStep[] = [
-    {
-      target: "[data-tour='module-header']",
-      title: "🔨 Bem-vindo ao Ensaio de Compactação!",
-      content: "Este módulo permite analisar curvas de compactação (Proctor Normal ou Modificado), determinando a umidade ótima e o peso específico seco máximo do solo.",
-      placement: "bottom",
-      spotlightPadding: 16,
-    },
-    {
-      target: "[data-tour='config-gerais']",
-      title: "⚙️ Parâmetros Gerais",
-      content: "Configure o volume e massa do cilindro de compactação. O Gs (densidade relativa dos grãos) é opcional, mas necessário para traçar a curva de saturação teórica (S=100%).",
-      placement: "right",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='pontos-ensaio']",
-      title: "📋 Pontos do Ensaio",
-      content: "Adicione os pontos do ensaio (mínimo 3). Para cada ponto, registre: massa da amostra compactada + cilindro e as massas para determinação de umidade.",
-      placement: "right",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='navegacao-pontos']",
-      title: "◀️▶️ Navegação entre Pontos",
-      content: "Use as setas para navegar entre os pontos. Adicione (+) ou remova (🗑️) pontos conforme necessário. Mais pontos resultam em uma curva mais precisa!",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='btn-calcular']",
-      title: "⚡ Processar Ensaio",
-      content: "Após preencher todos os pontos, clique aqui para processar o ensaio. O sistema traçará a curva de compactação e determinará automaticamente os parâmetros ótimos.",
-      placement: "top",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='resultados']",
-      title: "📊 Tabela de Resultados",
-      content: "Visualize os dados calculados para cada ponto: umidade (w%) e peso específico seco (γd). O ponto ótimo é destacado em verde. Use as setas para navegar entre slides.",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='parametros-otimos']",
-      title: "🎯 Parâmetros Ótimos",
-      content: "Aqui estão os valores ótimos determinados: umidade ótima (w_ot) e peso específico seco máximo (γd,máx). Estes são essenciais para especificação de compactação em campo!",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='resultados']",
-      title: "📈 Curva de Compactação",
-      content: "No segundo slide, visualize a curva completa traçando umidade × γd. Se forneceu Gs, a curva de saturação S=100% também é exibida, mostrando o limite teórico.",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='actions']",
-      title: "💾 Salvar e Exportar",
-      content: "Salve seus ensaios para consulta posterior ou exporte em PDF/Excel. Use o botão de exemplos para carregar ensaios pré-configurados e explorar o módulo!",
-      placement: "bottom",
-      spotlightPadding: 12,
-    },
-  ];
 
-  // Sugerir tour via toast na primeira visita
-  useEffect(() => {
-    // Verificar se tours estão globalmente desabilitados
-    if (!toursEnabled) return;
-
-    let toastId: string | number | undefined;
-
-    const timer = setTimeout(() => {
-      // Preparação: carregar exemplo e calcular
-      const prepareForTour = async () => {
-        const exemploParaTour = {
-          icon: "🏜️",
-          nome: "Areia Argilosa",
-          descricao: "Curva típica de areia argilosa",
-          volumeCilindro: "982",
-          pesoCilindro: "4100",
-          Gs: "2.68",
-          pontos: [
-            { id: generateId(), pesoAmostaCilindro: "6012.5", pesoBrutoUmido: "106.56", pesoBrutoSeco: "93.69", tara: "24.72" },
-            { id: generateId(), pesoAmostaCilindro: "6102.0", pesoBrutoUmido: "115.23", pesoBrutoSeco: "100.14", tara: "28.65" },
-            { id: generateId(), pesoAmostaCilindro: "6150.0", pesoBrutoUmido: "122.78", pesoBrutoSeco: "104.82", tara: "26.13" },
-            { id: generateId(), pesoAmostaCilindro: "6138.0", pesoBrutoUmido: "118.44", pesoBrutoSeco: "99.28", tara: "25.87" },
-            { id: generateId(), pesoAmostaCilindro: "6095.0", pesoBrutoUmido: "114.92", pesoBrutoSeco: "94.63", tara: "27.41" },
-          ],
-        };
-        handleSelectExample(exemploParaTour as any);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        // Force calculation for tour
-        const values = form.getValues();
-        handleCalculate(values, false); // false to show success toast if needed, or consistent with user action
-        await new Promise(resolve => setTimeout(resolve, 800));
-      };
-
-      // Sugerir tour com toast
-      toastId = suggestTour(tourSteps, "compactacao", "Compactação", prepareForTour);
-    }, 1000);
-
-    return () => {
-      clearTimeout(timer);
-      if (toastId) {
-        toast.dismiss(toastId);
-      }
-    };
-  }, [toursEnabled]);
 
   useEffect(() => {
     if (fields.length > 0) {
@@ -446,33 +333,7 @@ function CompactacaoDesktop() {
     toast("Ensaio carregado!", { description: `"${calculation.name}" foi carregado com sucesso.` });
   };
 
-  const handleStartTour = async () => {
-    const exemploParaTour = {
-      icon: "🏜️",
-      nome: "Areia Argilosa",
-      descricao: "Curva típica de areia argilosa",
-      volumeCilindro: "982",
-      pesoCilindro: "4100",
-      Gs: "2.68",
-      pontos: [
-        { id: generateId(), pesoAmostaCilindro: "6012.5", pesoBrutoUmido: "106.56", pesoBrutoSeco: "93.69", tara: "24.72" },
-        { id: generateId(), pesoAmostaCilindro: "6102.0", pesoBrutoUmido: "115.23", pesoBrutoSeco: "100.14", tara: "28.65" },
-        { id: generateId(), pesoAmostaCilindro: "6150.0", pesoBrutoUmido: "122.78", pesoBrutoSeco: "104.82", tara: "26.13" },
-        { id: generateId(), pesoAmostaCilindro: "6138.0", pesoBrutoUmido: "118.44", pesoBrutoSeco: "99.28", tara: "25.87" },
-        { id: generateId(), pesoAmostaCilindro: "6095.0", pesoBrutoUmido: "114.92", pesoBrutoSeco: "94.63", tara: "27.41" },
-      ],
-    };
 
-    handleSelectExample(exemploParaTour as any);
-
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const values = form.getValues();
-    handleCalculate(values, false);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    startTour(tourSteps, "compactacao", true);
-    toast("Tour iniciado!", { description: "Exemplo carregado automaticamente para demonstração." });
-  };
 
   const handleExportPDF = () => {
     if (!results) return;

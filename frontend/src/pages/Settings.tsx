@@ -11,7 +11,7 @@ import { UnitSystem, InterfaceDensity, PageOrientation, PageMargins, PaperSize }
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
 import { useState, useRef } from "react";
-import { useToursControl } from "@/components/WelcomeDialog";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,7 +35,7 @@ import SettingsMobile from "./mobile/SettingsMobile";
 
 function SettingsDesktop() {
   const { settings, updateSettings, resetSettings, clearAllCalculations, exportSettings, importSettings } = useSettings();
-  const { resetAllTours } = useToursControl();
+
   const [showClearDialog, setShowClearDialog] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
   const [showPrintDialog, setShowPrintDialog] = useState(false);
@@ -319,50 +319,7 @@ function SettingsDesktop() {
           </Card>
         </section>
 
-        {/* Ajuda e Tutoriais */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <HelpCircle className="w-5 h-5 text-primary" />
-            <h2 className="text-2xl font-semibold text-foreground">Tutoriais</h2>
-          </div>
 
-          <Card className="glass p-6">
-            <div className="space-y-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-2">
-                    <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                      <HelpCircle className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1">
-                      <Label className="text-lg font-semibold">
-                        Resetar Tutoriais
-                      </Label>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground pl-12">
-                    Ao acessar cada módulo pela primeira vez, você verá uma sugestão para
-                    visualizar o tutorial interativo.
-                    <span className="block mt-1 text-xs">
-                      <strong>Dica:</strong> Clique no botão abaixo para resetar todos os tutoriais e vê-los novamente.
-                    </span>
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    resetAllTours();
-                    toast.success("Tutoriais resetados", {
-                      description: "As sugestões de tutorial aparecerão novamente em todos os módulos",
-                    });
-                  }}
-                >
-                  Resetar Tutoriais
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </section>
 
         {/* Gerenciamento de Dados */}
         <section className="space-y-4">

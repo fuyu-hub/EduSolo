@@ -13,23 +13,24 @@ import SavedCalculations from "@/components/SavedCalculations";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport } from "@/lib/export-utils";
 import { useSettings } from "@/hooks/use-settings";
+import { useTheme } from "@/hooks/use-theme";
 import DialogExemplosNewmark from "./DialogExemplosNewmark";
 import DialogConfiguracoesNewmark from "./DialogConfiguracoesNewmark";
 import { calcularAcrescimoTensoes } from "@/lib/calculations/acrescimo-tensoes";
 
 interface NewmarkAnaliseProps {
   onVoltar: () => void;
-  onStartTour?: () => void;
   onLoadExampleRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 // Função para gerar IDs únicos (alternativa ao crypto.randomUUID para compatibilidade)
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 
-export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef }: NewmarkAnaliseProps) {
+export default function NewmarkAnalise({ onVoltar, onLoadExampleRef }: NewmarkAnaliseProps) {
   // Configurações
   const { settings } = useSettings();
-  
+  const { theme } = useTheme();
+
   // Estado principal
   const [pontos, setPontos] = useState<PontoAnalise[]>([]);
   const [largura, setLargura] = useState<number | undefined>(3);
@@ -39,7 +40,7 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
   const [usarAbaco, setUsarAbaco] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [calculoFeito, setCalculoFeito] = useState(false);
-  
+
   // Estado dos popups
   const [cargaPopupOpen, setCargaPopupOpen] = useState(false);
   const [pontoPopupOpen, setPontoPopupOpen] = useState(false);
@@ -48,7 +49,7 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
   const [nomePadraoNovoPonto, setNomePadraoNovoPonto] = useState("");
   const [exemplosDialogOpen, setExemplosDialogOpen] = useState(false);
   const [configuracoesDialogOpen, setConfiguracoesDialogOpen] = useState(false);
-  
+
   // Save/Load
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
@@ -112,7 +113,7 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
       }
 
       // Atualiza as tensões e detalhes dos pontos que foram calculados
-      setPontos(prevPontos => 
+      setPontos(prevPontos =>
         prevPontos.map(p => {
           const resultado = resultadosMap.get(p.id);
           if (resultado) {
@@ -164,7 +165,7 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
 
   const handleConfirmarPonto = (nome: string, x: number, y: number, z: number) => {
     if (pontoEditando) {
-      setPontos(prevPontos => prevPontos.map(p => 
+      setPontos(prevPontos => prevPontos.map(p =>
         p.id === pontoEditando.id ? { ...p, nome, x, y, z, tensao: undefined } : p
       ));
       toast("Ponto atualizado!", { description: `"${nome}" foi atualizado.` });
@@ -185,7 +186,7 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
 
   // Handler de movimentação de ponto
   const handleMovimentarPonto = (id: string, x: number, y: number, z: number) => {
-    setPontos(prevPontos => prevPontos.map(p => 
+    setPontos(prevPontos => prevPontos.map(p =>
       p.id === id ? { ...p, x, y, z, tensao: undefined } : p
     ));
     setCalculoFeito(false);
@@ -226,12 +227,12 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
       { label: "Pontos Analisados", value: pontosComTensao.length.toString() },
       { label: "Acréscimo de Tensão Vertical Máximo", value: `${tensaoMax.toFixed(settings.decimalPlaces)} kPa` },
       { label: "Acréscimo de Tensão Vertical Mínimo", value: `${tensaoMin.toFixed(settings.decimalPlaces)} kPa` },
-      { 
-        label: "Ponto de Máx", 
+      {
+        label: "Ponto de Máx",
         value: pontoMaxTensao ? `${pontoMaxTensao.nome} (X=${pontoMaxTensao.x.toFixed(2)}m, Y=${pontoMaxTensao.y !== undefined ? pontoMaxTensao.y.toFixed(2) : '0.00'}m, Z=${pontoMaxTensao.z.toFixed(2)}m)` : "-"
       },
-      { 
-        label: "Ponto de Mín", 
+      {
+        label: "Ponto de Mín",
         value: pontoMinTensao ? `${pontoMinTensao.nome} (X=${pontoMinTensao.x.toFixed(2)}m, Y=${pontoMinTensao.y !== undefined ? pontoMinTensao.y.toFixed(2) : '0.00'}m, Z=${pontoMinTensao.z.toFixed(2)}m)` : "-"
       }
     ] : undefined;
@@ -267,7 +268,7 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
       results: resultsList,
       summary,
       formulas,
-      theme,
+      theme: { mode: theme.mode, color: (theme as any).color || 'indigo' },
       printSettings: settings.printSettings
     };
 
@@ -292,13 +293,15 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
       { label: "Método", value: metodo }
     ];
 
-    const resultadosData = pontos.map(p => ({
-      Nome: p.nome,
-      "X (m)": p.x.toFixed(2),
-      "Y (m)": p.y !== undefined ? p.y.toFixed(2) : "0.00",
-      "Z (m)": p.z.toFixed(2),
-      "Δσv (kPa)": p.tensao !== undefined ? p.tensao.toFixed(settings.decimalPlaces) : "N/A"
-    }));
+    const resultadosData: { label: string; value: string | number }[] = [];
+    pontos.forEach((p, idx) => {
+      resultadosData.push({ label: `=== Ponto ${idx + 1}: ${p.nome} ===`, value: "" });
+      resultadosData.push({ label: "X (m)", value: p.x.toFixed(2) });
+      resultadosData.push({ label: "Y (m)", value: p.y !== undefined ? p.y.toFixed(2) : "0.00" });
+      resultadosData.push({ label: "Z (m)", value: p.z.toFixed(2) });
+      resultadosData.push({ label: "Δσv (kPa)", value: p.tensao !== undefined ? p.tensao.toFixed(settings.decimalPlaces) : "N/A" });
+      resultadosData.push({ label: "", value: "" }); // Espaçamento
+    });
 
     const excelData: ExcelExportData = {
       moduleName: "newmark",
@@ -367,7 +370,7 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
     setLargura(exemplo.largura);
     setComprimento(exemplo.comprimento);
     setIntensidade(exemplo.intensidade);
-    
+
     const novosPontos = exemplo.pontos.map((p: any, idx: number) => ({
       id: `exemplo-${idx}`,
       nome: p.nome,
@@ -376,7 +379,7 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
       z: p.z,
       tensao: undefined,
     }));
-    
+
     setPontos(novosPontos);
     setCalculoFeito(false);
     setExemplosDialogOpen(false);
@@ -437,11 +440,7 @@ export default function NewmarkAnalise({ onVoltar, onStartTour, onLoadExampleRef
         </div>
 
         <div className="flex items-center gap-2">
-          {onStartTour && (
-            <Button variant="outline" size="icon" onClick={onStartTour} title="Iniciar tutorial">
-              <GraduationCap className="w-4 h-4" />
-            </Button>
-          )}
+
           <Button variant="outline" size="sm" onClick={() => setConfiguracoesDialogOpen(true)}>
             <Settings className="w-4 h-4 mr-2" />
             Configurações

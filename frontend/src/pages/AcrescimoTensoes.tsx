@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PrintHeader from "@/components/PrintHeader";
 import { useNavigate } from "react-router-dom";
-import { useTour, TourStep } from "@/contexts/TourContext";
+
 import { toast } from "@/components/ui/sonner";
 import { MobileModuleWrapper } from "@/components/mobile";
 import AcrescimoTensoesMobile from "./mobile/AcrescimoTensoesMobile";
-import { useToursEnabled } from "@/components/WelcomeDialog";
+
 
 const metodos = [
   {
@@ -60,84 +60,11 @@ const metodos = [
 
 function AcrescimoTensoesDesktop() {
   const navigate = useNavigate();
-  const { startTour, suggestTour } = useTour();
-  const toursEnabled = useToursEnabled();
 
-  const tourSteps: TourStep[] = [
-    {
-      target: "[data-tour='header']",
-      title: "🎯 Bem-vindo ao Acréscimo de Tensões!",
-      content: "Este módulo permite analisar a distribuição de tensões no solo devido a diferentes tipos de carregamentos superficiais. Escolha o método adequado ao seu caso!",
-      placement: "bottom",
-      spotlightPadding: 16,
-    },
-    {
-      target: "[data-tour='metodos-grid']",
-      title: "📐 Métodos Disponíveis",
-      content: "Cada método é adequado para um tipo específico de carregamento. Clique em qualquer card para acessar o módulo correspondente.",
-      placement: "bottom",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='metodo-boussinesq']",
-      title: "📍 Boussinesq - Carga Pontual",
-      content: "Para cargas concentradas como estacas, postes e torres. Solução clássica para carga pontual vertical.",
-      placement: "right",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='metodo-carothers']",
-      title: "📏 Carothers - Carga em Faixa",
-      content: "Para cargas distribuídas em faixas como fundações corridas, muros de arrimo e aterros lineares.",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='metodo-love']",
-      title: "⭕ Love - Carga Circular",
-      content: "Para cargas circulares como tanques, silos e fundações circulares. Utiliza simetria axial.",
-      placement: "right",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='metodo-newmark']",
-      title: "⬛ Newmark - Carga Retangular",
-      content: "Para sapatas e fundações rasas retangulares. Método do fator de influência para áreas retangulares.",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='info-card']",
-      title: "ℹ️ Análise 2D Interativa",
-      content: "Todos os métodos incluem visualização 2D interativa, permitindo adicionar múltiplos pontos de análise e comparar resultados!",
-      placement: "top",
-      spotlightPadding: 12,
-    },
-  ];
 
-  // Sugerir tour via toast na primeira visita
-  useEffect(() => {
-    // Verificar se tours estão globalmente desabilitados
-    if (!toursEnabled) return;
 
-    let toastId: string | number | undefined;
 
-    const timer = setTimeout(() => {
-      // Sugerir tour com toast (sem preparação necessária)
-      toastId = suggestTour(tourSteps, "acrescimo-tensoes", "Acréscimo de Tensões");
-    }, 1000);
 
-    return () => {
-      clearTimeout(timer);
-      if (toastId) {
-        toast.dismiss(toastId);
-      }
-    };
-  }, [toursEnabled]);
-
-  const handleStartTour = () => {
-    startTour(tourSteps, "acrescimo-tensoes", true);
-  };
 
   const handleMetodoClick = (metodo: typeof metodos[0]) => {
     if (metodo.disponivel) {
@@ -162,23 +89,7 @@ function AcrescimoTensoesDesktop() {
             </p>
           </div>
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleStartTour}
-                className="h-10 w-10"
-              >
-                <GraduationCap className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Iniciar tour guiado</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+
       </div>
 
       {/* Seleção de Método */}

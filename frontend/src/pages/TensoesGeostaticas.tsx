@@ -19,9 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSavedCalculations } from "@/hooks/use-saved-calculations";
 import { useSettings } from "@/hooks/use-settings";
 import { useTheme } from "@/hooks/use-theme";
-import { useTour, TourStep } from "@/contexts/TourContext";
 import SavedCalculations from "@/components/SavedCalculations";
-import { useToursEnabled } from "@/components/WelcomeDialog";
 import SaveDialog from "@/components/SaveDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
@@ -88,18 +86,8 @@ interface TensoesGeostaticasInputAPI {
   peso_especifico_agua: number;
 }
 
-interface TensaoPonto {
-  profundidade: number;
-  tensao_total_vertical?: number | null;
-  pressao_neutra?: number | null;
-  tensao_efetiva_vertical?: number | null;
-  tensao_efetiva_horizontal?: number | null;
-}
+import { TensoesGeostaticasOutput } from "@/modules/tensoes/schemas";
 
-interface Results {
-  pontos_calculo: TensaoPonto[];
-  erro?: string | null;
-}
 
 const tooltips = {
   profundidadeNA: "Profundidade do Nível d'Água (NA) a partir da superfície (m)",
@@ -119,8 +107,6 @@ function TensoesGeostaticasDesktop() {
   const { toast: toastFn } = { toast };
   const { settings } = useSettings();
   const { theme } = useTheme();
-  const { startTour, suggestTour } = useTour();
-  const toursEnabled = useToursEnabled();
   const [currentCamadaIndex, setCurrentCamadaIndex] = useState(0);
   const [config, setConfig] = useState<ConfigData>({
     pesoEspecificoAgua: "10.0",
@@ -141,7 +127,7 @@ function TensoesGeostaticasDesktop() {
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "camadas", keyName: "fieldId" });
 
-  const [results, setResults] = useState<Results | null>(null);
+  const [results, setResults] = useState<TensoesGeostaticasOutput | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
@@ -157,112 +143,7 @@ function TensoesGeostaticasDesktop() {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   // Definição dos steps do tour
-  const tourSteps: TourStep[] = [
-    {
-      target: "[data-tour='module-header']",
-      title: "🏔️ Bem-vindo às Tensões Geostáticas!",
-      content: "Este módulo permite calcular tensões verticais totais, efetivas, pressão neutra e tensões horizontais em perfis de solo estratificados. Vamos explorar com um exemplo de 3 camadas!",
-      placement: "bottom",
-      spotlightPadding: 16,
-    },
-    {
-      target: "[data-tour='diagrama-camadas']",
-      title: "📐 Perfil de Solo Carregado",
-      content: "Este perfil de exemplo possui 3 camadas: Areia (0-3m), Argila (3-8m) e Areia (8-13m). O nível d'água está a 2m de profundidade. As cores indicam o estado: cinza = não saturado, azul = saturado.",
-      placement: "right",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='diagrama-camadas']",
-      title: "✏️ Editando Camadas",
-      content: "Clique em qualquer camada do diagrama para editar suas propriedades: nome, espessura, γ natural, γ saturado, Ko e definir nível d'água. Experimente clicar na camada de Argila!",
-      placement: "right",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='diagrama-camadas']",
-      title: "➕ Adicionando Novas Camadas",
-      content: "Use o botão '+' (Adicionar Camada) no diagrama para inserir uma nova camada ao perfil. Você pode construir perfis complexos com quantas camadas precisar!",
-      placement: "right",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='config-button']",
-      title: "⚙️ Configurações Globais",
-      content: "Configure parâmetros globais como o peso específico da água (γw = 10.0 kN/m³). Estas configurações se aplicam a todo o perfil.",
-      placement: "bottom",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='btn-calcular']",
-      title: "⚡ Calcular Tensões",
-      content: "Após configurar todas as camadas, clique aqui para calcular as tensões ao longo do perfil. O sistema calcula automaticamente σv, u, σ'v e σ'h em múltiplos pontos.",
-      placement: "top",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='tabs-resultados']",
-      title: "📊 Resultados - Tabela",
-      content: "Aqui estão os resultados calculados do exemplo! Veja as tensões em cada profundidade. Note como a pressão neutra (u) começa a 2m (nível d'água) e as tensões efetivas diferem das totais.",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='tabs-resultados']",
-      title: "📈 Resultados - Perfil Gráfico",
-      content: "Alterne para a aba 'Perfil de Tensões' para visualizar graficamente. A linha vertical azul indica o nível d'água. Note como a pressão neutra é zero acima do NA!",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='actions']",
-      title: "💾 Salvar e Exportar",
-      content: "Salve perfis completos, exporte em PDF/Excel ou carregue outros exemplos pré-configurados! O botão de exemplos possui perfis típicos para você explorar.",
-      placement: "bottom",
-      spotlightPadding: 12,
-    },
-  ];
 
-  // Sugerir tour via toast na primeira visita
-  useEffect(() => {
-    // Verificar se tours estão globalmente desabilitados
-    if (!toursEnabled) return;
-
-    let toastId: string | number | undefined;
-
-    const timer = setTimeout(() => {
-      // Preparação: carregar exemplo e calcular
-      const prepareForTour = async () => {
-        const exemploParaTour = {
-          icon: "🏗️",
-          nome: "Perfil Estratificado com NA",
-          descricao: "Perfil típico com 3 camadas e nível d'água",
-          profundidadeNA: "2.0",
-          alturaCapilar: "0.5",
-          pesoEspecificoAgua: "10.0",
-          camadas: [
-            { id: generateId(), nome: "Areia Fina", espessura: "3.0", profundidadeNA: "2.0", capilaridade: "0.5", gamaNat: "17.0", gamaSat: "19.5", Ko: "", impermeavel: false },
-            { id: generateId(), nome: "Argila Mole", espessura: "5.0", profundidadeNA: "", capilaridade: "", gamaNat: "", gamaSat: "17.0", Ko: "", impermeavel: false },
-            { id: generateId(), nome: "Areia Média", espessura: "5.0", profundidadeNA: "", capilaridade: "", gamaNat: "", gamaSat: "20.0", Ko: "", impermeavel: false },
-          ],
-        };
-        handleSelectExample(exemploParaTour as any);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        form.handleSubmit(onSubmit)();
-        await new Promise(resolve => setTimeout(resolve, 800));
-      };
-
-      // Sugerir tour com toast
-      toastId = suggestTour(tourSteps, "tensoes-geostaticas", "Tensões Geostáticas", prepareForTour);
-    }, 1000);
-
-    return () => {
-      clearTimeout(timer);
-      if (toastId) {
-        toast.dismiss(toastId);
-      }
-    };
-  }, [toursEnabled]);
 
   useEffect(() => {
     if (fields.length > 0) {
@@ -454,61 +335,7 @@ function TensoesGeostaticasDesktop() {
     toast("Perfil carregado!", { description: `"${calculation.name}" foi carregado com sucesso.` });
   };
 
-  const handleStartTour = async () => {
-    // Carregar exemplo de perfil de 3 camadas para demonstração
-    const exemploParaTour = {
-      icon: "🏗️",
-      nome: "Perfil Estratificado com NA",
-      descricao: "Perfil típico com 3 camadas e nível d'água",
-      profundidadeNA: "2.0",
-      alturaCapilar: "0.5",
-      pesoEspecificoAgua: "10.0",
-      camadas: [
-        {
-          id: generateId(),
-          nome: "Areia Fina",
-          espessura: "3.0",
-          profundidadeNA: "2.0",
-          capilaridade: "0.5",
-          gamaNat: "17.0",
-          gamaSat: "19.5",
-          Ko: "",
-          impermeavel: false
-        },
-        {
-          id: generateId(),
-          nome: "Argila Mole",
-          espessura: "5.0",
-          profundidadeNA: "",
-          capilaridade: "",
-          gamaNat: "",
-          gamaSat: "17.0",
-          Ko: "",
-          impermeavel: false
-        },
-        {
-          id: generateId(),
-          nome: "Areia Média",
-          espessura: "5.0",
-          profundidadeNA: "",
-          capilaridade: "",
-          gamaNat: "",
-          gamaSat: "20.0",
-          Ko: "",
-          impermeavel: false
-        },
-      ],
-    };
 
-    handleSelectExample(exemploParaTour as any);
-
-    await new Promise(resolve => setTimeout(resolve, 300));
-    form.handleSubmit(onSubmit)();
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    startTour(tourSteps, "tensoes-geostaticas", true);
-    toast("Tour iniciado!", { description: "Exemplo de 3 camadas carregado para demonstração." });
-  };
 
   const handleExportPDF = () => {
     if (!results) return;
@@ -641,7 +468,7 @@ function TensoesGeostaticasDesktop() {
       tables,
       chartImage: perfilImage || diagramaImage || undefined,
       customFileName: pdfFileName,
-      theme,
+      theme: { mode: theme.mode, color: (theme as any).color || 'indigo' },
       printSettings: settings.printSettings
     };
 
@@ -858,21 +685,7 @@ function TensoesGeostaticasDesktop() {
           <div data-tour="config-button">
             <DialogConfiguracoes configInicial={config} onConfirm={handleConfigChange} disabled={isCalculating} />
           </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleStartTour}
-                className="h-10 w-10"
-              >
-                <GraduationCap className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Iniciar tour guiado</p>
-            </TooltipContent>
-          </Tooltip>
+
           <TooltipProvider>
             <CalculationActions
               onSave={handleSaveClick}

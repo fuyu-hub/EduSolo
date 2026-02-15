@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { calcularLimitesConsistencia } from "@/lib/calculations/limites-consistencia";
 import { z } from "zod";
 import { Droplet, Info, Calculator as CalcIcon, Plus, Trash2, LineChart, ChevronLeft, ChevronRight, AlertCircle, BarChart3, Save, FolderOpen, Download, Printer, FileText, GraduationCap } from "lucide-react";
-import { useTour, TourStep } from "@/contexts/TourContext";
+
 import { toast } from "@/components/ui/sonner";
 import type { CarouselApi } from "@/components/ui/carousel";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
@@ -34,7 +34,6 @@ import { useSettings } from "@/hooks/use-settings";
 import { useTheme } from "@/hooks/use-theme";
 import SavedCalculations from "@/components/SavedCalculations";
 import SaveDialog from "@/components/SaveDialog";
-import { useToursEnabled } from "@/components/WelcomeDialog";
 import PrintHeader from "@/components/PrintHeader";
 import CalculationActions from "@/components/CalculationActions";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/export-utils";
@@ -138,8 +137,6 @@ function LimitesConsistenciaDesktop() {
   const { theme } = useTheme();
   const { addReport } = useRecentReports();
   const navigate = useNavigate();
-  const { startTour, suggestTour, currentStep, isActive: isTourActive } = useTour();
-  const toursEnabled = useToursEnabled();
   const [currentPointIndex, setCurrentPointIndex] = useState(0);
   const [currentLPIndex, setCurrentLPIndex] = useState(0);
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
@@ -180,117 +177,11 @@ function LimitesConsistenciaDesktop() {
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const limiteLiquidezChartRef = useRef<HTMLDivElement>(null);
 
-  // Definição dos steps do tour
-  const tourSteps: TourStep[] = [
-    {
-      target: "[data-tour='module-header']",
-      title: "💧 Bem-vindo aos Limites de Consistência!",
-      content: "Este módulo calcula os Limites de Consistência (LL, LP e IP) e classifica o solo quanto à plasticidade e consistência, essenciais para projetos geotécnicos.",
-      placement: "bottom",
-      spotlightPadding: 16,
-    },
-    {
-      target: "[data-tour='pontos-ll']",
-      title: "📊 Ensaio de Limite de Liquidez (LL)",
-      content: "Insira os dados de cada ensaio: número de golpes e massas do recipiente. São necessários pelo menos 2 pontos, mas recomenda-se 4-5 para maior precisão. Use as setas para navegar entre os pontos.",
-      placement: "right",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='add-ponto']",
-      title: "➕ Adicionar Mais Pontos",
-      content: "Clique aqui para adicionar mais pontos ao ensaio de LL. Mais pontos geralmente resultam em uma curva de fluidez mais precisa.",
-      placement: "bottom",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='ensaio-lp']",
-      title: "🧵 Ensaio de Limite de Plasticidade (LP)",
-      content: "Preencha os dados do ensaio de LP (rolinho de 3mm). Este ensaio determina o teor de umidade na transição entre os estados plástico e semissólido.",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='dados-opcionais']",
-      title: "📐 Dados Opcionais",
-      content: "Umidade natural: necessária para calcular o Índice de Consistência (IC). Percentual de argila: necessário para calcular a Atividade da Argila (Ia).",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='btn-calcular']",
-      title: "⚡ Processar Cálculos",
-      content: "Após preencher os dados, clique aqui para calcular LL, LP, IP, classificação de plasticidade e, se aplicável, IC e Atividade.",
-      placement: "top",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='resultados']",
-      title: "🎯 Resultados e Classificações",
-      content: "Aqui estão todos os limites calculados do exemplo (LL, LP, IP, IC, Atividade). Use as setas para navegar entre os slides. Clique no ícone (i) para ver fórmulas e explicações detalhadas.",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='resultados']",
-      title: "📈 Gráfico do Limite de Liquidez",
-      content: "Visualize o gráfico de fluidez com a linha de tendência (regressão linear) e os pontos do ensaio. A linha verde marca o LL determinado a 25 golpes. Use as setas do carrossel para navegar entre resultados e gráfico.",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='actions']",
-      title: "💾 Salvar e Exportar",
-      content: "Salve seus ensaios para consulta posterior ou exporte em PDF/Excel. Você também pode carregar exemplos práticos para aprender!",
-      placement: "bottom",
-      spotlightPadding: 12,
-    },
-  ];
 
-  // Sugerir tour via toast na primeira visita
-  useEffect(() => {
-    // Verificar se tours estão globalmente desabilitados
-    if (!toursEnabled) return;
-
-    let toastId: string | number | undefined;
-
-    const timer = setTimeout(() => {
-      // Preparação: carregar exemplo e calcular
-      const prepareForTour = async () => {
-        const exemploParaTour = exemplosLimites[0];
-        handleSelectExample(exemploParaTour);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        form.handleSubmit(onSubmit)();
-        await new Promise(resolve => setTimeout(resolve, 800));
-      };
-
-      // Sugerir tour com toast
-      toastId = suggestTour(tourSteps, "limites-consistencia", "Limites de Consistência", prepareForTour);
-    }, 1000);
-
-    return () => {
-      clearTimeout(timer);
-      if (toastId) {
-        toast.dismiss(toastId);
-      }
-    };
-  }, [toursEnabled]);
 
   useEffect(() => { if (fields.length > 0) { setCurrentPointIndex(prev => Math.min(prev, fields.length - 1)); } else { setCurrentPointIndex(0); } }, [fields.length]);
 
-  // Navegar automaticamente no carrossel quando o tour chegar no step correspondente
-  useEffect(() => {
-    if (isTourActive && carouselApi && results) {
-      // Step 6 são os Resultados Numéricos - slide 0 (padrão, já está lá)
-      if (currentStep === 6) {
-        carouselApi.scrollTo(0);
-      }
-      // Step 7 é o Gráfico do Limite de Liquidez - slide 1
-      else if (currentStep === 7) {
-        carouselApi.scrollTo(1);
-      }
-    }
-  }, [currentStep, isTourActive, carouselApi, results]);
+
 
   const addPontoLL = () => { append({ id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }); setCurrentPointIndex(fields.length); };
   const removePontoLL = () => { if (fields.length > 2) { remove(currentPointIndex); } else { notify.warning({ title: "Atenção", description: "São necessários pelo menos 2 pontos para o cálculo do LL." }); } };
@@ -375,26 +266,7 @@ function LimitesConsistenciaDesktop() {
     notify.success({ title: "Cálculo carregado!", description: `"${calculation.name}" foi carregado com sucesso.` });
   };
 
-  const handleStartTour = async () => {
-    // Carregar exemplo automaticamente para que os steps 7 e 8 tenham conteúdo
-    const exemploParaTour = exemplosLimites[0]; // Argila de Alta Plasticidade
 
-    // Carregar dados do exemplo
-    handleSelectExample(exemploParaTour);
-
-    // Aguardar um pouco para o formulário ser preenchido
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Submeter o formulário automaticamente
-    form.handleSubmit(onSubmit)();
-
-    // Aguardar cálculo completar
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Iniciar o tour
-    startTour(tourSteps, "limites-consistencia", true); // Force = true para reiniciar
-    notify.info({ title: "Tour iniciado!", description: "Exemplo carregado automaticamente para demonstração." });
-  };
 
   const handleExportPDF = () => {
     if (!results) return;
@@ -508,7 +380,7 @@ function LimitesConsistenciaDesktop() {
         formulas,
         tables,
         customFileName: pdfFileName,
-        theme,
+        theme: { mode: theme.mode, color: (theme as any).color || 'indigo' },
         printSettings: settings.printSettings
       };
 
@@ -646,21 +518,7 @@ function LimitesConsistenciaDesktop() {
 
         <div className="flex items-center gap-2" data-tour="actions">
           <DialogExemplos onSelectExample={handleSelectExample} disabled={isCalculating} />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleStartTour}
-                className="h-10 w-10"
-              >
-                <GraduationCap className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Iniciar tour guiado</p>
-            </TooltipContent>
-          </Tooltip>
+
           <TooltipProvider>
             <CalculationActions
               onSave={handleSaveClick}

@@ -1,13 +1,7 @@
 // frontend/src/components/tensoes/TabelaResultados.tsx
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-interface TensaoPonto {
-  profundidade: number;
-  tensao_total_vertical?: number | null;
-  pressao_neutra?: number | null;
-  tensao_efetiva_vertical?: number | null;
-  tensao_efetiva_horizontal?: number | null;
-}
+import { TensaoPonto } from "@/modules/tensoes/schemas";
 
 interface NivelAgua {
   profundidade: number;
@@ -34,7 +28,7 @@ export default function TabelaResultados({ pontos, profundidadeNA, alturaCapilar
   const temTensaoHorizontal = pontos.some(p => p.tensao_efetiva_horizontal !== null && p.tensao_efetiva_horizontal !== undefined);
 
   // Calcula a cota de início da capilaridade para destacar na tabela
-  const cotaInicioCapilaridade = profundidadeNA !== undefined && alturaCapilar > 0 
+  const cotaInicioCapilaridade = profundidadeNA !== undefined && alturaCapilar > 0
     ? Math.max(0, profundidadeNA - alturaCapilar)
     : null;
 
@@ -55,7 +49,7 @@ export default function TabelaResultados({ pontos, profundidadeNA, alturaCapilar
             // Verifica se é algum NA (se houver múltiplos NAs)
             let naLabel = "";
             let isNA = false;
-            
+
             if (niveisAgua && niveisAgua.length > 0) {
               niveisAgua.forEach((na, idx) => {
                 if (Math.abs(ponto.profundidade - na.profundidade) < 0.01) {
@@ -67,11 +61,11 @@ export default function TabelaResultados({ pontos, profundidadeNA, alturaCapilar
               isNA = true;
               naLabel = "(NA)";
             }
-            
+
             // Verifica se é início de capilaridade
             let isInicioCapilar = false;
             let capilarLabel = "";
-            
+
             if (niveisAgua && niveisAgua.length > 0) {
               niveisAgua.forEach((na, idx) => {
                 if (na.capilaridade && na.capilaridade > 0) {
@@ -86,13 +80,13 @@ export default function TabelaResultados({ pontos, profundidadeNA, alturaCapilar
               isInicioCapilar = true;
               capilarLabel = "(Início Cap.)";
             }
-            
+
             return (
-              <TableRow 
+              <TableRow
                 key={index}
                 className={
-                  isNA ? "bg-blue-100/50 dark:bg-blue-900/20 font-medium" : 
-                  isInicioCapilar ? "bg-cyan-50/50 dark:bg-cyan-900/10 font-medium" : ""
+                  isNA ? "bg-blue-100/50 dark:bg-blue-900/20 font-medium" :
+                    isInicioCapilar ? "bg-cyan-50/50 dark:bg-cyan-900/10 font-medium" : ""
                 }
               >
                 <TableCell className="text-center font-mono">
@@ -101,24 +95,24 @@ export default function TabelaResultados({ pontos, profundidadeNA, alturaCapilar
                   {isInicioCapilar && <span className="ml-2 text-xs text-cyan-600 dark:text-cyan-400">{capilarLabel}</span>}
                 </TableCell>
                 <TableCell className="text-center font-mono">
-                  {ponto.tensao_total_vertical !== null && ponto.tensao_total_vertical !== undefined 
-                    ? ponto.tensao_total_vertical.toFixed(2) 
+                  {ponto.tensao_total_vertical !== null && ponto.tensao_total_vertical !== undefined
+                    ? ponto.tensao_total_vertical.toFixed(2)
                     : "-"}
                 </TableCell>
                 <TableCell className="text-center font-mono">
-                  {ponto.pressao_neutra !== null && ponto.pressao_neutra !== undefined 
-                    ? ponto.pressao_neutra.toFixed(2) 
+                  {ponto.pressao_neutra !== null && ponto.pressao_neutra !== undefined
+                    ? ponto.pressao_neutra.toFixed(2)
                     : "-"}
                 </TableCell>
                 <TableCell className="text-center font-mono">
-                  {ponto.tensao_efetiva_vertical !== null && ponto.tensao_efetiva_vertical !== undefined 
-                    ? ponto.tensao_efetiva_vertical.toFixed(2) 
+                  {ponto.tensao_efetiva_vertical !== null && ponto.tensao_efetiva_vertical !== undefined
+                    ? ponto.tensao_efetiva_vertical.toFixed(2)
                     : "-"}
                 </TableCell>
                 {temTensaoHorizontal && (
                   <TableCell className="text-center font-mono">
-                    {ponto.tensao_efetiva_horizontal !== null && ponto.tensao_efetiva_horizontal !== undefined 
-                      ? ponto.tensao_efetiva_horizontal.toFixed(2) 
+                    {ponto.tensao_efetiva_horizontal !== null && ponto.tensao_efetiva_horizontal !== undefined
+                      ? ponto.tensao_efetiva_horizontal.toFixed(2)
                       : "-"}
                   </TableCell>
                 )}

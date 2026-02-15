@@ -7,10 +7,8 @@ import { PageLoader } from "@/components/ui/loading-spinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
-import { TourProvider } from "@/contexts/TourContext";
-import { Tour } from "@/components/Tour";
+
 import { useRoutePreload } from "@/hooks/use-route-preload";
-import { ToursProvider } from "@/components/WelcomeDialog";
 
 // Lazy loading de páginas para melhor performance
 // Páginas principais (carregamento imediato)
@@ -367,17 +365,12 @@ const App = () => (
   <ErrorBoundary>
     <SettingsProvider>
       <ThemeProvider>
-        <TourProvider>
-          <ToursProvider>
-            <TooltipProvider>
-              <Sonner />
-              <Tour />
-              <BrowserRouter>
-                <AppContent />
-              </BrowserRouter>
-            </TooltipProvider>
-          </ToursProvider>
-        </TourProvider>
+        <TooltipProvider>
+          <Sonner />
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </TooltipProvider>
       </ThemeProvider>
     </SettingsProvider>
   </ErrorBoundary>

@@ -4,13 +4,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity } from "lucide-react";
 
-interface TensaoPonto {
-  profundidade: number;
-  tensao_total_vertical?: number | null;
-  pressao_neutra?: number | null;
-  tensao_efetiva_vertical?: number | null;
-  tensao_efetiva_horizontal?: number | null;
-}
+import { TensaoPonto } from "@/modules/tensoes/schemas";
+
 
 interface NivelAgua {
   profundidade: number;
@@ -26,7 +21,7 @@ interface PerfilTensoesProps {
 export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: PerfilTensoesProps) {
   const dadosGrafico = useMemo(() => {
     if (!pontos || pontos.length === 0) return [];
-    
+
     return pontos.map(p => ({
       prof: Number(p.profundidade.toFixed(2)),
       sigma_v: p.tensao_total_vertical !== null && p.tensao_total_vertical !== undefined ? Number(p.tensao_total_vertical.toFixed(2)) : null,
@@ -43,14 +38,14 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
 
   const dominioX = useMemo(() => {
     if (dadosGrafico.length === 0) return [0, 200];
-    
+
     // Inclui sigma_h_ef no cálculo do domínio apenas se houver tensão horizontal
-    const valores = temTensaoHorizontal 
+    const valores = temTensaoHorizontal
       ? dadosGrafico.flatMap(d => [d.sigma_v, d.u, d.sigma_v_ef, d.sigma_h_ef].filter((v): v is number => v !== null))
       : dadosGrafico.flatMap(d => [d.sigma_v, d.u, d.sigma_v_ef].filter((v): v is number => v !== null));
-    
+
     if (valores.length === 0) return [0, 200];
-    
+
     const minTensao = Math.min(...valores, 0); // Inclui 0 no mínimo
     const maxTensao = Math.max(...valores, 0); // Inclui 0 no máximo
     const margem = Math.max((maxTensao - minTensao) * 0.15, 10); // Margem mínima de 10
@@ -59,7 +54,7 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
 
   const dominioY = useMemo(() => {
     if (dadosGrafico.length === 0) return [0, 10];
-    
+
     const profs = dadosGrafico.map(d => d.prof);
     const minProf = Math.min(...profs, 0);
     const maxProf = Math.max(...profs);
@@ -95,26 +90,26 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
       </CardHeader>
       <CardContent className="flex justify-center bg-white rounded-lg p-3">
         <ResponsiveContainer width="100%" height={350}>
-          <LineChart 
+          <LineChart
             data={dadosGrafico}
             layout="vertical"
             margin={{ top: 20, right: 20, left: 20, bottom: 5 }}
           >
-            <CartesianGrid 
-              strokeDasharray="3 3" 
-              stroke="#d1d5db" 
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="#d1d5db"
               opacity={1}
               horizontal={true}
               vertical={true}
             />
-            
+
             {/* Eixo X (Tensão) - Horizontal */}
-            <XAxis 
+            <XAxis
               type="number"
               domain={dominioX}
-              label={{ 
-                value: 'Tensão (kPa)', 
-                position: 'insideBottom', 
+              label={{
+                value: 'Tensão (kPa)',
+                position: 'insideBottom',
                 offset: -8,
                 style: { fontSize: 13, fontWeight: 600, fill: '#000000' }
               }}
@@ -122,17 +117,17 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
               axisLine={{ stroke: '#000000', strokeWidth: 1.5 }}
               tickLine={{ stroke: '#000000' }}
             />
-            
+
             {/* Eixo Y (Profundidade) - 0 no topo, aumenta para baixo */}
-            <YAxis 
+            <YAxis
               dataKey="prof"
               type="number"
               domain={[0, 'dataMax + 1']}
               reversed={false}
               orientation="left"
-              label={{ 
-                value: 'Profundidade (m)', 
-                angle: -90, 
+              label={{
+                value: 'Profundidade (m)',
+                angle: -90,
                 position: 'insideLeft',
                 style: { fontSize: 13, fontWeight: 600, fill: '#000000' },
                 offset: 20,
@@ -142,8 +137,8 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
               axisLine={{ stroke: '#000000', strokeWidth: 1.5 }}
               tickLine={{ stroke: '#000000' }}
             />
-            
-            <Tooltip 
+
+            <Tooltip
               content={({ active, payload }) => {
                 if (!active || !payload || payload.length === 0) return null;
                 const data = payload[0].payload;
@@ -168,8 +163,8 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
                 );
               }}
             />
-            
-            <Legend 
+
+            <Legend
               content={({ payload }) => {
                 if (!payload) return null;
                 return (
@@ -183,8 +178,8 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
                       };
                       return (
                         <div key={`item-${index}`} className="flex items-center gap-1.5">
-                          <div 
-                            className="w-2.5 h-2.5 rounded-full" 
+                          <div
+                            className="w-2.5 h-2.5 rounded-full"
                             style={{ backgroundColor: entry.color }}
                           />
                           <span className="text-[12px] text-black">
@@ -197,20 +192,20 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
                 );
               }}
             />
-            
+
             {/* Linhas dos Níveis d'Água - no layout vertical, usamos y para linhas horizontais */}
             {niveisAgua && niveisAgua.length > 0 ? (
               // Múltiplos NAs
               niveisAgua.map((na, idx) => (
                 na.profundidade > 0 && (
-                  <ReferenceLine 
+                  <ReferenceLine
                     key={`na-${idx}`}
                     y={na.profundidade}
-                    stroke="#3b82f6" 
+                    stroke="#3b82f6"
                     strokeWidth={2.5}
                     strokeDasharray="5 5"
-                    label={{ 
-                      value: niveisAgua.length > 1 ? `NA${idx + 1} = ${na.profundidade.toFixed(2)} m` : `NA = ${na.profundidade.toFixed(2)} m`, 
+                    label={{
+                      value: niveisAgua.length > 1 ? `NA${idx + 1} = ${na.profundidade.toFixed(2)} m` : `NA = ${na.profundidade.toFixed(2)} m`,
                       position: 'insideTopRight',
                       fill: '#3b82f6',
                       fontSize: 12,
@@ -223,13 +218,13 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
             ) : (
               // NA único (modo compatibilidade)
               profundidadeNA !== undefined && profundidadeNA > 0 && (
-                <ReferenceLine 
+                <ReferenceLine
                   y={profundidadeNA}
-                  stroke="#3b82f6" 
+                  stroke="#3b82f6"
                   strokeWidth={2.5}
                   strokeDasharray="5 5"
-                  label={{ 
-                    value: `NA = ${profundidadeNA.toFixed(2)} m`, 
+                  label={{
+                    value: `NA = ${profundidadeNA.toFixed(2)} m`,
                     position: 'insideTopRight',
                     fill: '#3b82f6',
                     fontSize: 12,
@@ -239,7 +234,7 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
                 />
               )
             )}
-            
+
             {/* Linhas de tensão - no layout vertical, dataKey aponta para valores no eixo X */}
             <Line
               name="sigma_v"
@@ -252,7 +247,7 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
               connectNulls
               isAnimationActive={true}
             />
-            
+
             <Line
               name="u"
               type="linear"
@@ -264,7 +259,7 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
               connectNulls
               isAnimationActive={true}
             />
-            
+
             <Line
               name="sigma_v_ef"
               type="linear"
@@ -276,7 +271,7 @@ export default function PerfilTensoes({ pontos, profundidadeNA, niveisAgua }: Pe
               connectNulls
               isAnimationActive={true}
             />
-            
+
             {temTensaoHorizontal && (
               <Line
                 name="sigma_h_ef"

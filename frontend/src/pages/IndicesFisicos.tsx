@@ -61,7 +61,7 @@ import { prepareReportForStorage } from "@/lib/reportManager";
 import { useTheme } from "@/hooks/use-theme";
 import SoilExamples from "@/components/soil/SoilExamples";
 import GsSuggestions from "@/components/soil/GsSuggestions";
-import { useToursEnabled } from "@/components/WelcomeDialog";
+
 import ResultInterpretation from "@/components/soil/ResultInterpretation";
 import InputWithValidation from "@/components/soil/InputWithValidation";
 import { SoilExample, soilExamples, type AmostraIndicesFisicos } from "@/lib/soil-constants";
@@ -69,7 +69,7 @@ import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/use-settings";
 import { formatNumber } from "@/lib/format-number";
 import { AppSettings } from "@/contexts/SettingsContext";
-import { useTour, TourStep } from "@/contexts/TourContext";
+
 import { toast } from "@/components/ui/sonner";
 
 // Interface para o estado do formulário
@@ -130,9 +130,8 @@ const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
 function IndicesFisicosDesktop() {
   // Configurações
   const { settings } = useSettings();
-  const { startTour, suggestTour } = useTour();
   const { theme } = useTheme();
-  const toursEnabled = useToursEnabled();
+
   const { addReport } = useRecentReports();
   const navigate = useNavigate();
 
@@ -156,95 +155,7 @@ function IndicesFisicosDesktop() {
   const [error, setError] = useState<string | null>(null);
   const notify = useNotification();
 
-  // Definição dos steps do tour
-  const tourSteps: TourStep[] = [
-    {
-      target: "[data-tour='module-header']",
-      title: "🧮 Bem-vindo aos Índices Físicos!",
-      content: "Este módulo permite calcular as propriedades físicas fundamentais do solo, como peso específico, índice de vazios, porosidade e grau de saturação.",
-      placement: "bottom",
-      spotlightPadding: 16,
-    },
-    {
-      target: "[data-tour='input-basicos']",
-      title: "📊 Dados Básicos de Entrada",
-      content: "Insira os valores fundamentais obtidos no ensaio: massa úmida, massa seca, volume total e densidade dos grãos (Gs). Esses dados são essenciais para calcular todos os índices físicos do solo.",
-      placement: "right",
-      spotlightPadding: 12,
-    },
-    {
-      target: "#Gs",
-      title: "🔬 Densidade dos Grãos (Gs)",
-      content: "O Gs é essencial para calcular todos os índices físicos. Ele não pode ser calculado apenas com massa e volume - deve ser informado. Valores típicos: Areia (quartzo) = 2.65, Argila = 2.70, Silte = 2.68. Use as sugestões ao lado!",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "#indice_vazios_max",
-      title: "📐 Índices de Vazios (Opcional)",
-      content: "Para calcular a compacidade relativa (Dr) de solos granulares, forneça os valores de emax e emin do solo, obtidos em ensaios específicos.",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='btn-calcular']",
-      title: "⚡ Calcular Resultados",
-      content: "Após preencher os dados necessários, clique aqui para processar os cálculos. Os resultados aparecerão instantaneamente no painel ao lado.",
-      placement: "top",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='diagrama-fases']",
-      title: "🎨 Diagrama de Fases",
-      content: "Esta visualização mostra a distribuição das três fases do solo (sólidos, água e ar). Neste exemplo de areia compacta, note os volumes relativos de cada fase.",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='resultados']",
-      title: "📈 Resultados Numéricos",
-      content: "Todos os índices calculados do exemplo estão aqui. Use as setas para navegar. Clique no ícone (i) para ver fórmulas e explicações, incluindo compacidade relativa (Dr).",
-      placement: "left",
-      spotlightPadding: 12,
-    },
-    {
-      target: "[data-tour='actions']",
-      title: "💾 Salvar e Exportar",
-      content: "Salve seus cálculos para consulta posterior ou exporte os resultados em PDF ou Excel. Você também pode carregar exemplos práticos para aprender!",
-      placement: "bottom",
-      spotlightPadding: 12,
-    },
-  ];
 
-  // Sugerir tour via toast na primeira visita
-  useEffect(() => {
-    // Verificar se tours estão globalmente desabilitados
-    if (!toursEnabled) return;
-
-    let toastId: string | number | undefined;
-
-    const timer = setTimeout(() => {
-      // Preparação: carregar exemplo e calcular
-      const prepareForTour = async () => {
-        const exemploParaTour = soilExamples[1]; // Areia Compacta
-        handleLoadExample(exemploParaTour);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        await handleCalculate();
-        await new Promise(resolve => setTimeout(resolve, 800));
-      };
-
-      // Sugerir tour com toast
-      toastId = suggestTour(tourSteps, "indices-fisicos", "Índices Físicos", prepareForTour);
-    }, 1000);
-
-    return () => {
-      clearTimeout(timer);
-      // Dismiss toast on navigation
-      if (toastId) {
-        toast.dismiss(toastId);
-      }
-    };
-  }, [toursEnabled]);
 
   // Restaurar dados ao abrir via "Gerar" em Relatórios
   useEffect(() => {
@@ -464,24 +375,7 @@ function IndicesFisicosDesktop() {
     notify.success({ title: "Cálculo carregado!", description: `"${calculation.name}" foi carregado com sucesso.` });
   };
 
-  const handleStartTour = async () => {
-    // Carregar exemplo automaticamente para demonstração
-    const exemploParaTour = soilExamples[1]; // Areia Compacta
-    handleLoadExample(exemploParaTour);
 
-    // Aguardar formulário ser preenchido
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Calcular automaticamente
-    await handleCalculate();
-
-    // Aguardar cálculo completar
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Iniciar o tour
-    startTour(tourSteps, "indices-fisicos", true); // Force = true para reiniciar
-    notify.info({ title: "Tour iniciado!", description: "Exemplo carregado automaticamente para demonstração." });
-  };
 
   const handleExportPDF = () => {
     if (!results) return;
@@ -686,7 +580,7 @@ function IndicesFisicosDesktop() {
       customFileName: pdfFileName,
       // Passar título personalizado se a configuração estiver ativa
       customTitle: settings.printSettings?.includeCustomTitle ? customReportTitle : undefined,
-      theme,
+      theme: { mode: theme.mode, color: (theme as any).color || 'indigo' },
       printSettings: settings.printSettings
     };
 
@@ -898,21 +792,7 @@ function IndicesFisicosDesktop() {
           {/* Action Buttons */}
           <div className="flex items-center gap-2" data-tour="actions">
             <SoilExamples onSelect={handleLoadExample} disabled={isCalculating} />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleStartTour}
-                  className="h-10 w-10"
-                >
-                  <GraduationCap className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Iniciar tour guiado</p>
-              </TooltipContent>
-            </Tooltip>
+
             <TooltipProvider>
               <CalculationActions
                 onSave={handleSaveClick}
