@@ -56,7 +56,7 @@ const resultTooltips: Record<string, { desc: string; range?: string }> = {
     LL: { desc: "Limite de Liquidez: teor de umidade onde o solo passa de plástico para líquido.", range: "Argilas: 30% a 100%" },
     LP: { desc: "Limite de Plasticidade: teor de umidade onde o solo passa de semi-sólido para plástico.", range: "Argilas: 15% a 40%" },
     IP: { desc: "Índice de Plasticidade: amplitude do estado plástico (LL - LP).", range: "0: Não plástico | 1-5: Leve | 5-10: Baixa | 10-20: Média | 20-40: Alta | >40: Muito alta (Burmister, 1949)" },
-    IC: { desc: "Índice de Consistência: posição relativa da umidade natural entre LL e LP.", range: "<0: líquido | 0-1: plástico | >1: sólido" },
+    IC: { desc: "Índice de Consistência: posição relativa da umidade natural entre LL e LP.", range: "IC < 0: Muito mole | 0-0.5: Mole | 0.5-0.75: Média | 0.75-1.0: Rija | >1.0: Dura (Caputo, 2015)" },
     Dr: { desc: "Compacidade Relativa: indica o quão compacto está o solo em relação aos estados extremos.", range: "<15%: muito fofa | >85%: muito compacta" },
 };
 

@@ -141,11 +141,11 @@ export function calcularLimitesConsistencia(
       if (dados.umidade_natural !== undefined) {
         if (ip_calculado > EPSILON) {
           ic_calculado = (ll_calculado - dados.umidade_natural) / ip_calculado;
-          if (ic_calculado < 0) classificacao_consistencia = 'Muito Mole (líquida)';
-          else if (ic_calculado < 0.5) classificacao_consistencia = 'Mole';
-          else if (ic_calculado < 0.75) classificacao_consistencia = 'Média';
-          else if (ic_calculado < 1.0) classificacao_consistencia = 'Rija';
-          else classificacao_consistencia = 'Dura (semi-sólida/sólida)';
+          if (ic_calculado < 0) classificacao_consistencia = 'Muito Mole (vasa)';
+          else if (ic_calculado <= 0.5) classificacao_consistencia = 'Mole';
+          else if (ic_calculado <= 0.75) classificacao_consistencia = 'Média';
+          else if (ic_calculado <= 1.0) classificacao_consistencia = 'Rija';
+          else classificacao_consistencia = 'Dura';
         } else {
           classificacao_consistencia = 'Não aplicável (solo NP)';
         }
