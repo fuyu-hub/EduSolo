@@ -75,7 +75,7 @@ export function calcularClassificacaoPorPorcentagem(
             return {
                 total_areia: dados.areia_grossa + dados.areia_media + dados.areia_fina,
                 total_finos: dados.silte + dados.argila,
-                erro: `A soma das frações deve ser igual a 100%. Soma atual: ${soma.toFixed(1)}%`,
+                erro: `A soma das frações deve ser igual a 100%. Soma atual: ${soma.toFixed(1).replace('.', ',')}%`,
             };
         }
 

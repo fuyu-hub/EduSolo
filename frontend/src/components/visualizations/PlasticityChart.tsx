@@ -712,51 +712,7 @@ const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ 
   const ipA = (llVal: number) => Math.max(0, 0.73 * (llVal - 20));
   const ipA_at_50 = ipA(50);
 
-  // Função para determinar a classificação do solo com suporte a classificação dupla
-  const getSoilClassification = () => {
-    if (!hasValidData) return '';
 
-    const ip_linha_a = ipA(ll!);
-    const distancia_linha_a = ip! - ip_linha_a;
-    const tolerancia_linha_a = Math.max(Math.abs(ip_linha_a) * 0.08, 1.0);
-    const tolerancia_ll_50 = 3.0;
-    const proxima_ll_50 = Math.abs(ll! - 50) <= tolerancia_ll_50;
-
-    if (ll! < 50) {
-      // Baixa plasticidade (L)
-      if (ip! >= 4 && ip! <= 7) {
-        // Zona CL-ML tradicional (entre IP=4 e IP=7)
-        return 'CL-ML';
-      } else if (ip! > 7 && Math.abs(distancia_linha_a) <= tolerancia_linha_a) {
-        // Próximo da Linha A, acima de IP=7 -> classificação dupla
-        return distancia_linha_a >= 0 ? 'CL-ML' : 'ML-CL';
-      } else if (ip! > 7 && distancia_linha_a >= tolerancia_linha_a) {
-        // Claramente acima da linha A
-        return 'CL';
-      } else if (ip! < 4 && distancia_linha_a <= -tolerancia_linha_a) {
-        // Claramente abaixo da linha A
-        return 'ML';
-      } else {
-        // Fallback para zona intermediária
-        return 'CL-ML';
-      }
-    } else {
-      // Alta plasticidade (H)
-      if (Math.abs(distancia_linha_a) <= tolerancia_linha_a) {
-        // Próximo da Linha A -> classificação dupla
-        return distancia_linha_a >= 0 ? 'CH-MH' : 'MH-CH';
-      } else if (distancia_linha_a >= tolerancia_linha_a) {
-        // Claramente acima da linha A
-        return proxima_ll_50 ? 'CL-CH' : 'CH';
-      } else {
-        // Claramente abaixo da linha A
-        return proxima_ll_50 ? 'ML-MH' : 'MH';
-      }
-    }
-  };
-
-  const soilClassification = getSoilClassification();
-  const isDualClassification = soilClassification.includes('-');
 
   // Componente do gráfico reutilizável
   const ChartContent = ({ isDialog = false }: { isDialog?: boolean }) => (
@@ -987,64 +943,6 @@ const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ 
           </div>
         </div>,
         document.body
-      )}
-
-      {/* Informações da classificação do solo - apenas se houver dados válidos */}
-      {hasValidData && (
-        <Card>
-          <CardHeader className="pb-2 pt-3">
-            <div className="flex items-center justify-between mb-1">
-              <CardTitle className="text-sm">Classificação do Solo</CardTitle>
-              {isDualClassification && (
-                <Badge variant="default" className="text-[10px] h-5 px-2 bg-amber-500 hover:bg-amber-600 animate-pulse">
-                  DUPLA
-                </Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs" style={{ backgroundColor: zoneInfo[soilClassification as keyof typeof zoneInfo]?.color + '20' }}>
-                {soilClassification}
-              </Badge>
-            </div>
-            <CardDescription className="text-xs mt-1">
-              {zoneInfo[soilClassification as keyof typeof zoneInfo]?.name || "Classificação em zona de transição"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-0 pb-3">
-            <p className="text-xs text-muted-foreground mb-1.5 leading-tight">
-              {zoneInfo[soilClassification as keyof typeof zoneInfo]?.description ||
-                "Solo com características mistas, localizado em zona de transição entre classificações."}
-            </p>
-
-            {/* Explicação da classificação dupla */}
-            {isDualClassification && (
-              <div className="mt-2 p-2 rounded-md bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
-                <p className="text-[10px] font-semibold text-amber-900 dark:text-amber-300 mb-1">
-                  🔄 Classificação Dupla
-                </p>
-                <p className="text-[10px] text-amber-800 dark:text-amber-400 leading-tight">
-                  {soilClassification.includes('CL-ML') || soilClassification.includes('ML-CL')
-                    ? 'Solo na zona de transição entre argila e silte de baixa plasticidade. Pode estar na zona CL-ML (IP 4-7) ou próximo à Linha A.'
-                    : soilClassification.includes('CL-CH')
-                      ? 'Argila próxima à transição entre baixa e alta plasticidade (LL próximo a 50%).'
-                      : soilClassification.includes('ML-MH')
-                        ? 'Silte próximo à transição entre baixa e alta plasticidade (LL próximo a 50%).'
-                        : soilClassification.includes('CH-MH') || soilClassification.includes('MH-CH')
-                          ? 'Solo de alta plasticidade próximo à Linha A, com características mistas de argila e silte.'
-                          : 'Solo com características em zona de transição. Ensaios complementares recomendados.'}
-                </p>
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-1 mt-2">
-              {zoneInfo[soilClassification as keyof typeof zoneInfo]?.properties.map((prop, index) => (
-                <Badge key={index} variant="secondary" className="text-[10px] py-0 px-1.5 h-5">
-                  {prop}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       )}
 
     </div>

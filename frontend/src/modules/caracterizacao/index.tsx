@@ -720,7 +720,7 @@ const EntradaDados = () => {
         if (umidadesValidas.length < 2) return { status: 'ok' };
 
         const media = umidadesValidas.reduce((a, b) => a + b, 0) / umidadesValidas.length;
-        const variacaoPercentual = Math.abs((umidadeAtual - media) / media) * 100;
+        const variacaoPercentual = Math.abs(umidadeAtual - media);
 
         // Só mostrar erro se desviar mais de 5% (NBR 7180/2025)
         if (variacaoPercentual > 5) {
@@ -739,7 +739,7 @@ const EntradaDados = () => {
         if (umidadesValidas.length < 2) return null;
 
         const media = umidadesValidas.reduce((a, b) => a + b, 0) / umidadesValidas.length;
-        return Math.abs((umidadeAtual - media) / media) * 100;
+        return Math.abs(umidadeAtual - media);
     };
 
     // Validar quantidade de pontos LP (mínimo 3 pela NBR 7180/2025)
@@ -1040,7 +1040,7 @@ const EntradaDados = () => {
                             <div></div>
                         </div>
 
-                        <div className="space-y-1 max-h-[220px] overflow-y-auto pr-1">
+                        <div className="space-y-1">
                             {limites.pontosLP.map((ponto, i) => {
                                 const validacao = validarVariacaoLP(i);
                                 const borderClass = validacao.status === 'error'

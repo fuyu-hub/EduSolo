@@ -115,9 +115,14 @@ export default function GranulometriaTeste() {
         toast.success(`Exemplo "${exemplo.nome}" carregado!`);
     };
 
+    // Helper para converter string com virgula ou ponto
+    const parseValue = (val: string): number => {
+        return parseFloat(val.replace(',', '.'));
+    };
+
     // Calcular soma das frações
     const somaFracoes = FRACOES.reduce((sum, f) => {
-        const val = parseFloat(formData[f.key]);
+        const val = parseValue(formData[f.key]);
         return sum + (isNaN(val) ? 0 : val);
     }, 0);
 
@@ -127,7 +132,7 @@ export default function GranulometriaTeste() {
     // Auto-calculate
     useEffect(() => {
         // Precisa de pelo menos 2 frações preenchidas e soma válida
-        const fracoesPreenchidas = FRACOES.filter((f) => formData[f.key] !== "" && !isNaN(parseFloat(formData[f.key])));
+        const fracoesPreenchidas = FRACOES.filter((f) => formData[f.key] !== "" && !isNaN(parseValue(formData[f.key])));
         if (fracoesPreenchidas.length < 2) {
             setResults(null);
             return;
@@ -139,20 +144,20 @@ export default function GranulometriaTeste() {
         }
 
         const input: ClassificacaoPorcentagemInput = {
-            pedregulho: parseFloat(formData.pedregulho) || 0,
-            areia_grossa: parseFloat(formData.areia_grossa) || 0,
-            areia_media: parseFloat(formData.areia_media) || 0,
-            areia_fina: parseFloat(formData.areia_fina) || 0,
-            silte: parseFloat(formData.silte) || 0,
-            argila: parseFloat(formData.argila) || 0,
-            pass_peneira_10: formData.pass_p10 ? parseFloat(formData.pass_p10) : undefined,
-            pass_peneira_40: formData.pass_p40 ? parseFloat(formData.pass_p40) : undefined,
-            pass_peneira_200: formData.pass_p200 ? parseFloat(formData.pass_p200) : undefined,
-            d10: formData.d10 ? parseFloat(formData.d10) : undefined,
-            d30: formData.d30 ? parseFloat(formData.d30) : undefined,
-            d60: formData.d60 ? parseFloat(formData.d60) : undefined,
-            ll: formData.ll ? parseFloat(formData.ll) : undefined,
-            lp: formData.lp ? parseFloat(formData.lp) : undefined,
+            pedregulho: parseValue(formData.pedregulho) || 0,
+            areia_grossa: parseValue(formData.areia_grossa) || 0,
+            areia_media: parseValue(formData.areia_media) || 0,
+            areia_fina: parseValue(formData.areia_fina) || 0,
+            silte: parseValue(formData.silte) || 0,
+            argila: parseValue(formData.argila) || 0,
+            pass_peneira_10: formData.pass_p10 ? parseValue(formData.pass_p10) : undefined,
+            pass_peneira_40: formData.pass_p40 ? parseValue(formData.pass_p40) : undefined,
+            pass_peneira_200: formData.pass_p200 ? parseValue(formData.pass_p200) : undefined,
+            d10: formData.d10 ? parseValue(formData.d10) : undefined,
+            d30: formData.d30 ? parseValue(formData.d30) : undefined,
+            d60: formData.d60 ? parseValue(formData.d60) : undefined,
+            ll: formData.ll ? parseValue(formData.ll) : undefined,
+            lp: formData.lp ? parseValue(formData.lp) : undefined,
         };
 
         const resultado = calcularClassificacaoPorPorcentagem(input);
@@ -170,7 +175,7 @@ export default function GranulometriaTeste() {
 
         const valores = FRACOES.map((f) => ({
             ...f,
-            valor: parseFloat(formData[f.key]) || 0,
+            valor: parseValue(formData[f.key]) || 0,
         })).filter((f) => f.valor > 0);
 
         if (valores.length === 0) return null;
@@ -214,7 +219,7 @@ export default function GranulometriaTeste() {
     return (
         <div className={UI_STANDARDS.pageContainer}>
             <Helmet>
-                <title>Classificação Mecânica dos Solos | EduSolos</title>
+                <title>Classificação Granulométrica | EduSolos</title>
                 <meta name="description" content="Classifique solos pelos sistemas USCS e AASHTO (HRB) informando apenas as frações granulométricas e limites de consistência. Simples e rápido." />
             </Helmet>
             <PrintHeader moduleTitle="Classificação Granulométrica" moduleName="granulometria" />
@@ -554,9 +559,9 @@ export default function GranulometriaTeste() {
                         <CardContent className="pt-0">
                             {(formData.ll && formData.lp) ? (
                                 <PlasticityChart
-                                    ll={formData.ll ? parseFloat(formData.ll) : null}
+                                    ll={formData.ll ? parseValue(formData.ll) : null}
                                     ip={(formData.ll && formData.lp)
-                                        ? parseFloat(formData.ll) - parseFloat(formData.lp)
+                                        ? parseValue(formData.ll) - parseValue(formData.lp)
                                         : null}
                                 />
                             ) : (
