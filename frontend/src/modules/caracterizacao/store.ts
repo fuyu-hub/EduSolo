@@ -62,6 +62,8 @@ export const useCaracterizacaoStore = create<CaracterizacaoState>((set) => ({
             { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" },
             { id: generateId(), massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" }
         ],
+        umidadeNatural: "",
+        percentualArgila: "",
     },
     updateLimites: (data) => set((state) => ({
         limites: { ...state.limites, ...data }

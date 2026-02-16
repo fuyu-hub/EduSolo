@@ -8,33 +8,32 @@ import { useCaracterizacaoStore } from "../store";
 import { Separator } from "@/components/ui/separator";
 
 export function LimitesInput() {
-    const { amostras, currentAmostraIndex, updateLimites } = useCaracterizacaoStore();
-    const currentAmostra = amostras[currentAmostraIndex];
-    const { pontosLL, pontosLP, umidadeNatural, percentualArgila } = currentAmostra.limites;
+    const { limites, updateLimites } = useCaracterizacaoStore();
+    const { pontosLL, pontosLP, umidadeNatural, percentualArgila } = limites;
 
     const handleUpdateLL = (idx: number, field: string, value: string) => {
         const newPontos = [...pontosLL];
         newPontos[idx] = { ...newPontos[idx], [field]: value };
-        updateLimites(currentAmostraIndex, { pontosLL: newPontos });
+        updateLimites({ pontosLL: newPontos });
     };
 
     const handleUpdateLP = (idx: number, field: string, value: string) => {
         const newPontos = [...pontosLP];
         newPontos[idx] = { ...newPontos[idx], [field]: value };
-        updateLimites(currentAmostraIndex, { pontosLP: newPontos });
+        updateLimites({ pontosLP: newPontos });
     };
 
     const addPontoLL = () => {
         const generateId = () => `${Date.now()}-${Math.random()}`;
-        updateLimites(currentAmostraIndex, {
-            pontosLL: [...pontosLL, { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "" }]
+        updateLimites({
+            pontosLL: [...pontosLL, { id: generateId(), numGolpes: "", massaUmidaRecipiente: "", massaSecaRecipiente: "", massaRecipiente: "", umidade: "" }]
         });
     };
 
     const removePontoLL = (index: number) => {
         if (pontosLL.length <= 2) return;
         const newPontos = pontosLL.filter((_, i) => i !== index);
-        updateLimites(currentAmostraIndex, { pontosLL: newPontos });
+        updateLimites({ pontosLL: newPontos });
     };
 
     return (
@@ -133,7 +132,7 @@ export function LimitesInput() {
                                 id="umidadeNatural"
                                 placeholder="Ex: 15.5"
                                 value={umidadeNatural}
-                                onChange={e => updateLimites(currentAmostraIndex, { umidadeNatural: e.target.value })}
+                                onChange={e => updateLimites({ umidadeNatural: e.target.value })}
                             />
                         </div>
                         <div className="space-y-2">
@@ -142,7 +141,7 @@ export function LimitesInput() {
                                 id="argila"
                                 placeholder="Opcional"
                                 value={percentualArgila}
-                                onChange={e => updateLimites(currentAmostraIndex, { percentualArgila: e.target.value })}
+                                onChange={e => updateLimites({ percentualArgila: e.target.value })}
                             />
                         </div>
                     </div>
