@@ -25,8 +25,9 @@ export default function Salvos() {
   const handleOpen = (calculation: any) => {
     // Navegar para o módulo específico (implementar lógica de navegação)
     const moduleRoutes: Record<string, string> = {
-      "Índices Físicos": "/indices-fisicos",
-      "Limites de Consistência": "/limites-consistencia",
+      "Índices Físicos": "/indices-limites",
+      "Limites de Consistência": "/indices-limites",
+      "Índices e Limites": "/indices-limites",
       "Granulometria": "/granulometria",
       "Compactação": "/compactacao",
       "Tensões Geostáticas": "/tensoes",

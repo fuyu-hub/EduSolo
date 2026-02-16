@@ -37,8 +37,7 @@ import CurvaCompactacao, { CurvaCompactacaoRef } from "@/components/compactacao/
 import TabelaResultados from "@/components/compactacao/TabelaResultados";
 import DialogExemplos from "@/components/compactacao/DialogExemplos";
 import { ExemploCompactacao } from "@/lib/exemplos-compactacao";
-import { MobileModuleWrapper } from "@/components/mobile";
-import CompactacaoMobile from "./mobile/CompactacaoMobile";
+
 import { useCompactacaoStore } from "@/modules/compactacao/store";
 import { UI_STANDARDS } from "@/lib/ui-standards";
 
@@ -989,13 +988,9 @@ function CompactacaoDesktop() {
   );
 }
 
-// Wrapper principal que escolhe versão mobile ou desktop
+// Wrapper principal
 export default function Compactacao() {
-  return (
-    <MobileModuleWrapper mobileVersion={<CompactacaoMobile />}>
-      <CompactacaoDesktop />
-    </MobileModuleWrapper>
-  );
+  return <CompactacaoDesktop />;
 }
 // Função auxiliar para linhas de resultado
 // Função auxiliar para linhas de resultado

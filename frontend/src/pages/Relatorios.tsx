@@ -1,7 +1,5 @@
 import { useRecentReports } from '@/hooks/useRecentReports';
 import { Helmet } from 'react-helmet-async';
-import { useIsMobile } from '@/hooks/use-mobile';
-import RelatoriosMobile from './mobile/RelatoriosMobile';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { FileText, Download, Trash2, Calendar, Package, Eye, RotateCw } from 'lucide-react';
@@ -18,8 +16,8 @@ import { downloadPdfFromBase64, downloadPdfFromUrl } from '@/lib/reportManager';
 // Mapeamento de módulos para suas rotas
 const moduleRoutes: { [key: string]: string } = {
   'granulometria': '/granulometria',
-  'indices-fisicos': '/indices-fisicos',
-  'limites': '/limites-consistencia',
+  'indices-fisicos': '/indices-limites',
+  'limites': '/indices-limites',
   'compactacao': '/compactacao',
   'tensoes': '/tensoes',
   'acrescimo': '/acrescimo-tensoes',
@@ -37,7 +35,7 @@ const moduleLabels: { [key: string]: string } = {
 };
 
 export default function Relatorios() {
-  const isMobile = useIsMobile();
+
   const navigate = useNavigate();
   const { reports, removeReport, clearAll } = useRecentReports();
   const [search, setSearch] = useState('');
@@ -98,10 +96,6 @@ export default function Relatorios() {
       downloadPdfFromUrl(report.pdfUrl, filename);
     }
   };
-
-  if (isMobile) {
-    return <RelatoriosMobile />;
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/5 p-6">

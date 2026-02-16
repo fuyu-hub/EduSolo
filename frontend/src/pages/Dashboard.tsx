@@ -14,19 +14,12 @@ const modules = [
     path: "/indices-limites",
     preload: () => import("./../modules/caracterizacao"),
   },
-  /*   {
-      icon: Database,
-      title: "Granulometria e Classificação",
-      description: "Análise granulométrica com classificação USCS e AASHTO",
-      path: "/granulometria",
-      preload: () => import("./Granulometria"),
-    }, */
   {
     icon: Database,
     title: "Classificação Granulométrica",
     description: "Classificação de Solos pelos Sistemas USCS e AASHTO",
     path: "/granulometria",
-    preload: () => import("./GranulometriaTeste"),
+    preload: () => import("./Granulometria"),
   },
   {
     icon: CompactacaoIcon,

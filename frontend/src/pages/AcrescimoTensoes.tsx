@@ -8,8 +8,7 @@ import PrintHeader from "@/components/PrintHeader";
 import { useNavigate } from "react-router-dom";
 
 import { toast } from "@/components/ui/sonner";
-import { MobileModuleWrapper } from "@/components/mobile";
-import AcrescimoTensoesMobile from "./mobile/AcrescimoTensoesMobile";
+
 
 
 const metodos = [
@@ -191,11 +190,7 @@ function AcrescimoTensoesDesktop() {
   );
 }
 
-// Wrapper principal que escolhe versão mobile ou desktop
+// Wrapper principal
 export default function AcrescimoTensoes() {
-  return (
-    <MobileModuleWrapper mobileVersion={<AcrescimoTensoesMobile />}>
-      <AcrescimoTensoesDesktop />
-    </MobileModuleWrapper>
-  );
+  return <AcrescimoTensoesDesktop />;
 }

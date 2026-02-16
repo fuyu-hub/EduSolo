@@ -25,11 +25,10 @@ interface PontoCurva {
 interface LimiteLiquidezChartProps {
   pontos: PontoCurva[];
   ll: number | null;
-  isMobile?: boolean;
 }
 
 const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChartProps>(
-  ({ pontos, ll, isMobile = false }, ref) => {
+  ({ pontos, ll }, ref) => {
     const [dialogOpen, setDialogOpen] = useState(false);
     const chartRef = useRef<HTMLDivElement>(null);
 
@@ -426,26 +425,24 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
               Salvar JPG
             </Button>
 
-            {!isMobile && (
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <Maximize2 className="w-4 h-4" />
-                    Ampliar
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-5xl max-h-[90vh] w-full">
-                  <DialogHeader>
-                    <DialogTitle>Gráfico - Limite de Liquidez (Ampliado)</DialogTitle>
-                  </DialogHeader>
-                  <div className="w-full flex justify-center items-center p-2 bg-muted/10 rounded-lg">
-                    <div className="w-full max-w-[1200px]">
-                      <ChartContent isDialog={true} />
-                    </div>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Maximize2 className="w-4 h-4" />
+                  Ampliar
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-5xl max-h-[90vh] w-full">
+                <DialogHeader>
+                  <DialogTitle>Gráfico - Limite de Liquidez (Ampliado)</DialogTitle>
+                </DialogHeader>
+                <div className="w-full flex justify-center items-center p-2 bg-muted/10 rounded-lg">
+                  <div className="w-full max-w-[1200px]">
+                    <ChartContent isDialog={true} />
                   </div>
-                </DialogContent>
-              </Dialog>
-            )}
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 

@@ -10,9 +10,7 @@ import {
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { MobileLayout } from "@/components/mobile/MobileLayout";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const menuItems = [
@@ -216,22 +214,8 @@ const ConditionalSheetClose = ({ shouldWrap, children, ...props }: { shouldWrap:
 };
 
 
-// Agora usa React.ReactNode corretamente
 export function Layout({ children }: { children: React.ReactNode }) {
-  const isMobile = useIsMobile();
-
-  // Usa React.useMemo para garantir renderização consistente e evitar flash
-  const layout = React.useMemo(() => {
-    // Se for mobile, usa o MobileLayout
-    if (isMobile) {
-      return <MobileLayout>{children}</MobileLayout>;
-    }
-
-    // Caso contrário, usa o layout desktop normal
-    return <DesktopLayout>{children}</DesktopLayout>;
-  }, [isMobile, children]);
-
-  return layout;
+  return <DesktopLayout>{children}</DesktopLayout>;
 }
 
 // Desktop Layout Component

@@ -13,11 +13,10 @@ interface CurvaGranulometricaProps {
   d10?: number | null;
   d30?: number | null;
   d60?: number | null;
-  isMobile?: boolean;
 }
 
 // Otimizado com React.memo para evitar re-renders desnecessários
-const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30, d60, isMobile = false }: CurvaGranulometricaProps) {
+const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30, d60 }: CurvaGranulometricaProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   // Função para exportar o gráfico como JPG
@@ -177,14 +176,12 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
   // Componente do gráfico
   const GraficoContent = ({ isDialog = false }: { isDialog?: boolean }) => (
     <ComposedChart
-      width={isDialog ? 950 : (isMobile ? 340 : 1300)}
-      height={isDialog ? 520 : (isMobile ? 300 : 380)}
+      width={isDialog ? 950 : 1300}
+      height={isDialog ? 520 : 380}
       data={dadosGrafico}
       margin={isDialog
         ? { top: 50, right: 40, left: 60, bottom: 80 }
-        : (isMobile
-          ? { top: 35, right: 10, left: 50, bottom: 40 }
-          : { top: 45, right: 30, left: 60, bottom: 50 })
+        : { top: 45, right: 30, left: 60, bottom: 50 }
       }
     >
       <defs>
@@ -238,12 +235,12 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
         ticks={ticksX}
         tickFormatter={formatarEixoX}
         label={{
-          value: isMobile ? 'Diâmetro (mm)' : 'Diâmetro das partículas (mm)',
+          value: 'Diâmetro das partículas (mm)',
           position: 'bottom',
-          offset: isDialog ? 5 : (isMobile ? 5 : 10),
-          style: { fontSize: isDialog ? 14 : (isMobile ? 10 : 13), fontWeight: 600, fill: '#374151' }
+          offset: isDialog ? 5 : 10,
+          style: { fontSize: isDialog ? 14 : 13, fontWeight: 600, fill: '#374151' }
         }}
-        tick={{ fontSize: isDialog ? 13 : (isMobile ? 9 : 12), fill: '#6b7280' }}
+        tick={{ fontSize: isDialog ? 13 : 12, fill: '#6b7280' }}
         stroke="#9ca3af"
         strokeWidth={1}
       />
@@ -253,21 +250,21 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
         domain={[0, 100]}
         ticks={isDialog
           ? [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]
-          : (isMobile ? [0, 20, 40, 60, 80, 100] : [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+          : [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
         }
         label={{
           value: '% Passante',
           angle: -90,
           position: 'insideLeft',
-          offset: isDialog ? 10 : (isMobile ? 0 : 5),
-          style: { fontSize: isDialog ? 14 : (isMobile ? 10 : 13), fontWeight: 600, fill: '#374151' }
+          offset: isDialog ? 10 : 5,
+          style: { fontSize: isDialog ? 14 : 13, fontWeight: 600, fill: '#374151' }
         }}
-        tick={{ fontSize: isDialog ? 13 : (isMobile ? 9 : 12), fill: '#6b7280' }}
+        tick={{ fontSize: isDialog ? 13 : 12, fill: '#6b7280' }}
         stroke="#9ca3af"
         strokeWidth={1}
       />
 
-      {!isMobile && <Tooltip content={<CustomTooltip />} />}
+      <Tooltip content={<CustomTooltip />} />
 
       {/* Área sob a curva */}
       <defs>
@@ -282,14 +279,14 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
         type="monotone"
         dataKey="passante"
         stroke="#065f46"
-        strokeWidth={isDialog ? 3 : (isMobile ? 2 : 2.5)}
-        dot={isMobile ? false : {
+        strokeWidth={isDialog ? 3 : 2.5}
+        dot={{
           fill: "#065f46",
           stroke: "#fff",
           strokeWidth: 2,
           r: isDialog ? 5 : 4
         }}
-        activeDot={isMobile ? false : {
+        activeDot={{
           r: isDialog ? 7 : 6,
           fill: "#065f46",
           stroke: "#fff",
@@ -360,121 +357,119 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
         />
       )}
 
-
       {/* Labels das frações principais */}
-      {!isMobile && (
-        <>
-          {/* Label ARGILA (< 0.02 mm) */}
-          {minAberturaLog <= Math.log10(0.02) && (
-            <ReferenceLine
-              x={(minAberturaLog + Math.log10(0.02)) / 2}
-              stroke="transparent"
-              label={{
-                value: 'ARGILA',
-                position: 'top',
-                fill: '#dc2626',
-                fontSize: isDialog ? 13 : 11,
-                fontWeight: 'bold',
-                offset: 20
-              }}
-            />
-          )}
+      <>
+        {/* Label ARGILA (< 0.02 mm) */}
+        {minAberturaLog <= Math.log10(0.02) && (
+          <ReferenceLine
+            x={(minAberturaLog + Math.log10(0.02)) / 2}
+            stroke="transparent"
+            label={{
+              value: 'ARGILA',
+              position: 'top',
+              fill: '#dc2626',
+              fontSize: isDialog ? 13 : 11,
+              fontWeight: 'bold',
+              offset: 20
+            }}
+          />
+        )}
 
-          {/* Label SILTE (0.02 - 0.06 mm) */}
-          {minAberturaLog <= Math.log10(0.06) && maxAberturaLog >= Math.log10(0.02) && (
-            <ReferenceLine
-              x={(Math.log10(0.02) + Math.log10(0.06)) / 2}
-              stroke="transparent"
-              label={{
-                value: 'SILTE',
-                position: 'top',
-                fill: '#dc2626',
-                fontSize: isDialog ? 13 : 11,
-                fontWeight: 'bold',
-                offset: 20
-              }}
-            />
-          )}
+        {/* Label SILTE (0.02 - 0.06 mm) */}
+        {minAberturaLog <= Math.log10(0.06) && maxAberturaLog >= Math.log10(0.02) && (
+          <ReferenceLine
+            x={(Math.log10(0.02) + Math.log10(0.06)) / 2}
+            stroke="transparent"
+            label={{
+              value: 'SILTE',
+              position: 'top',
+              fill: '#dc2626',
+              fontSize: isDialog ? 13 : 11,
+              fontWeight: 'bold',
+              offset: 20
+            }}
+          />
+        )}
 
-          {/* Label AREIA (0.06 - 2.0 mm) */}
-          {minAberturaLog <= Math.log10(2.0) && maxAberturaLog >= Math.log10(0.06) && (
-            <ReferenceLine
-              x={(Math.log10(0.06) + Math.log10(2.0)) / 2}
-              stroke="transparent"
-              label={{
-                value: 'AREIA',
-                position: 'top',
-                fill: '#dc2626',
-                fontSize: isDialog ? 13 : 11,
-                fontWeight: 'bold',
-                offset: 20
-              }}
-            />
-          )}
+        {/* Label AREIA (0.06 - 2.0 mm) */}
+        {minAberturaLog <= Math.log10(2.0) && maxAberturaLog >= Math.log10(0.06) && (
+          <ReferenceLine
+            x={(Math.log10(0.06) + Math.log10(2.0)) / 2}
+            stroke="transparent"
+            label={{
+              value: 'AREIA',
+              position: 'top',
+              fill: '#dc2626',
+              fontSize: isDialog ? 13 : 11,
+              fontWeight: 'bold',
+              offset: 20
+            }}
+          />
+        )}
 
-          {/* Subdivisões da Areia - Labels (acima do gráfico) */}
-          {minAberturaLog <= Math.log10(0.2) && maxAberturaLog >= Math.log10(0.06) && (
-            <ReferenceLine
-              x={(Math.log10(0.06) + Math.log10(0.2)) / 2}
-              stroke="transparent"
-              label={{
-                value: 'Fina',
-                position: 'top',
-                fill: '#991b1b',
-                fontSize: isDialog ? 11 : 9,
-                fontWeight: '600',
-                offset: 5
-              }}
-            />
-          )}
+        {/* Subdivisões da Areia - Labels (acima do gráfico) */}
+        {minAberturaLog <= Math.log10(0.2) && maxAberturaLog >= Math.log10(0.06) && (
+          <ReferenceLine
+            x={(Math.log10(0.06) + Math.log10(0.2)) / 2}
+            stroke="transparent"
+            label={{
+              value: 'Fina',
+              position: 'top',
+              fill: '#991b1b',
+              fontSize: isDialog ? 11 : 9,
+              fontWeight: '600',
+              offset: 5
+            }}
+          />
+        )}
 
-          {minAberturaLog <= Math.log10(0.6) && maxAberturaLog >= Math.log10(0.2) && (
-            <ReferenceLine
-              x={(Math.log10(0.2) + Math.log10(0.6)) / 2}
-              stroke="transparent"
-              label={{
-                value: 'Média',
-                position: 'top',
-                fill: '#991b1b',
-                fontSize: isDialog ? 11 : 9,
-                fontWeight: '600',
-                offset: 5
-              }}
-            />
-          )}
+        {minAberturaLog <= Math.log10(0.6) && maxAberturaLog >= Math.log10(0.2) && (
+          <ReferenceLine
+            x={(Math.log10(0.2) + Math.log10(0.6)) / 2}
+            stroke="transparent"
+            label={{
+              value: 'Média',
+              position: 'top',
+              fill: '#991b1b',
+              fontSize: isDialog ? 11 : 9,
+              fontWeight: '600',
+              offset: 5
+            }}
+          />
+        )}
 
-          {minAberturaLog <= Math.log10(2.0) && maxAberturaLog >= Math.log10(0.6) && (
-            <ReferenceLine
-              x={(Math.log10(0.6) + Math.log10(2.0)) / 2}
-              stroke="transparent"
-              label={{
-                value: 'Grossa',
-                position: 'top',
-                fill: '#991b1b',
-                fontSize: isDialog ? 11 : 9,
-                fontWeight: '600',
-                offset: 5
-              }}
-            />
-          )}
+        {minAberturaLog <= Math.log10(2.0) && maxAberturaLog >= Math.log10(0.6) && (
+          <ReferenceLine
+            x={(Math.log10(0.6) + Math.log10(2.0)) / 2}
+            stroke="transparent"
+            label={{
+              value: 'Grossa',
+              position: 'top',
+              fill: '#991b1b',
+              fontSize: isDialog ? 11 : 9,
+              fontWeight: '600',
+              offset: 5
+            }}
+          />
+        )}
 
-          {/* Label PEDREGULHO (2.0 - 60 mm) */}
-          {maxAberturaLog >= Math.log10(2.0) && (
-            <ReferenceLine
-              x={(Math.log10(2.0) + Math.min(maxAberturaLog, Math.log10(60))) / 2}
-              stroke="transparent"
-              label={{
-                value: 'PEDREGULHO',
-                position: 'top',
-                fill: '#dc2626',
-                fontSize: isDialog ? 13 : 11,
-                fontWeight: 'bold',
-                offset: 20
-              }}
-            />
-          )}
-        </>
-      )}
+        {/* Label PEDREGULHO (2.0 - 60 mm) */}
+        {maxAberturaLog >= Math.log10(2.0) && (
+          <ReferenceLine
+            x={(Math.log10(2.0) + Math.min(maxAberturaLog, Math.log10(60))) / 2}
+            stroke="transparent"
+            label={{
+              value: 'PEDREGULHO',
+              position: 'top',
+              fill: '#dc2626',
+              fontSize: isDialog ? 13 : 11,
+              fontWeight: 'bold',
+              offset: 20
+            }}
+          />
+        )}
+      </>
+
 
     </ComposedChart>
   );
@@ -493,24 +488,22 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
           Salvar JPG
         </Button>
 
-        {!isMobile && (
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Maximize2 className="w-4 h-4" />
-                Ampliar
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-5xl max-h-[90vh] w-full">
-              <DialogHeader>
-                <DialogTitle>Curva Granulométrica - Visualização Ampliada</DialogTitle>
-              </DialogHeader>
-              <div className="w-full flex justify-center items-center p-4">
-                <GraficoContent isDialog={true} />
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Maximize2 className="w-4 h-4" />
+              Ampliar
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-5xl max-h-[90vh] w-full">
+            <DialogHeader>
+              <DialogTitle>Curva Granulométrica - Visualização Ampliada</DialogTitle>
+            </DialogHeader>
+            <div className="w-full flex justify-center items-center p-4">
+              <GraficoContent isDialog={true} />
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Gráfico ampliado renderizado em background (invisível) para captura */}
@@ -529,64 +522,62 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
       </div>
 
       {/* Gráfico */}
-      <div className={isMobile ? "w-full h-[320px] border rounded-lg overflow-x-auto overflow-y-hidden flex items-center p-1 shadow-sm" : "w-full h-[420px] border rounded-lg overflow-x-auto overflow-y-hidden flex items-center p-2 shadow-sm"} style={{ backgroundColor: 'white' }}>
+      <div className="w-full h-[420px] border rounded-lg overflow-x-auto overflow-y-hidden flex items-center p-2 shadow-sm" style={{ backgroundColor: 'white' }}>
         <GraficoContent isDialog={false} />
       </div>
 
       {/* Legenda dos diâmetros característicos */}
-      {!isMobile && (
-        <div className="grid grid-cols-2 gap-4">
-          {/* Diâmetros característicos */}
-          {(d10 || d30 || d60) && (
-            <div className="p-4 rounded-lg bg-white dark:bg-gray-900 border shadow-sm">
-              <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Diâmetros Característicos</p>
-              <div className="space-y-2 text-sm">
-                {d10 && (
-                  <div className="flex items-center gap-3 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
-                    <div className="w-4 h-4 rounded-full bg-red-500 shadow-sm"></div>
-                    <span className="text-gray-700 dark:text-gray-300"><strong>D10</strong> = {d10.toFixed(4)} mm</span>
-                  </div>
-                )}
-                {d30 && (
-                  <div className="flex items-center gap-3 p-2 rounded-md hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors">
-                    <div className="w-4 h-4 rounded-full bg-amber-500 shadow-sm"></div>
-                    <span className="text-gray-700 dark:text-gray-300"><strong>D30</strong> = {d30.toFixed(4)} mm</span>
-                  </div>
-                )}
-                {d60 && (
-                  <div className="flex items-center gap-3 p-2 rounded-md hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors">
-                    <div className="w-4 h-4 rounded-full bg-green-500 shadow-sm"></div>
-                    <span className="text-gray-700 dark:text-gray-300"><strong>D60</strong> = {d60.toFixed(4)} mm</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Classificação granulométrica */}
+      <div className="grid grid-cols-2 gap-4">
+        {/* Diâmetros característicos */}
+        {(d10 || d30 || d60) && (
           <div className="p-4 rounded-lg bg-white dark:bg-gray-900 border shadow-sm">
-            <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Limites de Tamanho (ABNT)</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-2 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                <span className="font-semibold text-amber-900 dark:text-amber-300">Argila</span>
-                <div className="text-amber-800 dark:text-amber-400 font-medium mt-1">&lt; 0.002 mm</div>
-              </div>
-              <div className="p-2 rounded-md bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
-                <span className="font-semibold text-orange-900 dark:text-orange-300">Silte</span>
-                <div className="text-orange-800 dark:text-orange-400 font-medium mt-1">0.002-0.06</div>
-              </div>
-              <div className="p-2 rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
-                <span className="font-semibold text-yellow-900 dark:text-yellow-300">Areia</span>
-                <div className="text-yellow-800 dark:text-yellow-400 font-medium mt-1">0.06-2.0</div>
-              </div>
-              <div className="p-2 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
-                <span className="font-semibold text-gray-900 dark:text-gray-300">Pedregulho</span>
-                <div className="text-gray-800 dark:text-gray-400 font-medium mt-1">2.0-60 mm</div>
-              </div>
+            <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Diâmetros Característicos</p>
+            <div className="space-y-2 text-sm">
+              {d10 && (
+                <div className="flex items-center gap-3 p-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors">
+                  <div className="w-4 h-4 rounded-full bg-red-500 shadow-sm"></div>
+                  <span className="text-gray-700 dark:text-gray-300"><strong>D10</strong> = {d10.toFixed(4)} mm</span>
+                </div>
+              )}
+              {d30 && (
+                <div className="flex items-center gap-3 p-2 rounded-md hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors">
+                  <div className="w-4 h-4 rounded-full bg-amber-500 shadow-sm"></div>
+                  <span className="text-gray-700 dark:text-gray-300"><strong>D30</strong> = {d30.toFixed(4)} mm</span>
+                </div>
+              )}
+              {d60 && (
+                <div className="flex items-center gap-3 p-2 rounded-md hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors">
+                  <div className="w-4 h-4 rounded-full bg-green-500 shadow-sm"></div>
+                  <span className="text-gray-700 dark:text-gray-300"><strong>D60</strong> = {d60.toFixed(4)} mm</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Classificação granulométrica */}
+        <div className="p-4 rounded-lg bg-white dark:bg-gray-900 border shadow-sm">
+          <p className="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-300">Limites de Tamanho (ABNT)</p>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="p-2 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+              <span className="font-semibold text-amber-900 dark:text-amber-300">Argila</span>
+              <div className="text-amber-800 dark:text-amber-400 font-medium mt-1">&lt; 0.002 mm</div>
+            </div>
+            <div className="p-2 rounded-md bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
+              <span className="font-semibold text-orange-900 dark:text-orange-300">Silte</span>
+              <div className="text-orange-800 dark:text-orange-400 font-medium mt-1">0.002-0.06</div>
+            </div>
+            <div className="p-2 rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+              <span className="font-semibold text-yellow-900 dark:text-yellow-300">Areia</span>
+              <div className="text-yellow-800 dark:text-yellow-400 font-medium mt-1">0.06-2.0</div>
+            </div>
+            <div className="p-2 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700">
+              <span className="font-semibold text-gray-900 dark:text-gray-300">Pedregulho</span>
+              <div className="text-gray-800 dark:text-gray-400 font-medium mt-1">2.0-60 mm</div>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 });

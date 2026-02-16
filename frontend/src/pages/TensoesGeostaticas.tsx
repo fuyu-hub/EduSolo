@@ -34,8 +34,7 @@ import { ExemploTensoes } from "@/lib/exemplos-tensoes";
 import { CamadaData } from "@/components/tensoes/DialogCamada";
 import DialogConfiguracoes, { ConfigData } from "@/components/tensoes/DialogConfiguracoes";
 import { transferirNAParaCamadaCorreta, CamadaTensoes } from "@/lib/tensoes-utils";
-import { MobileModuleWrapper } from "@/components/mobile";
-import TensoesGeostaticasMobile from "./mobile/TensoesGeostaticasMobile";
+
 
 // Schema de validação
 const camadaSchema = z.object({
@@ -827,12 +826,8 @@ function TensoesGeostaticasDesktop() {
   );
 }
 
-// Wrapper principal que escolhe versão mobile ou desktop
+// Wrapper principal
 export default function TensoesGeostaticas() {
-  return (
-    <MobileModuleWrapper mobileVersion={<TensoesGeostaticasMobile />}>
-      <TensoesGeostaticasDesktop />
-    </MobileModuleWrapper>
-  );
+  return <TensoesGeostaticasDesktop />;
 }
 

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { Command } from "cmdk";
-import { Beaker, Droplet, Filter, Database, Mountain, Target, LayoutGrid, FileText, Settings, Search } from "lucide-react";
+import { Beaker, Filter, Database, Mountain, Target, LayoutGrid, FileText, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function CommandPalette() {
@@ -62,11 +62,8 @@ export function CommandPalette() {
             <Command.Empty className="px-3 py-4 text-sm text-muted-foreground">Sem resultados</Command.Empty>
 
             <Command.Group heading="Módulos">
-              <Command.Item onSelect={() => goto("/indices-fisicos")} className="px-3 py-2 flex items-center gap-2 cursor-pointer">
-                <Beaker className="w-4 h-4" /> Índices Físicos
-              </Command.Item>
-              <Command.Item onSelect={() => goto("/limites-consistencia")} className="px-3 py-2 flex items-center gap-2 cursor-pointer">
-                <Droplet className="w-4 h-4" /> Limites de Consistência
+              <Command.Item onSelect={() => goto("/indices-limites")} className="px-3 py-2 flex items-center gap-2 cursor-pointer">
+                <Beaker className="w-4 h-4" /> Índices Físicos e Limites
               </Command.Item>
               <Command.Item onSelect={() => goto("/granulometria")} className="px-3 py-2 flex items-center gap-2 cursor-pointer">
                 <Database className="w-4 h-4" /> Granulometria

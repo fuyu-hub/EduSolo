@@ -16,11 +16,8 @@ import { useRoutePreload } from "@/hooks/use-route-preload";
 // Páginas principais (carregamento imediato)
 import NotFound from "./pages/NotFound";
 
-// Páginas de cálculo (lazy loading)
-const IndicesFisicos = lazy(() => import("./pages/IndicesFisicos"));
-const LimitesConsistencia = lazy(() => import("./pages/LimitesConsistencia"));
 const Granulometria = lazy(() => import("./pages/Granulometria"));
-const GranulometriaTeste = lazy(() => import("./pages/GranulometriaTeste"));
+const GranulometriaLab = lazy(() => import("./pages/GranulometriaLab"));
 const Compactacao = lazy(() => import("./pages/Compactacao"));
 const TensoesGeostaticas = lazy(() => import("./pages/TensoesGeostaticas"));
 const AcrescimoTensoes = lazy(() => import("./pages/AcrescimoTensoes"));
@@ -35,7 +32,6 @@ const Newmark = lazy(() => import("./pages/acrescimo-tensoes/Newmark"));
 
 // Páginas auxiliares (lazy loading)
 const Educacional = lazy(() => import("./pages/Educacional"));
-const Settings = lazy(() => import("./pages/Settings"));
 const About = lazy(() => import("./pages/About"));
 const PlanosFuturos = lazy(() => import("./pages/PlanosFuturos"));
 const Manual = lazy(() => import("./pages/Manual"));
@@ -53,7 +49,7 @@ const AppContent = () => {
   // Preload das rotas mais acessadas após 2 segundos de idle
   useRoutePreload({
     routes: {
-      indicesFisicos: () => import("./pages/IndicesFisicos"),
+      caracterizacao: () => import("./modules/caracterizacao"),
       granulometria: () => import("./pages/Granulometria"),
       compactacao: () => import("./pages/Compactacao"),
       tensoes: () => import("./pages/TensoesGeostaticas"),
@@ -65,9 +61,7 @@ const AppContent = () => {
   // Preload de rotas secundárias após 5 segundos
   useEffect(() => {
     const timer = setTimeout(() => {
-      import("./pages/LimitesConsistencia");
       import("./pages/AcrescimoTensoes");
-      // import("./pages/Settings");
     }, 5000);
 
     return () => clearTimeout(timer);
@@ -150,27 +144,10 @@ const AppContent = () => {
           }
         />
 
-        {/* Rotas de cálculo - com lazy loading */}
-        <Route
-          path="/indices-fisicos"
-          element={
-            <Layout>
-              <Suspense fallback={<PageLoader />}>
-                <IndicesFisicos />
-              </Suspense>
-            </Layout>
-          }
-        />
-        <Route
-          path="/limites-consistencia"
-          element={
-            <Layout>
-              <Suspense fallback={<PageLoader />}>
-                <LimitesConsistencia />
-              </Suspense>
-            </Layout>
-          }
-        />
+        {/* Redirects de rotas antigas */}
+        <Route path="/indices-fisicos" element={<Navigate to="/indices-limites" replace />} />
+        <Route path="/limites-consistencia" element={<Navigate to="/indices-limites" replace />} />
+
         <Route
           path="/indices-limites"
           element={
@@ -186,7 +163,7 @@ const AppContent = () => {
           element={
             <Layout>
               <Suspense fallback={<PageLoader />}>
-                <GranulometriaTeste />
+                <Granulometria />
               </Suspense>
             </Layout>
           }
@@ -196,7 +173,7 @@ const AppContent = () => {
           element={
             <Layout>
               <Suspense fallback={<PageLoader />}>
-                <Granulometria />
+                <GranulometriaLab />
               </Suspense>
             </Layout>
           }
@@ -293,16 +270,6 @@ const AppContent = () => {
             </Layout>
           }
         />
-        {/* <Route
-          path="/settings"
-          element={
-            <Layout>
-              <Suspense fallback={<PageLoader />}>
-                <Settings />
-              </Suspense>
-            </Layout>
-          }
-        /> */}
         <Route
           path="/about"
           element={
@@ -319,16 +286,6 @@ const AppContent = () => {
             <Layout>
               <Suspense fallback={<PageLoader />}>
                 <PlanosFuturos />
-              </Suspense>
-            </Layout>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <Layout>
-              <Suspense fallback={<PageLoader />}>
-                <Settings />
               </Suspense>
             </Layout>
           }
