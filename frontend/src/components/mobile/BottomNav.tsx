@@ -21,11 +21,12 @@ interface NavItem {
   path?: string;
   action?: () => void;
   isExpandButton?: boolean;
+  comingSoon?: boolean;
 }
 
 const mainNavItems: NavItem[] = [
-  { icon: Save, label: "Relatorios", path: "/relatorios" },
-  { icon: BookOpen, label: "Educacional", path: "/educacional" },
+  { icon: Save, label: "Relatorios", path: "/relatorios", comingSoon: true },
+  { icon: BookOpen, label: "Educacional", path: "/educacional", comingSoon: true },
   { icon: Home, label: "Início", path: "/", isExpandButton: true },
   { icon: MoreHorizontal, label: "Mais", path: "#placeholder" },
   // { icon: Settings, label: "Config", path: "/settings" },
@@ -148,6 +149,28 @@ export function BottomNav() {
                     <Icon className="w-5 h-5" strokeWidth={2} />
                   </div>
                   <span className="text-[10px] font-medium transition-colors duration-300 text-muted-foreground">
+                    {item.label}
+                  </span>
+                </button>
+              );
+            }
+
+            // Items em desenvolvimento: não clicáveis, visuais apagados
+            if (item.comingSoon) {
+              return (
+                <button
+                  key={item.label}
+                  disabled
+                  className={cn(
+                    "flex flex-col items-center justify-center h-full gap-1 transition-all duration-300 ease-out px-6 cursor-default opacity-35"
+                  )}
+                >
+                  <div
+                    className="flex items-center justify-center w-11 h-11 rounded-xl text-muted-foreground"
+                  >
+                    <Icon className="w-5 h-5" strokeWidth={2} />
+                  </div>
+                  <span className="text-[10px] font-medium text-muted-foreground">
                     {item.label}
                   </span>
                 </button>

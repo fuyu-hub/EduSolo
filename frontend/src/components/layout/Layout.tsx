@@ -1,6 +1,6 @@
 // Adiciona React à importação
 import React, { useState, useEffect } from "react";
-import { Menu, Beaker, Droplet, Filter, Database, Mountain, Target, MoveDown, BookOpen, ArrowLeft, Settings, Sun, Moon, Info, Rocket, FileText, LayoutGrid, ChevronDown, HelpCircle } from "lucide-react";
+import { Menu, Beaker, Droplet, Filter, Database, Mountain, Target, MoveDown, BookOpen, ArrowLeft, Sun, Moon, Info, FileText, LayoutGrid, ChevronDown, HelpCircle } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/use-theme";
@@ -25,11 +25,9 @@ const menuItems = [
   {
     title: "Ferramentas",
     items: [
-      { icon: FileText, label: "Relatórios", path: "/relatorios", tourId: "" },
-      { icon: BookOpen, label: "Material Educacional", path: "/educacional", tourId: "" },
-      { icon: Settings, label: "Configurações", path: "/settings", tourId: "settings-menu" },
+      { icon: FileText, label: "Relatórios", path: "/relatorios", tourId: "", comingSoon: true },
+      { icon: BookOpen, label: "Material Educacional", path: "/educacional", tourId: "", comingSoon: true },
       { icon: Info, label: "Sobre", path: "/about", tourId: "" },
-      { icon: Rocket, label: "Planos Futuros", path: "/planos-futuros", tourId: "" },
     ],
   },
 ];
@@ -86,10 +84,20 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
+                const isComingSoon = (item as any).comingSoon;
                 const buttonContent = (
                   <>
                     <Icon className={cn("h-5 w-5", !collapsed && "mr-3")} />
-                    {!collapsed && <span className="font-medium">{item.label}</span>}
+                    {!collapsed && (
+                      <div className={cn("flex-1 text-left", isComingSoon && "flex flex-col")}>
+                        <span className="font-medium">{item.label}</span>
+                        {isComingSoon && (
+                          <span className="text-[9px] font-medium text-muted-foreground/50 italic leading-tight">
+                            em breve
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </>
                 );
 
@@ -143,6 +151,26 @@ const SidebarContent = ({ collapsed, onLinkClick }: { collapsed: boolean; onLink
                         </div>
                       </CollapsibleContent>
                     </Collapsible>
+                  );
+                }
+
+                // Items em desenvolvimento: não clicáveis, apenas visuais apagados
+                if (isComingSoon) {
+                  return (
+                    <div key={item.path} title={collapsed ? `${item.label} (em breve)` : undefined}>
+                      <Button
+                        variant="ghost"
+                        disabled
+                        className={cn(
+                          "w-full transition-all duration-200 h-9 rounded-md relative cursor-default opacity-40",
+                          collapsed ? "justify-center px-2" : "justify-start px-3",
+                          "text-muted-foreground"
+                        )}
+                        aria-label={`${item.label} (em breve)`}
+                      >
+                        {buttonContent}
+                      </Button>
+                    </div>
                   );
                 }
 
