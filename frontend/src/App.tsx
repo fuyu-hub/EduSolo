@@ -8,6 +8,7 @@ import { PageLoader } from "@/components/ui/loading-spinner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
+import { WelcomeDialog } from "@/components/WelcomeDialog";
 
 import { useRoutePreload } from "@/hooks/use-route-preload";
 
@@ -379,6 +380,7 @@ const App = () => (
         <ThemeProvider>
           <TooltipProvider>
             <Sonner />
+            <WelcomeDialog />
             <BrowserRouter>
               <AppContent />
             </BrowserRouter>
