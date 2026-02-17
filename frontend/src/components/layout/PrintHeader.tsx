@@ -1,4 +1,4 @@
-import { IsometricCube } from "@/components/ui/isometric-cube";
+// IsometricCube removed
 
 interface PrintHeaderProps {
   moduleTitle: string;
@@ -18,10 +18,10 @@ export default function PrintHeader({ moduleTitle, moduleName }: PrintHeaderProp
     <div className="print-header hidden">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <IsometricCube className="w-12 h-12" />
+          <img src="/icon-48x48.png" alt="EduSolos Logo" className="w-12 h-12" />
           <div>
             <h1 className="text-2xl font-bold">EduSolos</h1>
-            <p className="text-sm text-muted-foreground">Sistema de Análise Geotécnica</p>
+            <p className="text-sm text-muted-foreground">Ferramentas de Mecânica dos Solos</p>
           </div>
         </div>
         <div className="text-right">
