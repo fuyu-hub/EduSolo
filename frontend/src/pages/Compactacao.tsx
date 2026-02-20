@@ -40,6 +40,7 @@ import { ExemploCompactacao } from "@/lib/exemplos-compactacao";
 
 import { useCompactacaoStore } from "@/modules/compactacao/store";
 import { UI_STANDARDS } from "@/lib/ui-standards";
+import { handleArrowNavigation } from "@/lib/navigation";
 
 // Schema de validação
 const pontoCompactacaoSchema = z.object({
@@ -625,7 +626,7 @@ function CompactacaoDesktop() {
   const modoEntradaUmidade = form.watch("modoEntradaUmidade") || "medicoes";
 
   return (
-    <div className={UI_STANDARDS.pageContainer}>
+    <div className={UI_STANDARDS.pageContainer} onKeyDown={handleArrowNavigation}>
       <Helmet>
         <title>Ensaio de Compactação (Proctor) | EduSolos</title>
         <meta name="description" content="Determine a curva de compactação, umidade ótima e peso específico seco máximo conforme a norma Proctor. Ferramenta interativa de geotecnia." />

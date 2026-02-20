@@ -15,6 +15,7 @@ import PrintHeader from "@/components/PrintHeader";
 import PlasticityChart from "@/components/visualizations/PlasticityChart";
 import { UI_STANDARDS } from "@/lib/ui-standards";
 import { cn } from "@/lib/utils";
+import { handleArrowNavigation } from "@/lib/navigation";
 import {
     calcularClassificacaoPorPorcentagem,
     type ClassificacaoPorcentagemInput,
@@ -217,7 +218,7 @@ export default function GranulometriaTeste() {
     };
 
     return (
-        <div className={UI_STANDARDS.pageContainer}>
+        <div className={UI_STANDARDS.pageContainer} onKeyDown={handleArrowNavigation}>
             <Helmet>
                 <title>Classificação Granulométrica | EduSolos</title>
                 <meta name="description" content="Classifique solos pelos sistemas USCS e AASHTO (HRB) informando apenas as frações granulométricas e limites de consistência. Simples e rápido." />
