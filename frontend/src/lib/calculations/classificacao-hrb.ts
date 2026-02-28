@@ -18,8 +18,8 @@ export function classificarHRB(dados: ClassificacaoHRBInput): ClassificacaoHRBOu
     // Tratar campos vazios de LL/LP como 0 automaticamente
     // para evitar classificação imprecisa (A-2 sem subgrupo) quando o usuário
     // esquece de digitar "0" em um solo não plástico
-    const ll = dados.ll ?? 0;
-    const ip = dados.ip ?? 0;
+    const ll = Math.trunc(dados.ll ?? 0);
+    const ip = Math.trunc(dados.ip ?? 0);
 
     // Validações
     if (p200 < 0 || p200 > 100) {
@@ -43,7 +43,7 @@ export function classificarHRB(dados: ClassificacaoHRBInput): ClassificacaoHRBOu
 
     // Adiciona o índice de grupo se aplicável
     if (ig > 0) {
-      classificacao += ` (${ig})`;
+      classificacao += ` (${ig.toFixed(1)})`;
     }
 
     // Obtém a descrição do grupo
@@ -131,8 +131,10 @@ function determinarGrupoHRB(
     }
 
     // 4. Deve ser A-7 (P200 > 35, LL > 40, IP > 10)
-    // Nota 3: Subgrupos do A-7
-    if (ip < ll - 30) {
+    // Nota 3 (AASHTO M 145): Subgrupos do A-7
+    // A-7-5: IP <= LL - 30
+    // A-7-6: IP > LL - 30
+    if (ip <= ll - 30) {
       return ['A-7', '5'];
     } else {
       return ['A-7', '6'];
@@ -147,26 +149,48 @@ function calcularIndiceGrupo(
   ll: number,
   ip: number
 ): number {
-  // IG é sempre 0 para A-1-a, A-1-b e A-3
-  if (grupo === 'A-1' || grupo === 'A-3') {
+  /**
+   * Segundo AASHTO M 145 / DNIT:
+   * - O IG é sempre 0 para os grupos A-1-a, A-1-b, A-3, A-2-4 e A-2-5.
+   * - Para os grupos A-2-6 e A-2-7, usa-se apenas a parcela do IP.
+   * - O IG deve ser arredondado para o inteiro mais próximo.
+   * - Se o valor for negativo, assume-se 0.
+   */
+
+  if (
+    grupo === 'A-1' ||
+    grupo === 'A-3' ||
+    (grupo === 'A-2' && (subgrupo === '4' || subgrupo === '5'))
+  ) {
     return 0;
   }
 
-  // Fórmula geral
-  let ig = (p200 - 35) * (0.2 + 0.005 * (ll - 40)) + 0.01 * (p200 - 15) * (ip - 10);
+  // Fatores limitados:
+  // a: parte de p200 entre 35 e 75 (0 a 40)
+  const a = Math.max(0, Math.min(p200 - 35, 40));
+  // b: parte de p200 entre 15 e 55 (0 a 40)
+  const b = Math.max(0, Math.min(p200 - 15, 40));
+  // c: parte de LL entre 40 e 60 (0 a 20)
+  const c = Math.max(0, Math.min(ll - 40, 20));
+  // d: parte de IP entre 10 e 30 (0 a 20)
+  const d = Math.max(0, Math.min(ip - 10, 20));
 
-  // Para A-2-4 e A-2-5, somente a parcela do IP é usada
-  if (grupo === 'A-2' && (subgrupo === '4' || subgrupo === '5')) {
-    ig = 0.01 * (p200 - 15) * (ip - 10);
+  let ig = 0;
+
+  if (grupo === 'A-2' && (subgrupo === '6' || subgrupo === '7')) {
+    // Para A-2-6 e A-2-7, somente a parcela do IP é usada: IG = 0,01 * (F-15) * (PI-10)
+    ig = 0.01 * b * d;
+  } else {
+    /**
+     * Fórmula Geral: IG = (F-35) * [0,2 + 0,005 * (LL-40)] + 0,01 * (F-15) * (PI-10)
+     * Ou: IG = 0,2*a + 0,005*a*c + 0,01*b*d
+     */
+    ig = 0.2 * a + 0.005 * a * c + 0.01 * b * d;
   }
 
-  // IG não pode ser negativo
-  if (ig < 0) {
-    return 0;
-  }
-
-  // Arredondar para o inteiro mais próximo
-  return Math.round(ig);
+  // Arredondar para uma casa decimal
+  // O IG não será negativo devido aos limites dos fatores, mas garantimos o arredondamento
+  return Math.max(0, Math.round(ig * 10) / 10);
 }
 
 function obterDescricaoHRB(grupo: string, subgrupo: string | undefined): string {

@@ -119,7 +119,11 @@ export function calcularLimitesConsistencia(
     let classificacao_consistencia: string | undefined;
 
     if (ll_calculado !== undefined && lp_calculado !== undefined) {
-      ip_calculado = ll_calculado - lp_calculado;
+      // Truncar LL e LP antes do cálculo do IP conforme normas de arredondamento técnico
+      const ll_trunc = Math.trunc(ll_calculado);
+      const lp_trunc = Math.trunc(lp_calculado);
+
+      ip_calculado = ll_trunc - lp_trunc;
       if (ip_calculado < 0) ip_calculado = 0; // Solo NP
 
       // Classificação de plasticidade (Burmister, 1949)
