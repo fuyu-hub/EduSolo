@@ -18,8 +18,8 @@ export function classificarHRB(dados: ClassificacaoHRBInput): ClassificacaoHRBOu
     // Tratar campos vazios de LL/LP como 0 automaticamente
     // para evitar classificação imprecisa (A-2 sem subgrupo) quando o usuário
     // esquece de digitar "0" em um solo não plástico
-    const ll = Math.trunc(dados.ll ?? 0);
-    const ip = Math.trunc(dados.ip ?? 0);
+    const ll = dados.ll ?? 0;
+    const ip = dados.ip ?? 0;
 
     // Validações
     if (p200 < 0 || p200 > 100) {

@@ -129,9 +129,9 @@ function classificarSoloGrosso(
           ? Cu >= 4.0 && Cc >= 1.0 && Cc <= 3.0
           : Cu >= 6.0 && Cc >= 1.0 && Cc <= 3.0;
 
-      // Tratar campos vazios de LL/LP como 0 e truncar
-      const ll = Math.trunc(dados.ll ?? 0);
-      const ip = Math.trunc(dados.ip ?? 0);
+      // Tratar campos vazios de LL/LP como 0 automaticamente
+      const ll = dados.ll ?? 0;
+      const ip = dados.ip ?? 0;
 
       // Para classificar o tipo de finos (M/C/C-M), usamos LL e IP (0 se vazios)
       const sufixo_finos = determinarSufixoFinos(ll, ip);
@@ -168,8 +168,8 @@ function classificarSoloGrosso(
       // Fallback: Sem Cu e Cc (provavelmente D10 < #200 e sem sedimentação)
       // Assumir Mal Graduado (P) por segurança e seguir com a classificação dupla
 
-      const ll = Math.trunc(dados.ll ?? 0);
-      const ip = Math.trunc(dados.ip ?? 0);
+      const ll = dados.ll ?? 0;
+      const ip = dados.ip ?? 0;
       const sufixo_finos = determinarSufixoFinos(ll, ip);
       let tipo_finos_desc = "finos";
       if (sufixo_finos === 'M') tipo_finos_desc = "silte";
@@ -191,9 +191,9 @@ function classificarSoloGrosso(
     }
   } else {
     // finos > 12%
-    // Tratar campos vazios de LL/LP como 0 e truncar
-    const ll = Math.trunc(dados.ll ?? 0);
-    const ip = Math.trunc(dados.ip ?? 0);
+    // Tratar campos vazios de LL/LP como 0 automaticamente
+    const ll = dados.ll ?? 0;
+    const ip = dados.ip ?? 0;
     const sufixo_finos = determinarSufixoFinos(ll, ip);
     let classificacao: string;
     let descricao: string;
@@ -218,9 +218,9 @@ function classificarSoloGrosso(
 }
 
 function classificarSoloFino(dados: ClassificacaoUSCSInput): ClassificacaoUSCSOutput {
-  // Tratar campos vazios de LL/LP como 0 e truncar
-  const LL = Math.trunc(dados.ll ?? 0);
-  const IP = Math.trunc(dados.ip ?? 0);
+  // Tratar campos vazios de LL/LP como 0 automaticamente
+  const LL = dados.ll ?? 0;
+  const IP = dados.ip ?? 0;
 
   // Calcular IP na Linha A para o LL do solo
   // Linha A: IP = 0,73 * (LL - 20)
