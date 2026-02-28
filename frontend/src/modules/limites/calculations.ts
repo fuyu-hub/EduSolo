@@ -119,12 +119,17 @@ export function calcularLimitesConsistencia(
     let classificacao_consistencia: string | undefined;
 
     if (ll_calculado !== undefined && lp_calculado !== undefined) {
-      // Truncar LL e LP antes do cálculo do IP conforme normas de arredondamento técnico
-      const ll_trunc = Math.trunc(ll_calculado);
-      const lp_trunc = Math.trunc(lp_calculado);
+      // Arredondar LL e LP para o inteiro mais próximo antes do cálculo do IP, 
+      // conforme normas técnicas (NBR 6459 e NBR 7180)
+      const ll_final = Math.round(ll_calculado);
+      const lp_final = Math.round(lp_calculado);
 
-      ip_calculado = ll_trunc - lp_trunc;
+      ip_calculado = ll_final - lp_final;
       if (ip_calculado < 0) ip_calculado = 0; // Solo NP
+
+      // Atualizar valores calculados para os arredondados
+      ll_calculado = ll_final;
+      lp_calculado = lp_final;
 
       // Classificação de plasticidade (Burmister, 1949)
       if (ip_calculado <= EPSILON) {
