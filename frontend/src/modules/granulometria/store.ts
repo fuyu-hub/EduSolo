@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 export interface PeneiraDado {
     abertura: string;
@@ -75,62 +76,69 @@ const defaultFormData: GranulometriaFormData = {
     limitePlasticidade: "",
 };
 
-export const useGranulometriaStore = create<GranulometriaState>((set) => ({
-    formData: JSON.parse(JSON.stringify(defaultFormData)),
+export const useGranulometriaStore = create<GranulometriaState>()(
+    persist(
+        (set) => ({
+            formData: JSON.parse(JSON.stringify(defaultFormData)),
 
-    updateFormData: (data) => set((state) => ({
-        formData: { ...state.formData, ...data }
-    })),
+            updateFormData: (data) => set((state) => ({
+                formData: { ...state.formData, ...data }
+            })),
 
-    updatePeneiraGrosso: (index, data) => set((state) => {
-        const newPeneiras = [...state.formData.peneiramento_grosso.peneiras];
-        newPeneiras[index] = { ...newPeneiras[index], ...data };
-        return {
-            formData: {
-                ...state.formData,
-                peneiramento_grosso: {
-                    ...state.formData.peneiramento_grosso,
-                    peneiras: newPeneiras
+            updatePeneiraGrosso: (index, data) => set((state) => {
+                const newPeneiras = [...state.formData.peneiramento_grosso.peneiras];
+                newPeneiras[index] = { ...newPeneiras[index], ...data };
+                return {
+                    formData: {
+                        ...state.formData,
+                        peneiramento_grosso: {
+                            ...state.formData.peneiramento_grosso,
+                            peneiras: newPeneiras
+                        }
+                    }
+                };
+            }),
+
+            updatePeneiraFino: (index, data) => set((state) => {
+                const newPeneiras = [...state.formData.peneiramento_fino.peneiras];
+                newPeneiras[index] = { ...newPeneiras[index], ...data };
+                return {
+                    formData: {
+                        ...state.formData,
+                        peneiramento_fino: {
+                            ...state.formData.peneiramento_fino,
+                            peneiras: newPeneiras
+                        }
+                    }
+                };
+            }),
+
+            updateGrossoData: (data) => set((state) => ({
+                formData: {
+                    ...state.formData,
+                    peneiramento_grosso: {
+                        ...state.formData.peneiramento_grosso,
+                        ...data
+                    }
                 }
-            }
-        };
-    }),
+            })),
 
-    updatePeneiraFino: (index, data) => set((state) => {
-        const newPeneiras = [...state.formData.peneiramento_fino.peneiras];
-        newPeneiras[index] = { ...newPeneiras[index], ...data };
-        return {
-            formData: {
-                ...state.formData,
-                peneiramento_fino: {
-                    ...state.formData.peneiramento_fino,
-                    peneiras: newPeneiras
+            updateFinoData: (data) => set((state) => ({
+                formData: {
+                    ...state.formData,
+                    peneiramento_fino: {
+                        ...state.formData.peneiramento_fino,
+                        ...data
+                    }
                 }
-            }
-        };
-    }),
+            })),
 
-    updateGrossoData: (data) => set((state) => ({
-        formData: {
-            ...state.formData,
-            peneiramento_grosso: {
-                ...state.formData.peneiramento_grosso,
-                ...data
-            }
+            resetForm: () => set({
+                formData: JSON.parse(JSON.stringify(defaultFormData))
+            }),
+        }),
+        {
+            name: 'granulometria-storage',
         }
-    })),
-
-    updateFinoData: (data) => set((state) => ({
-        formData: {
-            ...state.formData,
-            peneiramento_fino: {
-                ...state.formData.peneiramento_fino,
-                ...data
-            }
-        }
-    })),
-
-    resetForm: () => set({
-        formData: JSON.parse(JSON.stringify(defaultFormData))
-    }),
-}));
+    )
+);

@@ -23,6 +23,7 @@ import {
 } from "@/modules/granulometria-teste/calculations-porcentagem";
 import DialogExemplos from "@/modules/granulometria-teste/components/DialogExemplos";
 import type { ExemploGranulometriaTeste } from "@/lib/exemplos-granulometria-teste";
+import { useGranulometriaTesteStore, type GranulometriaTesteFormData } from "@/modules/granulometria-teste/store";
 
 // Campos de fração com labels e tooltips
 const FRACOES = [
@@ -48,56 +49,21 @@ const tooltips = {
     lp: "Limite de Plasticidade: teor de umidade no qual o solo passa do estado semi-sólido para o plástico (%).",
 };
 
-interface FormData {
-    pedregulho: string;
-    areia_grossa: string;
-    areia_media: string;
-    areia_fina: string;
-    silte: string;
-    argila: string;
-    // Parâmetros de Caracterização
-    pass_p10: string;
-    pass_p40: string;
-    pass_p200: string;
-    d10: string;
-    d30: string;
-    d60: string;
-    ll: string;
-    lp: string;
-}
-
-const defaultFormData: FormData = {
-    pedregulho: "",
-    areia_grossa: "",
-    areia_media: "",
-    areia_fina: "",
-    silte: "",
-    argila: "",
-    pass_p10: "",
-    pass_p40: "",
-    pass_p200: "",
-    d10: "",
-    d30: "",
-    d60: "",
-    ll: "",
-    lp: "",
-};
-
 export default function GranulometriaTeste() {
-    const [formData, setFormData] = useState<FormData>(defaultFormData);
+    const { formData, updateFormData, clearFormData } = useGranulometriaTesteStore();
     const [results, setResults] = useState<ClassificacaoPorcentagemOutput | null>(null);
 
-    const handleInputChange = (field: keyof FormData, value: string) => {
-        setFormData((prev) => ({ ...prev, [field]: value }));
+    const handleInputChange = (field: keyof GranulometriaTesteFormData, value: string) => {
+        updateFormData({ [field]: value });
     };
 
     const handleClear = () => {
-        setFormData(defaultFormData);
+        clearFormData();
         setResults(null);
     };
 
     const handleSelectExample = (exemplo: ExemploGranulometriaTeste) => {
-        setFormData({
+        updateFormData({
             pedregulho: exemplo.fracoes.pedregulho,
             areia_grossa: exemplo.fracoes.areia_grossa,
             areia_media: exemplo.fracoes.areia_media,

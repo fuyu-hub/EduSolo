@@ -146,13 +146,20 @@ export default function CaracterizacaoPage() {
             };
 
             // Preparar inputs de todas as amostras
-            const inputsIndices = amostras.map(amostra => ({
-                peso_total: parseNum(amostra.indices.massaUmida)!,
-                peso_solido: parseNum(amostra.indices.massaSeca)!,
-                volume_total: parseNum(amostra.indices.volume),
-                Gs: parseNum(settings.Gs)!,
-                peso_especifico_agua: parseNum(settings.pesoEspecificoAgua) || 10.0, // Fallback safe
-            }));
+            const inputsIndices = amostras.map(amostra => {
+                const mu = parseNum(amostra.indices.massaUmida);
+                const ms = parseNum(amostra.indices.massaSeca);
+                const t = parseNum(amostra.indices.tara) || 0;
+
+                return {
+                    // Se as massas forem informadas, subtraímos a tara (Massa Líquida = Massa Bruta - Tara)
+                    peso_total: mu !== undefined ? mu - t : undefined,
+                    peso_solido: ms !== undefined ? ms - t : undefined,
+                    volume_total: parseNum(amostra.indices.volume),
+                    Gs: parseNum(settings.Gs)!,
+                    peso_especifico_agua: parseNum(settings.pesoEspecificoAgua) || 10.0,
+                };
+            });
 
             // Calcular índices físicos (já retorna média se múltiplas amostras)
             const resIndices = calcularIndicesFisicosMultiplasAmostras(inputsIndices);

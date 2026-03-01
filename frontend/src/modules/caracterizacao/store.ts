@@ -72,7 +72,7 @@ export const useCaracterizacaoStore = create<CaracterizacaoState>((set) => ({
     amostras: [{
         id: generateId(),
         nome: "Amostra 1",
-        indices: { massaUmida: "", massaSeca: "", volume: "" },
+        indices: { massaUmida: "", massaSeca: "", tara: "", volume: "" },
     }],
     currentAmostraIndex: 0,
 
@@ -81,7 +81,7 @@ export const useCaracterizacaoStore = create<CaracterizacaoState>((set) => ({
         const newAmostra: AmostraUnificada = {
             id: generateId(),
             nome: `Amostra ${state.amostras.length + 1}`,
-            indices: { massaUmida: "", massaSeca: "", volume: "" },
+            indices: { massaUmida: "", massaSeca: "", tara: "", volume: "" },
         };
         return {
             amostras: [...state.amostras, newAmostra],
@@ -133,7 +133,7 @@ export const useCaracterizacaoStore = create<CaracterizacaoState>((set) => ({
         amostras: [{
             id: generateId(),
             nome: "Amostra 1",
-            indices: { massaUmida: "", massaSeca: "", volume: "" },
+            indices: { massaUmida: "", massaSeca: "", tara: "", volume: "" },
         }],
         currentAmostraIndex: 0
     }))

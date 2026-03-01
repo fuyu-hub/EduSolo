@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 // Função auxiliar para gerar IDs
 const generateId = () => `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
@@ -56,43 +57,50 @@ const defaultFormData: CompactacaoFormData = {
     ],
 };
 
-export const useCompactacaoStore = create<CompactacaoState>((set) => ({
-    formData: { ...defaultFormData },
+export const useCompactacaoStore = create<CompactacaoState>()(
+    persist(
+        (set) => ({
+            formData: { ...defaultFormData },
 
-    updateFormData: (data) => set((state) => ({
-        formData: { ...state.formData, ...data }
-    })),
+            updateFormData: (data) => set((state) => ({
+                formData: { ...state.formData, ...data }
+            })),
 
-    updatePonto: (index, data) => set((state) => {
-        const newPontos = [...state.formData.pontos];
-        newPontos[index] = { ...newPontos[index], ...data };
-        return { formData: { ...state.formData, pontos: newPontos } };
-    }),
+            updatePonto: (index, data) => set((state) => {
+                const newPontos = [...state.formData.pontos];
+                newPontos[index] = { ...newPontos[index], ...data };
+                return { formData: { ...state.formData, pontos: newPontos } };
+            }),
 
-    addPonto: () => set((state) => ({
-        formData: {
-            ...state.formData,
-            pontos: [
-                ...state.formData.pontos,
-                createEmptyPonto()
-            ]
+            addPonto: () => set((state) => ({
+                formData: {
+                    ...state.formData,
+                    pontos: [
+                        ...state.formData.pontos,
+                        createEmptyPonto()
+                    ]
+                }
+            })),
+
+            removePonto: (index) => set((state) => {
+                if (state.formData.pontos.length <= 3) return state;
+                const newPontos = state.formData.pontos.filter((_, i) => i !== index);
+                return { formData: { ...state.formData, pontos: newPontos } };
+            }),
+
+            resetForm: () => set({
+                formData: {
+                    ...defaultFormData,
+                    pontos: [
+                        createEmptyPonto(),
+                        createEmptyPonto(),
+                        createEmptyPonto(),
+                    ],
+                }
+            }),
+        }),
+        {
+            name: 'compactacao-storage',
         }
-    })),
-
-    removePonto: (index) => set((state) => {
-        if (state.formData.pontos.length <= 3) return state;
-        const newPontos = state.formData.pontos.filter((_, i) => i !== index);
-        return { formData: { ...state.formData, pontos: newPontos } };
-    }),
-
-    resetForm: () => set({
-        formData: {
-            ...defaultFormData,
-            pontos: [
-                createEmptyPonto(),
-                createEmptyPonto(),
-                createEmptyPonto(),
-            ],
-        }
-    }),
-}));
+    )
+);
