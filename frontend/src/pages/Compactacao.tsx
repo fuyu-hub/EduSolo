@@ -45,7 +45,7 @@ import { handleArrowNavigation } from "@/lib/navigation";
 // Schema de validação
 const pontoCompactacaoSchema = z.object({
   id: z.string(),
-  pesoAmostaCilindro: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val.replace(',', '.'))) && parseFloat(val.replace(',', '.')) > 0, { message: "Deve ser maior que 0" }),
+  pesoAmostaCilindro: z.string().optional().default(""),
   // Campos para medições (opcionais - dependem do modo)
   pesoBrutoUmido: z.string().optional(),
   pesoBrutoSeco: z.string().optional(),
@@ -56,7 +56,7 @@ const pontoCompactacaoSchema = z.object({
 
 const formSchema = z.object({
   volumeCilindro: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val.replace(',', '.'))) && parseFloat(val.replace(',', '.')) > 0, { message: "Volume deve ser maior que 0" }),
-  pesoCilindro: z.string().min(1, { message: "Campo obrigatório" }).refine(val => !isNaN(parseFloat(val.replace(',', '.'))) && parseFloat(val.replace(',', '.')) >= 0, { message: "Peso deve ser maior ou igual a 0" }),
+  pesoCilindro: z.string().optional().default(""),
   Gs: z.string().optional().refine(val => val === undefined || val === "" || (!isNaN(parseFloat(val.replace(',', '.'))) && parseFloat(val.replace(',', '.')) > 0), {
     message: "Gs deve ser maior que 0 (ou deixe vazio)",
   }),
@@ -147,11 +147,10 @@ function CompactacaoDesktop() {
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "pontos", keyName: "fieldId" });
 
-  // Cálculo Automático de Umidade (Interativo) e Inverso
+  // Cálculo Automático de Umidade (Interativo)
   const pesoBrutoUmido = watch(`pontos.${currentPointIndex}.pesoBrutoUmido`);
   const pesoBrutoSeco = watch(`pontos.${currentPointIndex}.pesoBrutoSeco`);
   const tara = watch(`pontos.${currentPointIndex}.tara`);
-  const umidadeDireta = watch(`pontos.${currentPointIndex}.umidadeDireta`); // Monitorar umidadeDireta
   const modoEntrada = watch("modoEntradaUmidade");
 
   // Estado local para exibir a umidade calculada em tempo real (apenas feedback visual)
@@ -179,24 +178,38 @@ function CompactacaoDesktop() {
     }
   }, [pesoBrutoUmido, pesoBrutoSeco, tara, modoEntrada, currentPointIndex, setValue]);
 
-  // Cálculo Inverso: Umidade -> MBS (Modo 'direta')
-  // Se o usuário altera a umidade diretamente, ajustamos o MBS mantendo MBU e Tara fixos
-  useEffect(() => {
-    if (modoEntrada === "direta") {
-      const w = parseFloat((umidadeDireta || "0").replace(',', '.'));
-      const pbu = parseFloat((pesoBrutoUmido || "0").replace(',', '.')); // Mantém MBU fixo
-      const t = parseFloat((tara || "0").replace(',', '.'));
+  // Cálculo Inverso: Umidade -> MBS (para qualquer ponto)
+  // Quando o usuário altera a umidade diretamente em qualquer linha,
+  // ajustamos o MBS mantendo MBU e Tara fixos
+  const calcularMBSInverso = (pontoIndex: number, umidadeStr: string) => {
+    const w = parseFloat((umidadeStr || "0").replace(',', '.'));
+    const pbuStr = form.getValues(`pontos.${pontoIndex}.pesoBrutoUmido`);
+    const taraStr = form.getValues(`pontos.${pontoIndex}.tara`);
+    const pbu = parseFloat((pbuStr || "0").replace(',', '.'));
+    const t = parseFloat((taraStr || "0").replace(',', '.'));
 
-      if (w >= 0 && pbu > 0 && t >= 0 && pbu > t) {
-        // Fórmula derivada: MBS = (MBU + W*Tara) / (1 + W), onde W = w/100
-        const W = w / 100;
-        const novoMBS = (pbu + (W * t)) / (1 + W);
-
-        // Atualiza MBS silenciosamente
-        setValue(`pontos.${currentPointIndex}.pesoBrutoSeco`, novoMBS.toFixed(2), { shouldValidate: false, shouldDirty: true });
-      }
+    if (w >= 0 && pbu > 0 && t >= 0 && pbu > t) {
+      const W = w / 100;
+      const novoMBS = (pbu + (W * t)) / (1 + W);
+      setValue(`pontos.${pontoIndex}.pesoBrutoSeco`, novoMBS.toFixed(2), { shouldValidate: false, shouldDirty: true });
     }
-  }, [umidadeDireta, pesoBrutoUmido, tara, modoEntrada, currentPointIndex, setValue]);
+  };
+
+  // Cálculo direto: MBU/MBS/Tara -> Umidade (para qualquer ponto)
+  // Chamado no onBlur dos campos MBU, MBS e Tara
+  const recalcularUmidadePonto = (pontoIndex: number) => {
+    const pbuStr = form.getValues(`pontos.${pontoIndex}.pesoBrutoUmido`);
+    const pbsStr = form.getValues(`pontos.${pontoIndex}.pesoBrutoSeco`);
+    const taraStr = form.getValues(`pontos.${pontoIndex}.tara`);
+    const pbu = parseFloat((pbuStr || "0").replace(',', '.'));
+    const pbs = parseFloat((pbsStr || "0").replace(',', '.'));
+    const t = parseFloat((taraStr || "0").replace(',', '.'));
+
+    if (pbu > 0 && pbs > 0 && t >= 0 && pbs > t && pbu >= pbs) {
+      const w = ((pbu - pbs) / (pbs - t)) * 100;
+      setValue(`pontos.${pontoIndex}.umidadeDireta`, w.toFixed(2), { shouldValidate: false, shouldDirty: true });
+    }
+  };
 
   const [results, setResults] = useState<CompactacaoOutput | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -515,7 +528,9 @@ function CompactacaoDesktop() {
     let apiInput: CompactacaoInputAPI;
     try {
       const volumeCil = parseFloat(data.volumeCilindro.replace(',', '.'));
-      const pesoCil = parseFloat(data.pesoCilindro.replace(',', '.'));
+      // Tratar pesoCilindro vazio como 0 (significa que pesoAmostaCilindro já é massa da amostra)
+      const pesoCilRaw = data.pesoCilindro?.trim();
+      const pesoCil = pesoCilRaw === '' || pesoCilRaw === undefined ? 0 : parseFloat(pesoCilRaw.replace(',', '.'));
       const pesoEspAgua = parseFloat(data.pesoEspecificoAgua.replace(',', '.'));
 
       // Verificação básica de números válidos nos campos de configuração
@@ -530,19 +545,22 @@ function CompactacaoDesktop() {
 
       // Validar pontos baseado no modo
       const modo = data.modoEntradaUmidade;
+      const semCilindro = pesoCil === 0 && (!pesoCilRaw || pesoCilRaw === '');
       const pontosValidos = data.pontos.length >= 3 && data.pontos.every(p => {
-        // Peso Amostra+Cilindro é sempre obrigatório
-        const temPesoAmostra = p.pesoAmostaCilindro && !isNaN(parseFloat(p.pesoAmostaCilindro.replace(',', '.')));
+        const temPesoAmostra = p.pesoAmostaCilindro && !isNaN(parseFloat(p.pesoAmostaCilindro.replace(',', '.'))) && parseFloat(p.pesoAmostaCilindro.replace(',', '.')) > 0;
+        const temMBS = p.pesoBrutoSeco && !isNaN(parseFloat(p.pesoBrutoSeco.replace(',', '.'))) && parseFloat(p.pesoBrutoSeco.replace(',', '.')) > 0;
+        const temTara = p.tara !== undefined && p.tara !== '' && !isNaN(parseFloat(p.tara.replace(',', '.')));
+        const temMBU = p.pesoBrutoUmido && !isNaN(parseFloat(p.pesoBrutoUmido.replace(',', '.'))) && parseFloat(p.pesoBrutoUmido.replace(',', '.')) > 0;
+
+        // Precisa de massa para calcular γd: pesoAmostaCilindro OU (MBS + Tara quando sem cilindro)
+        const temMassa = temPesoAmostra || (semCilindro && temMBS && temTara);
 
         if (modo === "direta") {
-          // Modo direta: precisa de umidadeDireta
-          return temPesoAmostra && p.umidadeDireta && !isNaN(parseFloat(p.umidadeDireta.replace(',', '.')));
+          // Modo direta: precisa de umidadeDireta + massa
+          return temMassa && p.umidadeDireta && !isNaN(parseFloat(p.umidadeDireta.replace(',', '.')));
         } else {
-          // Modo medições: precisa dos 3 pesos
-          return temPesoAmostra &&
-            p.pesoBrutoUmido && !isNaN(parseFloat(p.pesoBrutoUmido.replace(',', '.'))) &&
-            p.pesoBrutoSeco && !isNaN(parseFloat(p.pesoBrutoSeco.replace(',', '.'))) &&
-            p.tara && !isNaN(parseFloat(p.tara.replace(',', '.')));
+          // Modo medições: precisa de MBU + MBS + Tara + massa
+          return temMassa && temMBU && temMBS && temTara;
         }
       });
 
@@ -561,11 +579,26 @@ function CompactacaoDesktop() {
 
       apiInput = {
         pontos_ensaio: data.pontos.map(p => {
-          const base = {
-            massa_umida_total: parseFloat(p.pesoAmostaCilindro.replace(',', '.')),
+          const pesoAmostraVal = p.pesoAmostaCilindro && p.pesoAmostaCilindro.trim() !== ''
+            ? parseFloat(p.pesoAmostaCilindro.replace(',', '.'))
+            : 0;
+
+          const base: PontoEnsaioAPI = {
+            massa_umida_total: pesoAmostraVal,
             massa_molde: pesoCil,
             volume_molde: volumeCil,
           };
+
+          // Sempre incluir MBS/Tara quando disponíveis (necessário para cálculo alternativo)
+          if (p.pesoBrutoSeco && p.pesoBrutoSeco.trim() !== '') {
+            base.massa_seca_recipiente_w = parseFloat(p.pesoBrutoSeco.replace(',', '.'));
+          }
+          if (p.tara !== undefined && p.tara.trim() !== '') {
+            base.massa_recipiente_w = parseFloat(p.tara.replace(',', '.'));
+          }
+          if (p.pesoBrutoUmido && p.pesoBrutoUmido.trim() !== '') {
+            base.massa_umida_recipiente_w = parseFloat(p.pesoBrutoUmido.replace(',', '.'));
+          }
 
           if (modo === "direta") {
             return {
@@ -573,12 +606,7 @@ function CompactacaoDesktop() {
               umidade_direta: parseFloat(p.umidadeDireta!.replace(',', '.')),
             };
           } else {
-            return {
-              ...base,
-              massa_umida_recipiente_w: parseFloat(p.pesoBrutoUmido!.replace(',', '.')),
-              massa_seca_recipiente_w: parseFloat(p.pesoBrutoSeco!.replace(',', '.')),
-              massa_recipiente_w: parseFloat(p.tara!.replace(',', '.')),
-            };
+            return base;
           }
         }),
         Gs: (data.Gs && data.Gs !== "") ? parseFloat(data.Gs.replace(',', '.')) : undefined,
@@ -761,46 +789,49 @@ function CompactacaoDesktop() {
               </div>
 
               <div className="space-y-1">
-                {fields.map((fieldItem, i) => {
-                  // Calcular umidade automaticamente para esta linha
-                  const pbu = parseFloat(form.watch(`pontos.${i}.pesoBrutoUmido`) || "0");
-                  const pbs = parseFloat(form.watch(`pontos.${i}.pesoBrutoSeco`) || "0");
-                  const t = parseFloat(form.watch(`pontos.${i}.tara`) || "0");
-                  const umidadeCalc = (pbu > 0 && pbs > 0 && t >= 0 && pbs > t && pbu >= pbs)
-                    ? ((pbu - pbs) / (pbs - t)) * 100
-                    : null;
-
-                  return (
-                    <div key={fieldItem.fieldId} className="relative">
-                      <div className="grid grid-cols-[1fr,1fr,1fr,1fr,70px,auto] gap-1.5 items-center p-1.5 rounded-md border bg-muted/5 transition-colors hover:bg-muted/10">
-                        <Controller name={`pontos.${i}.pesoAmostaCilindro`} control={form.control} render={({ field }) => (
-                          <Input className="h-8 text-xs px-2 text-center" placeholder="g" {...field} />
-                        )} />
-                        <Controller name={`pontos.${i}.pesoBrutoUmido`} control={form.control} render={({ field }) => (
-                          <Input className="h-8 text-xs px-2 text-center" placeholder="g" {...field} value={field.value ?? ""} />
-                        )} />
-                        <Controller name={`pontos.${i}.pesoBrutoSeco`} control={form.control} render={({ field }) => (
-                          <Input className="h-8 text-xs px-2 text-center" placeholder="g" {...field} value={field.value ?? ""} />
-                        )} />
-                        <Controller name={`pontos.${i}.tara`} control={form.control} render={({ field }) => (
-                          <Input className="h-8 text-xs px-2 text-center" placeholder="g" {...field} value={field.value ?? ""} />
-                        )} />
-                        <Controller name={`pontos.${i}.umidadeDireta`} control={form.control} render={({ field }) => (
-                          <Input
-                            className="h-8 text-xs px-1 text-center font-mono"
-                            placeholder="%"
-                            {...field}
-                            value={umidadeCalc !== null ? umidadeCalc.toFixed(2) : (field.value ?? "")}
-                            onChange={(e) => field.onChange(e.target.value)}
-                          />
-                        )} />
-                        <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive shrink-0" onClick={() => { remove(i); }} disabled={fields.length <= 3}>
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
+                {fields.map((fieldItem, i) => (
+                  <div key={fieldItem.fieldId} className="relative">
+                    <div className="grid grid-cols-[1fr,1fr,1fr,1fr,70px,auto] gap-1.5 items-center p-1.5 rounded-md border bg-muted/5 transition-colors hover:bg-muted/10">
+                      <Controller name={`pontos.${i}.pesoAmostaCilindro`} control={form.control} render={({ field }) => (
+                        <Input className="h-8 text-xs px-2 text-center" placeholder="g" {...field} />
+                      )} />
+                      <Controller name={`pontos.${i}.pesoBrutoUmido`} control={form.control} render={({ field }) => (
+                        <Input className="h-8 text-xs px-2 text-center" placeholder="g" {...field} value={field.value ?? ""}
+                          onBlur={(e) => { field.onBlur(); recalcularUmidadePonto(i); }}
+                        />
+                      )} />
+                      <Controller name={`pontos.${i}.pesoBrutoSeco`} control={form.control} render={({ field }) => (
+                        <Input className="h-8 text-xs px-2 text-center" placeholder="g" {...field} value={field.value ?? ""}
+                          onBlur={(e) => { field.onBlur(); recalcularUmidadePonto(i); }}
+                        />
+                      )} />
+                      <Controller name={`pontos.${i}.tara`} control={form.control} render={({ field }) => (
+                        <Input className="h-8 text-xs px-2 text-center" placeholder="g" {...field} value={field.value ?? ""}
+                          onBlur={(e) => { field.onBlur(); recalcularUmidadePonto(i); }}
+                        />
+                      )} />
+                      <Controller name={`pontos.${i}.umidadeDireta`} control={form.control} render={({ field }) => (
+                        <Input
+                          className="h-8 text-xs px-1 text-center font-mono"
+                          placeholder="%"
+                          {...field}
+                          value={field.value ?? ""}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          onBlur={(e) => {
+                            field.onBlur();
+                            // Cálculo inverso: Umidade -> MBS ao sair do campo
+                            if (e.target.value) {
+                              calcularMBSInverso(i, e.target.value);
+                            }
+                          }}
+                        />
+                      )} />
+                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive shrink-0" onClick={() => { remove(i); }} disabled={fields.length <= 3}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
 
               {/* Error Alert */}

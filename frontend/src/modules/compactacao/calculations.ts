@@ -157,7 +157,11 @@ export function calcularCompactacao(dados: CompactacaoInput): CompactacaoOutput 
       if (ponto.volume_molde <= 0) {
         throw new Error(`Erro: Volume do molde inválido (${ponto.volume_molde}) no ponto ${i + 1}.`);
       }
-      if (ponto.massa_umida_total < ponto.massa_molde) {
+
+      // Determinar se usa caminho alternativo (sem massa_umida_total / sem cilindro)
+      const usarCaminhoAlternativo = ponto.massa_umida_total <= 0 && ponto.massa_molde === 0;
+
+      if (!usarCaminhoAlternativo && ponto.massa_umida_total < ponto.massa_molde) {
         throw new Error(
           `Erro: Massa úmida total (${ponto.massa_umida_total}) menor que a massa do molde (${ponto.massa_molde}) no ponto ${i + 1}.`
         );
@@ -198,12 +202,32 @@ export function calcularCompactacao(dados: CompactacaoInput): CompactacaoOutput 
       }
 
       // Cálculo do Peso Específico Seco
-      const massa_solo_umido = ponto.massa_umida_total - ponto.massa_molde;
-      const gama_h_gcm3 = massa_solo_umido / ponto.volume_molde;
-      const gama_h_knm3 = (gama_h_gcm3 * gama_w) / gama_w_gcm3;
+      let gama_d: number;
 
-      const umidade_decimal = umidade_percentual / 100;
-      const gama_d = gama_h_knm3 / (1 + umidade_decimal);
+      if (usarCaminhoAlternativo) {
+        // Caminho alternativo: usar MBS e Tara para calcular γd diretamente
+        if (ponto.massa_seca_recipiente_w === undefined || ponto.massa_recipiente_w === undefined) {
+          throw new Error(
+            `Erro: Ponto ${i + 1}: sem massa amostra+cilindro, é necessário fornecer MBS e Tara.`
+          );
+        }
+        const massa_solo_seco = ponto.massa_seca_recipiente_w - ponto.massa_recipiente_w;
+        if (massa_solo_seco <= 0) {
+          throw new Error(
+            `Erro: Massa seca do solo inválida no ponto ${i + 1}.`
+          );
+        }
+        const gama_d_gcm3 = massa_solo_seco / ponto.volume_molde;
+        gama_d = (gama_d_gcm3 * gama_w) / gama_w_gcm3;
+      } else {
+        // Caminho padrão: usar massa_umida_total e massa_molde
+        const massa_solo_umido = ponto.massa_umida_total - ponto.massa_molde;
+        const gama_h_gcm3 = massa_solo_umido / ponto.volume_molde;
+        const gama_h_knm3 = (gama_h_gcm3 * gama_w) / gama_w_gcm3;
+
+        const umidade_decimal = umidade_percentual / 100;
+        gama_d = gama_h_knm3 / (1 + umidade_decimal);
+      }
 
       pontos_calculados.push({
         umidade: umidade_percentual,
