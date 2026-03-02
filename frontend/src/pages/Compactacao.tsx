@@ -155,6 +155,8 @@ function CompactacaoDesktop() {
 
   // Estado local para exibir a umidade calculada em tempo real (apenas feedback visual)
   const [umidadeCalculadaPreview, setUmidadeCalculadaPreview] = useState<number | null>(null);
+  // Controla qual campo w% está focado (para formatação condicional)
+  const [focusedUmidadeIndex, setFocusedUmidadeIndex] = useState<number | null>(null);
 
   // Cálculo: Pesos -> Umidade (Modo 'medicoes')
   useEffect(() => {
@@ -545,7 +547,7 @@ function CompactacaoDesktop() {
 
       // Validar pontos baseado no modo
       const modo = data.modoEntradaUmidade;
-      const semCilindro = pesoCil === 0 && (!pesoCilRaw || pesoCilRaw === '');
+      const semCilindro = pesoCil === 0;
       const pontosValidos = data.pontos.length >= 3 && data.pontos.every(p => {
         const temPesoAmostra = p.pesoAmostaCilindro && !isNaN(parseFloat(p.pesoAmostaCilindro.replace(',', '.'))) && parseFloat(p.pesoAmostaCilindro.replace(',', '.')) > 0;
         const temMBS = p.pesoBrutoSeco && !isNaN(parseFloat(p.pesoBrutoSeco.replace(',', '.'))) && parseFloat(p.pesoBrutoSeco.replace(',', '.')) > 0;
@@ -810,22 +812,29 @@ function CompactacaoDesktop() {
                           onBlur={(e) => { field.onBlur(); recalcularUmidadePonto(i); }}
                         />
                       )} />
-                      <Controller name={`pontos.${i}.umidadeDireta`} control={form.control} render={({ field }) => (
-                        <Input
-                          className="h-8 text-xs px-1 text-center font-mono"
-                          placeholder="%"
-                          {...field}
-                          value={field.value ?? ""}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          onBlur={(e) => {
-                            field.onBlur();
-                            // Cálculo inverso: Umidade -> MBS ao sair do campo
-                            if (e.target.value) {
-                              calcularMBSInverso(i, e.target.value);
-                            }
-                          }}
-                        />
-                      )} />
+                      <Controller name={`pontos.${i}.umidadeDireta`} control={form.control} render={({ field }) => {
+                        // Formatar: 1 casa decimal quando não focado, valor completo quando editando
+                        const displayValue = (() => {
+                          if (!field.value) return "";
+                          if (focusedUmidadeIndex === i) return field.value; // Valor completo ao editar
+                          const num = parseFloat(field.value.replace(',', '.'));
+                          return isNaN(num) ? field.value : num.toFixed(1);
+                        })();
+                        return (
+                          <Input
+                            className="h-8 text-xs px-1 text-center font-mono"
+                            placeholder="%"
+                            {...field}
+                            value={displayValue}
+                            onFocus={() => setFocusedUmidadeIndex(i)}
+                            onBlur={(e) => {
+                              setFocusedUmidadeIndex(null);
+                              field.onBlur();
+                              if (e.target.value) { calcularMBSInverso(i, e.target.value); }
+                            }}
+                          />
+                        );
+                      }} />
                       <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive/70 hover:text-destructive shrink-0" onClick={() => { remove(i); }} disabled={fields.length <= 3}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>
@@ -887,7 +896,9 @@ function CompactacaoDesktop() {
                         </h4>
                         <div className="space-y-[1px]">
                           <ResultRow label="Volume do Cilindro" value={parseFloat(form.getValues().volumeCilindro)} unit="cm³" />
-                          <ResultRow label="Massa do Cilindro" value={parseFloat(form.getValues().pesoCilindro)} unit="g" />
+                          {form.getValues().pesoCilindro && parseFloat(form.getValues().pesoCilindro!) > 0 && (
+                            <ResultRow label="Massa do Cilindro" value={parseFloat(form.getValues().pesoCilindro!)} unit="g" />
+                          )}
                           <ResultRow label="Densidade dos Grãos (Gs)" value={form.getValues().Gs ? parseFloat(form.getValues().Gs!) : null} unit="" precision={3} />
                           <ResultRow label="Peso Esp. da Água" value={parseFloat(form.getValues().pesoEspecificoAgua)} unit="kN/m³" />
                         </div>
