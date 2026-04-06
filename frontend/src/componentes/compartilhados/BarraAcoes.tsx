@@ -1,3 +1,9 @@
+/**
+ * BarraAcoes — Barra de ações padronizada para manipulação de cálculos.
+ * 
+ * Agrupa os atalhos vitais dos módulos: Carregar, Salvar e Exportar (PDF/Excel),
+ * centralizados num layout consistente com tooltips explicativos.
+ */
 import { Save, FolderOpen, FileDown, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -5,11 +11,17 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { cn } from "@/lib/utils";
 
 interface CalculationActionsProps {
+  /** Callback executado ao clicar em "Salvar Cálculo" */
   onSave: () => void;
+  /** Callback executado ao clicar no ícone de "Carregar Cálculo" da base */
   onLoad: () => void;
+  /** Callback para exportar resultados em PDF */
   onExportPDF: () => void;
+  /** Callback para exportar planilhas padronizadas em Excel */
   onExportExcel: () => void;
+  /** Passar "true" para habilitar as ações de Salvar e Exportar (quando o módulo contém um resultado final gerado) */
   hasResults: boolean;
+  /** Impede ações enquanto a requisição de cálculo está processando */
   isCalculating: boolean;
 }
 

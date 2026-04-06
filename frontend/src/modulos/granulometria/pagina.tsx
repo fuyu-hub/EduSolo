@@ -13,9 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { toast } from "@/components/ui/sonner";
-import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 import PrintHeader from "@/componentes/base/CabecalhoImpressao";
 import PlasticityChart from "./componentes/CartaPlasticidade";
 import { UI_STANDARDS } from "@/lib/ui-standards";
@@ -33,6 +31,9 @@ import { LinhaResultado } from "@/componentes/compartilhados/LinhaResultado";
 import { getDefinicao } from "@/componentes/compartilhados/definicoes";
 import { DefinicaoTooltip } from "@/components/ui/DefinicaoTooltip";
 import { BotaoLimpar } from "@/componentes/compartilhados/BotaoLimpar";
+import { CabecalhoModulo } from "@/componentes/compartilhados/CabecalhoModulo";
+import { useAutoCalculo } from "@/hooks/useAutoCalculo";
+import { LayoutDividido } from "@/componentes/compartilhados/LayoutDividido";
 
 function CompositionBar({ formData, somaFracoes, somaValida, temFracoes }: {
   formData: GranulometriaFormData; somaFracoes: number; somaValida: boolean; temFracoes: boolean;
@@ -83,23 +84,27 @@ export default function GranulometriaPage() {
 
   const { pedregulho, areia_grossa, areia_media, areia_fina, silte, argila, pass_p10, pass_p40, pass_p200, d10, d30, d60, ll, lp } = formData;
 
-  useEffect(() => {
-    const fracoesPreenchidas = FRACOES.filter((f) => formData[f.key] !== "" && !isNaN(parseDecimal(formData[f.key])));
-    if (fracoesPreenchidas.length < 2 || (!somaValida && temFracoes)) { setResults(null); return; }
+  useAutoCalculo(
+    () => {
+      const fracoesPreenchidas = FRACOES.filter((f) => formData[f.key] !== "" && !isNaN(parseDecimal(formData[f.key])));
+      if (fracoesPreenchidas.length < 2 || (!somaValida && temFracoes)) { setResults(null); return; }
 
-    const resultado = calcularClassificacao({
-      pedregulho: parseDecimal(pedregulho) || 0, areia_grossa: parseDecimal(areia_grossa) || 0,
-      areia_media: parseDecimal(areia_media) || 0, areia_fina: parseDecimal(areia_fina) || 0,
-      silte: parseDecimal(silte) || 0, argila: parseDecimal(argila) || 0,
-      pass_peneira_10: pass_p10 ? parseDecimal(pass_p10) : undefined,
-      pass_peneira_40: pass_p40 ? parseDecimal(pass_p40) : undefined,
-      pass_peneira_200: pass_p200 ? parseDecimal(pass_p200) : undefined,
-      d10: d10 ? parseDecimal(d10) : undefined, d30: d30 ? parseDecimal(d30) : undefined,
-      d60: d60 ? parseDecimal(d60) : undefined, ll: ll ? parseDecimal(ll) : undefined,
-      lp: lp ? parseDecimal(lp) : undefined,
-    });
-    setResults(resultado.erro ? null : resultado);
-  }, [pedregulho, areia_grossa, areia_media, areia_fina, silte, argila, pass_p10, pass_p40, pass_p200, d10, d30, d60, ll, lp, somaValida, temFracoes]);
+      const resultado = calcularClassificacao({
+        pedregulho: parseDecimal(pedregulho) || 0, areia_grossa: parseDecimal(areia_grossa) || 0,
+        areia_media: parseDecimal(areia_media) || 0, areia_fina: parseDecimal(areia_fina) || 0,
+        silte: parseDecimal(silte) || 0, argila: parseDecimal(argila) || 0,
+        pass_peneira_10: pass_p10 ? parseDecimal(pass_p10) : undefined,
+        pass_peneira_40: pass_p40 ? parseDecimal(pass_p40) : undefined,
+        pass_peneira_200: pass_p200 ? parseDecimal(pass_p200) : undefined,
+        d10: d10 ? parseDecimal(d10) : undefined, d30: d30 ? parseDecimal(d30) : undefined,
+        d60: d60 ? parseDecimal(d60) : undefined, ll: ll ? parseDecimal(ll) : undefined,
+        lp: lp ? parseDecimal(lp) : undefined,
+      });
+      setResults(resultado.erro ? null : resultado);
+    },
+    [pedregulho, areia_grossa, areia_media, areia_fina, silte, argila, pass_p10, pass_p40, pass_p200, d10, d30, d60, ll, lp, somaValida, temFracoes],
+    300
+  );
 
   const diff = 100 - somaFracoes;
   const diffAbs = Math.abs(diff).toFixed(1);
@@ -108,7 +113,6 @@ export default function GranulometriaPage() {
     : `Soma excede 100% em ${diffAbs}%. Reduza uma das frações.`;
 
   return (
-    <TooltipProvider>
       <div className={UI_STANDARDS.pageContainer} onKeyDown={handleArrowNavigation}>
         <Helmet>
           <title>Classificação Granulométrica | EduSolos</title>
@@ -116,24 +120,21 @@ export default function GranulometriaPage() {
         </Helmet>
         <PrintHeader moduleTitle="Classificação Granulométrica" moduleName="granulometria" />
 
-        <div className={UI_STANDARDS.header.container}>
-          <div className="flex items-center gap-3">
-            <div className={UI_STANDARDS.header.iconContainer}><Database className={UI_STANDARDS.header.icon} /></div>
-            <div>
-              <h1 className={UI_STANDARDS.header.title}>Classificação Granulométrica</h1>
-              <p className={UI_STANDARDS.header.subtitle}>Classificação de Solos pelos Sistemas USCS e AASHTO</p>
-            </div>
-          </div>
-          <div className={UI_STANDARDS.header.actionsContainer}>
-            <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
-            <DialogExemplos onSelectExample={handleSelectExample} currentFormData={formData} />
-            <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
-            <BotaoLimpar onLimpar={handleClear} />
-          </div>
-        </div>
+        <CabecalhoModulo
+          icone={<Database className={UI_STANDARDS.header.icon} />}
+          titulo="Classificação Granulométrica"
+          subtitulo="Classificação de Solos pelos Sistemas USCS e AASHTO"
+          acoes={[
+            <DialogExemplos key="exemplos" onSelectExample={handleSelectExample} currentFormData={formData} />,
+            <BotaoLimpar key="limpar" onLimpar={handleClear} />
+          ]}
+        />
 
-        <div className={UI_STANDARDS.mainGrid}>
-          <div className="space-y-4 animate-in slide-in-from-left-5 duration-300">
+        <LayoutDividido
+          classNameEsquerdo="space-y-4"
+          classNameDireito="space-y-4"
+          painelEsquerdo={
+            <>
             {/* Card: Frações */}
             <Card className="glass border-primary/20">
               <CardHeader className="pb-3 bg-gradient-to-r from-primary/5 to-transparent">
@@ -168,7 +169,7 @@ export default function GranulometriaPage() {
                     ))}
                   </div>
                 </div>
-                <Separator className="!my-3 opacity-50" />
+                <hr className="my-3 opacity-50 bg-border border-0 h-px" />
                 <CompositionBar formData={formData} somaFracoes={somaFracoes} somaValida={somaValida} temFracoes={temFracoes} />
                 {temFracoes && !somaValida && (
                   <p className="text-xs text-red-500/90 flex items-start gap-1.5 mt-2 font-medium">
@@ -207,7 +208,7 @@ export default function GranulometriaPage() {
                       ))}
                     </div>
                   </div>
-                  <Separator />
+                  <hr className="my-3 bg-border border-0 h-px" />
                   <div>
                     <Label className="text-sm font-medium">Diâmetros Característicos (mm)</Label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
@@ -224,7 +225,7 @@ export default function GranulometriaPage() {
                       ))}
                     </div>
                   </div>
-                  <Separator />
+                  <hr className="my-3 bg-border border-0 h-px" />
                   <div>
                     <Label className="text-sm font-medium">Limites de Consistência (%)</Label>
                     <div className="grid grid-cols-2 gap-4 mt-2">
@@ -266,10 +267,10 @@ export default function GranulometriaPage() {
                 </CardContent>
               )}
             </Card>
-          </div>
-
-          {/* Resultados */}
-          <div ref={resultRef} className="space-y-4 animate-in slide-in-from-right-5 duration-300 sticky top-4 self-start">
+            </>
+          }
+          painelDireito={
+            <div ref={resultRef} className="space-y-4 flex flex-col h-full">
             <Card className="glass">
               <CardContent className="p-0">
                 <div role="status" aria-live="polite" aria-label="Resultados da classificação" className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border">
@@ -345,8 +346,9 @@ export default function GranulometriaPage() {
                 )}
               </CardContent>
             </Card>
-          </div>
-        </div>
+            </div>
+          }
+        />
 
         {results && (
           <div className="fixed bottom-6 right-6 z-50 md:hidden animate-in slide-in-from-bottom-5">
@@ -356,6 +358,5 @@ export default function GranulometriaPage() {
           </div>
         )}
       </div>
-    </TooltipProvider>
   );
 }

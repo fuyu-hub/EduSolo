@@ -1,3 +1,9 @@
+/**
+ * TooltipErro — Indicador visual (exclamação vermelha) de validação local.
+ * 
+ * Exibe um alerta visual não-intrusivo em inputs ou áreas específicas
+ * e que mostra informações ricas em tooltip ao passar o mouse ou focar.
+ */
 import React from "react";
 import { AlertCircle } from "lucide-react";
 import {
@@ -9,14 +15,13 @@ import {
 import { cn } from "@/lib/utils";
 
 interface TooltipErroProps {
+    /** Mensagem contextual explicando a causa do erro de validação. Se nulo ou não passado, o componente não renderiza. */
     mensagem?: string;
+    /** Estilos CSS complementares a serem mesclados no trigger (ícone) */
     className?: string;
 }
 
-/**
- * Componente TooltipErro
- * Exibe um indicador visual de erro (exclamação) que mostra uma mensagem ao passar o mouse.
- */
+
 export function TooltipErro({ mensagem, className }: TooltipErroProps) {
     if (!mensagem) return null;
 

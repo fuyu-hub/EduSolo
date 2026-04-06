@@ -1,3 +1,9 @@
+/**
+ * LinhaResultado — Renderizador de resultados parciais ou finais em formato de grid.
+ * 
+ * Exibe um par "Rótulo + Unidade + Valor" padronizado para leituras de resultados.
+ * Possui integração automática com a base léxica caso providenciado o ID do glossário.
+ */
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Info } from "lucide-react";
@@ -5,21 +11,25 @@ import { DefinicaoTooltip } from "@/components/ui/DefinicaoTooltip";
 import { getDefinicao } from "./definicoes";
 
 interface LinhaResultadoProps {
+    /** ID de identificação interno usado para busca no dicionário `definicoes.ts` para renderizar o helper de `DefinicaoTooltip` */
     id?: string;
+    /** Símbolo de engenharia ou abreviação da grandeza (Ex: "\u03B3d", "P") */
     simbolo?: string | React.ReactNode;
+    /** Nome descritivo (Ex: "Peso Específico Seco Máximo") */
     label?: string | React.ReactNode;
+    /** Valor numérico ou string a ser computado à direita */
     value: number | string | null | undefined;
+    /** Unidade física correspondente (Ex: "g/cm³") */
     unit?: string;
+    /** Casas decimais para valores number ou formatType (default: 2) */
     precision?: number;
+    /** Booleana para demarcar destaque visual (exibição como valor final) */
     highlight?: boolean;
+    /** Permite empurrar classes base para o Container flex do componente */
     className?: string;
 }
 
-/**
- * Componente LinhaResultado
- * Exibe um par Rótulo: Valor + Unidade de forma padronizada.
- * Se um ID for fornecido, busca automaticamente a definição no glossário para o Tooltip.
- */
+
 export function LinhaResultado({
     id,
     simbolo,

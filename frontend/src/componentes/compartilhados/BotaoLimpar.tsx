@@ -1,14 +1,26 @@
+/**
+ * BotaoLimpar — Botão com confirmação em popover para reset de estado.
+ * 
+ * Evita limpezas de tela (reset) acidentais ao pedir confirmação. 
+ * Pode ser facilmente ancorado aos cabeçalhos com o padrão de UI.
+ */
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { Button, ButtonProps } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface BotaoLimparProps {
+  /** Callback disparado quando a exclusão/limpeza é confirmada pelo usuário */
   onLimpar: () => void;
+  /** Texto opcional para o botão de trigger (default: "Limpar") */
   texto?: string;
+  /** Classes extras a serem injetadas no botão de trigger */
   className?: string;
+  /** Estilo shadcn do botão (default: "ghost") */
   variant?: ButtonProps["variant"];
+  /** Tamanho do botão (default: "sm") */
   size?: ButtonProps["size"];
+  /** Estado desabilitado (ex: enquanto recalcula ou se estiver em estado inicial) */
   disabled?: boolean;
 }
 

@@ -5,20 +5,17 @@
  * Contém toda a lógica de estado, cálculos, formulários de entrada
  * e visualização de resultados em um componente unificado.
  */
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { Helmet } from 'react-helmet-async';
 import {
-    Beaker, Trash2, AlertCircle, Plus, Droplet,
-    BarChart3, CheckCircle, Pencil, ArrowRight
+    Beaker, Trash2, Plus, Droplet,
+    BarChart3, Pencil
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { DefinicaoTooltip } from "@/components/ui/DefinicaoTooltip";
 import { cn } from "@/lib/utils";
@@ -32,16 +29,19 @@ import { UI_STANDARDS } from "@/lib/ui-standards";
 import { handleArrowNavigation } from "@/lib/navigation";
 
 import { useIndicesLimitesStore } from "./store";
-import { calcularIndicesFisicos } from "./calculos";
-import { calcularLimitesConsistencia } from "./calculos";
+import { calcularIndicesFisicos, calcularLimitesConsistencia } from "./calculos";
 import { CaracterizacaoOutput } from "./types";
 import DialogExemplos from "./componentes/DialogExemplos";
 import { ExemploCaracterizacao } from "./exemplos";
 import { BotaoLimpar } from "@/componentes/compartilhados/BotaoLimpar";
+import { CabecalhoModulo } from "@/componentes/compartilhados/CabecalhoModulo";
+import { AlertaErro } from "@/componentes/compartilhados/AlertaErro";
+import { useAutoCalculo } from "@/hooks/useAutoCalculo";
 
 import { LinhaResultado } from "@/componentes/compartilhados/LinhaResultado";
 import DiagramaFases from "./componentes/DiagramaFases";
 import LimiteLiquidezChart from "./componentes/LimiteLiquidezChart";
+import { LayoutDividido } from "@/componentes/compartilhados/LayoutDividido";
 import { Input } from "@/components/ui/input";
 import { TooltipErro } from "@/componentes/compartilhados/TooltipErro";
 
@@ -58,27 +58,9 @@ export default function IndicesLimitesPage() {
 
     const [resultadoCombinado, setResultadoCombinado] = useState<CaracterizacaoOutput | null>(null);
     const [currentStep, setCurrentStep] = useState<Step>("dados");
-    const debounceRef = useRef<ReturnType<typeof setTimeout>>();
     const limiteLiquidezChartRef = useRef<HTMLDivElement>(null);
 
-    // ─── Restaurar dados de relatório (sessionStorage) ───
 
-    useEffect(() => {
-        const storedData = sessionStorage.getItem('caracterizacao_lastData');
-        if (!storedData) return;
-        try {
-            const data = JSON.parse(storedData);
-            if (data.indices) updateIndices(data.indices);
-            if (data.settings) updateSettings(data.settings);
-            if (data.limites) updateGlobalLimites(data.limites);
-            if (data.resultadoCombinado) setResultadoCombinado(data.resultadoCombinado);
-            toast.info("Dados restaurados do relatório.");
-        } catch (e) {
-            console.error("Erro ao restaurar dados", e);
-        } finally {
-            sessionStorage.removeItem('caracterizacao_lastData');
-        }
-    }, []);
 
     // ─── Auto-cálculo com debounce (250ms) ───
 
@@ -150,11 +132,7 @@ export default function IndicesLimitesPage() {
         }
     };
 
-    useEffect(() => {
-        clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(handleCalculate, 250);
-        return () => clearTimeout(debounceRef.current);
-    }, [indices, settings, globalLimites]);
+    useAutoCalculo(handleCalculate, [indices, settings, globalLimites], 250);
 
     // ─── Handlers ───
 
@@ -206,21 +184,15 @@ export default function IndicesLimitesPage() {
             <PrintHeader moduleTitle="Índices Físicos e Limites de Consistência" moduleName="caracterizacao" />
 
             {/* Header */}
-            <div className={UI_STANDARDS.header.container} data-tour="module-header">
-                <div className="flex items-center gap-3">
-                    <div className={UI_STANDARDS.header.iconContainer}><Beaker className={UI_STANDARDS.header.icon} /></div>
-                    <div>
-                        <h1 className={UI_STANDARDS.header.title}>Índices Físicos e Limites de Consistência</h1>
-                        <p className={UI_STANDARDS.header.subtitle}>Análise das propriedades físicas do solo</p>
-                    </div>
-                </div>
-                <div className={UI_STANDARDS.header.actionsContainer}>
-                    <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
-                    <DialogExemplos onSelectExample={handleLoadExample} />
-                    <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
-                    <BotaoLimpar onLimpar={handleClear} />
-                </div>
-            </div>
+            <CabecalhoModulo
+                icone={<Beaker className={UI_STANDARDS.header.icon} />}
+                titulo="Índices Físicos e Limites de Consistência"
+                subtitulo="Análise das propriedades físicas do solo"
+                acoes={[
+                    <DialogExemplos key="exemplos" onSelectExample={handleLoadExample} />,
+                    <BotaoLimpar key="limpar" onLimpar={handleClear} />,
+                ]}
+            />
 
             {/* Step Selection (Alternador Estilo Segmented Control) */}
             <div className="bg-muted/20 p-1.5 rounded-xl grid grid-cols-4 w-full mb-8 border border-border/40 relative">
@@ -262,9 +234,13 @@ export default function IndicesLimitesPage() {
 
             {/* Layout Principal — 60/40 */}
             {currentStep !== "resultados" ? (
-                <div className="grid grid-cols-1 lg:grid-cols-[6fr,4fr] gap-6">
-                    {/* ═══ Coluna Esquerda: Entrada de Dados ═══ */}
-                    <div className="animate-in slide-in-from-left-5 duration-300 h-full flex flex-col" onKeyDown={handleArrowNavigation}>
+                <LayoutDividido
+                    sticky={currentStep !== "dados"}
+                    proporcao="6fr 4fr"
+                    classNameEsquerdo="h-full flex flex-col"
+                    classNameDireito="flex flex-col gap-4 h-full"
+                    painelEsquerdo={
+                        <div className="h-full flex flex-col" onKeyDown={handleArrowNavigation}>
                         {currentStep === "dados" && (
                             <StepDadosBasicos
                                 indices={indices} updateIndices={updateIndices}
@@ -286,10 +262,9 @@ export default function IndicesLimitesPage() {
                             />
                         )}
                     </div>
-
-                    {/* ═══ Coluna Direita: Resultados (sempre visíveis) ═══ */}
-                    <div className="flex flex-col gap-4 animate-in slide-in-from-right-5 duration-300 h-full">
-                        {/* Diagrama de Fases & Índices Físicos (Apenas no Step Dados) */}
+                    }
+                    painelDireito={
+                        <>
                         {currentStep === "dados" && (
                             <>
                                 <Card className="glass">
@@ -335,7 +310,6 @@ export default function IndicesLimitesPage() {
                             </>
                         )}
 
-                        {/* Limites de Consistência (Visível em LL e LP) */}
                         {currentStep !== "dados" && (
                             <Card className={cn("glass flex flex-col", currentStep === "ll" ? "flex-none" : "flex-1")}>
                                 <CardHeader className="pb-1 pt-3 px-4">
@@ -370,7 +344,6 @@ export default function IndicesLimitesPage() {
                             </Card>
                         )}
 
-                        {/* Gráfico LL (Apenas no Step LL) */}
                         {currentStep === "ll" && (
                             <Card className="glass flex-1 flex flex-col min-h-[250px]">
                                 <CardHeader className="pb-1 pt-3 px-4 shrink-0">
@@ -387,19 +360,39 @@ export default function IndicesLimitesPage() {
                                 </CardContent>
                             </Card>
                         )}
-                    </div>
-                </div>
+                        </>
+                    }
+                />
             ) : (
-                /* ═══ Aba "Ver resultados" — layout especial 60/40 ═══ */
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-                    {/* Coluna Esquerda: Resultados em texto */}
-                    <div className="space-y-4 animate-in slide-in-from-left-5 duration-300">
-                        {resultadoCombinado?.erro && (
-                            <Alert variant="destructive">
-                                <AlertCircle className="h-4 w-4" />
-                                <AlertDescription>{resultadoCombinado.erro}</AlertDescription>
-                            </Alert>
-                        )}
+                /* ═══ Aba "Ver resultados" — layout especial 50/50 ═══ */
+                <LayoutDividido
+                    sticky={true}
+                    classNameEsquerdo="space-y-4"
+                    classNameDireito="space-y-4 h-full flex flex-col"
+                    painelEsquerdo={
+                        <>
+                        <AlertaErro erro={resultadoCombinado?.erro} />
+                        <Card className="glass">
+                            <CardHeader className="pb-2 pt-3 px-4">
+                                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                    Diagrama de Fases
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-0 pb-3 px-4">
+                                <DiagramaFases
+                                    volumeSolidosNorm={1}
+                                    volumeAguaNorm={displayResult.e && displayResult.Sr ? (displayResult.e * displayResult.Sr / 100) : 0}
+                                    volumeArNorm={displayResult.e ? displayResult.e * (1 - (displayResult.Sr || 0) / 100) : 0}
+                                    volumeSolidosCalc={displayResult.volume_solidos_calc}
+                                    volumeAguaCalc={displayResult.volume_agua_calc}
+                                    volumeArCalc={displayResult.volume_ar_calc}
+                                    volumeTotalCalc={displayResult.volume_total_calc}
+                                    massaSolidosCalc={displayResult.massa_solidos_calc}
+                                    massaAguaCalc={displayResult.massa_agua_calc}
+                                    massaTotalCalc={displayResult.massa_total_calc}
+                                />
+                            </CardContent>
+                        </Card>
                         {/* Card Único Unificado de Resultados */}
                         <Card className="glass border-border/40">
                             <CardContent className="p-0">
@@ -466,32 +459,10 @@ export default function IndicesLimitesPage() {
                                 </div>
                             </CardContent>
                         </Card>
-                    </div>
-
-                    {/* Coluna Direita: Gráficos e Diagrama */}
-                    <div className="space-y-4 animate-in slide-in-from-right-5 duration-300">
-                        <Card className="glass">
-                            <CardHeader className="pb-2 pt-3 px-4">
-                                <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                    Diagrama de Fases
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-0 pb-3 px-4">
-                                <DiagramaFases
-                                    volumeSolidosNorm={1}
-                                    volumeAguaNorm={displayResult.e && displayResult.Sr ? (displayResult.e * displayResult.Sr / 100) : 0}
-                                    volumeArNorm={displayResult.e ? displayResult.e * (1 - (displayResult.Sr || 0) / 100) : 0}
-                                    volumeSolidosCalc={displayResult.volume_solidos_calc}
-                                    volumeAguaCalc={displayResult.volume_agua_calc}
-                                    volumeArCalc={displayResult.volume_ar_calc}
-                                    volumeTotalCalc={displayResult.volume_total_calc}
-                                    massaSolidosCalc={displayResult.massa_solidos_calc}
-                                    massaAguaCalc={displayResult.massa_agua_calc}
-                                    massaTotalCalc={displayResult.massa_total_calc}
-                                />
-                            </CardContent>
-                        </Card>
-
+                        </>
+                    }
+                    painelDireito={
+                        <>
                         <Card className="glass">
                             <CardHeader className={UI_STANDARDS.card.header}>
                                 <CardTitle className={UI_STANDARDS.card.title}>
@@ -507,8 +478,9 @@ export default function IndicesLimitesPage() {
                                 />
                             </CardContent>
                         </Card>
-                    </div>
-                </div>
+                        </>
+                    }
+                />
             )}
 
 

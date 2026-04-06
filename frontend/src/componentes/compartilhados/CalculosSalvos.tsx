@@ -1,3 +1,9 @@
+/**
+ * CalculosSalvos — Interface modal que exibe o histórico de cálculos do SessionStorage.
+ * 
+ * Centraliza funcionalidades de renomear, carregar na tela principal
+ * ou apagar completamente cálculos em lote via Local/Session Storage (Zustand persistent).
+ */
 import { useState } from "react";
 import { FolderOpen, Trash2, Edit2, Download, Calendar, X } from "lucide-react";
 import {
@@ -28,12 +34,19 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface SavedCalculationsProps {
+  /** Gerencia do modo open/close do Modal (Dialog) */
   open: boolean;
+  /** Aciona a mudança de estado base de visibilidade */
   onOpenChange: (open: boolean) => void;
+  /** Array de cálculos em cache obtidos pela use-saved-calculations store */
   calculations: SavedCalculation[];
+  /** Injeta os dados da seleção clicada de volta nos formulários ativos na página principal */
   onLoad: (calculation: SavedCalculation) => void;
+  /** Exclui o item selecionado permanentemente */
   onDelete: (id: string) => void;
+  /** Renomeia do título auto-gerado para um título mais descritivo a pedido do usuário */
   onRename: (id: string, newName: string) => void;
+  /** Referência estática formativa do tipo de módulo renderizado e da chave na tabela de salvos */
   moduleName: string;
 }
 

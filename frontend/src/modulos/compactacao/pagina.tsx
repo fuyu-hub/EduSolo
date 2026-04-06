@@ -6,7 +6,7 @@ import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { calcularCompactacao } from "./calculos";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { RotateCcw, Database, Info, Calculator as CalcIcon, Plus, Trash2, AlertCircle, BarChart3, Save, FolderOpen, GraduationCap, LayoutGrid, RefreshCw } from "lucide-react";
+import { RotateCcw, Database, Info, Calculator as CalcIcon, Plus, Trash2, BarChart3, Save, FolderOpen, GraduationCap, LayoutGrid, RefreshCw } from "lucide-react";
 import { CompactacaoIcon } from "@/componentes/icones/IconeCompactacao";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,21 +15,23 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter as UIDialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 
 
 import CurvaCompactacao, { type CurvaCompactacaoRef } from "./componentes/CurvaCompactacao";
 import TabelaResultados from "./componentes/TabelaResultados";
 import DialogExemplos from "./componentes/DialogExemplos";
 import { type ExemploCompactacao } from "./exemplos";
+import { getDefinicao } from "@/componentes/compartilhados/definicoes";
 import { LinhaResultado } from "@/componentes/compartilhados/LinhaResultado";
 import { DefinicaoTooltip } from "@/components/ui/DefinicaoTooltip";
+import { LayoutDividido } from "@/componentes/compartilhados/LayoutDividido";
 import { BotaoLimpar } from "@/componentes/compartilhados/BotaoLimpar";
+import { CabecalhoModulo } from "@/componentes/compartilhados/CabecalhoModulo";
+import { AlertaErro } from "@/componentes/compartilhados/AlertaErro";
 
 import { useCompactacaoStore } from "./store";
 import { UI_STANDARDS } from "@/lib/ui-standards";
@@ -435,35 +437,23 @@ function CompactacaoDesktop() {
       <PrintHeader moduleTitle="Ensaio de Compactação" moduleName="compactacao" />
 
       {/* Top Header Section */}
-      <div className={UI_STANDARDS.header.container} data-tour="module-header">
-        <div className="flex items-center gap-3">
-          <div className={UI_STANDARDS.header.iconContainer}>
-            <CompactacaoIcon className={UI_STANDARDS.header.icon} />
-          </div>
-          <div>
-            <h1 className={UI_STANDARDS.header.title}>Ensaio de Compactação</h1>
-            <p className={UI_STANDARDS.header.subtitle}>Determinação da curva de compactação (Proctor)</p>
-          </div>
-        </div>
+      <CabecalhoModulo
+        icone={<CompactacaoIcon className={UI_STANDARDS.header.icon} />}
+        titulo="Ensaio de Compactação"
+        subtitulo="Determinação da curva de compactação (Proctor)"
+        dataTour="module-header"
+        acoes={[
+          <DialogExemplos key="exemplos" onSelectExample={handleSelectExample} disabled={isCalculating} currentFormData={form.getValues()} />,
+          <BotaoLimpar key="limpar" onLimpar={handleClear} />,
+        ]}
+      />
 
-        <div className={UI_STANDARDS.header.actionsContainer} data-tour="actions">
-          <TooltipProvider>
-            <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
-
-            {/* Exemplos */}
-            <DialogExemplos onSelectExample={handleSelectExample} disabled={isCalculating} currentFormData={form.getValues()} />
-
-            <Separator orientation="vertical" className="h-6 mx-1 bg-border" />
-
-            <BotaoLimpar onLimpar={handleClear} />
-          </TooltipProvider>
-        </div>
-      </div>
-
-      <div className={UI_STANDARDS.mainGrid}>
-        {/* Formulário - Input */}
-        <div className="space-y-4 animate-in slide-in-from-left-5 duration-300">
-          {/* Card: Parâmetros Gerais */}
+      <LayoutDividido
+        classNameEsquerdo="space-y-4"
+        classNameDireito="space-y-4 h-full flex flex-col"
+        painelEsquerdo={
+          <>
+            {/* Formulário - Input */}
           <Card className="glass border-primary/20">
             <CardHeader className="pb-3 bg-gradient-to-r from-primary/5 to-transparent">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -602,20 +592,15 @@ function CompactacaoDesktop() {
                 ))}
               </div>
 
-              {/* Error Alert */}
-              {apiError && !isCalculating && (
-                <Alert variant="destructive" className="p-2">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle className="text-sm">Erro</AlertTitle>
-                  <AlertDescription className="text-xs">{apiError}</AlertDescription>
-                </Alert>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Resultados */}
-        <div className="space-y-4 animate-in slide-in-from-right-5 duration-300">
+            {/* Error Alert */}
+            {!isCalculating && <AlertaErro erro={apiError} />}
+          </CardContent>
+        </Card>
+        </>
+        }
+        painelDireito={
+          <>
+            {/* Resultados */}
           {!results ? (
             <Card className="glass flex items-center justify-center p-12 text-center text-muted-foreground border-dashed min-h-[400px]">
               <div>
@@ -625,10 +610,7 @@ function CompactacaoDesktop() {
               </div>
             </Card>
           ) : results.erro ? (
-            <Alert variant="destructive" className="min-h-[200px] flex items-center">
-              <AlertCircle className="h-5 w-5" />
-              <AlertDescription className="text-base ml-2">{results.erro}</AlertDescription>
-            </Alert>
+            <AlertaErro erro={results.erro} className="min-h-[200px] flex items-center" />
           ) : (
             <Tabs value={resultTab} onValueChange={setResultTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -738,8 +720,9 @@ function CompactacaoDesktop() {
               </TabsContent>
             </Tabs>
           )}
-        </div>
-      </div>
+          </>
+        }
+      />
     </div >
   );
 }
