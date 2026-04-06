@@ -17,7 +17,7 @@ export default function DialogExemplos({ onSelectExample, disabled }: DialogExem
   const store = useIndicesLimitesStore();
 
   const getFormStateFromStore = (): ExemploCaracterizacao => {
-    const amostra = store.amostras[store.currentAmostraIndex || 0];
+    const amostra = { indices: store.indices };
     const llPoints = store.limites.pontosLL.map(p => ({ 
       numGolpes: p.numGolpes || "", 
       massaUmidaRecipiente: p.massaUmidaRecipiente || "", 

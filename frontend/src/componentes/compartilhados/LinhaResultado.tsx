@@ -33,7 +33,7 @@ export function LinhaResultado({
     const definicao = id ? getDefinicao(id) : null;
     const finalLabel = label || definicao?.termo || id;
     const finalUnit = unit || definicao?.unidade || "";
-    
+
     const hasSimbolo = !!simbolo;
 
     const formatValue = (val: number | string | null | undefined) => {
@@ -62,8 +62,8 @@ export function LinhaResultado({
                     )}>
                         {finalLabel}
                     </span>
-                    <DefinicaoTooltip 
-                        id={id} 
+                    <DefinicaoTooltip
+                        id={id}
                         side="right"
                         termo={simbolo && definicao?.termo ? (
                             <span className="flex items-center gap-2">
@@ -75,12 +75,19 @@ export function LinhaResultado({
                     />
                 </div>
             </div>
-            <span className={cn(
-                "font-mono font-medium text-right whitespace-nowrap ml-2 text-foreground",
-                highlight && "text-primary"
+            <div className={cn(
+                "font-mono text-right whitespace-nowrap ml-2 flex items-baseline justify-end gap-1",
+                highlight ? "text-primary" : "text-foreground"
             )}>
-                {formatValue(value)} {(value !== null && value !== undefined && (typeof value !== "number" || !isNaN(value))) && finalUnit}
-            </span>
+                <span className="font-semibold text-[15px]">
+                    {formatValue(value)}
+                </span>
+                {(value !== null && value !== undefined && (typeof value !== "number" || !isNaN(value))) && finalUnit && (
+                    <span className="text-[11px] font-medium text-foreground">
+                        {finalUnit}
+                    </span>
+                )}
+            </div>
         </div>
     );
 }

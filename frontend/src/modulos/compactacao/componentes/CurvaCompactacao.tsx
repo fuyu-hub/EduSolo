@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Maximize2, Download } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Scatter, ReferenceDot, Label, Legend } from "recharts";
-import html2canvas from "html2canvas";
 import { toast } from "@/components/ui/sonner";
+import { exportChartAsImage, getChartImage } from "@/componentes/compartilhados/exportacao-grafico";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 import type { PontoCurvaCompactacao } from "../types";
@@ -176,56 +176,15 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
       return arr;
     })();
 
-    // Função para exportar como JPG
+    // Função para exportar como JPG (versão ampliada)
     const handleExportJPG = async () => {
-      // Capturar o gráfico principal (versão reduzida)
-      const element = document.getElementById('compactacao-chart-main');
-      if (!element) return;
-
-      try {
-        toast.info("Capturando gráfico...");
-
-        const canvas = await html2canvas(element, {
-          backgroundColor: '#ffffff',
-          scale: 2,
-          logging: false,
-          useCORS: true,
-        });
-
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.download = `grafico_compactacao_${new Date().toISOString().split('T')[0]}.jpg`;
-            link.href = url;
-            link.click();
-            URL.revokeObjectURL(url);
-            toast.success("Gráfico exportado com sucesso!");
-          }
-        }, 'image/jpeg', 0.95);
-      } catch (error) {
-        console.error('Erro ao exportar imagem:', error);
-        toast.error("Erro ao exportar o gráfico");
-      }
+      await exportChartAsImage("chart-export-container", "grafico_compactacao");
     };
 
     // Função para obter imagem para exportação (sem download)
     const getImageForExport = async (): Promise<string | null> => {
-      const element = document.getElementById('chart-capture-container');
-      if (!element) return null;
-
-      try {
-        const canvas = await html2canvas(element, {
-          backgroundColor: '#ffffff',
-          scale: 2,
-          logging: false,
-        });
-
-        return canvas.toDataURL('image/png');
-      } catch (error) {
-        console.error('Erro ao capturar imagem:', error);
-        return null;
-      }
+      // Capturar a versão ampliada para o PDF também
+      return await getChartImage('chart-export-container', { scale: 2 });
     };
 
     // Expor as funções via ref
@@ -498,9 +457,11 @@ const CurvaCompactacao = forwardRef<CurvaCompactacaoRef, CurvaCompactacaoProps>(
           </CardContent>
         </Card>
 
-        {/* Gráfico Oculto para Exportação (Sempre Expandido, Sem Bordas Arredondadas) */}
-        <div style={{ position: 'absolute', left: '-9999px', top: 0, width: '1200px' }} aria-hidden="true">
-          <ChartContent isDialog={true} isExport={true} />
+        {/* Gráfico Oculto para Exportação (Captura a versão ampliada) */}
+        <div style={{ position: 'absolute', left: '-9999px', top: 0, width: '1000px' }} aria-hidden="true">
+          <div id="chart-export-container" className="bg-white p-6">
+            <ChartContent isDialog={true} />
+          </div>
         </div>
       </div>
     );

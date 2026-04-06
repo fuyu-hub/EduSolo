@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Maximize2, Download } from "lucide-react";
 import { Line, XAxis, YAxis, CartesianGrid, Tooltip, ComposedChart, ReferenceLine, ReferenceArea } from "recharts";
-import html2canvas from "html2canvas";
 import { toast } from "@/components/ui/sonner";
+import { exportChartAsImage } from "@/componentes/compartilhados/exportacao-grafico";
 
 import { PontoGranulometrico } from "../types";
 
@@ -19,40 +19,9 @@ interface CurvaGranulometricaProps {
 const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30, d60 }: CurvaGranulometricaProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  // Função para exportar o gráfico como JPG
+  // Função para exportar como JPG (versão ampliada)
   const handleExportJPG = async () => {
-    try {
-      toast.info("Capturando gráfico...");
-
-      const chartElement = document.getElementById('curva-granulometrica-ampliada');
-      if (!chartElement) {
-        toast.error("Erro ao localizar o gráfico");
-        return;
-      }
-
-      const canvas = await html2canvas(chartElement, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        logging: false,
-        useCORS: true,
-      });
-
-      // Converter para JPG
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.download = `curva_granulometrica_${new Date().toISOString().split('T')[0]}.jpg`;
-          link.href = url;
-          link.click();
-          URL.revokeObjectURL(url);
-          toast.success("Gráfico exportado com sucesso!");
-        }
-      }, 'image/jpeg', 0.95);
-    } catch (error) {
-      console.error("Erro ao exportar gráfico:", error);
-      toast.error("Erro ao exportar o gráfico");
-    }
+    await exportChartAsImage("curva-granulometrica-ampliada", "curva_granulometrica");
   };
 
   // Preparar dados para o gráfico (ordenar por abertura crescente para plotagem)
@@ -506,17 +475,16 @@ const CurvaGranulometrica = memo(function CurvaGranulometrica({ dados, d10, d30,
         </Dialog>
       </div>
 
-      {/* Gráfico ampliado renderizado em background (invisível) para captura */}
       <div
         className="fixed pointer-events-none"
         style={{
           left: '-9999px',
           top: 0,
-          width: '1000px', // Largura fixa para o gráfico ampliado
+          width: 'max-content',
           zIndex: -9999
         }}
       >
-        <div id="curva-granulometrica-ampliada" className="bg-white p-4">
+        <div id="curva-granulometrica-ampliada" className="bg-white p-6" style={{ width: '1000px' }}>
           <GraficoContent isDialog={true} />
         </div>
       </div>

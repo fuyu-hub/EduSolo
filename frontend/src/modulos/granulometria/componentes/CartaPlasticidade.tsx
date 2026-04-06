@@ -16,8 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Maximize2, Download, Activity } from "lucide-react";
-import html2canvas from 'html2canvas';
 import { toast } from "@/components/ui/sonner";
+import { exportChartAsImage, getChartImage } from "@/componentes/compartilhados/exportacao-grafico";
 
 interface PlasticityChartProps {
   ll: number | null;
@@ -620,56 +620,15 @@ const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ 
   const chartRef = useRef<HTMLDivElement>(null);
   const chartAmpliado = useRef<HTMLDivElement>(null);
 
-  // Função para exportar como JPG
+  // Função para exportar como JPG (versão ampliada)
   const handleExportJPG = async () => {
-    const elementToCapture = document.getElementById('carta-plasticidade-ampliada');
-    if (!elementToCapture) return;
-
-    try {
-      toast.info("Capturando carta de plasticidade...");
-
-      const canvas = await html2canvas(elementToCapture, {
-        backgroundColor: '#ffffff',
-        scale: 2, // Maior qualidade
-        logging: false,
-        useCORS: true,
-      });
-
-      // Converter para JPG
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.download = `carta_plasticidade_${new Date().toISOString().split('T')[0]}.jpg`;
-          link.href = url;
-          link.click();
-          URL.revokeObjectURL(url);
-          toast.success("Carta exportada com sucesso!");
-        }
-      }, 'image/jpeg', 0.95);
-    } catch (error) {
-      console.error('Erro ao exportar imagem:', error);
-      toast.error("Erro ao exportar a carta");
-    }
+    await exportChartAsImage("carta-plasticidade-ampliada", "carta_plasticidade");
   };
 
   // Função para obter imagem para exportação (sem download)
   const getImageForExport = async (): Promise<string | null> => {
-    if (!chartRef.current) return null;
-
-    try {
-      const canvas = await html2canvas(chartRef.current, {
-        backgroundColor: '#ffffff',
-        scale: 2, // Maior qualidade
-        logging: false,
-      });
-
-      // Converter para PNG para melhor qualidade no PDF
-      return canvas.toDataURL('image/png');
-    } catch (error) {
-      console.error('Erro ao capturar imagem:', error);
-      return null;
-    }
+    // Capturar a versão ampliada para o PDF
+    return await getChartImage('carta-plasticidade-ampliada', { scale: 2 });
   };
 
   // Expor as funções via ref
@@ -875,17 +834,16 @@ const PlasticityChart = forwardRef<PlasticityChartRef, PlasticityChartProps>(({ 
         </Dialog>
       </div>
 
-      {/* Gráfico ampliado renderizado em background (invisível) para captura */}
       <div
         className="fixed pointer-events-none"
         style={{
           left: '-9999px',
           top: 0,
-          width: '1240px', // Largura fixa para o gráfico ampliado
+          width: 'max-content', // Ajusta ao conteúdo para evitar espaço branco
           zIndex: -9999
         }}
       >
-        <div id="carta-plasticidade-ampliada" className="bg-white p-4">
+        <div id="carta-plasticidade-ampliada" className="bg-white p-6" style={{ width: '900px' }}>
           <ChartContent isDialog={true} />
         </div>
       </div>

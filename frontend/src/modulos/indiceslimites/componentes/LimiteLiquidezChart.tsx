@@ -14,8 +14,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Maximize2, Download } from "lucide-react";
-import html2canvas from 'html2canvas';
 import { toast } from "@/components/ui/sonner";
+import { exportChartAsImage } from "@/componentes/compartilhados/exportacao-grafico";
 
 interface PontoCurva {
   x: number; // log10(num_golpes)
@@ -25,46 +25,21 @@ interface PontoCurva {
 interface LimiteLiquidezChartProps {
   pontos: PontoCurva[];
   ll: number | null;
+  compact?: boolean;
 }
 
 const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChartProps>(
-  ({ pontos, ll }, ref) => {
+  ({ pontos, ll, compact = false }, ref) => {
     const [dialogOpen, setDialogOpen] = useState(false);
     const chartRef = useRef<HTMLDivElement>(null);
 
-    // Função para exportar como JPG
+    // Função para exportar como JPG (versão ampliada)
     const handleExportJPG = async () => {
-      const elementToCapture = document.getElementById('limite-liquidez-main');
-      if (!elementToCapture) return;
-
-      try {
-        toast.info("Capturando gráfico...");
-
-        const canvas = await html2canvas(elementToCapture, {
-          backgroundColor: '#ffffff',
-          scale: 2,
-          logging: false,
-          useCORS: true,
-        });
-
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.download = `grafico_limite_liquidez_${new Date().toISOString().split('T')[0]}.jpg`;
-            link.href = url;
-            link.click();
-            URL.revokeObjectURL(url);
-            toast.success("Gráfico exportado com sucesso!");
-          }
-        }, 'image/jpeg', 0.95);
-      } catch (error) {
-        console.error('Erro ao exportar imagem:', error);
-        toast.error("Erro ao exportar o gráfico");
-      }
+      await exportChartAsImage("limite-liquidez-export", "grafico_limite_liquidez");
     };
 
     if (!pontos || pontos.length === 0) {
+      if (compact) return null;
       return (
         <Card>
           <CardHeader className="pb-2 pt-3">
@@ -248,8 +223,8 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
 
     // Componente do gráfico reutilizável
     const ChartContent = ({ isDialog = false, isExport = false }: { isDialog?: boolean; isExport?: boolean }) => {
-      const height = isDialog ? 500 : 320;
-      const fontSize = isDialog ? 14 : 12;
+      const height = isDialog ? 500 : compact ? 200 : 320;
+      const fontSize = isDialog ? 14 : compact ? 10 : 12;
       const labelFontSize = isDialog ? 16 : 14;
 
       return (
@@ -410,6 +385,16 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
       );
     };
 
+    if (compact) {
+      return (
+        <div className="w-full" ref={ref}>
+          <div ref={chartRef} className="w-full rounded-lg border border-border/30 overflow-hidden">
+            <ChartContent isDialog={false} />
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-2 relative" ref={ref}>
         {/* Botões Ampliar e Exportar */}
@@ -469,9 +454,11 @@ const LimiteLiquidezChart = React.forwardRef<HTMLDivElement, LimiteLiquidezChart
           </CardContent>
         </Card>
 
-        {/* Gráfico Oculto para Exportação */}
-        <div style={{ position: 'absolute', left: '-9999px', top: 0, width: '1200px' }} aria-hidden="true">
-          <ChartContent isDialog={true} isExport={true} />
+        {/* Gráfico Oculto para Exportação (Captura a versão ampliada) */}
+        <div style={{ position: 'absolute', left: '-9999px', top: 0, width: '1000px' }} aria-hidden="true">
+          <div id="limite-liquidez-export" className="bg-white p-6">
+            <ChartContent isDialog={true} />
+          </div>
         </div>
       </div>
     );

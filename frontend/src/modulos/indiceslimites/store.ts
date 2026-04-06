@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { AmostraUnificada, CaracterizacaoSettings, CaracterizacaoOutput, LimitesInput } from './types';
+import { CaracterizacaoSettings, CaracterizacaoOutput, LimitesInput, IndicesFisicosInput } from './types';
 import { generateId } from '@/lib/shared';
 
 interface CaracterizacaoState {
@@ -11,21 +11,16 @@ interface CaracterizacaoState {
     limites: LimitesInput;
     updateLimites: (data: Partial<LimitesInput>) => void;
 
-    // Gerenciamento de Amostras
-    amostras: AmostraUnificada[];
-    currentAmostraIndex: number;
-    addAmostra: () => void;
-    removeAmostra: (index: number) => void;
-    setCurrentAmostra: (index: number) => void;
-    updateAmostra: (index: number, data: Partial<AmostraUnificada>) => void;
-    updateIndices: (index: number, data: Partial<AmostraUnificada['indices']>) => void;
+    // Dados de índices físicos (amostra única)
+    indices: IndicesFisicosInput;
+    updateIndices: (data: Partial<IndicesFisicosInput>) => void;
 
     // Resultados
-    results: Record<string, CaracterizacaoOutput>;
-    setResult: (id: string, result: CaracterizacaoOutput) => void;
-    clearResults: () => void;
+    result: CaracterizacaoOutput | null;
+    setResult: (result: CaracterizacaoOutput | null) => void;
 
-    resetAmostras: () => void;
+    // Reset
+    reset: () => void;
 }
 
 const createDefaultLimites = (): LimitesInput => ({
@@ -39,10 +34,8 @@ const createDefaultLimites = (): LimitesInput => ({
     })),
 });
 
-const createDefaultAmostra = (nome: string = "Amostra 1"): AmostraUnificada => ({
-    id: generateId(),
-    nome,
-    indices: { massaUmida: "", massaSeca: "", tara: "", volume: "" },
+const createDefaultIndices = (): IndicesFisicosInput => ({
+    massaUmida: "", massaSeca: "", tara: "", volume: ""
 });
 
 export const useIndicesLimitesStore = create<CaracterizacaoState>((set) => ({
@@ -61,53 +54,23 @@ export const useIndicesLimitesStore = create<CaracterizacaoState>((set) => ({
         limites: { ...state.limites, ...data }
     })),
 
-    amostras: [createDefaultAmostra()],
-    currentAmostraIndex: 0,
-
-    addAmostra: () => set((state) => {
-        if (state.amostras.length >= 3) return state;
-        return {
-            amostras: [...state.amostras, createDefaultAmostra(`Amostra ${state.amostras.length + 1}`)],
-            currentAmostraIndex: state.amostras.length
-        };
-    }),
-
-    removeAmostra: (index) => set((state) => {
-        if (state.amostras.length <= 1) return state;
-        const newAmostras = state.amostras
-            .filter((_, i) => i !== index)
-            .map((a, i) => ({ ...a, nome: `Amostra ${i + 1}` }));
-        return {
-            amostras: newAmostras,
-            currentAmostraIndex: Math.min(index, newAmostras.length - 1)
-        };
-    }),
-
-    setCurrentAmostra: (index) => set({ currentAmostraIndex: index }),
-
-    updateAmostra: (index, data) => set((state) => {
-        const newAmostras = [...state.amostras];
-        newAmostras[index] = { ...newAmostras[index], ...data };
-        return { amostras: newAmostras };
-    }),
-
-    updateIndices: (index, data) => set((state) => {
-        const newAmostras = [...state.amostras];
-        newAmostras[index] = {
-            ...newAmostras[index],
-            indices: { ...newAmostras[index].indices, ...data }
-        };
-        return { amostras: newAmostras };
-    }),
-
-    results: {},
-    setResult: (id, result) => set((state) => ({
-        results: { ...state.results, [id]: result }
+    indices: createDefaultIndices(),
+    updateIndices: (data) => set((state) => ({
+        indices: { ...state.indices, ...data }
     })),
-    clearResults: () => set({ results: {} }),
 
-    resetAmostras: () => set({
-        amostras: [createDefaultAmostra()],
-        currentAmostraIndex: 0
+    result: null,
+    setResult: (result) => set({ result }),
+
+    reset: () => set({
+        indices: createDefaultIndices(),
+        limites: createDefaultLimites(),
+        settings: {
+            Gs: "",
+            pesoEspecificoAgua: "10.0",
+            indice_vazios_max: "",
+            indice_vazios_min: "",
+        },
+        result: null,
     }),
 }));
