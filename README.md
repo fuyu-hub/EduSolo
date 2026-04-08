@@ -1,57 +1,102 @@
 <p align="center">
-  <a href="https://edusolos.pages.dev">
-    <img src="./frontend/public/favicon.svg" alt="EduSolos Logo" width="128" />
-  </a>
+  <img src="./public/favicon.svg" alt="EduSolos Logo" width="100" />
 </p>
 
 <h1 align="center">EduSolos</h1>
 
 <p align="center">
-  EduSolos é uma plataforma web para cálculos práticos em Engenharia Geotécnica.
+  <strong>Plataforma educacional para análise e aprendizado em Engenharia Geotécnica.</strong>
 </p>
 
-<div align="center">
-  <a href="https://reactjs.org/">
-    <img alt="React" src="https://img.shields.io/badge/React-18+-61dafb?style=flat-square&logo=react&logoColor=black">
-  </a>
-  <a href="https://www.typescriptlang.org/">
-    <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.0+-3178c6?style=flat-square&logo=typescript&logoColor=white">
-  </a>
+<p align="center">
+  <img src="https://img.shields.io/badge/Versão-1.1.0-blue?style=flat-square" alt="Versão">
+  <img src="https://img.shields.io/badge/Status-Em%20Desenvolvimento-orange?style=flat-square" alt="Status">
+  <img src="https://img.shields.io/badge/Licença-PolyForm%20NC-green?style=flat-square" alt="Licença">
+</p>
+
+---
+
+## Visão Geral
+
+<div align="justify">
+O <strong>EduSolos</strong> é uma plataforma digital desenvolvida para auxiliar estudantes, professores e profissionais de Engenharia Civil e Geotecnia na realização de cálculos e análises de Mecânica dos Solos. O projeto combina rigor técnico-científico com uma interface moderna e intuitiva, visando otimizar o fluxo de trabalho acadêmico e profissional.
 </div>
 
-## Sobre
+<div align="justify">
+Fundamentado nas normas da Associação Brasileira de Normas Técnicas (ABNT) e nas principais bibliografias da área, o sistema garante precisão na obtenção de resultados e na geração de representações gráficas fundamentais para a prática geotécnica.
+</div>
 
-O EduSolos moderniza a aplicação e o ensino de conceitos de Mecânica dos Solos através de um sistema web de alto desempenho. A ferramenta opera de forma 100% offline dentro do navegador do usuário, sem a exigência de servidores externos. 
+## Principais Funcionalidades
 
-A exatidão dos processos respeita metodologias consolidadas e normas da área de atuação.
+Atualmente, o sistema dispõe dos seguintes módulos operacionais baseados em normas técnicas vigentes:
 
-## Funcionalidades
+- **Índices Físicos e Limites de Consistência**: Avaliação completa de relações entre fases (índice de vazios, porosidade, teor de umidade, grau de saturação) e determinação dos Limites de Atterberg (LL e LP). Inclui geração de diagrama de fases em tempo real.
+- **Granulometria**: Processamento de dados granulométricos com geração automática da curva de distribuição e extração de parâmetros como D10, D30, D60, Coeficiente de Uniformidade (Cu) e Curvatura (Cc).
+- **Compactação**: Ferramenta para análise de ensaios de compactação, permitindo a determinação da umidade ótima e do peso específico aparente seco máximo.
 
-O sistema compreende módulos que abordam diretamente o tratamento de dados laboratoriais de mecânica dos solos:
+### Expansões Planejadas
 
-- **Índices Físicos e Limites de Consistência**: Avaliação de índices de vazios, umidade e saturação, além do cálculo dos Atterberg (LL, LP). Acompanha um diagrama de fases em tempo real.
-- **Granulometria**: Sistema para plote de curvas de distribuição granulométrica e a extração imediata dos parâmetros D10, D30, D60 e dos coeficientes Cu e Cc.
-- **Compactação**: Ferramenta de representação de energia de compactação focada na localização exata de umidade ótima e peso específico aparente seco máximo.
+O projeto encontra-se em desenvolvimento contínuo, com implementações previstas para:
+- Tensões Geostáticas e Acréscimo de Tensões;
+- Recalque por Adensamento;
+- Resistência ao Cisalhamento.
 
+## Diferenciais Técnicos
+
+<div align="justify">
+<ul>
+  <li><strong>Processamento Local:</strong> Todo o processamento de dados é executado no navegador do usuário, garantindo agilidade e privacidade das informações.</li>
+  <li><strong>Conformidade Normativa:</strong> Cálculos e procedimentos estruturados de acordo com as normas técnicas brasileiras vigentes.</li>
+  <li><strong>Ferramentas Didáticas:</strong> Inclusão de dados de exemplo para facilitar o aprendizado e familiarização com os módulos laboratoriais.</li>
+  <li><strong>Exportação de Resultados:</strong> Geração de relatórios e gráficos em alta qualidade, prontos para uso em trabalhos acadêmicos ou relatórios técnicos.</li>
+</ul>
+</div>
+
+## Tecnologias Utilizadas
+
+A aplicação foi desenvolvida utilizando tecnologias modernas de desenvolvimento web:
+
+- **Core**: React e TypeScript;
+- **Build System**: Vite;
+- **Estilização**: Tailwind CSS e Radix UI;
+- **Visualização de Dados**: Recharts;
+- **Exportação**: jsPDF e html2canvas.
 
 ## Execução Local
 
-Pré-requisitos: Ter Node.js (versão 18+) instalado na máquina.
+Para executar o projeto em ambiente de desenvolvimento, certifique-se de possuir o [Node.js](https://nodejs.org/) (versão 18 ou superior) instalado.
 
-A aplicação e todo o seu motor de cálculo situam-se na pasta `frontend/`. Inicie o ambiente local via terminal na raiz do projeto:
+1. Clone o repositório:
+   ```bash
+   git clone https://github.com/[seu-usuario]/edusolos.git
+   ```
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+2. Acesse o diretório do projeto:
+   ```bash
+   cd edusolos
+   ```
 
-E no seu navegador preferido acesse `http://localhost:5173`.
+3. Instale as dependências:
+   ```bash
+   npm install
+   ```
 
-## Contribuindo
+4. Inicie o servidor de desenvolvimento:
+   ```bash
+   npm run dev
+   ```
 
-Regras de estruturação para o envio de pull requests, assim como guias das práticas de desenvolvimento adotadas no projeto, estão documentadas no arquivo [CONTRIBUTING.md](./CONTRIBUTING.md). Acesse-o antes de submeter commits de funcionalidade. Notas complementares e o acervo de documentação de versões prévias do refatoramento da arquitetura, encontram-se todos em `docs/`.
+5. Acesse a aplicação em: `http://localhost:5173`
 
-## Licença de Uso
+## Contribuição
 
-Este projeto está ancorado nos termos do arquivo [LICENSE](./LICENSE). O código fonte é disponibilizado por meio da diretriz PolyForm Noncommercial 1.0.0.
+Interessados em contribuir com o desenvolvimento do EduSolos devem consultar o guia detalhado em [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## Licença
+
+Este projeto está licenciado sob a **PolyForm Noncommercial 1.0.0**. Consulte o arquivo [LICENSE](./LICENSE) para mais detalhes sobre os termos de uso.
+
+---
+<p align="center">
+  Desenvolvido por <strong>Samuel Sousa Santos</strong>
+</p>
