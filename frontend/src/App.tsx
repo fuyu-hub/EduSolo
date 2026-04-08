@@ -1,0 +1,307 @@
+import { lazy, Suspense, useEffect } from "react";
+import { HelmetProvider } from "react-helmet-async";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Layout } from "@/componentes/base/LayoutPrincipal";
+import { PageLoader } from "@/components/ui/loading-spinner";
+import { ErrorBoundary } from "@/componentes/base/FronteiraErro";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { SettingsProvider } from "@/contexts/SettingsContext";
+import { WelcomeDialog } from "@/componentes/base/DialogoBoasVindas";
+import ScrollToTop from "@/componentes/base/ScrollParaTopo";
+
+import { useRoutePreload } from "@/hooks/use-route-preload";
+
+// Lazy loading de páginas para melhor performance
+// Páginas principais (carregamento imediato)
+import NotFound from "./modulos/paginas-extras/NotFound";
+
+const Granulometria = lazy(() => import("./modulos/granulometria/pagina"));
+const GranulometriaLab = lazy(() => import("./modulos/granulometrialab/pagina"));
+const Compactacao = lazy(() => import("./modulos/compactacao/pagina"));
+const TensoesGeostaticas = lazy(() => import("./pages/TensoesGeostaticas"));
+const AcrescimoTensoes = lazy(() => import("./pages/AcrescimoTensoes"));
+const RecalqueAdensamento = lazy(() => import("./pages/RecalqueAdensamento"));
+const Caracterizacao = lazy(() => import("./modulos/indiceslimites/pagina"));
+
+// Páginas de Acréscimo de Tensões (lazy loading)
+const Boussinesq = lazy(() => import("./pages/acrescimo-tensoes/Boussinesq"));
+const Love = lazy(() => import("./pages/acrescimo-tensoes/Love"));
+const Carothers = lazy(() => import("./pages/acrescimo-tensoes/Carothers"));
+const Newmark = lazy(() => import("./pages/acrescimo-tensoes/Newmark"));
+
+// Páginas auxiliares (lazy loading)
+const Educacional = lazy(() => import("./modulos/paginas-extras/Educacional"));
+const About = lazy(() => import("./modulos/paginas-extras/About"));
+const Dashboard = lazy(() => import("./modulos/paginas-extras/Dashboard"));
+
+import { MobileBlocker } from "@/componentes/base/BloqueioMobile";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+// Componente interno para preload
+const AppContent = () => {
+  const isMobile = useIsMobile();
+
+  // Preload das rotas mais acessadas após 2 segundos de idle
+  useRoutePreload({
+    routes: {
+      caracterizacao: () => import("./modulos/indiceslimites/pagina"),
+      granulometria: () => import("./modulos/granulometria/pagina"),
+      compactacao: () => import("./modulos/compactacao/pagina"),
+      tensoes: () => import("./pages/TensoesGeostaticas"),
+    },
+    delay: 2000,
+    onIdle: true,
+  });
+
+  // Preload de rotas secundárias após 5 segundos
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      import("./pages/AcrescimoTensoes");
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Mostrar notificação se o app foi atualizado
+  useEffect(() => {
+    const wasUpdated = sessionStorage.getItem("edusolo-app-updated");
+    if (wasUpdated) {
+      // Importar toast dinamicamente para evitar problemas de circular dependency
+      import("sonner").then(({ toast }) => {
+        toast.info("App atualizado!", {
+          description: "Algumas configurações foram resetadas para garantir compatibilidade.",
+          duration: 5000,
+        });
+      });
+      // Remover flag para não mostrar novamente
+      sessionStorage.removeItem("edusolo-app-updated");
+    }
+  }, []);
+
+  // Limpar overlays órfãos de dialogs/sheets que podem ter ficado presos
+  useEffect(() => {
+    const cleanupOrphanOverlays = () => {
+      // Remover portais Radix órfãos
+      const portals = document.querySelectorAll('[data-radix-portal]');
+      portals.forEach((portal) => {
+        // Se o portal não tem conteúdo visível ou está em estado fechado
+        if (!portal.querySelector('[data-state="open"]')) {
+          portal.remove();
+        }
+      });
+
+      // Remover overlays fixos escuros sem conteúdo
+      const overlays = document.querySelectorAll('.fixed.inset-0.bg-black\\/80');
+      overlays.forEach((overlay) => {
+        if (overlay.getAttribute('data-state') === 'closed') {
+          overlay.remove();
+        }
+      });
+    };
+
+    // Limpar após renderização inicial
+    const timer = setTimeout(cleanupOrphanOverlays, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isMobile) {
+    return <MobileBlocker />;
+  }
+
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Rota principal - Home como Dashboard */}
+        <Route
+          path="/"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Dashboard />
+              </Suspense>
+            </Layout>
+          }
+        />
+        {/* Alias para Dashboard */}
+        <Route
+          path="/modulos"
+          element={<Navigate to="/dashboard" replace />}
+        />
+        {/* Dashboard */}
+        <Route
+          path="/dashboard"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Dashboard />
+              </Suspense>
+            </Layout>
+          }
+        />
+
+        {/* Redirects de rotas antigas */}
+        <Route path="/indices-fisicos" element={<Navigate to="/indices-limites" replace />} />
+        <Route path="/limites-consistencia" element={<Navigate to="/indices-limites" replace />} />
+
+        <Route
+          path="/indices-limites"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Caracterizacao />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/granulometria"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Granulometria />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/granulometria-lab"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <GranulometriaLab />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/compactacao"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Compactacao />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/tensoes"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <TensoesGeostaticas />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/acrescimo-tensoes"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <AcrescimoTensoes />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/acrescimo-tensoes/boussinesq"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Boussinesq />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/acrescimo-tensoes/love"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Love />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/acrescimo-tensoes/carothers"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Carothers />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/acrescimo-tensoes/newmark"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Newmark />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/recalque-adensamento"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <RecalqueAdensamento />
+              </Suspense>
+            </Layout>
+          }
+        />
+
+        {/* Rotas auxiliares - com lazy loading */}
+        <Route
+          path="/educacional"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <Educacional />
+              </Suspense>
+            </Layout>
+          }
+        />
+        <Route
+          path="/about"
+          element={
+            <Layout>
+              <Suspense fallback={<PageLoader />}>
+                <About />
+              </Suspense>
+            </Layout>
+          }
+        />
+
+        {/* Rota 404 - sem lazy loading */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
+  );
+};
+
+const App = () => (
+  <ErrorBoundary>
+    <HelmetProvider>
+      <SettingsProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <Sonner />
+            <WelcomeDialog />
+            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+              <ScrollToTop />
+              <AppContent />
+            </BrowserRouter>
+          </TooltipProvider>
+        </ThemeProvider>
+      </SettingsProvider>
+    </HelmetProvider>
+  </ErrorBoundary>
+);
+
+export default App;
