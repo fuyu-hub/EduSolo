@@ -20,7 +20,7 @@ import NotFound from "./modulos/paginas-extras/NotFound";
 const Granulometria = lazy(() => import("./modulos/granulometria/pagina"));
 const GranulometriaLab = lazy(() => import("./modulos/granulometrialab/pagina"));
 const Compactacao = lazy(() => import("./modulos/compactacao/pagina"));
-const TensoesGeostaticas = lazy(() => import("./pages/TensoesGeostaticas"));
+const TensoesGeostaticas = lazy(() => import("./modulos/tensoes-geostaticas/pagina"));
 const AcrescimoTensoes = lazy(() => import("./pages/AcrescimoTensoes"));
 const RecalqueAdensamento = lazy(() => import("./pages/RecalqueAdensamento"));
 const Caracterizacao = lazy(() => import("./modulos/indiceslimites/pagina"));
@@ -49,7 +49,7 @@ const AppContent = () => {
       caracterizacao: () => import("./modulos/indiceslimites/pagina"),
       granulometria: () => import("./modulos/granulometria/pagina"),
       compactacao: () => import("./modulos/compactacao/pagina"),
-      tensoes: () => import("./pages/TensoesGeostaticas"),
+      tensoes: () => import("./modulos/tensoes-geostaticas/pagina"),
     },
     delay: 2000,
     onIdle: true,

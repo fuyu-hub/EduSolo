@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Helmet } from 'react-helmet-async';
 import { useForm, useFieldArray } from "react-hook-form";
 import { calcularRecalqueAdensamento } from "@/lib/calculations/recalque-adensamento";
-import { calcularTensoesGeostaticas } from "@/modules/tensoes/calculations";
+// import { calcularTensoesGeostaticas } from "@/modules/tensoes/calculations";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -32,11 +32,11 @@ import CalculationActions from "@/componentes/compartilhados/BarraAcoes";
 import SaveDialog from "@/componentes/dialogos/DialogoSalvar";
 import SavedCalculations from "@/componentes/compartilhados/CalculosSalvos";
 import PrintHeader from "@/componentes/base/CabecalhoImpressao";
-import DialogConfiguracoes, { ConfigData } from "@/modules/tensoes/components/DialogConfiguracoes";
+// import DialogConfiguracoes, { ConfigData } from "@/modules/tensoes/components/DialogConfiguracoes";
 import DialogExemplos from "@/modules/recalque/components/DialogExemplos";
 import { type ExemploRecalque } from "@/lib/exemplos/recalque-adensamento";
-import DialogCamada, { CamadaData } from "@/modules/tensoes/components/DialogCamada";
-import TabelaCamadas from "@/modules/tensoes/components/TabelaCamadas";
+// import DialogCamada, { CamadaData } from "@/modules/tensoes/components/DialogCamada";
+// import TabelaCamadas from "@/modules/tensoes/components/TabelaCamadas";
 import DiagramaRecalque from "@/modules/recalque/components/DiagramaRecalque";
 import { exportToPDF, exportToExcel, ExportData, ExcelExportData, formatNumberForExport, generateDefaultPDFFileName } from "@/lib/utils/export-utils";
 import ExportPDFDialog from "@/componentes/dialogos/DialogoExportarPDF";
@@ -48,7 +48,11 @@ import type {
   RecalqueAdensamentoInput,
   RecalqueAdensamentoOutput
 } from "@/lib/schemas/outros-modulos";
-import type { TensoesGeostaticasInput, CamadaSolo } from "@/modules/tensoes/schemas";
+// import type { TensoesGeostaticasInput, CamadaSolo } from "@/modules/tensoes/schemas";
+type ConfigData = { pesoEspecificoAgua: string };
+type CamadaData = any;
+type CamadaSolo = any;
+type TensoesGeostaticasInput = any;
 
 // Schema para Aba 1 - Perfil
 const camadaSchema = z.object({
@@ -306,14 +310,19 @@ export default function RecalqueAdensamento() {
           impermeavel: false,
         });
 
+        /* 
         const input: TensoesGeostaticasInput = {
           camadas,
           profundidade_na: profNAAbsoluto > 0 ? profNAAbsoluto : undefined,
+=======
           altura_capilar: alturaCap,
           peso_especifico_agua: pesoAgua,
         };
 
         const resultado = calcularTensoesGeostaticas(input);
+        if (resultado.erro) return 0;
+        */
+        const resultado: any = { pontos_calculo: [], erro: "Funcionalidade desabilitada temporariamente" };
         if (resultado.erro) return 0;
 
         const centro = alturaAterroNoPeriodo + (espessuraArgilaReal / 2);
@@ -1675,6 +1684,7 @@ export default function RecalqueAdensamento() {
       </div>
 
       {/* Dialogs */}
+      {/* 
       <DialogCamada
         open={dialogCamadaOpen}
         onOpenChange={setDialogCamadaOpen}
@@ -1682,7 +1692,11 @@ export default function RecalqueAdensamento() {
         camadaInicial={camadaEditando}
         title={camadaEditando ? "Editar Camada" : "Adicionar Camada"}
         showCompressivel={true}
-      />
+      /> 
+      */}
+      <div className="hidden text-xs text-muted-foreground">
+        DialogCamada desabilitado — requer migração
+      </div>
 
       <SaveDialog
         open={saveDialogOpen}

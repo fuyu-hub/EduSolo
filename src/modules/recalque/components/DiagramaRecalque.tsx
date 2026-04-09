@@ -8,6 +8,16 @@ import DialogCamadaBase from "./DialogCamadaBase";
 import DialogCamadaAterro, { CamadaAterroEditData } from "./DialogCamadaAterro";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  CORES_SOLO,
+  COR_ARGILA,
+  COR_AREIA,
+  COR_PEDREGULHO,
+  COR_ATERRO,
+  getCorTexto,
+  misturarCores,
+  seededRandom,
+} from "@/lib/constants/cores-solo";
 
 interface CamadaInfo {
   nome?: string;
@@ -37,59 +47,6 @@ interface CamadaArgilaEditData {
   Cr?: string;
   Cv?: string;
   e0?: string;
-}
-
-// Função para retornar cor de texto (sempre escura)
-function getCorTexto(corHex: string): string {
-  return '#1f2937';
-}
-
-// Função para misturar duas cores hex
-function misturarCores(cor1: string, cor2: string, percentualCor1: number): string {
-  const hex1 = cor1.replace('#', '');
-  const hex2 = cor2.replace('#', '');
-  
-  const r1 = parseInt(hex1.substring(0, 2), 16);
-  const g1 = parseInt(hex1.substring(2, 4), 16);
-  const b1 = parseInt(hex1.substring(4, 6), 16);
-  
-  const r2 = parseInt(hex2.substring(0, 2), 16);
-  const g2 = parseInt(hex2.substring(2, 4), 16);
-  const b2 = parseInt(hex2.substring(4, 6), 16);
-  
-  const r = Math.round(r1 * percentualCor1 + r2 * (1 - percentualCor1));
-  const g = Math.round(g1 * percentualCor1 + g2 * (1 - percentualCor1));
-  const b = Math.round(b1 * percentualCor1 + b2 * (1 - percentualCor1));
-  
-  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-}
-
-// Paleta de cores de solo
-const CORES_SOLO = [
-  { bg: "#d9bc8c", border: "#a67c52" }, // Areia amarelada
-  { bg: "#c4a57b", border: "#8b7355" }, // Areia marrom-claro
-  { bg: "#b8a99a", border: "#6b5d50" }, // Argila cinza-marrom
-  { bg: "#d4c5b9", border: "#9c8b7e" }, // Silte bege claro
-  { bg: "#b8956a", border: "#8b6f47" }, // Argila marrom
-  { bg: "#9c7a5e", border: "#6b4423" }, // Argila marrom-escuro
-  { bg: "#c9b89a", border: "#a08968" }, // Solo arenoso claro
-  { bg: "#a89080", border: "#7d6b5c" }, // Solo argiloso médio
-  { bg: "#8b7968", border: "#5d4e3f" }, // Solo compacto escuro
-  { bg: "#d6c3a8", border: "#b39a7d" }, // Areia fina clara
-];
-
-// Cor específica para argila (marrom argiloso)
-const COR_ARGILA = { bg: "#a67c52", border: "#8b5a3c" };
-const COR_AREIA = { bg: "#d9bc8c", border: "#a67c52" }; // Areia drenante
-const COR_PEDREGULHO = { bg: "#9ca3af", border: "#6b7280" }; // Pedregulho não drenante (cinza)
-
-// Cor para aterro/embankment
-const COR_ATERRO = { bg: "#8b7355", border: "#6b5d50" };
-
-// Função para gerar número pseudo-aleatório determinístico
-function seededRandom(seed: number): number {
-  const x = Math.sin(seed) * 10000;
-  return x - Math.floor(x);
 }
 
 export type PerfilState = "passado" | "presente" | "futuro";

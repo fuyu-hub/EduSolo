@@ -46,8 +46,9 @@ const modules = [
   {
     icon: Mountain,
     title: "Tensões Geostáticas",
-    path: "#",
-    comingSoon: true,
+    description: "Cálculo de tensões totais, efetivas e pressões neutras",
+    path: "/tensoes",
+    preload: () => import("@/modulos/tensoes-geostaticas/pagina"),
   },
   {
     icon: Target,

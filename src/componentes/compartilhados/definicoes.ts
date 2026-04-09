@@ -207,6 +207,77 @@ export const DEFINICOES_GERAIS: Record<string, DefinicaoGeotecnica> = {
         descricao: "Camada de solo natural sobre a qual repousa o pavimento. A classificação HRB avalia o desempenho esperado do solo como fundação de estradas.",
         referencia: "ABNT NBR 6502:2022",
     },
+
+    // Tensões Geostáticas
+    gamaNat: {
+        termo: "Peso Específico Natural",
+        descricao: "Peso do solo no estado natural (acima do NA), incluindo sólidos e água intersticial.",
+        unidade: "kN/m³",
+        referencia: "ABNT NBR 6502:2022 — Terminologia",
+    },
+    gamaSat: {
+        termo: "Peso Específico Saturado",
+        descricao: "Peso do solo quando todos os vazios estão preenchidos por água (abaixo do NA ou na franja capilar).",
+        unidade: "kN/m³",
+        referencia: "ABNT NBR 6502:2022 — Terminologia",
+    },
+    Ko: {
+        termo: "Coeficiente de Empuxo no Repouso",
+        descricao: "Relação entre a tensão efetiva horizontal e a tensão efetiva vertical no estado de repouso (sem deformação lateral). Tipicamente 0.3–0.7 para solos normalmente adensados.",
+        referencia: "Jaky (1944) — Ko ≈ 1 - sen(φ')",
+    },
+    profundidadeNA: {
+        termo: "Nível d'Água (NA)",
+        descricao: "Profundidade do nível freático medida a partir da superfície do terreno. Abaixo do NA, os poros do solo estão totalmente saturados.",
+        unidade: "m",
+        referencia: "ABNT NBR 6502:2022 — Terminologia",
+    },
+    capilaridade: {
+        termo: "Altura de Ascensão Capilar",
+        descricao: "Altura acima do NA onde o solo se encontra saturado por tensão superficial. A pressão neutra é negativa (sucção) nesta zona.",
+        unidade: "m",
+        referencia: "Das (2019) — Principles of Geotechnical Engineering",
+    },
+    espessuraCamada: {
+        termo: "Espessura da Camada",
+        descricao: "Espessura vertical da camada de solo no perfil estratigráfico.",
+        unidade: "m",
+    },
+    pesoEspecificoAgua: {
+        termo: "Peso Específico da Água",
+        descricao: "Peso por unidade de volume da água. Valor convencional: 9.81 kN/m³ (arredondado para 10.0 em exercícios acadêmicos).",
+        unidade: "kN/m³",
+        referencia: "Valor convencional",
+    },
+    sobrecargaSuperficial: {
+        termo: "Sobrecarga Superficial",
+        descricao: "Carga uniformemente distribuída aplicada na superfície do terreno (ex: aterro, pavimento, fundação). Aumenta σv em todos os pontos do perfil.",
+        unidade: "kPa",
+        referencia: "Terzaghi (1943) — Theoretical Soil Mechanics",
+    },
+    intervaloDiscretizacao: {
+        termo: "Intervalo de Discretização",
+        descricao: "Espaçamento entre pontos de cálculo intermediários dentro de cada camada. Produz gráficos mais suaves. Deixe vazio para calcular apenas nos nós críticos (transições de camada e NA).",
+        unidade: "m",
+    },
+    sigma_v: {
+        termo: "Tensão Total Vertical",
+        descricao: "Tensão vertical causada pelo peso próprio do solo acima do ponto considerado. σv = Σ(γᵢ · hᵢ) + q₀.",
+        unidade: "kPa",
+        referencia: "Terzaghi (1943)",
+    },
+    pressaoNeutra: {
+        termo: "Pressão Neutra",
+        descricao: "Pressão da água nos poros do solo. Positiva abaixo do NA (compressão), negativa na franja capilar (sucção). u = γw · (z - zNA).",
+        unidade: "kPa",
+        referencia: "Terzaghi (1943)",
+    },
+    sigma_v_ef: {
+        termo: "Tensão Efetiva Vertical",
+        descricao: "Tensão transmitida exclusivamente pelo esqueleto sólido do solo. σ'v = σv - u. Controla resistência, deformação e ruptura do solo.",
+        unidade: "kPa",
+        referencia: "Terzaghi (1943) — Princípio das Tensões Efetivas",
+    },
 };
 
 /** Função auxiliar para obter uma definição de forma segura */

@@ -20,12 +20,12 @@ const menuStructure = [
       { icon: Beaker, label: "Índices e Limites", path: "/indices-limites" },
       { icon: Database, label: "Granulometria", path: "/granulometria" },
       { icon: CompactacaoIcon, label: "Compactação", path: "/compactacao" },
+      { icon: Mountain, label: "Tensões Geostáticas", path: "/tensoes" },
     ],
   },
   {
     title: "Em planejamento",
     items: [
-      { icon: Mountain, label: "Tensões Geostáticas", path: "#", comingSoon: true },
       { icon: Target, label: "Acréscimo de Tensões", path: "#", comingSoon: true },
       { icon: MoveDown, label: "Recalque por Adensamento", path: "#", comingSoon: true },
       { icon: Scissors, label: "Resistência ao Cisalhamento", path: "#", comingSoon: true },
